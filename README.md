@@ -5,7 +5,7 @@ Support multi-réactions, affichage des compteurs sous chaque post et ajout faci
 
 ## Installation
 
-1. Copier le dossier `bastien/reactions` dans `ext/` de votre forum phpBB.  
+1. Copier le dossier `bastien59/reactions` dans `ext/` de votre forum phpBB.  
 2. Activer l'extension via **ACP → Personnalisation → Gérer les extensions**.  
 
 ## Fonctionnalités prévues
