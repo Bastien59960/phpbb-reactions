@@ -1,7 +1,6 @@
 <?php
 /**
 * Post Reactions extension for phpBB.
-*
 * @copyright (c) 2025 Bastien59960
 * @license GNU General Public License, version 2 (GPL-2.0)
 */
@@ -12,49 +11,74 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class listener implements EventSubscriberInterface
 {
-	protected $root_path;
-	protected $php_ext;
-	protected $user;
-	protected $template;
-	protected $reaction_url;
-	protected $assets_manager;
+    protected $controller;
+    protected $user;
+    protected $template;
+    protected $auth;
+    protected $reaction_url;
+    protected $assets_manager;
 
-	public function __construct(
-		$root_path,
-		$php_ext,
-		\phpbb\user $user,
-		\phpbb\template\template $template,
-		$reaction_url,
-		\phpbb\assets\manager $assets_manager
-	) {
-		$this->root_path = $root_path;
-		$this->php_ext = $php_ext;
-		$this->user = $user;
-		$this->template = $template;
-		$this->reaction_url = $reaction_url;
-		$this->assets_manager = $assets_manager;
-	}
+    public function __construct(
+        \bastien59960\reactions\controller\main $controller,
+        \phpbb\user $user,
+        \phpbb\template\template $template,
+        \phpbb\auth\auth $auth,
+        \Symfony\Component\Routing\Generator\UrlGeneratorInterface $reaction_url,
+        \phpbb\assets\manager $assets_manager
+    ) {
+        $this->controller = $controller;
+        $this->user = $user;
+        $this->template = $template;
+        $this->auth = $auth;
+        $this->reaction_url = $reaction_url;
+        $this->assets_manager = $assets_manager;
+    }
 
-	static public function getSubscribedEvents()
-	{
-		return [
-			'core.page_header_after' => 'add_reactions_script_and_template_vars',
-		];
-	}
+    static public function getSubscribedEvents()
+    {
+        return [
+            'core.viewtopic_modify_post_row' => 'add_reactions_to_post', // ESSENTIEL
+            'core.viewtopic_assign_template_vars_before' => 'add_reactions_global_vars', // MEILLEUR MOMENT
+        ];
+    }
 
-	public function add_reactions_script_and_template_vars($event)
-	{
-		// On n'inclut le script que si l'utilisateur est connecté et sur une page de sujet.
-		if (!$this->user->data['is_registered'] || $this->template->get_template_name() !== 'viewtopic_body.html') {
-			return;
-		}
+    public function add_reactions_to_post($event)
+    {
+        // Vérifier les permissions
+        $forum_id = $event['row']['forum_id'];
+        if (!$this->auth->acl_get('f_see_reactions', $forum_id)) {
+            return;
+        }
 
-		// On passe la variable de template pour l'URL du contrôleur.
-		$this->template->assign_vars([
-			'U_REACTIONS_HANDLE' => $this->reaction_url,
-		]);
+        $post_id = $event['row']['post_id'];
+        $reactions_html = $this->controller->get_reactions($post_id);
+        
+        $event['post_row'] = array_merge($event['post_row'], [
+            'REACTIONS' => $reactions_html,
+        ]);
+    }
 
-		// On inclut le fichier JavaScript de manière correcte.
-		$this->assets_manager->add_script('bastien59960\\reactions', 'reactions.js');
-	}
+    public function add_reactions_global_vars($event)
+    {
+        $forum_id = $event['forum_id'];
+        
+        // Vérifier si l'utilisateur peut voir et utiliser les réactions
+        $can_see_reactions = $this->auth->acl_get('f_see_reactions', $forum_id);
+        $can_use_reactions = $this->user->data['is_registered'] && 
+                            $this->auth->acl_get('f_use_reactions', $forum_id);
+
+        $this->template->assign_vars([
+            'S_CAN_SEE_REACTIONS'   => $can_see_reactions,
+            'S_CAN_USE_REACTIONS'   => $can_use_reactions,
+            'U_REACTIONS_HANDLE'    => $this->reaction_url->generate('bastien59960_reactions_handle'),
+        ]);
+
+        // Ajouter le JS seulement si nécessaire
+        if ($can_use_reactions) {
+            $this->assets_manager->add_script('reactions.js', [
+                'force_minify' => false,
+                'path_name' => 'bastien59960.reactions'
+            ]);
+        }
+    }
 }
