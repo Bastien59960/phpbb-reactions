@@ -179,7 +179,7 @@ class main
      */
     protected function get_available_reactions()
     {
-        return [
+        return [    
             ['unicode' => '👍', 'name' => 'Like'],
             ['unicode' => '❤️', 'name' => 'Love'],
             ['unicode' => '😂', 'name' => 'Laugh'],
