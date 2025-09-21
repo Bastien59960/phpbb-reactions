@@ -46,7 +46,7 @@ class listener implements EventSubscriberInterface
     {
         // Vérifier les permissions
         $forum_id = $event['row']['forum_id'];
-        if (!$this->auth->acl_get('f_see_reactions', $forum_id)) {
+        if (!$this->auth->acl_get('f_read', $forum_id)) {
             return;
         }
 
@@ -63,7 +63,7 @@ class listener implements EventSubscriberInterface
         $forum_id = $event['forum_id'];
         
         // Vérifier si l'utilisateur peut voir et utiliser les réactions
-        $can_see_reactions = $this->auth->acl_get('f_see_reactions', $forum_id);
+        $can_see_reactions = $this->auth->acl_get('f_read', $forum_id);
         $can_use_reactions = $this->user->data['is_registered'] && 
                             $this->auth->acl_get('f_use_reactions', $forum_id);
 
