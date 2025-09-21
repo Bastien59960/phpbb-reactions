@@ -1,5 +1,5 @@
 {
-    "name": "bastien/reactions",
+    "name": "bastien59960/reactions",
     "type": "phpbb-extension",
     "description": "Extension phpBB 3.3.15 permettant aux utilisateurs de réagir aux posts avec des émojis Unicode",
     "homepage": "https://github.com/Bastien59960/phpbb-reactions",
