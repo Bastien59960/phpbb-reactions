@@ -1,20 +1,10 @@
 <?php
 namespace bastien59\reactions;
 
-use phpbb\db\driver\driver_interface;
-
 class ext extends \phpbb\extension\base
 {
     /** @var \phpbb\db\driver\driver_interface */
     protected $db;
-
-    /**
-     * Constructor with dependency injection for the database service
-     */
-    public function __construct(\phpbb\db\driver\driver_interface $db)
-    {
-        $this->db = $db;
-    }
 
     /**
      * This method is called when the extension is installed
@@ -37,6 +27,9 @@ class ext extends \phpbb\extension\base
      */
     protected function create_database_table()
     {
+        global $phpbb_container;
+        $this->db = $phpbb_container->get('dbal.conn');
+
         $table_sql = "CREATE TABLE IF NOT EXISTS phpbb_post_reactions (
             reaction_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             post_id INT UNSIGNED NOT NULL,
