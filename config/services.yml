@@ -1,0 +1,8 @@
+services:
+    bastien59.reactions.listener:
+        class: bastien59\reactions\event\main_listener
+        arguments:
+            - '@config'
+            - '@template'
+        tags:
+            - { name: event.listener }

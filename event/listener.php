@@ -1,30 +1,34 @@
 <?php
+
 namespace bastien59\reactions\event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class listener implements EventSubscriberInterface
+class main_listener implements EventSubscriberInterface
 {
-    /**
-     * Abonnement aux événements phpBB
-     */
-    static public function getSubscribedEvents()
+    protected $config;
+    protected $template;
+
+    public function __construct(\phpbb\config\config $config, \phpbb\template\template $template)
     {
-        return [
-            'core.viewtopic_modify_post_row' => 'add_reactions_block',
-        ];
+        $this->config = $config;
+        $this->template = $template;
     }
 
-    /**
-     * Ajoute un bloc de réactions sous chaque post
-     */
-    public function add_reactions_block($event)
+    static public function getSubscribedEvents()
     {
-        $post_row = $event['post_row'];
+        return array(
+            'core.user_setup' => 'load_language_on_setup',
+        );
+    }
 
-        // Pour l'instant, on crée juste un bloc vide
-        $post_row['REACT_HTML'] = '<div class="post-reactions">Réactions à venir...</div>';
-
-        $event['post_row'] = $post_row;
+    public function load_language_on_setup($event)
+    {
+        $lang_set_ext = $event['lang_set_ext'];
+        $lang_set_ext[] = array(
+            'ext_name' => 'bastien59/reactions',
+            'lang_set' => 'common',
+        );
+        $event['lang_set_ext'] = $lang_set_ext;
     }
 }
