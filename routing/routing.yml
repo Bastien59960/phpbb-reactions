@@ -1,0 +1,7 @@
+bastien59960_reactions_handle:
+    path: /reactions/handle
+    defaults:
+        _controller: bastien59960.reactions.controller.main:handle
+        _anon_actions: ['handle']
+    requirements:
+        _method: 'POST'
