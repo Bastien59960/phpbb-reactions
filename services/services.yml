@@ -1,0 +1,7 @@
+services:
+    bastien59960.reactions.controller.main:
+        class: bastien59960\reactions\controller\main
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
