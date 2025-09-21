@@ -5,3 +5,15 @@ services:
             - '@dbal.conn'
             - '@user'
             - '@request'
+
+    # Service pour le listener
+    bastien59960.reactions.event.listener:
+        class: bastien59960\reactions\event\listener
+        arguments:
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '@user'
+            - '@template'
+            - '@router.url_generator'
+        tags:
+            - { name: event.listener }
