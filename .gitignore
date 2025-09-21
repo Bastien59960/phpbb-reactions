@@ -1,0 +1,43 @@
+# ===================================
+# Git ignore pour extension phpBB
+# ===================================
+
+# Fichiers temporaires de l'OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Stubs locaux (pour Intelephense uniquement)
+.stubs/
+phpbb_db_stub.php
+phpbb_extension_stub.php
+intelephense.config.json
+
+# Logs
+*.log
+
+# Cache & fichiers temporaires phpBB
+cache/
+store/
+files/
+
+# Vendor (composer install local, pas besoin dans ton repo si tu publies une extension)
+vendor/
+
+# Node modules (au cas où tu ajoutes du JS)
+node_modules/
+
+# Sauvegardes/archives
+*.bak
+*.zip
+*.tar.gz
+*.rar
+
+# ===================================
+# Fin du .gitignore
+# ===================================
+
