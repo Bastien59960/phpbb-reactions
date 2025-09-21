@@ -1,8 +1,6 @@
 <?php
 /**
-* Post Reactions extension for phpBB.
-* @copyright (c) 2025 Bastien59960
-* @license GNU General Public License, version 2 (GPL-2.0)
+* Post Reactions extension for phpBB - DEBUG VERSION
 */
 
 namespace bastien59960\reactions\event;
@@ -15,23 +13,20 @@ class listener implements EventSubscriberInterface
     protected $user;
     protected $template;
     protected $auth;
-    protected $reaction_url;
-    protected $assets_manager;
+    protected $helper;
 
     public function __construct(
         \bastien59960\reactions\controller\main $controller,
         \phpbb\user $user,
         \phpbb\template\template $template,
         \phpbb\auth\auth $auth,
-        \Symfony\Component\Routing\Generator\UrlGeneratorInterface $reaction_url,
-        \phpbb\assets\manager $assets_manager
+        \phpbb\controller\helper $helper
     ) {
         $this->controller = $controller;
         $this->user = $user;
         $this->template = $template;
         $this->auth = $auth;
-        $this->reaction_url = $reaction_url;
-        $this->assets_manager = $assets_manager;
+        $this->helper = $helper;
     }
 
     static public function getSubscribedEvents()
@@ -44,41 +39,36 @@ class listener implements EventSubscriberInterface
 
     public function add_reactions_to_post($event)
     {
-        // Vérifier les permissions
-        $forum_id = $event['row']['forum_id'];
-        if (!$this->auth->acl_get('f_read', $forum_id)) {
-            return;
-        }
-
+        // Debug simple : toujours ajouter du contenu
         $post_id = $event['row']['post_id'];
-        $reactions_html = $this->controller->get_reactions($post_id);
+        
+        // Test 1: Contenu HTML statique pour vérifier que l'injection fonctionne
+        $debug_html = '<div class="reactions-debug" style="background: yellow; padding: 5px; margin: 5px 0;">
+            DEBUG: Extension active pour post ' . $post_id . '
+        </div>';
+        
+        // Test 2: Essayer d'appeler le contrôleur
+        try {
+            $reactions_html = $this->controller->get_reactions($post_id);
+            if (empty($reactions_html)) {
+                $reactions_html = '<div style="color: red;">Contrôleur appelé mais HTML vide</div>';
+            }
+        } catch (\Exception $e) {
+            $reactions_html = '<div style="color: red;">ERREUR: ' . $e->getMessage() . '</div>';
+        }
         
         $event['post_row'] = array_merge($event['post_row'], [
-            'REACTIONS' => $reactions_html,
+            'REACTIONS' => $debug_html . $reactions_html,
         ]);
     }
 
     public function add_reactions_global_vars($event)
     {
-        $forum_id = $event['forum_id'];
-        
-        // Vérifier si l'utilisateur peut voir et utiliser les réactions
-        $can_see_reactions = $this->auth->acl_get('f_read', $forum_id);
-        $can_use_reactions = $this->user->data['is_registered'] && 
-                            $this->auth->acl_get('f_use_reactions', $forum_id);
-
+        // Variables globales simples pour test
         $this->template->assign_vars([
-            'S_CAN_SEE_REACTIONS'   => $can_see_reactions,
-            'S_CAN_USE_REACTIONS'   => $can_use_reactions,
-            'U_REACTIONS_HANDLE'    => $this->reaction_url->generate('bastien59960_reactions_handle'),
+            'S_CAN_SEE_REACTIONS'   => true,
+            'S_CAN_USE_REACTIONS'   => $this->user->data['is_registered'],
+            'U_REACTIONS_HANDLE'    => '#', // URL temporaire
         ]);
-
-        // Ajouter le JS seulement si nécessaire
-        if ($can_use_reactions) {
-            $this->assets_manager->add_script('reactions.js', [
-                'force_minify' => false,
-                'path_name' => 'bastien59960.reactions'
-            ]);
-        }
     }
 }
