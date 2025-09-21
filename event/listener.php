@@ -37,8 +37,8 @@ class listener implements EventSubscriberInterface
     static public function getSubscribedEvents()
     {
         return [
-            'core.viewtopic_modify_post_row' => 'add_reactions_to_post', // ESSENTIEL
-            'core.viewtopic_assign_template_vars_before' => 'add_reactions_global_vars', // MEILLEUR MOMENT
+            'core.viewtopic_modify_post_row' => 'add_reactions_to_post',
+            'core.viewtopic_assign_template_vars_before' => 'add_reactions_global_vars',
         ];
     }
 
