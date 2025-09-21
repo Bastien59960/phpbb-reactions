@@ -6,7 +6,7 @@
 * @license GNU General Public License, version 2 (GPL-2.0)
 */
 
-namespace bastien59\reactions;
+namespace bastien59960\reactions;
 
 /**
 * Extension base class which is used on the front end.
