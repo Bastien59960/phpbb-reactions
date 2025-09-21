@@ -8,7 +8,7 @@
 
 namespace bastien59\reactions\migrations;
 
-class install_reactions extends \phpbb\db\migration\migration
+class release_1_0_0 extends \phpbb\db\migration\migration
 {
     /**
     * Check if the migration is effectively installed (if the table exists)
@@ -17,7 +17,7 @@ class install_reactions extends \phpbb\db\migration\migration
     */
     public function effectively_installed()
     {
-        return $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions');
+        return isset($this->db_tools) && $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions');
     }
 
     /**
@@ -41,18 +41,18 @@ class install_reactions extends \phpbb\db\migration\migration
             'add_tables' => array(
                 $this->table_prefix . 'post_reactions' => array(
                     'COLUMNS' => array(
-                        'reaction_id' => array('UINT', null, 'auto_increment'),
-                        'post_id' => array('UINT', 0),
-                        'topic_id' => array('UINT', 0),
-                        'user_id' => array('UINT', 0),
+                        'reaction_id'      => array('UINT', null, 'auto_increment'),
+                        'post_id'          => array('UINT', 0),
+                        'topic_id'         => array('UINT', 0),
+                        'user_id'          => array('UINT', 0),
                         'reaction_unicode' => array('VCHAR:10', ''),
-                        'reaction_time' => array('TIMESTAMP', 0),
+                        'reaction_time'    => array('TIMESTAMP', 0),
                     ),
                     'PRIMARY_KEY' => 'reaction_id',
                     'KEYS' => array(
                         'post_reaction_idx' => array('INDEX', array('post_id', 'user_id')),
-                        'topic_idx' => array('INDEX', 'topic_id'),
-                        'user_idx' => array('INDEX', 'user_id'),
+                        'topic_idx'         => array('INDEX', 'topic_id'),
+                        'user_idx'          => array('INDEX', 'user_id'),
                     ),
                 ),
             ),
