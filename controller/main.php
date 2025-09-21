@@ -8,106 +8,328 @@
 
 namespace bastien59960\reactions\controller;
 
+use phpbb\json_response;
+use phpbb\exception\http_exception;
+
 class main
 {
     protected $db;
     protected $user;
     protected $request;
+    protected $template;
+    protected $auth;
+    protected $helper;
+    protected $reactions_table;
+    protected $reactions_used_table;
+    protected $posts_table;
+    protected $users_table;
 
-    public function __construct(\phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\request\request $request)
-    {
+    public function __construct(
+        \phpbb\db\driver\driver_interface $db,
+        \phpbb\user $user,
+        \phpbb\request\request $request,
+        \phpbb\template\template $template,
+        \phpbb\auth\auth $auth,
+        \phpbb\controller\helper $helper,
+        $tables
+    ) {
         $this->db = $db;
         $this->user = $user;
         $this->request = $request;
+        $this->template = $template;
+        $this->auth = $auth;
+        $this->helper = $helper;
+        
+        // Tables configuration
+        $this->reactions_table = $tables['reactions'];
+        $this->reactions_used_table = $tables['reactions_used'];
+        $this->posts_table = $tables['posts'];
+        $this->users_table = $tables['users'];
     }
 
+    /**
+     * Handle AJAX reaction requests
+     */
     public function handle()
     {
-        // 1. On vérifie si l'utilisateur est connecté.
+        // Check if it's an AJAX request
+        if (!$this->request->is_ajax()) {
+            throw new http_exception(400, 'AJAX_REQUIRED');
+        }
+
+        // Check if user is logged in
         if (!$this->user->data['is_registered']) {
-            return array('status' => 'error', 'message' => 'Not logged in');
+            return $this->json_response('error', 'NOT_LOGGED_IN');
         }
 
-        // 2. On récupère les données envoyées par la requête AJAX.
+        // Get and validate request data
         $post_id = $this->request->variable('post_id', 0);
-        $reaction_unicode = $this->request->variable('reaction', '', true);
+        $reaction_id = $this->request->variable('reaction_id', 0);
+        $reaction_unicode = $this->request->variable('reaction_unicode', '', true);
 
-        // 3. On vérifie que les données sont valides.
-        if (!$post_id || !$reaction_unicode) {
-            return array('status' => 'error', 'message' => 'Missing data');
+        // Validate input
+        if (!$post_id) {
+            return $this->json_response('error', 'MISSING_POST_ID');
         }
 
-        // 4. On gère la logique de la base de données.
-        $user_id = $this->user->data['user_id'];
-        $table_name = $this->db->sql_table('post_reactions');
+        // Check permissions for this post's forum
+        $forum_id = $this->get_forum_id_from_post($post_id);
+        if (!$forum_id || !$this->auth->acl_get('f_use_reactions', $forum_id)) {
+            return $this->json_response('error', 'NO_PERMISSION');
+        }
 
-        // On vérifie si l'utilisateur a déjà réagi à ce post.
-        $sql = 'SELECT reaction_id, reaction_unicode
-            FROM ' . $table_name . '
-            WHERE user_id = ' . (int) $user_id . '
-            AND post_id = ' . (int) $post_id;
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
+        try {
+            // Begin transaction
+            $this->db->sql_transaction('begin');
 
-        if ($row) {
-            // L'utilisateur a déjà réagi.
-            if ($row['reaction_unicode'] === $reaction_unicode) {
-                // Il reclique sur le même emoji, on supprime sa réaction.
-                $sql = 'DELETE FROM ' . $table_name . '
-                    WHERE reaction_id = ' . (int) $row['reaction_id'];
-                $this->db->sql_query($sql);
-                $action = 'removed';
+            $user_id = $this->user->data['user_id'];
+            $action = '';
+            $reaction_data = null;
+
+            // Check if user already reacted to this post
+            $sql = 'SELECT * 
+                FROM ' . $this->reactions_used_table . ' 
+                WHERE user_id = ' . (int) $user_id . ' 
+                AND post_id = ' . (int) $post_id;
+            $result = $this->db->sql_query($sql);
+            $existing_reaction = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if ($existing_reaction) {
+                // User already reacted - update or remove
+                if ($reaction_id && $existing_reaction['reaction_id'] == $reaction_id) {
+                    // Remove reaction (clicking same reaction again)
+                    $this->remove_reaction($existing_reaction['reaction_used_id']);
+                    $action = 'removed';
+                } else {
+                    // Update to new reaction
+                    $this->update_reaction($existing_reaction['reaction_used_id'], $reaction_id, $reaction_unicode);
+                    $action = 'updated';
+                    $reaction_data = $this->get_reaction_data($reaction_id);
+                }
             } else {
-                // Il change d'emoji, on met à jour sa réaction.
-                $sql_array = array(
-                    'reaction_unicode' => $reaction_unicode,
-                    'reaction_time'    => time(),
-                );
-                $sql = 'UPDATE ' . $table_name . '
-                    SET ' . $this->db->sql_build_array('UPDATE', $sql_array) . '
-                    WHERE reaction_id = ' . (int) $row['reaction_id'];
-                $this->db->sql_query($sql);
-                $action = 'updated';
+                // New reaction
+                $reaction_used_id = $this->add_reaction($post_id, $user_id, $reaction_id, $reaction_unicode);
+                $action = 'added';
+                $reaction_data = $this->get_reaction_data($reaction_id);
             }
-        } else {
-            // C'est une nouvelle réaction, on l'ajoute.
-            $sql_array = array(
-                'post_id'          => $post_id,
-                'user_id'          => $user_id,
-                'reaction_unicode' => $reaction_unicode,
-                'reaction_time'    => time(),
-                // NOTE: On ajoutera le topic_id plus tard, c'est mieux de le faire côté front-end.
-            );
-            $sql = 'INSERT INTO ' . $table_name . ' ' . $this->db->sql_build_array('INSERT', $sql_array);
-            $this->db->sql_query($sql);
-            $action = 'added';
+
+            // Commit transaction
+            $this->db->sql_transaction('commit');
+
+            // Get updated counts and return response
+            $counters = $this->get_reactions_count($post_id);
+            $user_reaction = $this->get_user_reaction($post_id, $user_id);
+
+            return $this->json_response('success', '', [
+                'action' => $action,
+                'counters' => $counters,
+                'user_reaction' => $user_reaction,
+                'reaction_data' => $reaction_data,
+                'post_id' => $post_id
+            ]);
+
+        } catch (\Exception $e) {
+            $this->db->sql_transaction('rollback');
+            return $this->json_response('error', 'DATABASE_ERROR', ['message' => $e->getMessage()]);
         }
-
-        // 5. On renvoie les compteurs mis à jour au front-end.
-        $counters = $this->get_reactions_count($post_id);
-
-        return array(
-            'status'   => 'success',
-            'action'   => $action,
-            'counters' => $counters,
-        );
     }
 
+    /**
+     * Get reactions HTML for a specific post
+     */
+    public function get_reactions($post_id)
+    {
+        if (!$post_id) {
+            return '';
+        }
+
+        // Get forum ID for permission check
+        $forum_id = $this->get_forum_id_from_post($post_id);
+        if (!$forum_id || !$this->auth->acl_get('f_see_reactions', $forum_id)) {
+            return '';
+        }
+
+        // Get all available reactions
+        $available_reactions = $this->get_available_reactions();
+        
+        // Get reaction counts for this post
+        $reaction_counts = $this->get_reactions_count($post_id);
+        
+        // Get user's current reaction (if any)
+        $user_reaction = $this->user->data['is_registered'] ? 
+            $this->get_user_reaction($post_id, $this->user->data['user_id']) : null;
+
+        // Assign template variables
+        $this->template->assign_vars([
+            'S_IS_REGISTERED'      => $this->user->data['is_registered'],
+            'S_CAN_USE_REACTIONS'  => $this->auth->acl_get('f_use_reactions', $forum_id),
+            'POST_ID'              => $post_id,
+            'USER_REACTION'        => $user_reaction,
+        ]);
+
+        // Assign each available reaction
+        foreach ($available_reactions as $reaction) {
+            $count = isset($reaction_counts[$reaction['reaction_id']]) ? $reaction_counts[$reaction['reaction_id']] : 0;
+            
+            $this->template->assign_block_vars('reactions', [
+                'ID'        => $reaction['reaction_id'],
+                'UNICODE'   => $reaction['reaction_unicode'],
+                'NAME'      => $reaction['reaction_name'],
+                'COUNT'     => $count,
+                'IS_USER'   => $user_reaction && $user_reaction['reaction_id'] == $reaction['reaction_id'],
+            ]);
+        }
+
+        // Render the template
+        return $this->template->render('reactions.html');
+    }
+
+    /**
+     * Get available reactions from database
+     */
+    protected function get_available_reactions()
+    {
+        $sql = 'SELECT * 
+            FROM ' . $this->reactions_table . ' 
+            WHERE reaction_enabled = 1 
+            ORDER BY reaction_order ASC';
+        $result = $this->db->sql_query($sql);
+        
+        $reactions = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $reactions[] = $row;
+        }
+        $this->db->sql_freeresult($result);
+        
+        return $reactions;
+    }
+
+    /**
+     * Get reaction counts for a post
+     */
     protected function get_reactions_count($post_id)
     {
-        $sql = 'SELECT reaction_unicode, COUNT(reaction_id) as count
-            FROM ' . $this->db->sql_table('post_reactions') . '
+        $sql = 'SELECT reaction_id, COUNT(*) as count
+            FROM ' . $this->reactions_used_table . '
             WHERE post_id = ' . (int) $post_id . '
-            GROUP BY reaction_unicode';
+            GROUP BY reaction_id';
         $result = $this->db->sql_query($sql);
 
-        $counters = array();
+        $counters = [];
         while ($row = $this->db->sql_fetchrow($result)) {
-            $counters[$row['reaction_unicode']] = (int) $row['count'];
+            $counters[$row['reaction_id']] = (int) $row['count'];
         }
         $this->db->sql_freeresult($result);
 
         return $counters;
+    }
+
+    /**
+     * Get user's reaction for a post
+     */
+    protected function get_user_reaction($post_id, $user_id)
+    {
+        $sql = 'SELECT ru.*, r.reaction_unicode, r.reaction_name
+            FROM ' . $this->reactions_used_table . ' ru
+            LEFT JOIN ' . $this->reactions_table . ' r ON ru.reaction_id = r.reaction_id
+            WHERE ru.post_id = ' . (int) $post_id . '
+            AND ru.user_id = ' . (int) $user_id;
+        $result = $this->db->sql_query($sql);
+        $reaction = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        return $reaction;
+    }
+
+    /**
+     * Get forum ID from post ID
+     */
+    protected function get_forum_id_from_post($post_id)
+    {
+        $sql = 'SELECT forum_id 
+            FROM ' . $this->posts_table . ' 
+            WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        return $row ? $row['forum_id'] : false;
+    }
+
+    /**
+     * Add a new reaction
+     */
+    protected function add_reaction($post_id, $user_id, $reaction_id, $reaction_unicode)
+    {
+        $sql_arr = [
+            'post_id'          => $post_id,
+            'user_id'          => $user_id,
+            'reaction_id'      => $reaction_id,
+            'reaction_unicode' => $reaction_unicode,
+            'reaction_time'    => time(),
+        ];
+
+        $sql = 'INSERT INTO ' . $this->reactions_used_table . ' 
+            ' . $this->db->sql_build_array('INSERT', $sql_arr);
+        $this->db->sql_query($sql);
+
+        return $this->db->sql_nextid();
+    }
+
+    /**
+     * Update existing reaction
+     */
+    protected function update_reaction($reaction_used_id, $reaction_id, $reaction_unicode)
+    {
+        $sql_arr = [
+            'reaction_id'      => $reaction_id,
+            'reaction_unicode' => $reaction_unicode,
+            'reaction_time'    => time(),
+        ];
+
+        $sql = 'UPDATE ' . $this->reactions_used_table . ' 
+            SET ' . $this->db->sql_build_array('UPDATE', $sql_arr) . '
+            WHERE reaction_used_id = ' . (int) $reaction_used_id;
+        $this->db->sql_query($sql);
+    }
+
+    /**
+     * Remove reaction
+     */
+    protected function remove_reaction($reaction_used_id)
+    {
+        $sql = 'DELETE FROM ' . $this->reactions_used_table . ' 
+            WHERE reaction_used_id = ' . (int) $reaction_used_id;
+        $this->db->sql_query($sql);
+    }
+
+    /**
+     * Get reaction data by ID
+     */
+    protected function get_reaction_data($reaction_id)
+    {
+        $sql = 'SELECT * 
+            FROM ' . $this->reactions_table . ' 
+            WHERE reaction_id = ' . (int) $reaction_id;
+        $result = $this->db->sql_query($sql);
+        $data = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        return $data;
+    }
+
+    /**
+     * JSON response helper
+     */
+    protected function json_response($status, $message = '', $data = [])
+    {
+        $response = array_merge([
+            'status'  => $status,
+            'message' => $message ? $this->user->lang($message) : '',
+        ], $data);
+
+        $json_response = new json_response();
+        return $json_response->send($response);
     }
 }
