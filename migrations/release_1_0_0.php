@@ -25,10 +25,10 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 	*
 	* @return array Array of migration files
 	*/
-	static public function depends_on()
-	{
-		return array('\phpbb\db\migration\data\v33x\v330');
-	}
+static public function depends_on()
+{
+    return array('\phpbb\db\migration\data\v33x\v3310');
+}
 
 	/**
 	* Add the table schemas used by this extension
