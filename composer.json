@@ -1,17 +1,21 @@
 {
-  "name": "bastien59/reactions",
-  "type": "phpbb-extension",
-  "description": "Extension phpBB 3.3.15 pour ajouter des réactions aux posts",
-  "version": "0.1.0",
-  "time": "2025-09-20",
-  "license": "GPL-2.0",
-  "authors": [
-    {
-      "name": "Bastien",
-      "email": "bastien@debucquoi.com"
+    "name": "bastien59/reactions",
+    "type": "phpbb-extension",
+    "description": "Extension phpBB 3.3.15 permettant aux utilisateurs de réagir aux posts avec des émojis Unicode",
+    "homepage": "https://github.com/Bastien59960/phpbb-reactions",
+    "version": "1.0.0-dev",
+    "license": "GPL-2.0-only",
+    "authors": [
+        {
+            "name": "Bastien59960",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.3",
+        "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+    },
+    "extra": {
+        "display-name": "Post Reactions"
     }
-  ],
-  "require": {
-    "php": ">=PHP 8.3.6"
-  }
 }

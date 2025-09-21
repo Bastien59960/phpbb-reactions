@@ -1,52 +1,30 @@
 <?php
+/**
+* Post Reactions extension for phpBB.
+*
+* @copyright (c) 2025 Bastien59960
+* @license GNU General Public License, version 2 (GPL-2.0)
+*/
+
 namespace bastien59\reactions;
 
+/**
+* Extension base class which is used on the front end.
+*/
 class ext extends \phpbb\extension\base
 {
-    /** @var \phpbb\db\driver\driver_interface */
-    protected $db;
-
     /**
-     * This method is called when the extension is installed
-     */
-    public function enable_step($old_state)
+    * Check whether or not the extension can be enabled.
+    * The current phpBB version should meet or exceed
+    * the minimum version required by this extension:
+    *
+    * Requires phpBB 3.3.0 due to updated extension meta-data
+    *
+    * @return bool
+    */
+    public function is_enableable()
     {
-        switch ($old_state)
-        {
-            case '':
-                $this->create_database_table();
-                return 'table_created';
-            case 'table_created':
-                return false;
-        }
-    }
-
-    /**
-     * Crée la table phpbb_post_reactions si elle n'existe pas
-     * avec gestion des erreurs
-     */
-    protected function create_database_table()
-    {
-        global $phpbb_container;
-        $this->db = $phpbb_container->get('dbal.conn');
-
-        $table_sql = "CREATE TABLE IF NOT EXISTS phpbb_post_reactions (
-            reaction_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            post_id INT UNSIGNED NOT NULL,
-            topic_id INT UNSIGNED NOT NULL,
-            user_id INT UNSIGNED NOT NULL,
-            reaction_unicode VARCHAR(10) NOT NULL,
-            reaction_time DATETIME NOT NULL,
-            PRIMARY KEY (reaction_id),
-            INDEX (post_id),
-            INDEX (topic_id),
-            INDEX (user_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-
-        try {
-            $this->db->sql_query($table_sql);
-        } catch (\Exception $e) {
-            trigger_error('Failed to create phpbb_post_reactions table: ' . $e->getMessage(), E_USER_ERROR);
-        }
+        $config = $this->container->get('config');
+        return phpbb_version_compare($config['version'], '3.3.0', '>=');
     }
 }
