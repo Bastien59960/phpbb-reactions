@@ -6,7 +6,7 @@
 * @license GNU General Public License, version 2 (GPL-2.0)
 */
 
-namespace bastien59\reactions\migrations;
+namespace bastien59960\reactions\migrations;
 
 class release_1_0_0 extends \phpbb\db\migration\migration
 {
