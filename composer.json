@@ -1,0 +1,17 @@
+{
+  "name": "bastien59/reactions",
+  "type": "phpbb-extension",
+  "description": "Extension phpBB 3.3.15 pour ajouter des réactions aux posts",
+  "version": "0.1.0",
+  "time": "2025-09-20",
+  "license": "GPL-2.0",
+  "authors": [
+    {
+      "name": "Bastien",
+      "email": "bastien@debucquoi.com"
+    }
+  ],
+  "require": {
+    "php": ">=PHP 8.3.6"
+  }
+}
