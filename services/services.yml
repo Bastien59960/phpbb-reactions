@@ -15,5 +15,6 @@ services:
             - '@user'
             - '@template'
             - '@router.url_generator'
+            - '@assets.manager'
         tags:
             - { name: event.listener }
