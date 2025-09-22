@@ -62,9 +62,9 @@ class main
 
         // Get and validate POST data
         $post_id = $this->request->variable('post_id', 0);
-        $reaction_unicode = $this->request->variable('reaction_unicode', '', true);
+        $reaction_emoji = $this->request->variable('reaction_emoji', '', true);
 
-        if ($post_id == 0 || empty($reaction_unicode)) {
+        if ($post_id == 0 || empty($reaction_emoji)) {
             return new JsonResponse([
                 'status'  => 'error',
                 'message' => 'INVALID_INPUT',
@@ -83,21 +83,21 @@ class main
         
         if ($existing_reaction) {
             // User has a reaction
-            if ($existing_reaction['reaction_unicode'] == $reaction_unicode) {
+            if ($existing_reaction['reaction_emoji'] == $reaction_emoji) {
                 // Same reaction, so remove it
                 $this->remove_reaction($existing_reaction['reaction_id']);
                 $current_user_reaction = '';
             } else {
                 // Different reaction, so update it
-                $this->update_reaction($existing_reaction['reaction_id'], $reaction_unicode);
-                $current_user_reaction = $reaction_unicode;
+                $this->update_reaction($existing_reaction['reaction_id'], $reaction_emoji);
+                $current_user_reaction = $reaction_emoji;
             }
         } else {
             // User has no reaction, so add a new one
             $topic_id = $this->get_topic_id_from_post($post_id);
             if ($topic_id > 0) {
-                $this->add_reaction($post_id, $topic_id, $reaction_unicode);
-                $current_user_reaction = $reaction_unicode;
+                $this->add_reaction($post_id, $topic_id, $reaction_emoji);
+                $current_user_reaction = $reaction_emoji;
             }
         }
 
