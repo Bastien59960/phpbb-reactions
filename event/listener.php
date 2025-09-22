@@ -103,6 +103,10 @@ class listener implements EventSubscriberInterface
             'REACTIONS_JS_PATH' => $js_path,
             'U_REACTIONS_AJAX' => $this->helper->route('bastien59960_reactions_ajax', []),
         ]);
+        
+        // Ajouter l'URL AJAX en JavaScript global
+        $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
+        $this->template->assign_var('REACTIONS_AJAX_URL_JS', 'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";');
     }
     
     /**
