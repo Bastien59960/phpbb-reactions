@@ -85,36 +85,36 @@
         picker.style.zIndex = 10000;
     }
 
-    function buildEmojiPicker(picker, postId, emojiData) {
-        // emojiData.emojis contient les catégories
-        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
-            // Titre catégorie
-            const catTitle = document.createElement('div');
-            catTitle.classList.add('emoji-category');
-            catTitle.textContent = category;
-            picker.appendChild(catTitle);
+function buildEmojiPicker(picker, postId, emojiData) {
+    Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
+        // Titre catégorie
+        const catTitle = document.createElement('div');
+        catTitle.classList.add('emoji-category');
+        catTitle.textContent = category;
+        picker.appendChild(catTitle);
 
-            // Parcours de chaque sous-catégorie
-            Object.values(subcategories).forEach(emojis => {
-                const grid = document.createElement('div');
-                grid.classList.add('emoji-grid');
+        // Parcours de chaque sous-catégorie
+        Object.values(subcategories).forEach(emojis => {
+            const grid = document.createElement('div');
+            grid.classList.add('emoji-grid');
 
-                emojis.forEach(emoji => {
-                    const cell = document.createElement('div');
-                    cell.classList.add('emoji-cell');
-                    cell.textContent = emoji.emoji; // on prend la propriété emoji
-                    cell.title = emoji.name;        // optionnel: tooltip
-                    cell.addEventListener('click', () => {
-                        addReaction(postId, emoji.emoji);
-                        closeAllPickers();
-                    });
-                    grid.appendChild(cell);
+            emojis.forEach(emoji => {
+                const cell = document.createElement('div');
+                cell.classList.add('emoji-cell');
+                cell.textContent = emoji.emoji;
+                cell.title = emoji.name;
+                cell.addEventListener('click', () => {
+                    addReaction(postId, emoji.emoji);
+                    closeAllPickers();
                 });
-
-                picker.appendChild(grid);
+                grid.appendChild(cell);
             });
+
+            picker.appendChild(grid);
         });
-    }
+    });
+}
+
 
     function closeAllPickers() {
         if (currentPicker) {
