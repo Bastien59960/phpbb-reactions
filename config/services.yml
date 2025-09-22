@@ -13,8 +13,8 @@ services:
             - '@language'
             - '@controller.helper'
         tags:
-            - { name: event.listener }
-
+            - { name: event.subscriber }
+            
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
         arguments:
@@ -24,5 +24,16 @@ services:
             - '@template'
             - '@auth'
             - '@controller.helper'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            
+    bastien59960.reactions.ajax:
+        class: bastien59960\reactions\controller\ajax
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@auth'
+            - '@language'
             - '%tables.post_reactions%'
             - '%tables.posts%'
