@@ -54,9 +54,6 @@ class listener implements EventSubscriberInterface
     public function add_assets_to_page($event)
     {
         // Add JavaScript and CSS to the page
-        $this->template->set_ext_data('bastien59960/reactions', [
-            'ASSET_URL' => $this->template->get_ext_path('bastien59960/reactions') . 'assets/',
-        ]);
         $this->template->add_link('reactions-css', 'reactions.css', 'bastien59960/reactions');
         $this->template->add_script_url('reactions-js', $this->template->get_ext_path('bastien59960/reactions') . 'assets/javascript/reactions.js');
     }
