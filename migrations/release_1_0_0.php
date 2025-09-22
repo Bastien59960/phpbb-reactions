@@ -45,7 +45,7 @@ static public function depends_on()
 						'post_id'          => array('UINT', 0),
 						'topic_id'         => array('UINT', 0),
 						'user_id'          => array('UINT', 0),
-						'reaction_unicode' => array('VCHAR:10', ''),
+						'reaction_emoji' => array('VCHAR:10', ''),
 						'reaction_time'    => array('TIMESTAMP', 0),
 					),
 					'PRIMARY_KEY' => 'reaction_id',
