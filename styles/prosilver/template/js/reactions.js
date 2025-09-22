@@ -145,52 +145,44 @@ function sendReaction(postId, emoji, action) {
      * @param {object} counters Les nouveaux comptes de réactions
      * @param {string} userReaction L'emoji que l'utilisateur a actuellement
      */
-    function updateReactionsDisplay(postId, counters, userReaction) {
-        const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
-        if (!postContainer) return;
+ /**
+ * Met à jour l'affichage d'une seule réaction après une réponse réussie.
+ * @param {int} postId L'ID du post
+ * @param {string} emoji L'émoji concerné
+ * @param {int} newCount Le nouveau total pour cet émoji
+ * @param {boolean} userHasReacted Si l'utilisateur a réagi avec cet émoji
+ */
+function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
+    const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
+    if (!postContainer) return;
 
-        const reactionsList = postContainer.querySelector('.post-reactions');
-        const moreButton = reactionsList.querySelector('.reaction-more');
-        
-        // Mettre à jour les réactions existantes et en ajouter si nécessaire
-        for (const emoji in counters) {
-            const count = counters[emoji];
-            let reactionElement = reactionsList.querySelector(`.reaction[data-emoji="${emoji}"]`);
+    const reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]`);
+    if (!reactionElement) return; // Ne devrait pas arriver sur un clic
 
-            if (!reactionElement) {
-                reactionElement = document.createElement('span');
-                reactionElement.classList.add('reaction');
-                reactionElement.setAttribute('data-emoji', emoji);
-                reactionElement.innerHTML = `${emoji} <span class="count">${count}</span>`;
-                reactionElement.addEventListener('click', handleReactionClick);
-                
-                reactionsList.insertBefore(reactionElement, moreButton);
-            } else {
-                const countSpan = reactionElement.querySelector('.count');
-                if (countSpan) countSpan.textContent = count;
-            }
-            
-            reactionElement.setAttribute('data-count', count);
-            reactionElement.title = `${count} réaction${count > 1 ? 's' : ''}`;
+    const countSpan = reactionElement.querySelector('.count');
 
-            if (emoji === userReaction) {
-                reactionElement.classList.add('active');
-            } else {
-                reactionElement.classList.remove('active');
-            }
-        }
-        
-        // Cacher les réactions qui n'ont plus de compte
-        reactionsList.querySelectorAll('.reaction[data-emoji]').forEach(el => {
-            const emoji = el.getAttribute('data-emoji');
-            if (counters[emoji] === undefined || counters[emoji] === 0) {
-                 el.classList.remove('active');
-                 el.querySelector('.count').textContent = '0';
-                 el.setAttribute('data-count', '0');
-            }
-        });
+    // Mettre à jour le compteur
+    if (countSpan) {
+        countSpan.textContent = newCount;
     }
+    
+    reactionElement.setAttribute('data-count', newCount);
+    reactionElement.title = `${newCount} réaction${newCount > 1 ? 's' : ''}`;
 
+    // Gérer l'état "actif" pour l'utilisateur
+    if (userHasReacted) {
+        reactionElement.classList.add('active');
+    } else {
+        reactionElement.classList.remove('active');
+    }
+    
+    // On cache l'élément si le compteur tombe à zéro (sauf si c'est une réaction par défaut)
+    if (newCount === 0 && !reactionElement.hasAttribute('data-is-default')) {
+        reactionElement.style.display = 'none';
+    } else {
+        reactionElement.style.display = '';
+    }
+}
     function getPostIdFromReaction(el) {
         const container = el.closest('.post-reactions-container');
         return container ? container.getAttribute('data-post-id') : null;
