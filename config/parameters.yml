@@ -1,0 +1,3 @@
+parameters:
+    bastien59960.reactions.tables:
+        tables.post_reactions: phpbb_post_reactions
