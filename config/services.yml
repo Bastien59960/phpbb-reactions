@@ -1,3 +1,6 @@
+imports:
+    - { resource: 'parameters.yml' }
+
 services:
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
@@ -11,12 +14,6 @@ services:
             - '@controller.helper'
         tags:
             - { name: event.listener }
-
-imports:
-    - { resource: 'parameters.yml' }
-
-
-
 
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
