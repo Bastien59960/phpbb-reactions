@@ -53,8 +53,8 @@ class listener implements EventSubscriberInterface
         $this->language = $language;
         $this->helper = $helper;
 
-        // ✅ Log pour vérifier que le constructeur est bien exécuté
-        error_log("[phpBB Reactions] Constructeur du listener exécuté !");
+        // Log pour vérifier que le constructeur est bien exécuté
+        error_log('[phpBB Reactions] Constructeur du listener exécuté !');
     }
 
     /**
@@ -64,7 +64,8 @@ class listener implements EventSubscriberInterface
      */
     static public function getSubscribedEvents()
     {
-        error_log("[phpBB Reactions] getSubscribedEvents() appelé !");
+        error_log('[phpBB Reactions] getSubscribedEvents() appelé !');
+
         return [
             'core.page_header'               => 'add_assets_to_page',
             'core.viewtopic_cache_user_data' => 'load_language_and_data',
@@ -75,6 +76,11 @@ class listener implements EventSubscriberInterface
 
     /**
      * Load language and add assets to page
+     *
+     * Note: ici on ne génère que des URLs globales (AJAX). Les URLs par post
+     * doivent être générées dans display_reactions() où $post_id est disponible.
+     *
+     * @param \phpbb\event\data $event
      */
     public function add_assets_to_page($event)
     {
@@ -83,8 +89,8 @@ class listener implements EventSubscriberInterface
         $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
         $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
-        // ✅ Ici on ne génère que l’URL AJAX globale
-        $ajax_url = $this->helper->route('bastien59960_reactions_ajax');
+        // URL AJAX globale (route sans paramètres obligatoires)
+        $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
 
         $this->template->assign_vars([
             'S_REACTIONS_ENABLED' => true,
@@ -98,21 +104,39 @@ class listener implements EventSubscriberInterface
 
     /**
      * Load language and user data
+     *
+     * @param \phpbb\event\data $event
      */
     public function load_language_and_data($event)
     {
         if (isset($event['user_cache_data'])) {
             $user_cache_data = $event['user_cache_data'];
-            // Tu peux enrichir $user_cache_data ici si besoin
+            // Possibilité d'enrichir $user_cache_data ici
             $event['user_cache_data'] = $user_cache_data;
         }
     }
 
     /**
      * Display reactions on posts
+     *
+     * @param \phpbb\event\data $event
      */
     public function display_reactions($event)
     {
         $post_row = isset($event['post_row']) ? $event['post_row'] : [];
         $row      = isset($event['row']) ? $event['row'] : [];
-        $post_id  = isset($row['post_id']) ?_]()_
+        $post_id  = isset($row['post_id']) ? (int) $row['post_id'] : 0;
+
+        if ($post_id <= 0) {
+            $event['post_row'] = $post_row;
+            return;
+        }
+
+        // Récupérer réactions et réactions de l'utilisateur courant
+        $reactions      = $this->get_post_reactions($post_id);
+        $user_reactions = $this->get_user_reactions($post_id, $this->user->data['user_id']);
+
+        $reactions_data = [];
+        foreach ($reactions as $emoji => $count) {
+            $reactions_data[] = [
+                'EMOJI'        => (string)
