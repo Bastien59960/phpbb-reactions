@@ -13,7 +13,7 @@ services:
             - '@language'
             - '@controller.helper'
         tags:
-            - { name: event.subscriber }
+            - { name: event.listener }
             
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
