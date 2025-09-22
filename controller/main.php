@@ -47,8 +47,12 @@ class main
      */
     public function handle()
     {
+        // Debug log
+        error_log('[phpBB Reactions] Controller handle() called');
+        
         // Check if it's an AJAX request
         if (!$this->request->is_ajax()) {
+            error_log('[phpBB Reactions] Not an AJAX request');
             throw new HttpException(400, 'Bad request');
         }
 
