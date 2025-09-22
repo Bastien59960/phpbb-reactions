@@ -12,7 +12,8 @@ services:
         tags:
             - { name: event.listener }
 
-
+imports:
+    - { resource: 'parameters.yml' }
 
 
 
