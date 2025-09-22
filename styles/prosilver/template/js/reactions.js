@@ -29,11 +29,10 @@
         event.stopPropagation();
 
         const el = event.currentTarget;
-        const emoji = el.getAttribute('data-emoji'); // CORRECTION: Utilisation de data-emoji
+        const emoji = el.getAttribute('data-emoji');
         const postId = getPostIdFromReaction(el);
         if (!emoji || !postId) return;
 
-        // Appel de la fonction pour envoyer la requête
         sendReaction(postId, emoji);
     }
 
@@ -87,12 +86,11 @@
                     cell.textContent = emoji.emoji;
                     cell.title = emoji.name;
                     cell.addEventListener('click', () => {
-                        sendReaction(postId, emoji.emoji); // Appel direct de sendReaction
+                        sendReaction(postId, emoji.emoji);
                         closeAllPickers();
                     });
                     grid.appendChild(cell);
                 });
-
                 picker.appendChild(grid);
             });
         });
@@ -111,17 +109,15 @@
      * @param {string} emoji L'emoji
      */
     function sendReaction(postId, emoji) {
-        const url = window.REACTIONS_AJAX_URL; // Utilisation de l'URL fournie par PHP
-        
-        // Données au format de formulaire
-        const formData = new URLSearchParams();
-        formData.append('post_id', postId);
-        formData.append('reaction_emoji', emoji); // CORRECTION: Variable envoyée au serveur
+        const url = window.REACTIONS_AJAX_URL;
 
         fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                post_id: postId,
+                reaction_emoji: emoji
+            })
         })
         .then(res => res.json())
         .then(data => {
@@ -154,7 +150,6 @@
             let reactionElement = reactionsList.querySelector(`.reaction[data-emoji="${emoji}"]`);
 
             if (!reactionElement) {
-                // Créer un nouvel élément de réaction s'il n'existe pas
                 reactionElement = document.createElement('span');
                 reactionElement.classList.add('reaction');
                 reactionElement.setAttribute('data-emoji', emoji);
@@ -163,16 +158,13 @@
                 
                 reactionsList.insertBefore(reactionElement, moreButton);
             } else {
-                // Mettre à jour le compteur d'une réaction existante
                 const countSpan = reactionElement.querySelector('.count');
                 if (countSpan) countSpan.textContent = count;
             }
             
-            // Mettre à jour les attributs
             reactionElement.setAttribute('data-count', count);
             reactionElement.title = `${count} réaction${count > 1 ? 's' : ''}`;
 
-            // Gérer la classe 'active'
             if (emoji === userReaction) {
                 reactionElement.classList.add('active');
             } else {
