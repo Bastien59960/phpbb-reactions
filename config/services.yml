@@ -2,6 +2,23 @@ services:
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
         arguments:
-            - '@dispatcher'
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '@template'
+            - '@language'
         tags:
             - { name: event.listener }
+
+    bastien59960.reactions.main:
+        class: bastien59960\reactions\controller\main
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@template'
+            - '@auth'
+            - '@controller.helper'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
