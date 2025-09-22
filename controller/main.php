@@ -53,94 +53,87 @@ class main
         }
 
         // Check user authentication
-        if ($this->user->data['user_id'] == 0) {
+        if ($this->user->data['user_id'] == ANONYMOUS) {
             return new JsonResponse([
-                'status'  => 'error',
-                'message' => 'AUTH_REQUIRED',
+                'success'  => false,
+                'error' => 'AUTH_REQUIRED',
             ]);
         }
 
         // Get and validate POST data
         $post_id = $this->request->variable('post_id', 0);
-        $reaction_emoji = $this->request->variable('reaction_emoji', '', true);
+        $reaction_emoji = $this->request->variable('emoji', '', true);
+        $action = $this->request->variable('action', '');
 
         if ($post_id == 0 || empty($reaction_emoji)) {
             return new JsonResponse([
-                'status'  => 'error',
-                'message' => 'INVALID_INPUT',
+                'success'  => false,
+                'error' => 'INVALID_INPUT',
             ]);
         }
+
+        // Vérifier que le post existe
+        $sql = 'SELECT topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $post_data = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$post_data) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'POST_NOT_FOUND'
+            ]);
+        }
+
+        $topic_id = $post_data['topic_id'];
         
-        // Check if user has already reacted
-        $sql = 'SELECT * FROM ' . $this->reactions_table . '
+        // Check if user has already reacted with this emoji
+        $sql = 'SELECT reaction_id FROM ' . $this->reactions_table . '
             WHERE post_id = ' . (int) $post_id . '
-            AND user_id = ' . (int) $this->user->data['user_id'];
+            AND user_id = ' . (int) $this->user->data['user_id'] . '
+            AND reaction_emoji = \'' . $this->db->sql_escape($reaction_emoji) . '\'';
         $result = $this->db->sql_query($sql);
         $existing_reaction = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
         
-        $current_user_reaction = null;
-        
         if ($existing_reaction) {
-            // User has a reaction
-            if ($existing_reaction['reaction_emoji'] == $reaction_emoji) {
-                // Same reaction, so remove it
-                $this->remove_reaction($existing_reaction['reaction_id']);
-                $current_user_reaction = '';
-            } else {
-                // Different reaction, so update it
-                $this->update_reaction($existing_reaction['reaction_id'], $reaction_emoji);
-                $current_user_reaction = $reaction_emoji;
-            }
+            // User already reacted with this emoji, remove it
+            $this->remove_reaction($existing_reaction['reaction_id']);
+            $user_reacted = false;
         } else {
-            // User has no reaction, so add a new one
-            $topic_id = $this->get_topic_id_from_post($post_id);
-            if ($topic_id > 0) {
-                $this->add_reaction($post_id, $topic_id, $reaction_emoji);
-                $current_user_reaction = $reaction_emoji;
-            }
+            // Add new reaction
+            $this->add_reaction($post_id, $topic_id, $reaction_emoji);
+            $user_reacted = true;
         }
 
-        // Get updated counts for the post
-        $updated_counts = $this->get_reaction_counts($post_id);
+        // Get updated count for this specific emoji
+        $count = $this->get_reaction_count($post_id, $reaction_emoji);
 
         return new JsonResponse([
-            'status'        => 'success',
-            'post_id'       => $post_id,
-            'counters'      => $updated_counts,
-            'user_reaction' => $current_user_reaction,
+            'success' => true,
+            'post_id' => $post_id,
+            'emoji' => $reaction_emoji,
+            'count' => $count,
+            'user_reacted' => $user_reacted
         ]);
     }
 
     /**
      * Add new reaction
      */
-    protected function add_reaction($post_id, $topic_id, $reaction_unicode)
+    protected function add_reaction($post_id, $topic_id, $reaction_emoji)
     {
         $sql_arr = [
             'post_id'          => (int) $post_id,
             'topic_id'         => (int) $topic_id,
             'user_id'          => (int) $this->user->data['user_id'],
-            'reaction_unicode' => (string) $reaction_unicode,
+            'reaction_emoji'   => (string) $reaction_emoji, // Corrigé: reaction_emoji au lieu de reaction_unicode
             'reaction_time'    => (int) time(),
         ];
         $sql = 'INSERT INTO ' . $this->reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_arr);
         $this->db->sql_query($sql);
     }
     
-    /**
-     * Update reaction
-     */
-    protected function update_reaction($reaction_id, $reaction_unicode)
-    {
-        $sql_arr = [
-            'reaction_unicode' => (string) $reaction_unicode,
-            'reaction_time'    => (int) time(),
-        ];
-        $sql = 'UPDATE ' . $this->reactions_table . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_arr) . ' WHERE reaction_id = ' . (int) $reaction_id;
-        $this->db->sql_query($sql);
-    }
-
     /**
      * Remove reaction
      */
@@ -151,35 +144,17 @@ class main
     }
     
     /**
-     * Get reaction counts for a specific post
+     * Get reaction count for a specific emoji on a post
      */
-    protected function get_reaction_counts($post_id)
+    protected function get_reaction_count($post_id, $emoji)
     {
-        $sql = 'SELECT reaction_unicode, COUNT(reaction_id) as reaction_count FROM ' . $this->reactions_table . '
+        $sql = 'SELECT COUNT(*) as count FROM ' . $this->reactions_table . '
             WHERE post_id = ' . (int) $post_id . '
-            GROUP BY reaction_unicode
-            ORDER BY reaction_count DESC';
-        $result = $this->db->sql_query($sql);
-        
-        $counts = [];
-        while ($row = $this->db->sql_fetchrow($result)) {
-            $counts[$row['reaction_unicode']] = (int) $row['reaction_count'];
-        }
-        $this->db->sql_freeresult($result);
-        
-        return $counts;
-    }
-    
-    /**
-     * Get topic ID from post ID
-     */
-    protected function get_topic_id_from_post($post_id)
-    {
-        $sql = 'SELECT topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+            AND reaction_emoji = \'' . $this->db->sql_escape($emoji) . '\'';
         $result = $this->db->sql_query($sql);
         $row = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
-
-        return $row ? (int) $row['topic_id'] : 0;
+        
+        return (int) $row['count'];
     }
 }
