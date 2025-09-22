@@ -24,20 +24,17 @@
         });
     }
 
-function handleReactionClick(event) {
-    event.preventDefault();
-    event.stopPropagation();
+    function handleReactionClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-    const el = event.currentTarget;
-    const emoji = el.getAttribute('data-emoji');
-    const postId = getPostIdFromReaction(el);
-    if (!emoji || !postId) return;
+        const el = event.currentTarget;
+        const emoji = el.getAttribute('data-emoji');
+        const postId = getPostIdFromReaction(el);
+        if (!emoji || !postId) return;
 
-    // Déterminer l'action : si l'élément a la classe 'active', on retire la réaction.
-    const action = el.classList.contains('active') ? 'remove' : 'add';
-
-    sendReaction(postId, emoji, action); // On passe l'action à sendReaction
-}
+        sendReaction(postId, emoji);
+    }
 
     function handleMoreButtonClick(event) {
         event.preventDefault();
@@ -54,13 +51,17 @@ function handleReactionClick(event) {
         picker.classList.add('emoji-picker');
         currentPicker = picker;
 
-        // Charger emojis.json depuis prosilver
-        fetch('/forum/ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
+        // Charger emojis.json depuis prosilver - utiliser un chemin relatif
+        fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => res.json())
             .then(data => {
                 buildEmojiPicker(picker, postId, data);
             })
-            .catch(err => console.error('Erreur de chargement emojis.json', err));
+            .catch(err => {
+                console.error('Erreur de chargement emojis.json', err);
+                // Fallback avec quelques emojis de base
+                buildFallbackPicker(picker, postId);
+            });
 
         document.body.appendChild(picker);
 
@@ -89,7 +90,7 @@ function handleReactionClick(event) {
                     cell.textContent = emoji.emoji;
                     cell.title = emoji.name;
                     cell.addEventListener('click', () => {
-                        sendReaction(postId, emoji.emoji, 'add');
+                        sendReaction(postId, emoji.emoji);
                         closeAllPickers();
                     });
                     grid.appendChild(cell);
@@ -99,6 +100,26 @@ function handleReactionClick(event) {
         });
     }
 
+    function buildFallbackPicker(picker, postId) {
+        const fallbackEmojis = ['😀', '😂', '❤️', '👍', '👎', '😮', '😢', '😡', '🔥', '👏', '🎉', '💯'];
+        
+        const grid = document.createElement('div');
+        grid.classList.add('emoji-grid');
+        
+        fallbackEmojis.forEach(emoji => {
+            const cell = document.createElement('div');
+            cell.classList.add('emoji-cell');
+            cell.textContent = emoji;
+            cell.addEventListener('click', () => {
+                sendReaction(postId, emoji);
+                closeAllPickers();
+            });
+            grid.appendChild(cell);
+        });
+        
+        picker.appendChild(grid);
+    }
+
     function closeAllPickers() {
         if (currentPicker) {
             currentPicker.remove();
@@ -106,83 +127,100 @@ function handleReactionClick(event) {
         }
     }
 
-   // reactions.js
-
-/**
- * Envoie la requête AJAX au serveur.
- * @param {int} postId L'ID du post
- * @param {string} emoji L'emoji
- * @param {string} action L'action à effectuer ('add' ou 'remove')
- */
-function sendReaction(postId, emoji, action) {
-    const url = window.REACTIONS_AJAX_URL; // Ceci est correct
-
-    fetch(url, {
-        method: 'POST',
-        // On envoie en 'form-data' car le contrôleur PHP lit les variables POST directement
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: new URLSearchParams({
-            'action': action,
-            'post_id': postId,
-            'emoji': emoji
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        // La structure de la réponse a changé, on appelle la nouvelle fonction de mise à jour
-        if (data.success) {
-            updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
-        } else {
-            console.error('Erreur serveur:', data.error);
-            alert('Erreur: ' + data.error); // Utiliser data.error comme défini dans ajax.php
-        }
-    })
-    .catch(err => console.error('Erreur AJAX:', err));
-}
     /**
-     * Met à jour l'affichage des réactions après une réponse réussie.
-     * @param {int} postId L'ID du post
-     * @param {object} counters Les nouveaux comptes de réactions
-     * @param {string} userReaction L'emoji que l'utilisateur a actuellement
+     * Envoie la requête AJAX au serveur.
      */
- /**
- * Met à jour l'affichage d'une seule réaction après une réponse réussie.
- * @param {int} postId L'ID du post
- * @param {string} emoji L'émoji concerné
- * @param {int} newCount Le nouveau total pour cet émoji
- * @param {boolean} userHasReacted Si l'utilisateur a réagi avec cet émoji
- */
-function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
-    const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
-    if (!postContainer) return;
+    function sendReaction(postId, emoji) {
+        const url = window.REACTIONS_AJAX_URL;
 
-    const reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]`);
-    if (!reactionElement) return; // Ne devrait pas arriver sur un clic
+        if (!url) {
+            console.error('REACTIONS_AJAX_URL non définie');
+            return;
+        }
 
-    const countSpan = reactionElement.querySelector('.count');
-
-    // Mettre à jour le compteur
-    if (countSpan) {
-        countSpan.textContent = newCount;
+        fetch(url, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest' // Important pour is_ajax()
+            },
+            body: new URLSearchParams({
+                'post_id': postId,
+                'emoji': emoji,
+                'action': 'toggle' // Optionnel, mais peut être utile
+            })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
+            } else {
+                console.error('Erreur serveur:', data.error);
+                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(err => {
+            console.error('Erreur AJAX:', err);
+            alert('Erreur de connexion: ' + err.message);
+        });
     }
-    
-    reactionElement.setAttribute('data-count', newCount);
-    reactionElement.title = `${newCount} réaction${newCount > 1 ? 's' : ''}`;
 
-    // Gérer l'état "actif" pour l'utilisateur
-    if (userHasReacted) {
-        reactionElement.classList.add('active');
-    } else {
-        reactionElement.classList.remove('active');
+    /**
+     * Met à jour l'affichage d'une seule réaction après une réponse réussie.
+     */
+    function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
+        const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
+        if (!postContainer) return;
+
+        let reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]`);
+        
+        // Si l'élément n'existe pas, le créer
+        if (!reactionElement) {
+            reactionElement = document.createElement('span');
+            reactionElement.classList.add('reaction');
+            reactionElement.setAttribute('data-emoji', emoji);
+            reactionElement.innerHTML = `${emoji} <span class="count">0</span>`;
+            reactionElement.addEventListener('click', handleReactionClick);
+            
+            // L'insérer avant le bouton "+"
+            const moreButton = postContainer.querySelector('.reaction-more');
+            if (moreButton) {
+                moreButton.parentNode.insertBefore(reactionElement, moreButton);
+            } else {
+                postContainer.querySelector('.post-reactions').appendChild(reactionElement);
+            }
+        }
+
+        const countSpan = reactionElement.querySelector('.count');
+
+        // Mettre à jour le compteur
+        if (countSpan) {
+            countSpan.textContent = newCount;
+        }
+        
+        reactionElement.setAttribute('data-count', newCount);
+        reactionElement.title = `${newCount} réaction${newCount > 1 ? 's' : ''}`;
+
+        // Gérer l'état "actif" pour l'utilisateur
+        if (userHasReacted) {
+            reactionElement.classList.add('active');
+        } else {
+            reactionElement.classList.remove('active');
+        }
+        
+        // Afficher/masquer l'élément selon le compteur
+        if (newCount === 0) {
+            reactionElement.style.display = 'none';
+        } else {
+            reactionElement.style.display = '';
+        }
     }
-    
-    // On cache l'élément si le compteur tombe à zéro (sauf si c'est une réaction par défaut)
-    if (newCount === 0 && !reactionElement.hasAttribute('data-is-default')) {
-        reactionElement.style.display = 'none';
-    } else {
-        reactionElement.style.display = '';
-    }
-}
+
     function getPostIdFromReaction(el) {
         const container = el.closest('.post-reactions-container');
         return container ? container.getAttribute('data-post-id') : null;
