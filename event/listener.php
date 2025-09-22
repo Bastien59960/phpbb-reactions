@@ -36,6 +36,9 @@ class listener implements EventSubscriberInterface
         $this->template = $template;
         $this->language = $language;
         $this->helper = $helper;
+
+        // TEST : vérifie si le Listener est instancié
+        error_log('Listener instancié');
     }
 
     static public function getSubscribedEvents()
