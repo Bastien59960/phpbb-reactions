@@ -1,3 +1,21 @@
-bastien59960_reactions_handle:
-    path: /reactions/handle
-    defaults: { _controller: 'bastien59960.reactions.controller.main:handle' }
+bastien59960_reactions_main:
+    path: /reactions
+    defaults: { _controller: bastien59960.reactions.main:handle }
+
+bastien59960_reactions_ajax:
+    path: /reactions/ajax
+    defaults: { _controller: bastien59960.reactions.ajax:handle }
+    requirements:
+        _method: POST
+
+bastien59960_reactions_add:
+    path: /reactions/add/{post_id}
+    defaults: { _controller: bastien59960.reactions.main:add }
+    requirements:
+        post_id: \d+
+
+bastien59960_reactions_remove:
+    path: /reactions/remove/{post_id}/{emoji}
+    defaults: { _controller: bastien59960.reactions.main:remove }
+    requirements:
+        post_id: \d+
