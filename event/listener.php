@@ -62,6 +62,26 @@ class listener implements EventSubscriberInterface
             return;
         }
 
+        public function add_post_reactions($event)
+{
+    $post_id = (int) $event['post_row']['POST_ID'];
+    $user_id = (int) $this->user->data['user_id'];
+
+    if ($post_id === 0) {
+        return;
+    }
+
+    // Ici tu ajoutes un tableau "factice" pour tester l'affichage
+    $event['post_row']['reaction_row'] = [
+        'REACTION_UNICODE' => '👍',
+        'REACTION_COUNT'   => 2,
+    ];
+
+    // Pour le picker (bouton +), tu peux ajouter d'autres emojis au choix
+    $event['post_row']['reaction_picker_row'] = [
+        'REACTION_UNICODE' => '😂', // ou tout autre emoji
+    ];
+}
         // Fetch reactions from DB for the current post
         $sql = 'SELECT reaction_unicode, COUNT(reaction_id) as reaction_count FROM ' . $this->reactions_table . '
             WHERE post_id = ' . $this->db->sql_escape($post_id) . '
