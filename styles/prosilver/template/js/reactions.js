@@ -68,7 +68,7 @@
         currentPicker = picker;
 
         // Charger emojis.json depuis prosilver
-        fetch('styles/prosilver/theme/categories.json')
+        fetch('/forum/ext/bastien59960/reactions/styles/categories.json')
             .then(res => res.json())
             .then(data => {
                 buildEmojiPicker(picker, postId, data);
