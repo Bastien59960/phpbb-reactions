@@ -46,12 +46,18 @@ class listener implements EventSubscriberInterface
         ];
     }
 
-    public function add_assets_to_page($event)
-    {
-        // Add JavaScript and CSS to the page
-        $this->template->add_asset_file('css', 'reactions.css');
-        $this->template->add_asset_file('js', 'reactions.js');
-    }
+public function add_assets_to_page($event)
+{
+    // C'est la méthode la plus fiable pour inclure les assets
+    $this->template->set_ext_data('bastien59960/reactions', [
+        'js' => [
+            'reactions.js',
+        ],
+        'css' => [
+            'reactions.css',
+        ],
+    ]);
+}
 
     public function add_post_reactions($event)
     {
