@@ -1,87 +1,138 @@
-/* global jQuery, window */
-(function($) {
+(function () {
     'use strict';
 
-    /**
-     * Gère les clics sur les réactions et la palette d'emojis.
-     */
-    function setupReactions() {
-        // Gère l'affichage/la masquage de la palette de réactions
-        $('.reaction-more').on('click', function(e) {
-            e.preventDefault();
-            const container = $(this).closest('.post-reactions-container');
-            const picker = container.find('.reaction-picker');
-            
-            // Masquer les autres palettes
-            $('.reaction-picker.show').not(picker).removeClass('show');
-            
-            picker.toggleClass('show');
+    let currentPicker = null;
+
+    // ---------- Initialisation ----------
+    function initReactions() {
+        attachReactionEvents();
+        attachMoreButtonEvents();
+        document.addEventListener('click', closeAllPickers);
+    }
+
+    function attachReactionEvents() {
+        document.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
+            reaction.removeEventListener('click', handleReactionClick);
+            reaction.addEventListener('click', handleReactionClick);
         });
+    }
 
-        // Gère le clic sur un emoji dans la palette
-        $('.reaction-picker .reaction').on('click', function(e) {
-            e.preventDefault();
-            const emoji = $(this).data('emoji');
-            const postContainer = $(this).closest('.post-reactions-container');
-            const postId = postContainer.data('post-id');
-
-            if (!postId || !emoji) {
-                console.error('Missing post ID or emoji.');
-                return;
-            }
-
-            // Fermer la palette
-            postContainer.find('.reaction-picker').removeClass('show');
-            
-            // Appel AJAX pour la réaction
-            sendReaction(postId, emoji, postContainer);
+    function attachMoreButtonEvents() {
+        document.querySelectorAll('.reaction-more').forEach(button => {
+            button.removeEventListener('click', handleMoreButtonClick);
+            button.addEventListener('click', handleMoreButtonClick);
         });
+    }
 
-        // Gère le clic sur une réaction existante
-        $('.post-reactions .reaction').on('click', function(e) {
-            e.preventDefault();
-            const emoji = $(this).data('emoji');
-            const postContainer = $(this).closest('.post-reactions-container');
-            const postId = postContainer.data('post-id');
+    function handleReactionClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-            if (!postId || !emoji) {
-                console.error('Missing post ID or emoji.');
-                return;
-            }
+        const el = event.currentTarget;
+        const emoji = el.getAttribute('data-emoji'); // CORRECTION: Utilisation de data-emoji
+        const postId = getPostIdFromReaction(el);
+        if (!emoji || !postId) return;
 
-            // Appel AJAX pour la réaction
-            sendReaction(postId, emoji, postContainer);
+        // Appel de la fonction pour envoyer la requête
+        sendReaction(postId, emoji);
+    }
+
+    function handleMoreButtonClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        closeAllPickers();
+
+        const button = event.currentTarget;
+        const postId = getPostIdFromReaction(button);
+        if (!postId) return;
+
+        // Création du picker flottant
+        const picker = document.createElement('div');
+        picker.classList.add('emoji-picker');
+        currentPicker = picker;
+
+        // Charger emojis.json depuis prosilver
+        fetch('/forum/ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
+            .then(res => res.json())
+            .then(data => {
+                buildEmojiPicker(picker, postId, data);
+            })
+            .catch(err => console.error('Erreur de chargement emojis.json', err));
+
+        document.body.appendChild(picker);
+
+        // Positionnement sous le bouton
+        const rect = button.getBoundingClientRect();
+        picker.style.position = 'absolute';
+        picker.style.top = `${rect.bottom + window.scrollY}px`;
+        picker.style.left = `${rect.left + window.scrollX}px`;
+        picker.style.zIndex = 10000;
+    }
+
+    function buildEmojiPicker(picker, postId, emojiData) {
+        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
+            const catTitle = document.createElement('div');
+            catTitle.classList.add('emoji-category');
+            catTitle.textContent = category;
+            picker.appendChild(catTitle);
+
+            Object.values(subcategories).forEach(emojis => {
+                const grid = document.createElement('div');
+                grid.classList.add('emoji-grid');
+
+                emojis.forEach(emoji => {
+                    const cell = document.createElement('div');
+                    cell.classList.add('emoji-cell');
+                    cell.textContent = emoji.emoji;
+                    cell.title = emoji.name;
+                    cell.addEventListener('click', () => {
+                        sendReaction(postId, emoji.emoji); // Appel direct de sendReaction
+                        closeAllPickers();
+                    });
+                    grid.appendChild(cell);
+                });
+
+                picker.appendChild(grid);
+            });
         });
+    }
+
+    function closeAllPickers() {
+        if (currentPicker) {
+            currentPicker.remove();
+            currentPicker = null;
+        }
     }
 
     /**
      * Envoie la requête AJAX au serveur.
      * @param {int} postId L'ID du post
      * @param {string} emoji L'emoji
-     * @param {jQuery} postContainer Le conteneur .post-reactions-container
      */
-    function sendReaction(postId, emoji, postContainer) {
-        $.ajax({
-            url: window.REACTIONS_AJAX_URL,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                post_id: postId,
-                reaction_emoji: emoji
-            },
-            success: function(response) {
-                if (response.status === 'success') {
-                    updateReactionsDisplay(response.post_id, response.counters, response.user_reaction, postContainer);
-                } else {
-                    console.error('Error from server: ', response.message);
-                    alert('Error: ' + response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error: ' + status, error);
-                alert('An error occurred. Please try again.');
+    function sendReaction(postId, emoji) {
+        const url = window.REACTIONS_AJAX_URL; // Utilisation de l'URL fournie par PHP
+        
+        // Données au format de formulaire
+        const formData = new URLSearchParams();
+        formData.append('post_id', postId);
+        formData.append('reaction_emoji', emoji); // CORRECTION: Variable envoyée au serveur
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateReactionsDisplay(postId, data.counters, data.user_reaction);
+            } else {
+                console.error('Erreur serveur:', data.message);
+                alert('Erreur: ' + data.message);
             }
-        });
+        })
+        .catch(err => console.error('Erreur AJAX:', err));
     }
 
     /**
@@ -89,38 +140,62 @@
      * @param {int} postId L'ID du post
      * @param {object} counters Les nouveaux comptes de réactions
      * @param {string} userReaction L'emoji que l'utilisateur a actuellement
-     * @param {jQuery} postContainer Le conteneur .post-reactions-container
      */
-    function updateReactionsDisplay(postId, counters, userReaction, postContainer) {
-        const reactionsList = postContainer.find('.post-reactions');
-        const moreButton = reactionsList.find('.reaction-more');
-        
-        // Mettre à jour les réactions existantes
-        reactionsList.find('.reaction[data-emoji]').each(function() {
-            const reactionElement = $(this);
-            const emoji = reactionElement.data('emoji');
-            const newCount = counters[emoji] || 0;
-            
-            if (newCount > 0) {
-                reactionElement.show();
-                reactionElement.find('.count').text(newCount);
-                reactionElement.data('count', newCount);
-                reactionElement.attr('title', newCount + ' réaction' + (newCount > 1 ? 's' : ''));
-            } else {
-                reactionElement.hide();
-            }
+    function updateReactionsDisplay(postId, counters, userReaction) {
+        const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
+        if (!postContainer) return;
 
-            if (emoji === userReaction) {
-                reactionElement.addClass('active');
+        const reactionsList = postContainer.querySelector('.post-reactions');
+        const moreButton = reactionsList.querySelector('.reaction-more');
+        
+        // Mettre à jour les réactions existantes et en ajouter si nécessaire
+        for (const emoji in counters) {
+            const count = counters[emoji];
+            let reactionElement = reactionsList.querySelector(`.reaction[data-emoji="${emoji}"]`);
+
+            if (!reactionElement) {
+                // Créer un nouvel élément de réaction s'il n'existe pas
+                reactionElement = document.createElement('span');
+                reactionElement.classList.add('reaction');
+                reactionElement.setAttribute('data-emoji', emoji);
+                reactionElement.innerHTML = `${emoji} <span class="count">${count}</span>`;
+                reactionElement.addEventListener('click', handleReactionClick);
+                
+                reactionsList.insertBefore(reactionElement, moreButton);
             } else {
-                reactionElement.removeClass('active');
+                // Mettre à jour le compteur d'une réaction existante
+                const countSpan = reactionElement.querySelector('.count');
+                if (countSpan) countSpan.textContent = count;
+            }
+            
+            // Mettre à jour les attributs
+            reactionElement.setAttribute('data-count', count);
+            reactionElement.title = `${count} réaction${count > 1 ? 's' : ''}`;
+
+            // Gérer la classe 'active'
+            if (emoji === userReaction) {
+                reactionElement.classList.add('active');
+            } else {
+                reactionElement.classList.remove('active');
+            }
+        }
+        
+        // Cacher les réactions qui n'ont plus de compte
+        reactionsList.querySelectorAll('.reaction[data-emoji]').forEach(el => {
+            const emoji = el.getAttribute('data-emoji');
+            if (counters[emoji] === undefined || counters[emoji] === 0) {
+                 el.classList.remove('active');
+                 el.querySelector('.count').textContent = '0';
+                 el.setAttribute('data-count', '0');
             }
         });
     }
 
-    // Initialisation
-    $(document).ready(function() {
-        setupReactions();
-    });
+    function getPostIdFromReaction(el) {
+        const container = el.closest('.post-reactions-container');
+        return container ? container.getAttribute('data-post-id') : null;
+    }
 
-})(jQuery);
+    document.addEventListener('DOMContentLoaded', initReactions);
+
+})();
