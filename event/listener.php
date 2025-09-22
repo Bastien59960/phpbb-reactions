@@ -162,10 +162,10 @@ class listener implements EventSubscriberInterface
             return [];
         }
 
-        $sql = 'SELECT COALESCE(reaction_emoji, reaction_unicode) AS reaction_key, COUNT(*) as reaction_count
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                GROUP BY COALESCE(reaction_emoji, reaction_unicode)';
+$sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) as reaction_count
+    FROM ' . $this->post_reactions_table . '
+    WHERE post_id = ' . (int) $post_id . '
+    GROUP BY reaction_emoji';
         $result = $this->db->sql_query($sql);
 
         $reactions = [];
@@ -189,10 +189,10 @@ class listener implements EventSubscriberInterface
             return [];
         }
 
-        $sql = 'SELECT COALESCE(reaction_emoji, reaction_unicode) AS reaction_key
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                  AND user_id = ' . $user_id;
+$sql = 'SELECT reaction_emoji AS reaction_key
+    FROM ' . $this->post_reactions_table . '
+    WHERE post_id = ' . (int) $post_id . '
+      AND user_id = ' . (int) $user_id;
         $result = $this->db->sql_query($sql);
 
         $user_reactions = [];
