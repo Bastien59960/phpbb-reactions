@@ -136,7 +136,19 @@ class listener implements EventSubscriberInterface
         $reactions      = $this->get_post_reactions($post_id);
         $user_reactions = $this->get_user_reactions($post_id, $this->user->data['user_id']);
 
-        $reactions_data = [];
-        foreach ($reactions as $emoji => $count) {
-            $reactions_data[] = [
-                'EMOJI'        => (string)
+$reactions_data = [];
+foreach ($reactions as $emoji => $count) {
+    $reactions_data[] = [
+        'EMOJI'       => (string) $emoji,
+        'COUNT'       => (int) $count,
+        'IS_USER_REACTION' => isset($user_reactions[$emoji]),
+    ];
+}
+
+// Assigner le tableau de données au template
+$this->template->assign_vars([
+    'REACTIONS_DATA' => $reactions_data,
+    'S_REACTIONS_POST_ID' => $post_id,
+]);
+
+$event['post_row'] = $post_row;
