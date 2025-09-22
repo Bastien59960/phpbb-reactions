@@ -18,22 +18,16 @@ class listener implements EventSubscriberInterface
     protected $posts_table;
     protected $template;
     protected $language;
+    protected $helper;
 
-    /**
-     * @param \phpbb\db\driver\driver_interface $db
-     * @param \phpbb\user $user
-     * @param string $reactions_table
-     * @param string $posts_table
-     * @param \phpbb\template\template $template
-     * @param \phpbb\language\language $language
-     */
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
         \phpbb\user $user,
         $reactions_table,
         $posts_table,
         \phpbb\template\template $template,
-        \phpbb\language\language $language
+        \phpbb\language\language $language,
+        \phpbb\controller\helper $helper
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -41,6 +35,7 @@ class listener implements EventSubscriberInterface
         $this->posts_table = $posts_table;
         $this->template = $template;
         $this->language = $language;
+        $this->helper = $helper;
     }
 
     static public function getSubscribedEvents()
