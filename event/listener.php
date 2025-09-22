@@ -1,10 +1,10 @@
 <?php
 /**
-* Post Reactions extension for phpBB.
-*
-* @copyright (c) 2025 Bastien59960
-* @license GNU General Public License, version 2 (GPL-2.0)
-*/
+ * Reactions Extension for phpBB 3.3
+ * 
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 
 namespace bastien59960\reactions\event;
 
@@ -12,80 +12,64 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class listener implements EventSubscriberInterface
 {
-    protected $db;
-    protected $user;
-    protected $reactions_table;
-    protected $posts_table;
+    /** @var \phpbb\template\template */
     protected $template;
-    protected $language;
-    protected $helper;
-
-    public function __construct(
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\user $user,
-        $reactions_table,
-        $posts_table,
-        \phpbb\template\template $template,
-        \phpbb\language\language $language,
-        \phpbb\controller\helper $helper
-    ) {
-        $this->db = $db;
-        $this->user = $user;
-        $this->reactions_table = $reactions_table;
-        $this->posts_table = $posts_table;
+    
+    /** @var \phpbb\path_helper */
+    protected $path_helper;
+    
+    /** @var string */
+    protected $ext_path;
+    
+    /**
+     * Constructor
+     *
+     * @param \phpbb\template\template $template
+     * @param \phpbb\path_helper $path_helper
+     * @param string $ext_path
+     */
+    public function __construct(\phpbb\template\template $template, \phpbb\path_helper $path_helper, $ext_path)
+    {
         $this->template = $template;
-        $this->language = $language;
-        $this->helper = $helper;
+        $this->path_helper = $path_helper;
+        $this->ext_path = $ext_path;
     }
 
+    /**
+     * Assign functions defined in this class to event listeners in the core
+     *
+     * @return array
+     */
     static public function getSubscribedEvents()
     {
         return [
-            'core.viewtopic_modify_post_row' => 'add_post_reactions',
             'core.page_header' => 'add_assets_to_page',
+            // Ajoutez d'autres événements selon vos besoins
         ];
     }
 
-public function add_assets_to_page($event)
-{
-    // C'est la méthode la plus fiable pour inclure les assets
-    $this->template->set_ext_data('bastien59960/reactions', [
-        'js' => [
-            'reactions.js',
-        ],
-        'css' => [
-            'reactions.css',
-        ],
-    ]);
-}
-
-    public function add_post_reactions($event)
+    /**
+     * Add assets to page
+     *
+     * @param \phpbb\event\data $event
+     */
+    public function add_assets_to_page($event)
     {
-        $post_id = (int) $event['post_row']['POST_ID'];
-        $user_id = (int) $this->user->data['user_id'];
-
-        if ($post_id === 0) {
-            return;
-        }
-
-        // --- AJOUT TEST : injecte des réactions fictives ---
-        $event['post_row']['reaction_rows'] = [
-            [
-                'REACTION_UNICODE' => '👍',
-                'REACTION_COUNT'   => 2,
-            ],
-            [
-                'REACTION_UNICODE' => '❤️',
-                'REACTION_COUNT'   => 1,
-            ],
-            [
-                'REACTION_UNICODE' => '😂',
-                'REACTION_COUNT'   => 3,
-            ],
-        ];
-        $event['post_row']['reaction_picker_row'] = [
-            'REACTION_UNICODE' => '😎',
-        ];
-        // --- FIN AJOUT TEST ---
+        // Méthode corrigée pour ajouter les assets CSS et JS
+        
+        // Ajouter le CSS
+        $this->template->assign_vars([
+            'S_REACTIONS_CSS' => $this->path_helper->update_web_root_path($this->ext_path . 'styles/prosilver/theme/reactions.css'),
+        ]);
+        
+        // Ajouter le JavaScript
+        $this->template->assign_vars([
+            'S_REACTIONS_JS' => $this->path_helper->update_web_root_path($this->ext_path . 'styles/prosilver/template/js/reactions.js'),
+        ]);
+        
+        // Alternative pour ajouter directement dans le template
+        // Vous devrez inclure ceci dans votre template overall_header_head_append.html :
+        // <link href="{S_REACTIONS_CSS}" rel="stylesheet" type="text/css" media="screen" />
+        // <script src="{S_REACTIONS_JS}"></script>
     }
 }
