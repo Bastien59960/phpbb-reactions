@@ -3,6 +3,44 @@
  * Styles pour l'affichage des réactions aux posts
  */
 
+.emoji-picker {
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 6px;
+    max-width: 600px; /* ajuste si besoin */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.emoji-category {
+    font-weight: bold;
+    margin: 12px 0 4px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr); /* 10 colonnes */
+    gap: 6px;
+    margin-bottom: 12px; /* espace entre sous-catégories */
+}
+
+.emoji-cell {
+    font-size: 2rem; /* x2 taille */
+    cursor: pointer;
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.emoji-cell:hover {
+    background: #f0f0f0;
+}
+
+
+
 /* Conteneur principal des réactions */
 .post-reactions {
     margin-top: 10px;
