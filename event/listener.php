@@ -33,9 +33,6 @@ class listener implements EventSubscriberInterface
     /** @var \phpbb\controller\helper */
     protected $helper;
 
-    /**
-     * Constructor
-     */
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
         \phpbb\user $user,
@@ -53,19 +50,11 @@ class listener implements EventSubscriberInterface
         $this->language = $language;
         $this->helper = $helper;
 
-        // Log pour vérifier que le constructeur est bien exécuté
-        error_log('[phpBB Reactions] Constructeur du listener exécuté !');
+        error_log('[phpBB Reactions] Listener chargé');
     }
 
-    /**
-     * Assign functions defined in this class to event listeners in the core
-     *
-     * @return array
-     */
     static public function getSubscribedEvents()
     {
-        error_log('[phpBB Reactions] getSubscribedEvents() appelé !');
-
         return [
             'core.page_header'               => 'add_assets_to_page',
             'core.viewtopic_cache_user_data' => 'load_language_and_data',
@@ -74,9 +63,6 @@ class listener implements EventSubscriberInterface
         ];
     }
 
-    /**
-     * Load language and add assets to page
-     */
     public function add_assets_to_page($event)
     {
         $this->language->add_lang('common', 'bastien59960/reactions');
@@ -99,24 +85,17 @@ class listener implements EventSubscriberInterface
         );
     }
 
-    /**
-     * Load language and user data
-     */
     public function load_language_and_data($event)
     {
         if (isset($event['user_cache_data'])) {
-            $user_cache_data = $event['user_cache_data'];
-            $event['user_cache_data'] = $user_cache_data;
+            $event['user_cache_data'] = $event['user_cache_data'];
         }
     }
 
-    /**
-     * Display reactions on posts
-     */
     public function display_reactions($event)
     {
-        $post_row = isset($event['post_row']) ? $event['post_row'] : [];
-        $row      = isset($event['row']) ? $event['row'] : [];
+        $post_row = $event['post_row'] ?? [];
+        $row      = $event['row'] ?? [];
         $post_id  = isset($row['post_id']) ? (int) $row['post_id'] : 0;
 
         if ($post_id <= 0) {
@@ -124,37 +103,45 @@ class listener implements EventSubscriberInterface
             return;
         }
 
+        // Récupère les réactions du post
         $reactions      = $this->get_post_reactions($post_id);
-        $user_reactions = $this->get_user_reactions($post_id, $this->user->data['user_id']);
+        $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']);
+
+        // Réactions par défaut toujours visibles
+        $default_reactions = ['👍', '❤️', '😂', '😮', '😢'];
 
         $reactions_data = [];
         foreach ($reactions as $emoji => $count) {
             $reactions_data[] = [
-                'EMOJI'            => (string) $emoji,
-                'COUNT'            => (int) $count,
-                'IS_USER_REACTION' => in_array($emoji, $user_reactions),
+                'EMOJI'        => (string) $emoji,
+                'COUNT'        => (int) $count,
+                'USER_REACTED' => in_array($emoji, $user_reactions),
             ];
         }
 
+        // Envoie les réactions existantes au template
+        $this->template->assign_block_vars_array('post_reactions', $reactions_data);
+
+        // Envoie aussi toutes les réactions possibles (palette)
+        $all_reactions = ['👍','❤️','😂','😮','😢','😡','🔥','👏','🥳','🎉','👌','👀']; // à compléter si besoin
+        foreach ($all_reactions as $emoji) {
+            $this->template->assign_block_vars('all_reactions', [
+                'EMOJI' => $emoji,
+            ]);
+        }
+
         $this->template->assign_vars([
-            'REACTIONS_DATA'      => $reactions_data,
             'S_REACTIONS_POST_ID' => $post_id,
         ]);
 
         $event['post_row'] = $post_row;
     }
 
-    /**
-     * Add forum-level data if needed
-     */
     public function add_forum_data($event)
     {
         // Placeholder si besoin
     }
 
-    /**
-     * Get reactions count for a post
-     */
     private function get_post_reactions($post_id)
     {
         $post_id = (int) $post_id;
@@ -162,10 +149,10 @@ class listener implements EventSubscriberInterface
             return [];
         }
 
-$sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) as reaction_count
-    FROM ' . $this->post_reactions_table . '
-    WHERE post_id = ' . (int) $post_id . '
-    GROUP BY reaction_emoji';
+        $sql = 'SELECT reaction_unicode AS reaction_key, COUNT(*) as reaction_count
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                GROUP BY reaction_unicode';
         $result = $this->db->sql_query($sql);
 
         $reactions = [];
@@ -177,9 +164,6 @@ $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) as reaction_count
         return $reactions;
     }
 
-    /**
-     * Get user reactions for a post
-     */
     private function get_user_reactions($post_id, $user_id)
     {
         $post_id = (int) $post_id;
@@ -189,10 +173,10 @@ $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) as reaction_count
             return [];
         }
 
-$sql = 'SELECT reaction_emoji AS reaction_key
-    FROM ' . $this->post_reactions_table . '
-    WHERE post_id = ' . (int) $post_id . '
-      AND user_id = ' . (int) $user_id;
+        $sql = 'SELECT reaction_unicode AS reaction_key
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                  AND user_id = ' . $user_id;
         $result = $this->db->sql_query($sql);
 
         $user_reactions = [];
