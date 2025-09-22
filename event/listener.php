@@ -53,12 +53,12 @@ class listener implements EventSubscriberInterface
         $this->language = $language;
         $this->helper = $helper;
 
-        // debug: vérifier que le service est instancié
-        error_log('[phpBB Reactions] Listener : construct invoked');
+        // debug rapide — devrait apparaître dans error.log si le service est instancié
+        error_log('[phpBB Reactions] Listener::__construct invoked');
     }
 
     /**
-     * Events subscription
+     * Subscribe to phpBB events
      *
      * @return array
      */
@@ -73,20 +73,20 @@ class listener implements EventSubscriberInterface
     }
 
     /**
-     * Add CSS/JS and language
+     * Add CSS/JS and load language
      *
      * @param \phpbb\event\data $event
      */
     public function add_assets_to_page($event)
     {
-        // charger la langue de l'extension (si existante)
+        // Charger le fichier de langue de l'extension (si présent)
         $this->language->add_lang('common', 'bastien59960/reactions');
 
-        // chemins relatifs des assets (adaptables)
+        // Chemins relatifs vers les assets de l'extension
         $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
         $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
-        // URL ajax globale (route définie dans routing.yml)
+        // URL AJAX globale (route définie dans routing.yml)
         $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
 
         $this->template->assign_vars([
@@ -96,40 +96,176 @@ class listener implements EventSubscriberInterface
             'U_REACTIONS_AJAX'    => $ajax_url,
         ]);
 
-        // expose l'URL ajax en JS global
-        $this->template->assign_var('REACTIONS_AJAX_URL_JS', 'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";');
+        // Exposer l'URL AJAX dans le JS global
+        $this->template->assign_var(
+            'REACTIONS_AJAX_URL_JS',
+            'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";'
+        );
     }
 
     /**
-     * Placeholder pour étendre les données utilisateur (inutile si non utilisé)
+     * Placeholder : enrichir user_cache_data si besoin
      *
      * @param \phpbb\event\data $event
      */
     public function load_language_and_data($event)
     {
-        // pour l'instant rien de spécial, mais la méthode est présente si besoin
+        // RAS pour l'instant — méthode gardée pour compatibilité
     }
 
     /**
-     * Main : préparer les données par post pour le template
+     * Prépare les données des réactions pour chaque post (appelé par core.viewtopic_post_row_after)
      *
      * @param \phpbb\event\data $event
      */
     public function display_reactions($event)
     {
-        // debug
-        error_log('[phpBB Reactions] display_reactions() called');
+        error_log('[phpBB Reactions] display_reactions called');
 
         $post_row = isset($event['post_row']) ? $event['post_row'] : [];
         $row      = isset($event['row']) ? $event['row'] : [];
         $post_id  = isset($row['post_id']) ? (int) $row['post_id'] : 0;
 
         if ($post_id <= 0) {
-            // rien à faire
             $event['post_row'] = $post_row;
             return;
         }
 
-        // récupère les données en base
-        $reactions_by_db = $this->get_post_reactions($post_id); // assoc: emoji => count
-        $user_reactions  = $this->get_user_reactions($post_id, (int) $
+        // Récupération depuis la DB
+        $reactions_by_db = $this->get_post_reactions($post_id); // [emoji => count]
+        $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']); // [emoji, ...]
+
+        // Réactions par défaut visibles (toujours présentes)
+        $default_reactions = ['👍', '❤️', '😂', '😮', '😢'];
+
+        // Construire la liste visible pour ce post :
+        // 1) les défauts (dans l'ordre), 2) les réactions supplémentaires venant de la DB
+        $visible = [];
+
+        foreach ($default_reactions as $emoji) {
+            $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
+
+            $visible[] = [
+                'EMOJI'        => $emoji,
+                'COUNT'        => $count,
+                'USER_REACTED' => in_array($emoji, $user_reactions, true),
+                'IS_DEFAULT'   => true,
+            ];
+
+            // si l'emoji existe en DB, on l'enlève pour éviter duplication
+            if (isset($reactions_by_db[$emoji])) {
+                unset($reactions_by_db[$emoji]);
+            }
+        }
+
+        // Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
+        foreach ($reactions_by_db as $emoji => $count) {
+            $visible[] = [
+                'EMOJI'        => $emoji,
+                'COUNT'        => (int) $count,
+                'USER_REACTED' => in_array($emoji, $user_reactions, true),
+                'IS_DEFAULT'   => false,
+            ];
+        }
+
+        // Palette complète (pour reaction-picker) - modifiable selon tes besoins
+        $all_reactions_list = [
+            '👍','❤️','😂','😮','😢','😡','🔥','👏','🥳','🎉',
+            '👌','👀','🤔','🙏','🤩','😴','🤮','💯','🙌','🤝',
+            '😅','🤷','😬','🤗','😇','😎','😤','😱','🎯','🧡'
+        ];
+        $all_reactions = [];
+        foreach ($all_reactions_list as $emoji) {
+            $all_reactions[] = ['EMOJI' => $emoji];
+        }
+
+        // URL pour action 'add' sur ce post (route attend post_id)
+        $u_react = $this->helper->route('bastien59960_reactions_add', ['post_id' => $post_id]);
+
+        // Fusionner données dans post_row pour le template (accessible via {postrow.*})
+        $post_row = array_merge($post_row, [
+            'S_REACTIONS_ENABLED' => true,
+            'POST_REACTIONS'      => $visible,
+            'ALL_REACTIONS'       => $all_reactions,
+            'U_REACT'             => $u_react,
+        ]);
+
+        $event['post_row'] = $post_row;
+    }
+
+    /**
+     * Placeholder pour données de forum si nécessaire
+     *
+     * @param \phpbb\event\data $event
+     */
+    public function add_forum_data($event)
+    {
+        // rien pour l'instant
+    }
+
+    /**
+     * Récupère le nombre de réactions par emoji pour un post
+     *
+     * @param int $post_id
+     * @return array emoji => count
+     */
+    private function get_post_reactions($post_id)
+    {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                GROUP BY reaction_emoji';
+        $result = $this->db->sql_query($sql);
+
+        $reactions = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+            if ($key !== '') {
+                $reactions[$key] = (int) $row['reaction_count'];
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        return $reactions;
+    }
+
+    /**
+     * Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
+     *
+     * @param int $post_id
+     * @param int $user_id
+     * @return array list d'emojis
+     */
+    private function get_user_reactions($post_id, $user_id)
+    {
+        $post_id = (int) $post_id;
+        $user_id = (int) $user_id;
+
+        if ($user_id === ANONYMOUS || $post_id <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT reaction_emoji AS reaction_key
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                  AND user_id = ' . $user_id;
+        $result = $this->db->sql_query($sql);
+
+        $user_reactions = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+            if ($key !== '') {
+                $user_reactions[] = $key;
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        // remove duplicates and reindex
+        return array_values(array_unique($user_reactions));
+    }
+}
