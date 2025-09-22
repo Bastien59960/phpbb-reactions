@@ -53,16 +53,7 @@ class listener implements EventSubscriberInterface
         $this->template->add_script_url('reactions-js', $this->template->get_ext_path('bastien59960/reactions') . 'assets/javascript/reactions.js');
     }
 
-    public function add_post_reactions($event)
-    {
-        $post_id = (int) $event['post_row']['POST_ID'];
-        $user_id = (int) $this->user->data['user_id'];
-        
-        if ($post_id === 0) {
-            return;
-        }
-
-        public function add_post_reactions($event)
+public function add_post_reactions($event)
 {
     $post_id = (int) $event['post_row']['POST_ID'];
     $user_id = (int) $this->user->data['user_id'];
@@ -71,16 +62,28 @@ class listener implements EventSubscriberInterface
         return;
     }
 
-    // Ici tu ajoutes un tableau "factice" pour tester l'affichage
-    $event['post_row']['reaction_row'] = [
-        'REACTION_UNICODE' => '👍',
-        'REACTION_COUNT'   => 2,
+    // --- AJOUT TEST : injecte des réactions fictives ---
+    // Pour l'affichage, le template attend reaction_rows (tableau), et reaction_picker_row (emoji pour le picker)
+    $event['post_row']['reaction_rows'] = [
+        [
+            'REACTION_UNICODE' => '👍',
+            'REACTION_COUNT'   => 2,
+        ],
+        [
+            'REACTION_UNICODE' => '❤️',
+            'REACTION_COUNT'   => 1,
+        ],
+        [
+            'REACTION_UNICODE' => '😂',
+            'REACTION_COUNT'   => 3,
+        ],
     ];
-
-    // Pour le picker (bouton +), tu peux ajouter d'autres emojis au choix
+    // Le picker (bouton +) propose par exemple l'emoji 😎
     $event['post_row']['reaction_picker_row'] = [
-        'REACTION_UNICODE' => '😂', // ou tout autre emoji
+        'REACTION_UNICODE' => '😎',
     ];
+    // --- FIN AJOUT TEST ---
+}
 }
         // Fetch reactions from DB for the current post
         $sql = 'SELECT reaction_unicode, COUNT(reaction_id) as reaction_count FROM ' . $this->reactions_table . '
