@@ -7,7 +7,7 @@
 */
 
 namespace bastien59960\reactions;
-
+error_log('ext.php chargé');
 /**
 * Extension base class.
 */
