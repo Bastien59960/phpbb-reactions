@@ -1,9 +1,9 @@
 <!-- IF S_REACTIONS_ENABLED and not S_IS_BOT -->
 <div class="post-reactions-container" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
-        <!-- Réactions déjà enregistrées (avec compteur) -->
-        <!-- IF postrow.POST_REACTIONS -->
-            <!-- BEGIN post_reactions -->
+
+        <!-- Réactions existantes depuis la DB -->
+        <!-- BEGIN post_reactions -->
             <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
                   data-emoji="{postrow.post_reactions.EMOJI}"
                   data-count="{postrow.post_reactions.COUNT}"
@@ -11,28 +11,24 @@
                 {postrow.post_reactions.EMOJI}
                 <span class="count">{postrow.post_reactions.COUNT}</span>
             </span>
-            <!-- END post_reactions -->
-        <!-- ENDIF -->
+        <!-- END post_reactions -->
 
-        <!-- Réactions courantes par défaut (affichées même si 0) -->
+        <!-- Réactions par défaut toujours affichées -->
         <span class="reaction" data-emoji="👍" data-count="0">👍 <span class="count">0</span></span>
         <span class="reaction" data-emoji="❤️" data-count="0">❤️ <span class="count">0</span></span>
         <span class="reaction" data-emoji="😂" data-count="0">😂 <span class="count">0</span></span>
         <span class="reaction" data-emoji="😮" data-count="0">😮 <span class="count">0</span></span>
         <span class="reaction" data-emoji="😢" data-count="0">😢 <span class="count">0</span></span>
 
-        <!-- Bouton pour ouvrir la palette complète -->
+        <!-- Bouton pour palette -->
         <span class="reaction-more" title="{L_REACTION_MORE}">+</span>
     </div>
 
-    <!-- Palette complète d'émojis -->
+    <!-- Palette des réactions (générée dynamiquement) -->
     <div class="reaction-picker">
-        <!-- Ici on affichera la liste complète des émojis -->
-        <span class="reaction" data-emoji="😡">😡</span>
-        <span class="reaction" data-emoji="🥳">🥳</span>
-        <span class="reaction" data-emoji="🔥">🔥</span>
-        <span class="reaction" data-emoji="👏">👏</span>
-        <!-- etc... (on complètera depuis PHP plus tard) -->
+        <!-- BEGIN all_reactions -->
+            <span class="reaction" data-emoji="{all_reactions.EMOJI}">{all_reactions.EMOJI}</span>
+        <!-- END all_reactions -->
     </div>
 </div>
 <!-- ENDIF -->
