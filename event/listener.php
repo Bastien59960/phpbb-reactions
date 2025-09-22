@@ -36,9 +36,6 @@ class listener implements EventSubscriberInterface
         $this->template = $template;
         $this->language = $language;
         $this->helper = $helper;
-
-        // TEST : vérifie si le Listener est instancié
-        error_log('Listener instancié');
     }
 
     static public function getSubscribedEvents()
@@ -52,17 +49,14 @@ class listener implements EventSubscriberInterface
     public function add_assets_to_page($event)
     {
         // Add JavaScript and CSS to the page
-        $this->template->add_link('reactions-css', 'reactions.css', 'bastien59960/reactions');
-        $this->template->add_script_url('reactions-js', $this->template->get_ext_path('bastien59960/reactions') . 'assets/javascript/reactions.js');
+        $this->template->add_asset_file('css', 'reactions.css');
+        $this->template->add_asset_file('js', 'reactions.js');
     }
 
     public function add_post_reactions($event)
     {
         $post_id = (int) $event['post_row']['POST_ID'];
         $user_id = (int) $this->user->data['user_id'];
-
-        // DEBUG: log dans le journal PHP pour chaque post affiché
-        error_log('Listener appelé pour le post ' . $post_id);
 
         if ($post_id === 0) {
             return;
