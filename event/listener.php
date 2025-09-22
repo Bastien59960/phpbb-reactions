@@ -58,6 +58,9 @@ class listener implements EventSubscriberInterface
         $post_id = (int) $event['post_row']['POST_ID'];
         $user_id = (int) $this->user->data['user_id'];
 
+        // DEBUG: log dans le journal PHP pour chaque post affiché
+        error_log('Listener appelé pour le post ' . $post_id);
+
         if ($post_id === 0) {
             return;
         }
