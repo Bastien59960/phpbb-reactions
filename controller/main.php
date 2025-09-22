@@ -8,8 +8,8 @@
 
 namespace bastien59960\reactions\controller;
 
-use phpbb\json_response;
-use phpbb\exception\http_exception;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class main
 {
@@ -49,12 +49,12 @@ class main
     {
         // Check if it's an AJAX request
         if (!$this->request->is_ajax()) {
-            throw new http_exception(400, 'Bad request');
+            throw new HttpException(400, 'Bad request');
         }
 
         // Check user authentication
         if ($this->user->data['user_id'] == 0) {
-            return new json_response([
+            return new JsonResponse([
                 'status'  => 'error',
                 'message' => 'AUTH_REQUIRED',
             ]);
@@ -65,7 +65,7 @@ class main
         $reaction_unicode = $this->request->variable('reaction_unicode', '', true);
 
         if ($post_id == 0 || empty($reaction_unicode)) {
-            return new json_response([
+            return new JsonResponse([
                 'status'  => 'error',
                 'message' => 'INVALID_INPUT',
             ]);
@@ -104,7 +104,7 @@ class main
         // Get updated counts for the post
         $updated_counts = $this->get_reaction_counts($post_id);
 
-        return new json_response([
+        return new JsonResponse([
             'status'        => 'success',
             'post_id'       => $post_id,
             'counters'      => $updated_counts,
