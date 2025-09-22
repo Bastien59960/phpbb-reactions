@@ -5,6 +5,8 @@
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
+// Debug temporaire
+$this->template->assign_var('DEBUG_REACTIONS', 'Extension reactions chargée !');
 
 namespace bastien59960\reactions\event;
 
