@@ -33,6 +33,16 @@ class listener implements EventSubscriberInterface
     /** @var \phpbb\controller\helper */
     protected $helper;
 
+        public function __construct(\phpbb\template\template $template, \phpbb\controller\helper $helper, \phpbb\config\config $config)
+    {
+        $this->template = $template;
+        $this->helper = $helper;
+        $this->config = $config;
+
+        // ✅ Log pour vérifier que le constructeur du listener est bien exécuté
+        error_log("[phpBB Reactions] Constructeur du listener exécuté !");
+    }
+
     /**
      * Constructor
      *
@@ -44,23 +54,26 @@ class listener implements EventSubscriberInterface
      * @param \phpbb\language\language $language
      * @param \phpbb\controller\helper $helper
      */
-    public function __construct(
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\user $user,
-        $post_reactions_table,
-        $posts_table,
-        \phpbb\template\template $template,
-        \phpbb\language\language $language,
-        \phpbb\controller\helper $helper
-    ) {
-        $this->db = $db;
-        $this->user = $user;
-        $this->post_reactions_table = $post_reactions_table;
-        $this->posts_table = $posts_table;
-        $this->template = $template;
-        $this->language = $language;
-        $this->helper = $helper;
-    }
+public function __construct(
+    \phpbb\db\driver\driver_interface $db,
+    \phpbb\user $user,
+    $post_reactions_table,
+    $posts_table,
+    \phpbb\template\template $template,
+    \phpbb\language\language $language,
+    \phpbb\controller\helper $helper
+) {
+    $this->db = $db;
+    $this->user = $user;
+    $this->post_reactions_table = $post_reactions_table;
+    $this->posts_table = $posts_table;
+    $this->template = $template;
+    $this->language = $language;
+    $this->helper = $helper;
+
+    // ✅ Log pour vérifier que le constructeur du listener est bien exécuté
+    error_log("[phpBB Reactions] Constructeur du listener exécuté !");
+}
 
     /**
      * Assign functions defined in this class to event listeners in the core
