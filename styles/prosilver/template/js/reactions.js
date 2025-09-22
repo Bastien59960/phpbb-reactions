@@ -1,164 +1,105 @@
 /**
  * Extension Reactions pour phpBB 3.3.15
- * JavaScript pour la gestion des interactions avec les réactions
+ * JavaScript complet - gère picker, affichage par défaut, AJAX et MAJ DOM
  */
-
-(function() {
+(function () {
     'use strict';
 
-    // Configuration des émojis par défaut (toujours visibles)
-    const DEFAULT_EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
-    
-    // Palette complète d'émojis (pour le sélecteur étendu)
+    // ---------- Configuration ----------
+    const DEFAULT_EMOJIS = ['👍', '❤️', '😂', '😮', '😢']; // toujours visibles (00 si count=0)
     const EMOJI_PALETTE = [
-        '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊',
-        '😋', '😎', '😍', '😘', '🥰', '😗', '😙', '😚', '😇', '🥳',
-        '😈', '👿', '😠', '😡', '🤬', '😱', '😰', '😨', '😧', '😦',
-        '😮', '😯', '😲', '🤯', '😳', '🥺', '😢', '😭', '😤', '😪',
-        '👍', '👎', '👌', '✌️', '🤞', '👏', '🙌', '👐', '🤲', '🙏',
-        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
-        '💯', '💥', '💢', '💨', '💫', '⭐', '🌟', '✨', '⚡', '🔥'
+        '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
+        '😋','😎','😍','😘','🥰','😗','😙','😚','😇','🥳',
+        '😈','👿','😠','😡','🤬','😱','😰','😨','😧','😦',
+        '😮','😯','😲','🤯','😳','🥺','😢','😭','😤','😪',
+        '👍','👎','👌','✌️','🤞','👏','🙌','👐','🤲','🙏',
+        '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔',
+        '💯','💥','💢','💨','💫','⭐','🌟','✨','⚡','🔥'
     ];
 
     let currentPickerId = null;
 
-    /**
-     * Initialisation des réactions au chargement de la page
-     */
-    function initReactions() {
-        // Forcer l’affichage des réactions par défaut
-        ensureDefaultReactions();
+    console.log('Reactions JS — boot');
 
-        // Attacher les événements aux réactions existantes
+    // ---------- Initialisation ----------
+    function initReactions() {
+        ensureDefaultReactions();
         attachReactionEvents();
-        
-        // Attacher les événements aux boutons "plus"
         attachMoreButtonEvents();
-        
-        // Fermer les palettes au clic à l'extérieur
         document.addEventListener('click', closeAllPickers);
-        
         console.log('Reactions extension initialisée');
     }
 
-    /**
-     * S’assurer que les émojis par défaut sont toujours affichés
-     */
+    // ---------- Ensure default emojis (always visible with "00" if count 0) ----------
     function ensureDefaultReactions() {
         document.querySelectorAll('.post-reactions-container').forEach(container => {
             const reactionContainer = container.querySelector('.post-reactions');
             if (!reactionContainer) return;
 
-            const postId = getPostIdFromReaction(container);
-
             DEFAULT_EMOJIS.forEach(emoji => {
-                let existing = reactionContainer.querySelector(`[data-unicode="${emoji}"]`);
+                // Supporter ancien et nouveau attributs (data-unicode / data-emoji)
+                let existing = reactionContainer.querySelector(`[data-unicode="${emoji}"], [data-emoji="${emoji}"]`);
                 if (!existing) {
-                    // Crée l’élément avec compteur "00"
                     const reaction = createReactionElement(emoji, 0, false, true);
+                    // set both attributes for compatibility
+                    reaction.setAttribute('data-unicode', emoji);
+                    reaction.setAttribute('data-emoji', emoji);
+
                     const moreBtn = reactionContainer.querySelector('.reaction-more');
                     if (moreBtn) {
                         reactionContainer.insertBefore(reaction, moreBtn);
                     } else {
                         reactionContainer.appendChild(reaction);
                     }
-                    // Attache les événements
+
                     reaction.addEventListener('click', handleReactionClick);
                     reaction.addEventListener('mouseenter', showTooltip);
                     reaction.addEventListener('mouseleave', hideTooltip);
+                } else {
+                    // si existant mais compteur absent/0, forcer l'affichage "00"
+                    const countSpan = existing.querySelector('.count');
+                    if (countSpan && (countSpan.textContent === '' || countSpan.textContent === '0')) {
+                        countSpan.textContent = '00';
+                        existing.setAttribute('data-count', 0);
+                    }
+                    existing.classList.add('default-reaction');
                 }
             });
         });
     }
 
-    /**
-     * Attacher les événements aux réactions existantes
-     */
+    // ---------- Events attachment ----------
     function attachReactionEvents() {
-        const reactions = document.querySelectorAll('.post-reactions .reaction');
-        reactions.forEach(reaction => {
+        document.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
+            // Avoid attaching twice
+            reaction.removeEventListener('click', handleReactionClick);
             reaction.addEventListener('click', handleReactionClick);
+            reaction.removeEventListener('mouseenter', showTooltip);
             reaction.addEventListener('mouseenter', showTooltip);
+            reaction.removeEventListener('mouseleave', hideTooltip);
             reaction.addEventListener('mouseleave', hideTooltip);
         });
     }
 
-    /**
-     * Attacher les événements aux boutons "+"
-     */
     function attachMoreButtonEvents() {
-        const moreButtons = document.querySelectorAll('.reaction-more');
-        moreButtons.forEach(button => {
+        document.querySelectorAll('.reaction-more').forEach(button => {
+            button.removeEventListener('click', handleMoreButtonClick);
             button.addEventListener('click', handleMoreButtonClick);
         });
     }
 
-    /**
-     * Créer un élément de réaction
-     * @param {string} emoji 
-     * @param {number} count 
-     * @param {boolean} isActive 
-     * @param {boolean} isDefault 
-     */
-    function createReactionElement(emoji, count, isActive, isDefault = false) {
-        const reaction = document.createElement('span');
-        reaction.className = 'reaction';
-        reaction.setAttribute('data-unicode', emoji);
-        reaction.setAttribute('data-count', count);
-        
-        if (isActive) {
-            reaction.classList.add('active');
-        }
-        if (isDefault) {
-            reaction.classList.add('default-reaction');
+    // ---------- Handlers ----------
+    function handleReactionClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const el = event.currentTarget;
+        const emoji = el.getAttribute('data-unicode') || el.getAttribute('data-emoji');
+        const postId = getPostIdFromReaction(el);
+
+        if (!emoji || !postId) {
+            console.error('Impossible de déterminer emoji ou postId (handleReactionClick)');
+            return;
         }
 
-        // Si compteur = 0 → afficher "00"
-        const displayCount = count === 0 ? '00' : count;
-        reaction.innerHTML = `${emoji} <span class="count">${displayCount}</span>`;
-        
-        return reaction;
-    }
-
-    /**
-     * Mettre à jour un élément de réaction existant
-     */
-    function updateReactionElement(element, count, isActive) {
-        const countSpan = element.querySelector('.count');
-        if (countSpan) {
-            countSpan.textContent = count === 0 ? '00' : count;
-        }
-        
-        element.setAttribute('data-count', count);
-        
-        if (isActive) {
-            element.classList.add('active');
-        } else {
-            element.classList.remove('active');
-        }
-
-        // ⚠️ Ne pas supprimer les réactions par défaut
-        if (!element.classList.contains('default-reaction')) {
-            if (count === 0 && !isActive) {
-                element.classList.add('removing');
-                setTimeout(() => {
-                    if (element.parentNode) {
-                        element.parentNode.removeChild(element);
-                    }
-                }, 200);
-            } else {
-                element.style.display = '';
-            }
-        }
-    }
-
-    // ... (tout le reste du code inchangé : addReaction, removeReaction, picker, AJAX, tooltips, etc.)
-
-    // Initialisation au chargement du DOM
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initReactions);
-    } else {
-        initReactions();
-    }
-
-})();
+        const isActive = e
