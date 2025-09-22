@@ -1,0 +1,7 @@
+services:
+    bastien59960.reactions.listener:
+        class: bastien59960\reactions\event\listener
+        arguments:
+            - '@dispatcher'
+        tags:
+            - { name: event.listener }

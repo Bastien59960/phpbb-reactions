@@ -1,3 +1,0 @@
-# Tables configuration for Post Reactions extension
-post_reactions:
-    table_name: phpbb_post_reactions
