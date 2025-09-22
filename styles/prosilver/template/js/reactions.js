@@ -24,17 +24,20 @@
         });
     }
 
-    function handleReactionClick(event) {
-        event.preventDefault();
-        event.stopPropagation();
+function handleReactionClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
 
-        const el = event.currentTarget;
-        const emoji = el.getAttribute('data-emoji');
-        const postId = getPostIdFromReaction(el);
-        if (!emoji || !postId) return;
+    const el = event.currentTarget;
+    const emoji = el.getAttribute('data-emoji');
+    const postId = getPostIdFromReaction(el);
+    if (!emoji || !postId) return;
 
-        sendReaction(postId, emoji);
-    }
+    // Déterminer l'action : si l'élément a la classe 'active', on retire la réaction.
+    const action = el.classList.contains('active') ? 'remove' : 'add';
+
+    sendReaction(postId, emoji, action); // On passe l'action à sendReaction
+}
 
     function handleMoreButtonClick(event) {
         event.preventDefault();
@@ -103,34 +106,39 @@
         }
     }
 
-    /**
-     * Envoie la requête AJAX au serveur.
-     * @param {int} postId L'ID du post
-     * @param {string} emoji L'emoji
-     */
-    function sendReaction(postId, emoji) {
-        const url = window.REACTIONS_AJAX_URL;
+   // reactions.js
 
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                post_id: postId,
-                reaction_emoji: emoji
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                updateReactionsDisplay(postId, data.counters, data.user_reaction);
-            } else {
-                console.error('Erreur serveur:', data.message);
-                alert('Erreur: ' + data.message);
-            }
-        })
-        .catch(err => console.error('Erreur AJAX:', err));
-    }
+/**
+ * Envoie la requête AJAX au serveur.
+ * @param {int} postId L'ID du post
+ * @param {string} emoji L'emoji
+ * @param {string} action L'action à effectuer ('add' ou 'remove')
+ */
+function sendReaction(postId, emoji, action) {
+    const url = window.REACTIONS_AJAX_URL; // Ceci est correct
 
+    fetch(url, {
+        method: 'POST',
+        // On envoie en 'form-data' car le contrôleur PHP lit les variables POST directement
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams({
+            'action': action,
+            'post_id': postId,
+            'emoji': emoji
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        // La structure de la réponse a changé, on appelle la nouvelle fonction de mise à jour
+        if (data.success) {
+            updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
+        } else {
+            console.error('Erreur serveur:', data.error);
+            alert('Erreur: ' + data.error); // Utiliser data.error comme défini dans ajax.php
+        }
+    })
+    .catch(err => console.error('Erreur AJAX:', err));
+}
     /**
      * Met à jour l'affichage des réactions après une réponse réussie.
      * @param {int} postId L'ID du post
