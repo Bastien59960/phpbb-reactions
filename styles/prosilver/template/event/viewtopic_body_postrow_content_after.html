@@ -1,26 +1,28 @@
-<div class="reactions-container" data-post-id="{postrow.POST_ID}">
-    <div class="reactions-list">
-        <!-- BEGIN postrow.reaction_rows -->
-        <button class="reaction-btn" data-reaction="{postrow.reaction_rows.REACTION_UNICODE}" data-user-reaction="1">
-            <span class="reaction-emoji">{postrow.reaction_rows.REACTION_UNICODE}</span>
-            <span class="reaction-count">{postrow.reaction_rows.REACTION_COUNT}</span>
-        </button>
-        <!-- END postrow.reaction_rows -->
-        <button class="reaction-add-btn" title="{L_REACTION_ADD_MORE}">
-            <i class="icon fa-plus fa-fw" aria-hidden="true"></i>
-        </button>
-    </div>
-    <div class="reaction-picker-modal" style="display:none;">
-        <div class="reaction-picker-content">
-            <div class="reaction-picker-grid">
-                <button class="reaction-picker-btn" data-reaction="{postrow.reaction_picker_row.REACTION_UNICODE}">
-                    {postrow.reaction_picker_row.REACTION_UNICODE}
-                </button>
-            </div>
-            <button class="reaction-picker-close-btn" title="{L_CLOSE}">
-                <i class="icon fa-times-circle fa-fw" aria-hidden="true"></i>
-            </button>
-        </div>
+<!-- Template à ajouter dans styles/prosilver/template/event/viewtopic_body_postrow_post_content_after.html -->
+
+<!-- IF S_REACTIONS_ENABLED and not S_IS_BOT -->
+<div class="post-reactions-container" data-post-id="{postrow.POST_ID}">
+    <div class="post-reactions">
+        <!-- IF postrow.POST_REACTIONS -->
+            <!-- BEGIN post_reactions -->
+            <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->" 
+                  data-unicode="{postrow.post_reactions.EMOJI}" 
+                  data-count="{postrow.post_reactions.COUNT}"
+                  title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
+                {postrow.post_reactions.EMOJI} <span class="count">{postrow.post_reactions.COUNT}</span>
+            </span>
+            <!-- END post_reactions -->
+        <!-- ENDIF -->
+        
+        <!-- Émojis par défaut toujours visibles -->
+        <span class="reaction" data-unicode="👍" data-count="0" style="display: none;">👍 <span class="count">0</span></span>
+        <span class="reaction" data-unicode="❤️" data-count="0" style="display: none;">❤️ <span class="count">0</span></span>
+        <span class="reaction" data-unicode="😂" data-count="0" style="display: none;">😂 <span class="count">0</span></span>
+        <span class="reaction" data-unicode="😮" data-count="0" style="display: none;">😮 <span class="count">0</span></span>
+        <span class="reaction" data-unicode="😢" data-count="0" style="display: none;">😢 <span class="count">0</span></span>
+        <span class="reaction" data-unicode="😡" data-count="0" style="display: none;">😡 <span class="count">0</span></span>
+        
+        <button class="reaction-more" title="{L_REACTION_MORE}">+</button>
     </div>
 </div>
-<input type="hidden" id="reactions-action-url" value="{REACTIONS_ACTION_URL}" />
+<!-- ENDIF -->
