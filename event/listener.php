@@ -84,7 +84,7 @@ public function add_post_reactions($event)
     ];
     // --- FIN AJOUT TEST ---
 }
-}
+
         // Fetch reactions from DB for the current post
         $sql = 'SELECT reaction_unicode, COUNT(reaction_id) as reaction_count FROM ' . $this->reactions_table . '
             WHERE post_id = ' . $this->db->sql_escape($post_id) . '
