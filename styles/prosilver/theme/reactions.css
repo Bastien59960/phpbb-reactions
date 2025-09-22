@@ -1,40 +1,262 @@
-.reactions-container {
-    margin: 10px 0;
-    padding: 5px;
-    border-top: 1px solid #ddd;
-}
+/* 
+ * Extension Reactions pour phpBB 3.3.15
+ * Styles pour l'affichage des réactions aux posts
+ */
 
-.reactions-list {
+/* Conteneur principal des réactions */
+.post-reactions {
+    margin-top: 10px;
+    padding: 8px 0;
+    border-top: 1px solid #e1e1e2;
     display: flex;
-    gap: 5px;
+    align-items: center;
     flex-wrap: wrap;
+    gap: 6px;
 }
 
-.reaction-btn {
-    background: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+/* Réactions individuelles */
+.post-reactions .reaction {
+    display: inline-flex;
+    align-items: center;
+    background: #f3f3f3;
+    border: 1px solid #d1d1d1;
+    border-radius: 15px;
     padding: 4px 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    user-select: none;
+    min-width: 40px;
+    justify-content: center;
 }
 
-.reaction-btn:hover {
+.post-reactions .reaction:hover {
     background: #e8e8e8;
-    transform: translateY(-2px);
+    border-color: #b8b8b8;
+    transform: translateY(-1px);
 }
 
-.reaction-btn.reaction-user {
-    background: #e3f2fd;
-    border-color: #2196f3;
+/* Réaction active (utilisateur a réagi) */
+.post-reactions .reaction.active {
+    background: #4a90c2;
+    color: white;
+    border-color: #3a7ca8;
 }
 
-.reaction-emoji {
-    font-size: 16px;
-    margin-right: 4px;
+.post-reactions .reaction.active:hover {
+    background: #3a7ca8;
 }
 
-.reaction-count {
+/* Compteur dans les réactions */
+.post-reactions .reaction .count {
+    margin-left: 4px;
+    font-weight: 500;
     font-size: 12px;
-    color: #666;
+}
+
+/* Masquer les réactions avec 0 compteur par défaut */
+.post-reactions .reaction[data-count="0"] {
+    display: none;
+}
+
+/* Bouton "+" pour afficher plus d'émojis */
+.reaction-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 1px dashed #d1d1d1;
+    border-radius: 15px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    height: 28px;
+}
+
+.reaction-more:hover {
+    background: #e9ecef;
+    color: #495057;
+    border-color: #adb5bd;
+}
+
+/* Palette d'émojis déroulante */
+.reaction-picker {
+    position: absolute;
+    background: white;
+    border: 1px solid #d1d1d1;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    z-index: 1000;
+    max-width: 300px;
+    display: none;
+    margin-top: 5px;
+}
+
+.reaction-picker.show {
+    display: block;
+}
+
+/* Émojis dans la palette */
+.reaction-picker .reaction {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 8px;
+    margin: 2px;
+    font-size: 18px;
+    min-width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reaction-picker .reaction:hover {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+/* Conteneur des réactions avec position relative pour la palette */
+.post-reactions-container {
+    position: relative;
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .post-reactions {
+        gap: 4px;
+    }
+    
+    .post-reactions .reaction {
+        padding: 3px 6px;
+        font-size: 13px;
+        border-radius: 12px;
+    }
+    
+    .reaction-more {
+        min-width: 28px;
+        height: 24px;
+        font-size: 14px;
+    }
+    
+    .reaction-picker {
+        max-width: 280px;
+        left: 0 !important;
+        right: auto !important;
+    }
+    
+    .reaction-picker .reaction {
+        min-width: 32px;
+        height: 32px;
+        font-size: 16px;
+        padding: 6px;
+    }
+}
+
+/* Animation pour l'apparition des nouvelles réactions */
+.post-reactions .reaction.new {
+    animation: reactionAppear 0.3s ease-out;
+}
+
+@keyframes reactionAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Animation pour la suppression de réaction */
+.post-reactions .reaction.removing {
+    animation: reactionDisappear 0.2s ease-in forwards;
+}
+
+@keyframes reactionDisappear {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Style pour les tooltips des réactions */
+.reaction-tooltip {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 1001;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.reaction-tooltip.show {
+    opacity: 1;
+}
+
+.reaction-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+/* Mode sombre - optionnel */
+@media (prefers-color-scheme: dark) {
+    .post-reactions {
+        border-color: #4a4a4a;
+    }
+    
+    .post-reactions .reaction {
+        background: #3a3a3a;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+    
+    .post-reactions .reaction:hover {
+        background: #4a4a4a;
+        border-color: #666;
+    }
+    
+    .reaction-more {
+        background: #3a3a3a;
+        color: #aaa;
+        border-color: #555;
+    }
+    
+    .reaction-picker {
+        background: #2a2a2a;
+        border-color: #555;
+    }
+}
+
+/* Intégration avec le style prosilver */
+.postbody .post-reactions {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Alignement avec les autres éléments du post */
+.post .post-reactions {
+    clear: both;
+    margin-top: 8px;
 }
