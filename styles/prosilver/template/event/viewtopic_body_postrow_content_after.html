@@ -1,28 +1,38 @@
-<!-- Template à ajouter dans styles/prosilver/template/event/viewtopic_body_postrow_post_content_after.html -->
-
 <!-- IF S_REACTIONS_ENABLED and not S_IS_BOT -->
 <div class="post-reactions-container" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
+        <!-- Réactions déjà enregistrées (avec compteur) -->
         <!-- IF postrow.POST_REACTIONS -->
             <!-- BEGIN post_reactions -->
-            <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->" 
-                  data-unicode="{postrow.post_reactions.EMOJI}" 
+            <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
+                  data-emoji="{postrow.post_reactions.EMOJI}"
                   data-count="{postrow.post_reactions.COUNT}"
                   title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
-                {postrow.post_reactions.EMOJI} <span class="count">{postrow.post_reactions.COUNT}</span>
+                {postrow.post_reactions.EMOJI}
+                <span class="count">{postrow.post_reactions.COUNT}</span>
             </span>
             <!-- END post_reactions -->
         <!-- ENDIF -->
-        
-        <!-- Émojis par défaut toujours visibles -->
-        <span class="reaction" data-unicode="👍" data-count="0" style="display: none;">👍 <span class="count">0</span></span>
-        <span class="reaction" data-unicode="❤️" data-count="0" style="display: none;">❤️ <span class="count">0</span></span>
-        <span class="reaction" data-unicode="😂" data-count="0" style="display: none;">😂 <span class="count">0</span></span>
-        <span class="reaction" data-unicode="😮" data-count="0" style="display: none;">😮 <span class="count">0</span></span>
-        <span class="reaction" data-unicode="😢" data-count="0" style="display: none;">😢 <span class="count">0</span></span>
-        <span class="reaction" data-unicode="😡" data-count="0" style="display: none;">😡 <span class="count">0</span></span>
-        
-        <button class="reaction-more" title="{L_REACTION_MORE}">+</button>
+
+        <!-- Réactions courantes par défaut (affichées même si 0) -->
+        <span class="reaction" data-emoji="👍" data-count="0">👍 <span class="count">0</span></span>
+        <span class="reaction" data-emoji="❤️" data-count="0">❤️ <span class="count">0</span></span>
+        <span class="reaction" data-emoji="😂" data-count="0">😂 <span class="count">0</span></span>
+        <span class="reaction" data-emoji="😮" data-count="0">😮 <span class="count">0</span></span>
+        <span class="reaction" data-emoji="😢" data-count="0">😢 <span class="count">0</span></span>
+
+        <!-- Bouton pour ouvrir la palette complète -->
+        <span class="reaction-more" title="{L_REACTION_MORE}">+</span>
+    </div>
+
+    <!-- Palette complète d'émojis -->
+    <div class="reaction-picker">
+        <!-- Ici on affichera la liste complète des émojis -->
+        <span class="reaction" data-emoji="😡">😡</span>
+        <span class="reaction" data-emoji="🥳">🥳</span>
+        <span class="reaction" data-emoji="🔥">🔥</span>
+        <span class="reaction" data-emoji="👏">👏</span>
+        <!-- etc... (on complètera depuis PHP plus tard) -->
     </div>
 </div>
 <!-- ENDIF -->
