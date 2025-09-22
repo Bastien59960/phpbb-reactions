@@ -63,7 +63,6 @@ class listener implements EventSubscriberInterface
         }
 
         // --- AJOUT TEST : injecte des réactions fictives ---
-        // Pour l'affichage, le template attend reaction_rows (tableau), et reaction_picker_row (emoji pour le picker)
         $event['post_row']['reaction_rows'] = [
             [
                 'REACTION_UNICODE' => '👍',
@@ -78,46 +77,9 @@ class listener implements EventSubscriberInterface
                 'REACTION_COUNT'   => 3,
             ],
         ];
-        // Le picker (bouton +) propose par exemple l'emoji 😎
         $event['post_row']['reaction_picker_row'] = [
             'REACTION_UNICODE' => '😎',
         ];
         // --- FIN AJOUT TEST ---
-
-        // Fetch reactions from DB for the current post
-        $sql = 'SELECT reaction_unicode, COUNT(reaction_id) as reaction_count FROM ' . $this->reactions_table . '
-            WHERE post_id = ' . $this->db->sql_escape($post_id) . '
-            GROUP BY reaction_unicode
-            ORDER BY reaction_count DESC';
-        $result = $this->db->sql_query($sql);
-        
-        $post_reactions = [];
-        while ($row = $this->db->sql_fetchrow($result))
-        {
-            $post_reactions[$row['reaction_unicode']] = (int) $row['reaction_count'];
-        }
-        $this->db->sql_freeresult($result);
-
-        // Fetch user's reaction for this post
-        $user_reaction = null;
-        if ($user_id > 0)
-        {
-            $sql = 'SELECT reaction_unicode FROM ' . $this->reactions_table . '
-                WHERE post_id = ' . $this->db->sql_escape($post_id) . '
-                AND user_id = ' . $this->db->sql_escape($user_id);
-            $result = $this->db->sql_query($sql);
-            $user_reaction = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
-        }
-
-        // Assign data to the template
-        $this->template->assign_block_vars('post_row', [
-            'REACTIONS' => $post_reactions,
-            'USER_REACTION' => $user_reaction ? $user_reaction['reaction_unicode'] : '',
-        ]);
-
-        $this->template->set_ext_data('bastien59960/reactions', [
-            'REACTIONS_ACTION_URL' => $this->helper->route('bastien59960_reactions_main_handle'),
-        ]);
     }
 }
