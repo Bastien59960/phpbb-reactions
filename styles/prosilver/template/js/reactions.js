@@ -89,7 +89,7 @@ function handleReactionClick(event) {
                     cell.textContent = emoji.emoji;
                     cell.title = emoji.name;
                     cell.addEventListener('click', () => {
-                        sendReaction(postId, emoji.emoji);
+                        sendReaction(postId, emoji.emoji, 'add');
                         closeAllPickers();
                     });
                     grid.appendChild(cell);
