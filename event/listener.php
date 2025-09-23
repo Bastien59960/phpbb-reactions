@@ -72,38 +72,37 @@ class listener implements EventSubscriberInterface
         ];
     }
 
-    /**
-     * Add CSS/JS and load language
-     *
-     * @param \phpbb\event\data $event
-     */
-    public function add_assets_to_page($event)
-    {
-        $this->template->assign_var('REACTIONS_SID', $this->user->data['session_id']);
-        // Charger le fichier de langue de l'extension (si présent)
-        $this->language->add_lang('common', 'bastien59960/reactions');
+   /**
+ * Add CSS/JS and load language
+ *
+ * @param \phpbb\event\data $event
+ */
+public function add_assets_to_page($event)
+{
+    // Charger le fichier de langue de l'extension (si présent)
+    $this->language->add_lang('common', 'bastien59960/reactions');
 
-        // Chemins relatifs vers les assets de l'extension
-        $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
-        $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
+    // Chemins relatifs vers les assets de l'extension
+    $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
+    $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
-        // URL AJAX globale (route définie dans routing.yml)
-        $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
+    // URL AJAX globale (route définie dans routing.yml)
+    $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
 
-        $this->template->assign_vars([
-            'S_REACTIONS_ENABLED' => true,
-            'REACTIONS_CSS_PATH'  => $css_path,
-            'REACTIONS_JS_PATH'   => $js_path,
-            'U_REACTIONS_AJAX'    => $ajax_url,
-        ]);
+    $this->template->assign_vars([
+        'S_REACTIONS_ENABLED' => true,
+        'REACTIONS_CSS_PATH'  => $css_path,
+        'REACTIONS_JS_PATH'   => $js_path,
+        'U_REACTIONS_AJAX'    => $ajax_url,
+        'REACTIONS_SID'       => $this->user->data['session_id'], // Ajouté pour le template
+    ]);
 
-        // Exposer l'URL AJAX dans le JS global
-        $this->template->assign_var(
-            'REACTIONS_AJAX_URL_JS',
-            'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";'
-        );
-    }
-
+    // Exposer l'URL AJAX et le SID dans le JS global
+    $this->template->assign_var(
+        'REACTIONS_AJAX_URL_JS',
+        'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";'
+    );
+}
     /**
      * Placeholder : enrichir user_cache_data si besoin
      *
