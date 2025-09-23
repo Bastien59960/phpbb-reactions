@@ -9,11 +9,29 @@
 namespace bastien59960\reactions\event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use phpbb\db\driver\driver_interface;
 
 class listener implements EventSubscriberInterface
 {
     /** @var \phpbb\db\driver\driver_interface */
     protected $db;
+
+        public function __construct(driver_interface $db)
+    {
+        $this->db = $db;
+
+        // Force la connexion en utf8mb4 pour gérer les emojis
+        // Exécuté dès l'initialisation du listener, donc au début de chaque requête.
+        $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
+    }
+        public static function getSubscribedEvents()
+    {
+        return [
+            // Événement très tôt dans le cycle de requête
+            'core.common' => 'on_common',
+        ];
+    }
+
 
     /** @var \phpbb\user */
     protected $user;
