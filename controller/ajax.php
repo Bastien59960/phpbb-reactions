@@ -147,103 +147,78 @@ class ajax
     }
 
     
-    /**
-     * Add a reaction
-     */
-    private function add_reaction($post_id, $emoji)
-    {
-        $user_id = $this->user->data['user_id'];
-        
-        if ($this->reaction_exists($post_id, $user_id, $emoji)) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_ALREADY_EXISTS')], 400);
-        }
-        
-        $topic_id = $this->get_topic_id($post_id);
-        
-        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' 
-                 (post_id, topic_id, user_id, reaction_emoji, reaction_time) 
-                 VALUES (' . (int) $post_id . ', ' . (int) $topic_id . ', ' . (int) $user_id . ', \'' . $this->db->sql_escape($emoji) . '\', ' . time() . ')';
-        
-        $this->db->sql_query($sql);
-        
-        if ($this->db->sql_affectedrows() > 0) {
-            $count = $this->get_reaction_count($post_id, $emoji);
-            return new JsonResponse([
-                'success' => true,
-                'message' => $this->language->lang('REACTION_SUCCESS_ADD'),
-                'count' => $count,
-                'user_reacted' => true
-            ]);
-        } else {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_ERROR')], 500);
-        }
-    }
+/**
+ * Add a reaction
+ */
+private function add_reaction($post_id, $emoji)
+{
+    // Vérifier si l’utilisateur a déjà réagi avec ce même emoji
+    $sql = 'SELECT reaction_id
+            FROM ' . $this->post_reactions_table . '
+            WHERE post_id = ' . (int) $post_id . '
+              AND user_id = ' . (int) $this->user->data['user_id'] . "
+              AND emoji = '" . $this->db->sql_escape($emoji) . "'";
+    $result = $this->db->sql_query($sql);
+    $already = $this->db->sql_fetchrow($result);
+    $this->db->sql_freeresult($result);
 
-    /**
-     * Remove a reaction
-     */
-    private function remove_reaction($post_id, $emoji)
-    {
-        $user_id = $this->user->data['user_id'];
-        
-        $sql = 'DELETE FROM ' . $this->post_reactions_table . ' 
-                WHERE post_id = ' . (int) $post_id . ' 
-                AND user_id = ' . (int) $user_id . ' 
-                AND reaction_emoji = \'' . $this->db->sql_escape($emoji) . '\'';
-        
-        $this->db->sql_query($sql);
-        
-        if ($this->db->sql_affectedrows() > 0) {
-            $count = $this->get_reaction_count($post_id, $emoji);
-            return new JsonResponse([
-                'success' => true,
-                'message' => $this->language->lang('REACTION_SUCCESS_REMOVE'),
-                'count' => $count,
-                'user_reacted' => false
-            ]);
-        } else {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_NOT_FOUND')], 404);
-        }
-    }
-
-    /**
-     * Get reactions for a post
-     */
-    private function get_reactions($post_id)
-    {
-        $reactions = [];
-        $user_reactions = [];
-        
-        $sql = 'SELECT reaction_emoji, COUNT(*) as reaction_count 
-                FROM ' . $this->post_reactions_table . ' 
-                WHERE post_id = ' . (int) $post_id . ' 
-                GROUP BY reaction_emoji';
-        $result = $this->db->sql_query($sql);
-        
-        while ($row = $this->db->sql_fetchrow($result)) {
-            $reactions[$row['reaction_emoji']] = (int) $row['reaction_count'];
-        }
-        $this->db->sql_freeresult($result);
-        
-        if ($this->user->data['user_id'] != ANONYMOUS) {
-            $sql = 'SELECT reaction_emoji 
-                    FROM ' . $this->post_reactions_table . ' 
-                    WHERE post_id = ' . (int) $post_id . ' 
-                    AND user_id = ' . (int) $this->user->data['user_id'];
-            $result = $this->db->sql_query($sql);
-            
-            while ($row = $this->db->sql_fetchrow($result)) {
-                $user_reactions[] = $row['reaction_emoji'];
-            }
-            $this->db->sql_freeresult($result);
-        }
-        
+    if ($already) {
         return new JsonResponse([
-            'success' => true,
-            'reactions' => $reactions,
-            'user_reactions' => $user_reactions
-        ]);
+            'success' => false,
+            'error'   => $this->language->lang('REACTION_ALREADY_ADDED')
+        ], 400);
     }
+
+    // Insertion
+    $sql_ary = [
+        'post_id' => (int) $post_id,
+        'user_id' => (int) $this->user->data['user_id'],
+        'emoji'   => $emoji,
+        'time'    => time(),
+    ];
+    $this->db->sql_query('INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+
+    return $this->get_reactions($post_id);
+}
+
+/**
+ * Remove a reaction
+ */
+private function remove_reaction($post_id, $emoji)
+{
+    $sql = 'DELETE FROM ' . $this->post_reactions_table . '
+            WHERE post_id = ' . (int) $post_id . '
+              AND user_id = ' . (int) $this->user->data['user_id'] . "
+              AND emoji = '" . $this->db->sql_escape($emoji) . "'";
+    $this->db->sql_query($sql);
+
+    return $this->get_reactions($post_id);
+}
+
+/**
+ * Get all reactions for a post
+ */
+private function get_reactions($post_id)
+{
+    $sql = 'SELECT emoji, COUNT(*) AS count
+            FROM ' . $this->post_reactions_table . '
+            WHERE post_id = ' . (int) $post_id . '
+            GROUP BY emoji';
+    $result = $this->db->sql_query($sql);
+
+    $reactions = [];
+    while ($row = $this->db->sql_fetchrow($result)) {
+        $reactions[$row['emoji']] = (int) $row['count'];
+    }
+    $this->db->sql_freeresult($result);
+
+    return new JsonResponse([
+        'success'   => true,
+        'post_id'   => $post_id,
+        'reactions' => $reactions,
+    ]);
+}
+
 
     /**
      * Check if a post is valid
