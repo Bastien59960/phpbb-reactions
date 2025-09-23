@@ -236,6 +236,7 @@ private function add_reaction($post_id, $emoji)
             'reaction_emoji' => $emoji,
             'reaction_time'  => time(),
         ];
+        error_log("[Reactions DEBUG] sql_ary = " . json_encode($sql_ary));
 
         $sql = 'INSERT INTO ' . $this->post_reactions_table . ' '
              . $this->db->sql_build_array('INSERT', $sql_ary);
