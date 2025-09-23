@@ -162,22 +162,25 @@ public function handle()
         }
 
         // 9) Dispatch logique principale
-        switch ($action) {
-            case 'add':
-                error_log("[Reactions RID=$rid] Action=add → post_id=$post_id, emoji=$emoji");
-                $resp = $this->add_reaction($post_id, $emoji);
-                break;
+switch ($action) {
+    case 'add':
+        $resp = $this->add_reaction($post_id, $emoji);
+        break;
 
-            case 'remove':
-                error_log("[Reactions RID=$rid] Action=remove → post_id=$post_id, emoji=$emoji");
-                $resp = $this->remove_reaction($post_id, $emoji);
-                break;
+    case 'remove':
+        $resp = $this->remove_reaction($post_id, $emoji);
+        break;
 
-            case 'get':
-                error_log("[Reactions RID=$rid] Action=get → post_id=$post_id");
-                $resp = $this->get_reactions($post_id);
-                break;
-        }
+    case 'get':
+        $reactions = $this->get_reactions($post_id);
+        $resp = new \Symfony\Component\HttpFoundation\JsonResponse([
+            'success'   => true,
+            'post_id'   => $post_id,
+            'reactions' => $reactions,
+        ]);
+        break;
+}
+
 
         // 10) Ajoute le RID dans la réponse si possible
         if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
