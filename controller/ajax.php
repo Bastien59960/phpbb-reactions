@@ -346,4 +346,4 @@ class ajax
         
         return (int) ($row['topic_id'] ?? 0);
     }
-}
+
