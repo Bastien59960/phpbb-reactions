@@ -2,7 +2,7 @@
 /**
  * Reactions Extension for phpBB 3.3
  * AJAX Controller
- * * @copyright (c) 2025 Bastien59960
+ * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
@@ -78,217 +78,132 @@ class ajax
         // 1. Log de débogage pour s'assurer que le contrôleur est appelé
         error_log('[phpBB Reactions] Controller handle() called');
 
-        // 2. Vérification de la méthode HTTP et du jeton CSRF
+        // 2. Vérification de la méthode HTTP et du jeton CSRF (commenté pour débogage)
         //if (!$this->request->is_valid_csrf_token()) {
         //    throw new HttpException(403, 'CSRF token is not valid.');
         //}
 
-        // 3. Vérification de l'authentification de l'utilisateur
-        if ($this->user->data['user_id'] == ANONYMOUS) {
-            throw new HttpException(403, 'User not logged in.');
+        // Vérifier si c'est une requête AJAX
+        if (!$this->request->is_ajax()) {
+            error_log('[phpBB Reactions] Not an AJAX request');
+            throw new HttpException(400, 'Bad request');
         }
 
-        // 4. Récupérer le corps de la requête JSON
+        // Vérifier l'authentification de l'utilisateur
+        if ($this->user->data['user_id'] == ANONYMOUS) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $this->language->lang('REACTION_NOT_AUTHORIZED'),
+            ]);
+        }
+
+        // Lire le corps de la requête JSON
         $input = file_get_contents('php://input');
+        error_log('[phpBB Reactions] Raw input: ' . $input); // Log pour débogage
         $data = json_decode($input, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            throw new HttpException(400, 'Invalid JSON data');
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('[phpBB Reactions] JSON decode error: ' . json_last_error_msg());
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'INVALID_JSON',
+            ]);
         }
-        
-        $sid = $data['sid'] ?? '';  // Correspond à la clé JS
-        
+
+        // Valider le SID pour CSRF (nouvelle implémentation)
+        $sid = $data['sid'] ?? '';
         if ($sid !== $this->user->data['session_id']) {
-        throw new HttpException(403, 'Jeton CSRF invalide.');
+            error_log('[phpBB Reactions] Invalid SID: received ' . $sid . ', expected ' . $this->user->data['session_id']);
+            throw new HttpException(403, 'Jeton CSRF invalide.');
         }
 
-        // 5. Récupérer les variables depuis le tableau JSON
+        // Récupérer et valider les données
         $post_id = $data['post_id'] ?? 0;
-        $emoji = $data['emoji'] ?? '';
-        $action = $data['action'] ?? '';
+        $emoji = $data['reaction_emoji'] ?? '';
 
-        // 6. Vérifications de base
-        if (!in_array($action, ['add', 'remove', 'get'])) {
-            return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
-        }
-        
-        if (!$post_id || !$this->is_valid_post($post_id)) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_POST')], 400);
-        }
-        
-        if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_EMOJI')], 400);
+        if ($post_id <= 0 || empty($emoji)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $this->language->lang('REACTION_INVALID_INPUT'),
+            ]);
         }
 
-        // 7. Vérifier les permissions
+        // Vérifier les permissions
+        if (!$this->auth->acl_get('f_reply', $this->get_forum_id_from_post($post_id))) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $this->language->lang('REACTION_NOT_AUTHORIZED'),
+            ]);
+        }
+
+        // Vérifier si le post existe et n'est pas verrouillé
         if (!$this->can_react_to_post($post_id)) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_NOT_AUTHORIZED')], 403);
+            return new JsonResponse([
+                'success' => false,
+                'message' => $this->language->lang('REACTION_INVALID_POST'),
+            ]);
         }
 
-        // 8. Logique principale
-        switch ($action) {
-            case 'add':
-                return $this->add_reaction($post_id, $emoji);
-            case 'remove':
-                return $this->remove_reaction($post_id, $emoji);
-            case 'get':
-                return $this->get_reactions($post_id);
-            default:
-                return new JsonResponse(['success' => false, 'error' => 'Unknown action'], 400);
-        }
-    }
-    
-    /**
-     * Add a reaction
-     */
-    private function add_reaction($post_id, $emoji)
-    {
         $user_id = $this->user->data['user_id'];
-        
-        if ($this->reaction_exists($post_id, $user_id, $emoji)) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_ALREADY_EXISTS')], 400);
-        }
-        
         $topic_id = $this->get_topic_id($post_id);
-        
-        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' 
-                 (post_id, topic_id, user_id, reaction_emoji, reaction_time) 
-                 VALUES (' . (int) $post_id . ', ' . (int) $topic_id . ', ' . (int) $user_id . ', \'' . $this->db->sql_escape($emoji) . '\', ' . time() . ')';
-        
-        $this->db->sql_query($sql);
-        
-        if ($this->db->sql_affectedrows() > 0) {
-            $count = $this->get_reaction_count($post_id, $emoji);
-            return new JsonResponse([
-                'success' => true,
-                'message' => $this->language->lang('REACTION_SUCCESS_ADD'),
-                'count' => $count,
-                'user_reacted' => true
-            ]);
-        } else {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_ERROR')], 500);
-        }
-    }
 
-    /**
-     * Remove a reaction
-     */
-    private function remove_reaction($post_id, $emoji)
-    {
-        $user_id = $this->user->data['user_id'];
-        
-        $sql = 'DELETE FROM ' . $this->post_reactions_table . ' 
-                WHERE post_id = ' . (int) $post_id . ' 
-                AND user_id = ' . (int) $user_id . ' 
-                AND reaction_emoji = \'' . $this->db->sql_escape($emoji) . '\'';
-        
-        $this->db->sql_query($sql);
-        
-        if ($this->db->sql_affectedrows() > 0) {
-            $count = $this->get_reaction_count($post_id, $emoji);
-            return new JsonResponse([
-                'success' => true,
-                'message' => $this->language->lang('REACTION_SUCCESS_REMOVE'),
-                'count' => $count,
-                'user_reacted' => false
-            ]);
+        // Vérifier si la réaction existe déjà
+        if ($this->reaction_exists($post_id, $user_id, $emoji)) {
+            // Supprimer la réaction
+            $this->remove_reaction($post_id, $user_id, $emoji);
+            $user_reacted = false;
         } else {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_NOT_FOUND')], 404);
+            // Ajouter la réaction
+            $this->add_reaction($post_id, $topic_id, $user_id, $emoji);
+            $user_reacted = true;
         }
-    }
 
-    /**
-     * Get reactions for a post
-     */
-    private function get_reactions($post_id)
-    {
-        $reactions = [];
-        $user_reactions = [];
-        
-        $sql = 'SELECT reaction_emoji, COUNT(*) as reaction_count 
-                FROM ' . $this->post_reactions_table . ' 
-                WHERE post_id = ' . (int) $post_id . ' 
-                GROUP BY reaction_emoji';
-        $result = $this->db->sql_query($sql);
-        
-        while ($row = $this->db->sql_fetchrow($result)) {
-            $reactions[$row['reaction_emoji']] = (int) $row['reaction_count'];
-        }
-        $this->db->sql_freeresult($result);
-        
-        if ($this->user->data['user_id'] != ANONYMOUS) {
-            $sql = 'SELECT reaction_emoji 
-                    FROM ' . $this->post_reactions_table . ' 
-                    WHERE post_id = ' . (int) $post_id . ' 
-                    AND user_id = ' . (int) $this->user->data['user_id'];
-            $result = $this->db->sql_query($sql);
-            
-            while ($row = $this->db->sql_fetchrow($result)) {
-                $user_reactions[] = $row['reaction_emoji'];
-            }
-            $this->db->sql_freeresult($result);
-        }
-        
+        // Récupérer le nouveau compteur
+        $count = $this->get_reaction_count($post_id, $emoji);
+
         return new JsonResponse([
             'success' => true,
-            'reactions' => $reactions,
-            'user_reactions' => $user_reactions
+            'post_id' => $post_id,
+            'emoji' => $emoji,
+            'count' => $count,
+            'user_reacted' => $user_reacted,
         ]);
     }
 
     /**
-     * Check if a post is valid
+     * Add new reaction
      */
-    private function is_valid_post($post_id)
+    private function add_reaction($post_id, $topic_id, $user_id, $emoji)
     {
-        $sql = 'SELECT post_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
-        $result = $this->db->sql_query($sql);
-        $exists = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-        
-        return (bool) $exists;
+        $sql_arr = [
+            'post_id' => (int) $post_id,
+            'topic_id' => (int) $topic_id,
+            'user_id' => (int) $user_id,
+            'reaction_emoji' => (string) $emoji,
+            'reaction_time' => (int) time(),
+        ];
+        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_arr);
+        $this->db->sql_query($sql);
     }
 
     /**
-     * Check if emoji is valid
+     * Remove reaction
      */
-    private function is_valid_emoji($emoji)
+    private function remove_reaction($post_id, $user_id, $emoji)
     {
-        $json_path = $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/template/categories.json';
-        if (!file_exists($json_path)) {
-            return false;
-        }
-        
-        $json_content = file_get_contents($json_path);
-        $data = json_decode($json_content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($data['emojis'])) {
-            return false;
-        }
-
-        foreach ($data['emojis'] as $category_name => $subcategories) {
-            foreach ($subcategories as $subcategory_name => $emojis) {
-                foreach ($emojis as $emoji_data) {
-                    if ($emoji_data['emoji'] === $emoji) {
-                        return true;
-                    }
-                }
-            }
-        }
-        
-        return false;
+        $sql = 'DELETE FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . (int) $post_id . '
+                AND user_id = ' . (int) $user_id . '
+                AND reaction_emoji = \'' . $this->db->sql_escape($emoji) . '\'';
+        $this->db->sql_query($sql);
     }
 
     /**
-     * Check if user can react to a post
+     * Check if user can react to this post (post exists and not locked)
      */
     private function can_react_to_post($post_id)
     {
-        if ($this->user->data['user_id'] == ANONYMOUS) {
-            return false;
-        }
-
-        $sql = 'SELECT p.post_id, p.forum_id, p.poster_id, t.topic_status, f.forum_status
+        $sql = 'SELECT p.post_id, t.topic_status, f.forum_status
                 FROM ' . $this->posts_table . ' p
                 JOIN ' . $this->topics_table . ' t ON p.topic_id = t.topic_id
                 JOIN ' . $this->forums_table . ' f ON p.forum_id = f.forum_id
@@ -350,5 +265,18 @@ class ajax
         $this->db->sql_freeresult($result);
         
         return (int) ($row['topic_id'] ?? 0);
+    }
+
+    /**
+     * Get forum ID from post ID (pour permissions)
+     */
+    private function get_forum_id_from_post($post_id)
+    {
+        $sql = 'SELECT forum_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return (int) ($row['forum_id'] ?? 0);
     }
 }
