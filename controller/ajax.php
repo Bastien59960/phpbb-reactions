@@ -74,98 +74,144 @@ class ajax
     /**
      * Handle AJAX reactions
      */
-   public function handle()
+public function handle()
 {
-    try {
-        error_log('[Reactions DEBUG] handle() démarré');
+    // 0) Identifiant unique de requête + timer
+    $rid = bin2hex(random_bytes(8));
+    $t0 = microtime(true);
+    error_log("[Reactions RID=$rid] handle() démarré");
 
-        // 1. Vérification utilisateur
+    try {
+        // 1) Vérification utilisateur
         if ($this->user->data['user_id'] == ANONYMOUS) {
-            error_log('[Reactions DEBUG] Utilisateur anonyme → refus');
+            error_log("[Reactions RID=$rid] Utilisateur anonyme → refus");
             throw new HttpException(403, 'User not logged in.');
         }
 
-        // 2. Lecture du JSON
+        // 2) Lecture du JSON (avec exceptions explicites)
         $raw = file_get_contents('php://input');
-        error_log('[Reactions DEBUG] Corps brut reçu: ' . $raw);
+        error_log("[Reactions RID=$rid] Corps brut reçu: $raw");
 
-        $data = json_decode($raw, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            error_log('[Reactions DEBUG] JSON invalide: ' . json_last_error_msg());
-            throw new HttpException(400, 'Invalid JSON data');
+        try {
+            $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $jsonEx) {
+            error_log("[Reactions RID=$rid] JSON invalide: " . $jsonEx->getMessage());
+            return new JsonResponse([
+                'success' => false,
+                'stage'   => 'json_decode',
+                'error'   => $jsonEx->getMessage(),
+                'rid'     => $rid,
+            ], 400);
         }
 
-        // 3. Extraction des variables
+        // 3) Extraction des variables
         $sid     = $data['sid'] ?? '';
         $post_id = (int) ($data['post_id'] ?? 0);
         $emoji   = $data['emoji'] ?? '';
         $action  = $data['action'] ?? '';
 
-        error_log("[Reactions DEBUG] Données extraites: sid=$sid, post_id=$post_id, emoji=$emoji, action=$action");
+        error_log("[Reactions RID=$rid] Données extraites: sid=$sid, post_id=$post_id, emoji=$emoji, action=$action, user_id=" . (int)$this->user->data['user_id']);
 
-        // 4. Vérification CSRF
+        // 4) Vérification CSRF
         if ($sid !== $this->user->data['session_id']) {
-            error_log('[Reactions DEBUG] SID invalide: attendu=' . $this->user->data['session_id']);
+            error_log("[Reactions RID=$rid] SID invalide: attendu=" . $this->user->data['session_id']);
             throw new HttpException(403, 'Jeton CSRF invalide.');
         }
 
-        // 5. Vérification action
-        if (!in_array($action, ['add', 'remove', 'get'])) {
-            error_log("[Reactions DEBUG] Action invalide: $action");
-            return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
+        // 5) Vérification action
+        if (!in_array($action, ['add', 'remove', 'get'], true)) {
+            error_log("[Reactions RID=$rid] Action invalide: $action");
+            return new JsonResponse([
+                'success' => false,
+                'error'   => 'Invalid action',
+                'rid'     => $rid,
+            ], 400);
         }
 
-        // 6. Vérification post
+        // 6) Vérification post
         if (!$post_id || !$this->is_valid_post($post_id)) {
-            error_log("[Reactions DEBUG] Post invalide: $post_id");
+            error_log("[Reactions RID=$rid] Post invalide: $post_id");
             return new JsonResponse([
                 'success' => false,
-                'error'   => $this->language->lang('REACTION_INVALID_POST')
+                'error'   => $this->language->lang('REACTION_INVALID_POST'),
+                'rid'     => $rid,
             ], 400);
         }
 
-        // 7. Vérification emoji
+        // 7) Vérification emoji (sauf action get)
         if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
-            error_log("[Reactions DEBUG] Emoji invalide: $emoji");
+            error_log("[Reactions RID=$rid] Emoji invalide: $emoji");
             return new JsonResponse([
                 'success' => false,
-                'error'   => $this->language->lang('REACTION_INVALID_EMOJI')
+                'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
+                'rid'     => $rid,
             ], 400);
         }
 
-        // 8. Vérification permissions
+        // 8) Vérification permissions
         if (!$this->can_react_to_post($post_id)) {
-            error_log("[Reactions DEBUG] Permission refusée pour post_id=$post_id");
+            error_log("[Reactions RID=$rid] Permission refusée pour post_id=$post_id");
             return new JsonResponse([
                 'success' => false,
-                'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED')
+                'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED'),
+                'rid'     => $rid,
             ], 403);
         }
 
-        // 9. Logique principale
+        // 9) Dispatch logique principale
         switch ($action) {
             case 'add':
-                error_log("[Reactions DEBUG] Action=add → post_id=$post_id, emoji=$emoji");
-                return $this->add_reaction($post_id, $emoji);
+                error_log("[Reactions RID=$rid] Action=add → post_id=$post_id, emoji=$emoji");
+                $resp = $this->add_reaction($post_id, $emoji);
+                break;
 
             case 'remove':
-                error_log("[Reactions DEBUG] Action=remove → post_id=$post_id, emoji=$emoji");
-                return $this->remove_reaction($post_id, $emoji);
+                error_log("[Reactions RID=$rid] Action=remove → post_id=$post_id, emoji=$emoji");
+                $resp = $this->remove_reaction($post_id, $emoji);
+                break;
 
             case 'get':
-                error_log("[Reactions DEBUG] Action=get → post_id=$post_id");
-                return $this->get_reactions($post_id);
+                error_log("[Reactions RID=$rid] Action=get → post_id=$post_id");
+                $resp = $this->get_reactions($post_id);
+                break;
         }
 
-        // 10. Cas inattendu
-        error_log("[Reactions DEBUG] Action inconnue: $action");
-        return new JsonResponse(['success' => false, 'error' => 'Unknown action'], 400);
+        // 10) Ajoute le RID dans la réponse si possible
+        if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
+            $payload = json_decode($resp->getContent(), true);
+            if (is_array($payload)) {
+                $payload['rid'] = $rid;
+                $resp->setData($payload);
+            }
+        }
+
+        return $resp;
+
+    } catch (\phpbb\exception\http_exception $httpEx) {
+        // Erreurs contrôlées (403/400…) → réponse claire
+        error_log("[Reactions RID=$rid] HttpException: " . $httpEx->getMessage());
+        return new JsonResponse([
+            'success' => false,
+            'error'   => $httpEx->getMessage(),
+            'rid'     => $rid,
+        ], $httpEx->get_status_code());
 
     } catch (\Throwable $e) {
-        error_log('[Reactions DEBUG] Exception attrapée: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-        return new JsonResponse(['error' => 'Erreur serveur'], 500);
+        // Erreurs fatales → plus jamais de 503 silencieux
+        error_log("[Reactions RID=$rid] Exception attrapée: " . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        return new JsonResponse([
+            'success' => false,
+            'error'   => 'Erreur serveur',
+            'rid'     => $rid,
+        ], 500);
+
+    } finally {
+        // 11) Chronométrage global
+        $elapsed = round((microtime(true) - $t0) * 1000);
+        error_log("[Reactions RID=$rid] handle() terminé en {$elapsed}ms");
     }
 }
+
 
 
     
