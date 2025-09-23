@@ -127,22 +127,24 @@
     }
 
     function sendReaction(postId, emoji) {
-        if (typeof REACTIONS_SID === 'undefined') {
-            console.error('REACTIONS_SID is not defined - CSRF may fail');
-            REACTIONS_SID = ''; // Fallback pour éviter crash, mais CSRF échouera côté serveur
-        }
-
-        fetch(REACTIONS_AJAX_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                post_id: postId,
-                reaction_emoji: emoji,
-                sid: REACTIONS_SID
-            })
+    // Vérifier si l'utilisateur a déjà cette réaction
+    const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${emoji}"]`);
+    const hasReacted = reactionElement && reactionElement.classList.contains('active');
+    
+    const action = hasReacted ? 'remove' : 'add';
+    
+    fetch(REACTIONS_AJAX_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            post_id: postId,
+            emoji: emoji,  // ← Changez 'reaction_emoji' en 'emoji'
+            action: action,  // ← Ajoutez cette ligne
+            sid: REACTIONS_SID
         })
+    })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok: ' + response.statusText);
