@@ -243,11 +243,13 @@ class ajax
     /**
      * Check if emoji is valid (basic Unicode emoji validation)
      */
-    private function is_valid_emoji($emoji)
+private function is_valid_emoji($emoji)
 {
     // Lire le contenu du fichier categories.json
-    $json_path = $this->root_path . 'ext/' . $this->php_ext . 'styles/prosilver/template/categories.json';
+    $json_path = $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/template/categories.json';
     if (!file_exists($json_path)) {
+        // Log de débogage pour s'assurer que le chemin est correct
+        error_log('[phpBB Reactions] categories.json not found at: ' . $json_path);
         return false;
     }
     
