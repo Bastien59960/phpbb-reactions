@@ -43,4 +43,5 @@ services:
             - '%tables.topics%'
             - '%tables.forums%'
             - '%core.root_path%'
+            - 'bastien59960/reactions'
             - '%core.php_ext%'
