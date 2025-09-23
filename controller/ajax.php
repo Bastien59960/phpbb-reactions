@@ -218,10 +218,10 @@ private function add_reaction($post_id, $emoji)
             ], 400);
         }
 
-        // 3) Validation rapide sur longueur emoji vs varchar(10)
-        // Attention: utf8mb3_bin + emojis multi-octets; si >10 octets, on refuse proprement.
+        // 3) Validation rapide sur longueur emoji vs varchar(20)
+        // utf8mb4_bin : certains emojis = 4 octets, parfois plus avec modificateurs
         if (strlen($emoji) > 20) {
-            error_log("[Reactions DEBUG] emoji trop long pour varchar(10): len=" . strlen($emoji));
+            error_log("[Reactions DEBUG] emoji trop long pour varchar(20): len=" . strlen($emoji));
             return new JsonResponse([
                 'success' => false,
                 'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
@@ -240,7 +240,16 @@ private function add_reaction($post_id, $emoji)
              . $this->db->sql_build_array('INSERT', $sql_ary);
 
         error_log("[Reactions DEBUG] SQL insert = $sql");
-        $this->db->sql_query($sql);
+
+        try {
+            $this->db->sql_query($sql);
+        } catch (\Throwable $dbEx) {
+            error_log("[Reactions DEBUG] Exception SQL: " . $dbEx->getMessage());
+            return new JsonResponse([
+                'success' => false,
+                'error'   => 'Erreur SQL: ' . $dbEx->getMessage(),
+            ], 500);
+        }
 
         // 5) Retourner les réactions mises à jour pour ce post
         return $this->get_reactions($post_id);
