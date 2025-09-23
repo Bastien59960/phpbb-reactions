@@ -2,7 +2,8 @@
 /**
  * Reactions Extension for phpBB 3.3
  * AJAX Controller
- * * @copyright (c) 2025 Bastien59960
+ * 
+ * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
@@ -42,23 +43,6 @@ class ajax
     /**
      * Constructor
      */
-
-    // Lire le flux brut si Content-Type = application/json
-if (strpos($this->request->server('CONTENT_TYPE', ''), 'application/json') !== false) {
-    $raw = file_get_contents('php://input');
-    $data = json_decode($raw, true);
-
-    $post_id = (int) ($data['post_id'] ?? 0);
-    $emoji   = $data['emoji'] ?? '';
-    $action  = $data['action'] ?? '';
-    $sid     = $data['sid'] ?? '';
-} else {
-    // fallback classique
-    $post_id = $this->request->variable('post_id', 0);
-    $emoji   = $this->request->variable('emoji', '');
-    $action  = $this->request->variable('action', '');
-    $sid     = $this->request->variable('sid', '');
-}
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
         \phpbb\user $user,
@@ -90,71 +74,78 @@ if (strpos($this->request->server('CONTENT_TYPE', ''), 'application/json') !== f
     /**
      * Handle AJAX reactions
      */
-   public function handle()
-{
+    public function handle()
+    {
         try {
-        // ton code ici
-    } catch (\Throwable $e) {
-        trigger_error('Erreur AJAX : ' . $e->getMessage(), E_USER_WARNING);
-        return new JsonResponse(['error' => 'Erreur serveur'], 500);
-    }
-    // 1. Log de débogage pour s'assurer que le contrôleur est appelé
-    error_log('[phpBB Reactions] Controller handle() called');
+            error_log('[phpBB Reactions] Controller handle() called');
 
-    // 2. Vérification de l'authentification de l'utilisateur
-    if ($this->user->data['user_id'] == ANONYMOUS) {
-        throw new HttpException(403, 'User not logged in.');
-    }
+            // Vérification de l'authentification
+            if ($this->user->data['user_id'] == ANONYMOUS) {
+                throw new HttpException(403, 'User not logged in.');
+            }
 
-    // 3. Récupérer le corps de la requête JSON
-    $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
+            // Lecture du JSON envoyé
+            $raw = file_get_contents('php://input');
+            $data = json_decode($raw, true);
 
-    if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-        throw new HttpException(400, 'Invalid JSON data');
-    }
-    
-    $sid = $data['sid'] ?? '';
-    
-    if ($sid !== $this->user->data['session_id']) {
-        throw new HttpException(403, 'Jeton CSRF invalide.');
-    }
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+                throw new HttpException(400, 'Invalid JSON data');
+            }
 
-    // 4. Récupérer les variables depuis le tableau JSON
-    $post_id = $data['post_id'] ?? 0;
-    $emoji = $data['emoji'] ?? '';
-    $action = $data['action'] ?? '';
+            $sid     = $data['sid'] ?? '';
+            $post_id = (int) ($data['post_id'] ?? 0);
+            $emoji   = $data['emoji'] ?? '';
+            $action  = $data['action'] ?? '';
 
-    // 5. Vérifications de base
-    if (!in_array($action, ['add', 'remove', 'get'])) {
-        return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
-    }
-    
-    if (!$post_id || !$this->is_valid_post($post_id)) {
-        return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_POST')], 400);
-    }
-    
-    if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
-        return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_EMOJI')], 400);
-    }
+            // Vérification CSRF
+            if ($sid !== $this->user->data['session_id']) {
+                throw new HttpException(403, 'Jeton CSRF invalide.');
+            }
 
-    // 6. Vérifier les permissions
-    if (!$this->can_react_to_post($post_id)) {
-        return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_NOT_AUTHORIZED')], 403);
-    }
+            // Vérifications de base
+            if (!in_array($action, ['add', 'remove', 'get'])) {
+                return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
+            }
 
-    // 7. Logique principale
-    switch ($action) {
-        case 'add':
-            return $this->add_reaction($post_id, $emoji);
-        case 'remove':
-            return $this->remove_reaction($post_id, $emoji);
-        case 'get':
-            return $this->get_reactions($post_id);
-        default:
+            if (!$post_id || !$this->is_valid_post($post_id)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error'   => $this->language->lang('REACTION_INVALID_POST')
+                ], 400);
+            }
+
+            if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error'   => $this->language->lang('REACTION_INVALID_EMOJI')
+                ], 400);
+            }
+
+            if (!$this->can_react_to_post($post_id)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED')
+                ], 403);
+            }
+
+            // Logique principale
+            switch ($action) {
+                case 'add':
+                    return $this->add_reaction($post_id, $emoji);
+                case 'remove':
+                    return $this->remove_reaction($post_id, $emoji);
+                case 'get':
+                    return $this->get_reactions($post_id);
+            }
+
             return new JsonResponse(['success' => false, 'error' => 'Unknown action'], 400);
+
+        } catch (\Throwable $e) {
+            error_log('[phpBB Reactions] AJAX error: ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Erreur serveur'], 500);
+        }
     }
-}
+
     
     /**
      * Add a reaction
