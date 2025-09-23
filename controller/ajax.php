@@ -328,11 +328,23 @@ try {
         $elapsed = round((microtime(true) - $t0) * 1000);
         error_log("[Reactions RID=$rid] add_reaction OK in {$elapsed}ms");
         return $this->get_reactions($post_id);
+
+
 $elapsed = round((microtime(true) - $t0) * 1000);
 error_log("[Reactions RID=$rid] add_reaction OK in {$elapsed}ms");
 
 // Récupère les réactions mises à jour
 $reactions = $this->get_reactions($post_id);
+
+// Retourne une réponse JSON valide
+return new \Symfony\Component\HttpFoundation\JsonResponse([
+    'success'   => true,
+    'rid'       => $rid,
+    'post_id'   => $post_id,
+    'reactions' => $reactions,
+]);
+
+        
 
 // Retourne une réponse JSON valide
 return new \Symfony\Component\HttpFoundation\JsonResponse([
