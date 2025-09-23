@@ -94,7 +94,7 @@ public function add_assets_to_page($event)
         'REACTIONS_CSS_PATH'  => $css_path,
         'REACTIONS_JS_PATH'   => $js_path,
         'U_REACTIONS_AJAX'    => $ajax_url,
-        'REACTIONS_SID'       => $this->user->data['session_id'], // Ajouté pour le template
+        'S_SESSION_ID'       => $this->user->data['session_id'], // Ajouté pour le template
     ]);
 
     // Exposer l'URL AJAX et le SID dans le JS global
