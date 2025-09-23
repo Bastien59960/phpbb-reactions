@@ -51,14 +51,14 @@
         picker.classList.add('emoji-picker');
         currentPicker = picker;
 
-        // Charger emojis.json depuis prosilver - utiliser un chemin relatif
+        // Charger categories.json depuis prosilver - utiliser un chemin relatif
         fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => res.json())
             .then(data => {
                 buildEmojiPicker(picker, postId, data);
             })
             .catch(err => {
-                console.error('Erreur de chargement emojis.json', err);
+                console.error('Erreur de chargement categories.json', err);
                 // Fallback avec quelques emojis de base
                 buildFallbackPicker(picker, postId);
             });
@@ -120,31 +120,35 @@
     }
 
     function closeAllPickers(event) {
-        if (currentPicker && !currentPicker.contains(event.target)) {
+        if (currentPicker && (!event || !currentPicker.contains(event.target))) {
             currentPicker.remove();
             currentPicker = null;
         }
     }
 
     function sendReaction(postId, emoji) {
-    // Vérifier si l'utilisateur a déjà cette réaction
-    const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${emoji}"]`);
-    const hasReacted = reactionElement && reactionElement.classList.contains('active');
-    
-    const action = hasReacted ? 'remove' : 'add';
-    
-    fetch(REACTIONS_AJAX_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            post_id: postId,
-            emoji: emoji,  // ← Changez 'reaction_emoji' en 'emoji'
-            action: action,  // ← Ajoutez cette ligne
-            sid: REACTIONS_SID
+        if (typeof REACTIONS_SID === 'undefined') {
+            console.error('REACTIONS_SID is not defined - CSRF may fail');
+            REACTIONS_SID = '';
+        }
+
+        // Déterminer l'action : add ou remove basé sur l'état actuel
+        const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${emoji}"]`);
+        const hasReacted = reactionElement && reactionElement.classList.contains('active');
+        const action = hasReacted ? 'remove' : 'add';
+
+        fetch(REACTIONS_AJAX_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                emoji: emoji,           // Changé de 'reaction_emoji' pour correspondre à ajax.php
+                action: action,         // Ajouté l'action requise par ajax.php
+                sid: REACTIONS_SID
+            })
         })
-    })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok: ' + response.statusText);
@@ -155,7 +159,7 @@
             if (data.success) {
                 updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
             } else {
-                console.error('Erreur de réaction :', data.message);
+                console.error('Erreur de réaction :', data.error || data.message);
             }
         })
         .catch(error => console.error('Erreur:', error));
