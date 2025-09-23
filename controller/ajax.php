@@ -60,19 +60,31 @@ class ajax
      */
     public function handle()
     {
+        // Log de débogage pour s'assurer que le contrôleur est appelé
+        error_log('[phpBB Reactions] Controller handle() called');
         // Vérifier que c'est une requête AJAX
         if (!$this->request->is_ajax()) {
             return $this->json_response(['error' => 'Invalid request'], 400);
         }
+
+                // Récupérer le corps de la requête JSON
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            throw new \Symfony\Component\HttpKernel\Exception\HttpException(400, 'Invalid JSON data');
+        }
+
+        // Récupérer les variables depuis le tableau JSON
+        $post_id = $data['post_id'] ?? 0;
+        $emoji = $data['emoji'] ?? '';
+        $action = $data['action'] ?? '';
 
         // Vérifier l'authentification
         if ($this->user->data['user_id'] == ANONYMOUS) {
             return $this->json_response(['error' => $this->language->lang('REACTION_NOT_AUTHORIZED')], 403);
         }
 
-        $action = $this->request->variable('action', '');
-        $post_id = $this->request->variable('post_id', 0);
-        $emoji = $this->request->variable('emoji', '', true);
         
         // Vérifications de base
         if (!in_array($action, ['add', 'remove', 'get'])) {
