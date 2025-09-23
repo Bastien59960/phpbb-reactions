@@ -75,6 +75,12 @@ class ajax
      */
    public function handle()
 {
+        try {
+        // ton code ici
+    } catch (\Throwable $e) {
+        trigger_error('Erreur AJAX : ' . $e->getMessage(), E_USER_WARNING);
+        return new JsonResponse(['error' => 'Erreur serveur'], 500);
+    }
     // 1. Log de débogage pour s'assurer que le contrôleur est appelé
     error_log('[phpBB Reactions] Controller handle() called');
 
