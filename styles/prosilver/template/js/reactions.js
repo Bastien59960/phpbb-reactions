@@ -131,6 +131,12 @@
      * Envoie la requête AJAX au serveur.
      */
 function sendReaction(postId, emoji) {
+
+    body: JSON.stringify({
+    post_id: postId,
+    reaction_emoji: emoji,
+    sid: REACTIONS_SID  // En supposant que REACTIONS_SID est une variable globale du template
+})
     // Définir la variable REACTIONS_AJAX_URL dans un script séparé
     // ou la passer dans le HTML si elle n'est pas déjà disponible.
     const url = REACTIONS_AJAX_URL; 
