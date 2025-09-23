@@ -174,34 +174,54 @@ class ajax
  */
 private function add_reaction($post_id, $emoji)
 {
-    // Vérifier si l’utilisateur a déjà réagi avec ce même emoji
-    $sql = 'SELECT reaction_id
-            FROM ' . $this->post_reactions_table . '
-            WHERE post_id = ' . (int) $post_id . '
-              AND user_id = ' . (int) $this->user->data['user_id'] . "
-              AND emoji = '" . $this->db->sql_escape($emoji) . "'";
-    $result = $this->db->sql_query($sql);
-    $already = $this->db->sql_fetchrow($result);
-    $this->db->sql_freeresult($result);
+    error_log("[Reactions DEBUG] add_reaction() appelé avec post_id=$post_id, emoji=$emoji");
 
-    if ($already) {
+    try {
+        $user_id = (int) $this->user->data['user_id'];
+
+        // Vérifier si l’utilisateur a déjà réagi avec ce même emoji
+        $sql = 'SELECT reaction_id
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . (int) $post_id . '
+                  AND user_id = ' . $user_id . "
+                  AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
+        $result = $this->db->sql_query($sql);
+        $already = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if ($already) {
+            error_log("[Reactions DEBUG] L'utilisateur $user_id a déjà réagi avec $emoji sur post $post_id");
+            return new JsonResponse([
+                'success' => false,
+                'error'   => $this->language->lang('REACTION_ALREADY_ADDED')
+            ], 400);
+        }
+
+        // Insertion
+        $sql_ary = [
+            'post_id'        => (int) $post_id,
+            'user_id'        => $user_id,
+            'reaction_emoji' => $emoji,
+            'reaction_time'  => time(),
+        ];
+        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' ' .
+               $this->db->sql_build_array('INSERT', $sql_ary);
+
+        error_log("[Reactions DEBUG] SQL insert = $sql");
+        $this->db->sql_query($sql);
+
+        // Retourner la liste mise à jour des réactions
+        return $this->get_reactions($post_id);
+
+    } catch (\Throwable $e) {
+        error_log("[Reactions DEBUG] Exception dans add_reaction: " . $e->getMessage());
         return new JsonResponse([
             'success' => false,
-            'error'   => $this->language->lang('REACTION_ALREADY_ADDED')
-        ], 400);
+            'error'   => 'Erreur serveur: ' . $e->getMessage(),
+        ], 500);
     }
-
-    // Insertion
-    $sql_ary = [
-        'post_id' => (int) $post_id,
-        'user_id' => (int) $this->user->data['user_id'],
-        'emoji'   => $emoji,
-        'time'    => time(),
-    ];
-    $this->db->sql_query('INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
-
-    return $this->get_reactions($post_id);
 }
+
 
 /**
  * Remove a reaction
