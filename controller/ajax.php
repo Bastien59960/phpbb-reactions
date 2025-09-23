@@ -220,7 +220,7 @@ private function add_reaction($post_id, $emoji)
 
         // 3) Validation rapide sur longueur emoji vs varchar(10)
         // Attention: utf8mb3_bin + emojis multi-octets; si >10 octets, on refuse proprement.
-        if (strlen($emoji) > 10) {
+        if (strlen($emoji) > 20) {
             error_log("[Reactions DEBUG] emoji trop long pour varchar(10): len=" . strlen($emoji));
             return new JsonResponse([
                 'success' => false,
