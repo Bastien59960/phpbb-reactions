@@ -254,7 +254,7 @@ class ajax
      */
     private function is_valid_emoji($emoji)
     {
-        $json_path = $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/template/categories.json';
+        $json_path = $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json';
         if (!file_exists($json_path)) {
             return false;
         }
