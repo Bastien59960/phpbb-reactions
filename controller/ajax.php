@@ -42,6 +42,23 @@ class ajax
     /**
      * Constructor
      */
+
+    // Lire le flux brut si Content-Type = application/json
+if (strpos($this->request->server('CONTENT_TYPE', ''), 'application/json') !== false) {
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw, true);
+
+    $post_id = (int) ($data['post_id'] ?? 0);
+    $emoji   = $data['emoji'] ?? '';
+    $action  = $data['action'] ?? '';
+    $sid     = $data['sid'] ?? '';
+} else {
+    // fallback classique
+    $post_id = $this->request->variable('post_id', 0);
+    $emoji   = $this->request->variable('emoji', '');
+    $action  = $this->request->variable('action', '');
+    $sid     = $this->request->variable('sid', '');
+}
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
         \phpbb\user $user,
