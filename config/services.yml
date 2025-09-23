@@ -6,8 +6,8 @@ services:
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
         arguments:
-            - '@dbal.conn'
-            #- '@db'
+            #- '@dbal.conn'
+            - '@db'
             - '@user'
             - '%tables.post_reactions%'
             - '%tables.posts%'
@@ -21,8 +21,8 @@ services:
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
         arguments:
-            - '@dbal.conn'
-            #- '@db'
+            #- '@dbal.conn'
+            - '@db'
             - '@user'
             - '@request'
             - '@template'
@@ -35,8 +35,8 @@ services:
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
-            - '@dbal.conn'
-            #- '@db'
+            #- '@dbal.conn'
+            - '@db'
             - '@user'
             - '@request'
             - '@auth'
