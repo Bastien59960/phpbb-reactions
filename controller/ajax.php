@@ -180,7 +180,7 @@ private function add_reaction($post_id, $emoji)
         $post_id = (int) $post_id;
         $user_id = (int) $this->user->data['user_id'];
 
-        // 1) Récupérer topic_id depuis phpbb_posts (posts_table)
+        // 1) Récupérer topic_id
         $sql = 'SELECT topic_id
                 FROM ' . $this->posts_table . '
                 WHERE post_id = ' . $post_id;
@@ -199,7 +199,7 @@ private function add_reaction($post_id, $emoji)
 
         $topic_id = (int) $row['topic_id'];
 
-        // 2) Vérifier doublon (même user, même post, même emoji)
+        // 2) Vérifier doublon
         $sql = 'SELECT reaction_id
                 FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . $post_id . '
@@ -218,10 +218,9 @@ private function add_reaction($post_id, $emoji)
             ], 400);
         }
 
-        // 3) Validation rapide sur longueur emoji vs varchar(20)
-        // utf8mb4_bin : certains emojis = 4 octets, parfois plus avec modificateurs
+        // 3) Vérification longueur
         if (strlen($emoji) > 20) {
-            error_log("[Reactions DEBUG] emoji trop long pour varchar(20): len=" . strlen($emoji));
+            error_log("[Reactions DEBUG] emoji trop long: len=" . strlen($emoji));
             return new JsonResponse([
                 'success' => false,
                 'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
@@ -236,17 +235,23 @@ private function add_reaction($post_id, $emoji)
             'reaction_emoji' => $emoji,
             'reaction_time'  => time(),
         ];
-        error_log("[Reactions DEBUG] sql_ary = " . json_encode($sql_ary));
+        error_log("[Reactions DEBUG] sql_ary = " . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
 
-        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' '
-             . $this->db->sql_build_array('INSERT', $sql_ary);
-
-        error_log("[Reactions DEBUG] SQL insert = $sql");
+        try {
+            $sql = 'INSERT INTO ' . $this->post_reactions_table . ' '
+                 . $this->db->sql_build_array('INSERT', $sql_ary);
+            error_log("[Reactions DEBUG] SQL insert = $sql");
+        } catch (\Throwable $buildEx) {
+            error_log("[Reactions DEBUG] Exception sql_build_array: " . $buildEx->getMessage());
+            return new JsonResponse([
+                'success' => false,
+                'error'   => 'Erreur build SQL: ' . $buildEx->getMessage(),
+            ], 500);
+        }
 
         try {
             $this->db->sql_query($sql);
         } catch (\Throwable $dbEx) {
-            // Ici tu verras l'erreur SQL exacte (ex: Incorrect string value)
             error_log("[Reactions DEBUG] Exception SQL: " . $dbEx->getMessage());
             return new JsonResponse([
                 'success' => false,
@@ -254,17 +259,18 @@ private function add_reaction($post_id, $emoji)
             ], 500);
         }
 
-        // 5) Retourner les réactions mises à jour pour ce post
+        // 5) Retourner les réactions mises à jour
         return $this->get_reactions($post_id);
 
     } catch (\Throwable $e) {
-        error_log("[Reactions DEBUG] Exception add_reaction: " . $e->getMessage());
+        error_log("[Reactions DEBUG] Exception add_reaction globale: " . $e->getMessage());
         return new JsonResponse([
             'success' => false,
             'error'   => 'Erreur serveur: ' . $e->getMessage(),
         ], 500);
     }
 }
+
 
 
 
