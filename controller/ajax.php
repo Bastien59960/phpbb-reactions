@@ -327,7 +327,18 @@ try {
 
         $elapsed = round((microtime(true) - $t0) * 1000);
         error_log("[Reactions RID=$rid] add_reaction OK in {$elapsed}ms");
-        return $this->get_reactions($post_id);
+        //return $this->get_reactions($post_id);
+        $reactions = $this->get_reactions($post_id);
+
+return new \Symfony\Component\HttpFoundation\JsonResponse([
+    'success'      => true,
+    'post_id'      => $post_id,
+    'emoji'        => $emoji,
+    'user_id'      => $user_id,
+    'count'        => isset($reactions[$emoji]) ? $reactions[$emoji] : 1,
+    'user_reacted' => true,
+    'reactions'    => $reactions,
+]);
 
 
 $elapsed = round((microtime(true) - $t0) * 1000);
