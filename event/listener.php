@@ -79,70 +79,123 @@ class listener implements EventSubscriberInterface
      */
     public function add_assets_to_page($event)
     {
-        // Charger le fichier de langue de l'extension
+        $this->template->assign_var('REACTIONS_SID', $this->user->data['session_id']);
+        // Charger le fichier de langue de l'extension (si présent)
         $this->language->add_lang('common', 'bastien59960/reactions');
 
-        // Assigner l'URL AJAX pour JS
-        $this->template->assign_var('REACTIONS_AJAX_URL', $this->helper->route('bastien59960_reactions_ajax'));
+        // Chemins relatifs vers les assets de l'extension
+        $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
+        $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
-        // Assigner le SID pour CSRF en JS
-        $this->template->assign_var('REACTIONS_SID', $this->user->data['session_id']);
+        // URL AJAX globale (route définie dans routing.yml)
+        $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
 
-        // Ajouter CSS
-        $this->template->assign_var('REACTIONS_CSS', 'ext/bastien59960/reactions/styles/all/theme/reactions.css');
+        $this->template->assign_vars([
+            'S_REACTIONS_ENABLED' => true,
+            'REACTIONS_CSS_PATH'  => $css_path,
+            'REACTIONS_JS_PATH'   => $js_path,
+            'U_REACTIONS_AJAX'    => $ajax_url,
+        ]);
 
-        // Ajouter JS
-        $this->template->assign_var('REACTIONS_JS', 'ext/bastien59960/reactions/styles/all/template/js/reactions.js');
-
-        // Log pour débogage
-        error_log('[phpBB Reactions] Assets added to page, SID: ' . $this->user->data['session_id']);
+        // Exposer l'URL AJAX dans le JS global
+        $this->template->assign_var(
+            'REACTIONS_AJAX_URL_JS',
+            'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";'
+        );
     }
 
     /**
-     * Load language and user data for viewtopic
+     * Placeholder : enrichir user_cache_data si besoin
      *
      * @param \phpbb\event\data $event
      */
     public function load_language_and_data($event)
     {
-        // Charger la langue si nécessaire
-        $this->language->add_lang('common', 'bastien59960/reactions');
+        // RAS pour l'instant — méthode gardée pour compatibilité
     }
 
     /**
-     * Display reactions in viewtopic
+     * Prépare les données des réactions pour chaque post (appelé par core.viewtopic_post_row_after)
      *
      * @param \phpbb\event\data $event
      */
     public function display_reactions($event)
     {
-        $post_row = $event['post_row'];
-        $post_id = $post_row['POST_ID'];
-        $user_id = $this->user->data['user_id'];
+        error_log('[phpBB Reactions] display_reactions called');
 
-        // Récupérer les réactions du post
-        $reactions = $this->get_post_reactions($post_id);
+        $post_row = isset($event['post_row']) ? $event['post_row'] : [];
+        $row      = isset($event['row']) ? $event['row'] : [];
+        $post_id  = isset($row['post_id']) ? (int) $row['post_id'] : 0;
 
-        // Récupérer les réactions de l'utilisateur courant
-        $user_reactions = $this->get_user_reactions($post_id, $user_id);
-
-        // Assigner au template
-        foreach ($reactions as $emoji => $count) {
-            $this->template->assign_block_vars('post_reactions', [
-                'EMOJI' => $emoji,
-                'COUNT' => $count,
-                'USER_REACTED' => in_array($emoji, $user_reactions),
-            ]);
+        if ($post_id <= 0) {
+            $event['post_row'] = $post_row;
+            return;
         }
 
-        // Activer les réactions si l'utilisateur n'est pas un bot
-        $this->template->assign_var('S_REACTIONS_ENABLED', !$event['s_is_bot']);
+        // Récupération depuis la DB
+        $reactions_by_db = $this->get_post_reactions($post_id); // [emoji => count]
+        $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']); // [emoji, ...]
+
+        // Réactions par défaut visibles (toujours présentes)
+        $default_reactions = ['👍', '❤️', '😂', '😮', '😢'];
+
+        // Construire la liste visible pour ce post :
+        // 1) les défauts (dans l'ordre), 2) les réactions supplémentaires venant de la DB
+        $visible = [];
+
+        foreach ($default_reactions as $emoji) {
+            $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
+
+            $visible[] = [
+                'EMOJI'        => $emoji,
+                'COUNT'        => $count,
+                'USER_REACTED' => in_array($emoji, $user_reactions, true),
+                'IS_DEFAULT'   => true,
+            ];
+
+            // si l'emoji existe en DB, on l'enlève pour éviter duplication
+            if (isset($reactions_by_db[$emoji])) {
+                unset($reactions_by_db[$emoji]);
+            }
+        }
+
+        // Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
+        foreach ($reactions_by_db as $emoji => $count) {
+            $visible[] = [
+                'EMOJI'        => $emoji,
+                'COUNT'        => (int) $count,
+                'USER_REACTED' => in_array($emoji, $user_reactions, true),
+                'IS_DEFAULT'   => false,
+            ];
+        }
+
+        // Palette complète (pour reaction-picker) - modifiable selon tes besoins
+        $all_reactions_list = [
+            '👍','❤️','😂','😮','😢','😡','🔥','👏','🥳','🎉',
+            '👌','👀','🤔','🙏','🤩','😴','🤮','💯','🙌','🤝',
+            '😅','🤷','😬','🤗','😇','😎','😤','😱','🎯','🧡'
+        ];
+        $all_reactions = [];
+        foreach ($all_reactions_list as $emoji) {
+            $all_reactions[] = ['EMOJI' => $emoji];
+        }
+
+        // URL pour action 'add' sur ce post (route attend post_id)
+        $u_react = $this->helper->route('bastien59960_reactions_add', ['post_id' => $post_id]);
+
+        // Fusionner données dans post_row pour le template (accessible via {postrow.*})
+        $post_row = array_merge($post_row, [
+            'S_REACTIONS_ENABLED' => true,
+            'POST_REACTIONS'      => $visible,
+            'ALL_REACTIONS'       => $all_reactions,
+            'U_REACT'             => $u_react,
+        ]);
 
         $event['post_row'] = $post_row;
     }
 
     /**
-     * Add data for viewforum if necessary
+     * Placeholder pour données de forum si nécessaire
      *
      * @param \phpbb\event\data $event
      */
