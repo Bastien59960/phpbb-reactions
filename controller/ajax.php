@@ -172,12 +172,7 @@ switch ($action) {
         break;
 
     case 'get':
-        $reactions = $this->get_reactions($post_id);
-        $resp = new \Symfony\Component\HttpFoundation\JsonResponse([
-            'success'   => true,
-            'post_id'   => $post_id,
-            'reactions' => $reactions,
-        ]);
+        $resp = $this->get_reactions($post_id);
         break;
 }
 
@@ -392,7 +387,14 @@ private function remove_reaction($post_id, $emoji)
               AND emoji = '" . $this->db->sql_escape($emoji) . "'";
     $this->db->sql_query($sql);
 
-    return $this->get_reactions($post_id);
+    $reactions = $this->get_reactions($post_id);
+return new JsonResponse([
+    'success'   => true,
+    'post_id'   => $post_id,
+    'emoji'     => $emoji,
+    'user_id'   => (int) $this->user->data['user_id'],
+    'reactions' => $reactions->getData()['reactions'] ?? [],
+]);
 }
 
 /**
