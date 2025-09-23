@@ -358,3 +358,5 @@ private function get_reactions($post_id)
         return (int) ($row['topic_id'] ?? 0);
     }
 
+} // fin de la classe ajax
+
