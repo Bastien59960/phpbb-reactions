@@ -2,33 +2,20 @@
 <div class="post-reactions-container" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
 
-        <!-- Réactions existantes depuis la DB -->
-        <!-- BEGIN post_reactions -->
+        <!-- Réactions depuis la DB (gérées par le listener PHP) -->
+        <!-- BEGIN postrow.post_reactions -->
             <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
                   data-emoji="{postrow.post_reactions.EMOJI}"
                   data-count="{postrow.post_reactions.COUNT}"
-                  title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
+                  title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
+                  <!-- IF postrow.post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
                 {postrow.post_reactions.EMOJI}
                 <span class="count">{postrow.post_reactions.COUNT}</span>
             </span>
-        <!-- END post_reactions -->
-
-        <!-- Réactions par défaut toujours affichées -->
-        <span class="reaction" data-emoji="👍" data-count="0">👍 <span class="count">0</span></span>
-        <span class="reaction" data-emoji="❤️" data-count="0">❤️ <span class="count">0</span></span>
-        <span class="reaction" data-emoji="😂" data-count="0">😂 <span class="count">0</span></span>
-        <span class="reaction" data-emoji="😮" data-count="0">😮 <span class="count">0</span></span>
-        <span class="reaction" data-emoji="😢" data-count="0">😢 <span class="count">0</span></span>
+        <!-- END postrow.post_reactions -->
 
         <!-- Bouton pour palette -->
-        <span class="reaction-more" title="{L_REACTION_MORE}">+</span>
-    </div>
-
-    <!-- Palette des réactions (générée dynamiquement) -->
-    <div class="reaction-picker">
-        <!-- BEGIN all_reactions -->
-            <span class="reaction" data-emoji="{all_reactions.EMOJI}">{all_reactions.EMOJI}</span>
-        <!-- END all_reactions -->
+        <span class="reaction-more" title="Ajouter une réaction">+</span>
     </div>
 </div>
 <!-- ENDIF -->
