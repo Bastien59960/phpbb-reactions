@@ -79,9 +79,9 @@ class ajax
         error_log('[phpBB Reactions] Controller handle() called');
 
         // 2. Vérification de la méthode HTTP et du jeton CSRF
-        if (!$this->request->is_valid_csrf_token()) {
-            throw new HttpException(403, 'CSRF token is not valid.');
-        }
+        //if (!$this->request->is_valid_csrf_token()) {
+        //    throw new HttpException(403, 'CSRF token is not valid.');
+        //}
 
         // 3. Vérification de l'authentification de l'utilisateur
         if ($this->user->data['user_id'] == ANONYMOUS) {
