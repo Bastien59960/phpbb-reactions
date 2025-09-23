@@ -7,7 +7,7 @@ services:
         class: bastien59960\reactions\event\listener
         arguments:
             - '@dbal.conn'
-            - '@db'
+            #- '@db'
             - '@user'
             - '%tables.post_reactions%'
             - '%tables.posts%'
@@ -22,7 +22,7 @@ services:
         class: bastien59960\reactions\controller\main
         arguments:
             - '@dbal.conn'
-            - '@db'
+            #- '@db'
             - '@user'
             - '@request'
             - '@template'
@@ -36,7 +36,7 @@ services:
         class: bastien59960\reactions\controller\ajax
         arguments:
             - '@dbal.conn'
-            - '@db'
+            #- '@db'
             - '@user'
             - '@request'
             - '@auth'
