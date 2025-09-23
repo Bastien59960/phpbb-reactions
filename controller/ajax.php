@@ -76,6 +76,8 @@ class ajax
      */
     public function handle()
     {
+        error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
         try {
             error_log('[phpBB Reactions] Controller handle() called');
 
@@ -83,7 +85,8 @@ class ajax
             if ($this->user->data['user_id'] == ANONYMOUS) {
                 throw new HttpException(403, 'User not logged in.');
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             // Lecture du JSON envoyé
             $raw = file_get_contents('php://input');
             $data = json_decode($raw, true);
@@ -91,43 +94,50 @@ class ajax
             if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
                 throw new HttpException(400, 'Invalid JSON data');
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             $sid     = $data['sid'] ?? '';
             $post_id = (int) ($data['post_id'] ?? 0);
             $emoji   = $data['emoji'] ?? '';
             $action  = $data['action'] ?? '';
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             // Vérification CSRF
             if ($sid !== $this->user->data['session_id']) {
                 throw new HttpException(403, 'Jeton CSRF invalide.');
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             // Vérifications de base
             if (!in_array($action, ['add', 'remove', 'get'])) {
                 return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             if (!$post_id || !$this->is_valid_post($post_id)) {
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_INVALID_POST')
                 ], 400);
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_INVALID_EMOJI')
                 ], 400);
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             if (!$this->can_react_to_post($post_id)) {
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED')
                 ], 403);
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             // Logique principale
             switch ($action) {
                 case 'add':
@@ -137,13 +147,16 @@ class ajax
                 case 'get':
                     return $this->get_reactions($post_id);
             }
-
+error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
             return new JsonResponse(['success' => false, 'error' => 'Unknown action'], 400);
 
         } catch (\Throwable $e) {
             error_log('[phpBB Reactions] AJAX error: ' . $e->getMessage());
             return new JsonResponse(['error' => 'Erreur serveur'], 500);
         }
+        error_log('[Reactions DEBUG] Étape 1: données reçues = ' . json_encode($data));
+error_log('[Reactions DEBUG] Étape 2: post_id=' . $post_id . ', emoji=' . $emoji . ', action=' . $action);
     }
 
     
