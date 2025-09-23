@@ -16,19 +16,57 @@ class listener implements EventSubscriberInterface
     /** @var \phpbb\db\driver\driver_interface */
     protected $db;
 
-        public function __construct(driver_interface $db)
-    {
-        $this->db = $db;
+    /** @var \phpbb\user */
+    protected $user;
 
-        // Force la connexion en utf8mb4 pour gérer les emojis
-        // Exécuté dès l'initialisation du listener, donc au début de chaque requête.
+    /** @var string */
+    protected $post_reactions_table;
+
+    /** @var string */
+    protected $posts_table;
+
+    /** @var \phpbb\template\template */
+    protected $template;
+
+    /** @var \phpbb\language\language */
+    protected $language;
+
+    /** @var \phpbb\controller\helper */
+    protected $helper;
+
+    /**
+     * Constructor unique
+     */
+    public function __construct(
+        driver_interface $db,
+        \phpbb\user $user,
+        $post_reactions_table,
+        $posts_table,
+        \phpbb\template\template $template,
+        \phpbb\language\language $language,
+        \phpbb\controller\helper $helper
+    ) {
+        $this->db = $db;
+        $this->user = $user;
+        $this->post_reactions_table = $post_reactions_table;
+        $this->posts_table = $posts_table;
+        $this->template = $template;
+        $this->language = $language;
+        $this->helper = $helper;
+
+        // Forcer la connexion en utf8mb4
         $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
+
+        error_log('[phpBB Reactions] Listener::__construct invoked');
     }
-        public static function getSubscribedEvents()
+
+    public static function getSubscribedEvents()
     {
         return [
-            // Événement très tôt dans le cycle de requête
-            'core.common' => 'on_common',
+            'core.page_header'               => 'add_assets_to_page',
+            'core.viewtopic_cache_user_data' => 'load_language_and_data',
+            'core.viewtopic_post_row_after'  => 'display_reactions',
+            'core.viewforum_modify_topicrow' => 'add_forum_data',
         ];
     }
 
