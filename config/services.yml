@@ -2,6 +2,7 @@ imports:
     - { resource: 'parameters.yml' }
 
 services:
+    # Service pour le listener d'événements
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
         arguments:
@@ -15,6 +16,7 @@ services:
         tags:
             - { name: event.listener }
             
+    # Service pour le contrôleur principal (optionnel si non utilisé)
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
         arguments:
@@ -26,3 +28,17 @@ services:
             - '@controller.helper'
             - '%tables.post_reactions%'
             - '%tables.posts%'
+
+    # Service pour le contrôleur AJAX (C'est celui qui manquait !)
+    bastien59960.reactions.ajax:
+        class: bastien59960\reactions\controller\ajax
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@auth'
+            - '@language'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.forums%'
