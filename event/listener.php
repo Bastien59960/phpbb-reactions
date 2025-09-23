@@ -35,7 +35,7 @@ class listener implements EventSubscriberInterface
     protected $helper;
 
     /**
-     * Constructor unique
+     * Constructor
      */
     public function __construct(
         driver_interface $db,
@@ -70,95 +70,38 @@ class listener implements EventSubscriberInterface
         ];
     }
 
-
-    /** @var \phpbb\user */
-    protected $user;
-
-    /** @var string */
-    protected $post_reactions_table;
-
-    /** @var string */
-    protected $posts_table;
-
-    /** @var \phpbb\template\template */
-    protected $template;
-
-    /** @var \phpbb\language\language */
-    protected $language;
-
-    /** @var \phpbb\controller\helper */
-    protected $helper;
-
-    /**
-     * Constructor
-     */
-    public function __construct(
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\user $user,
-        $post_reactions_table,
-        $posts_table,
-        \phpbb\template\template $template,
-        \phpbb\language\language $language,
-        \phpbb\controller\helper $helper
-    ) {
-        $this->db = $db;
-        $this->user = $user;
-        $this->post_reactions_table = $post_reactions_table;
-        $this->posts_table = $posts_table;
-        $this->template = $template;
-        $this->language = $language;
-        $this->helper = $helper;
-
-        // debug rapide — devrait apparaître dans error.log si le service est instancié
-        error_log('[phpBB Reactions] Listener::__construct invoked');
-    }
-
-    /**
-     * Subscribe to phpBB events
-     *
-     * @return array
-     */
-    static public function getSubscribedEvents()
-    {
-        return [
-            'core.page_header'               => 'add_assets_to_page',
-            'core.viewtopic_cache_user_data' => 'load_language_and_data',
-            'core.viewtopic_post_row_after'  => 'display_reactions',
-            'core.viewforum_modify_topicrow' => 'add_forum_data',
-        ];
-    }
-
    /**
- * Add CSS/JS and load language
- *
- * @param \phpbb\event\data $event
- */
-public function add_assets_to_page($event)
-{
-    // Charger le fichier de langue de l'extension (si présent)
-    $this->language->add_lang('common', 'bastien59960/reactions');
+     * Add CSS/JS and load language
+     *
+     * @param \phpbb\event\data $event
+     */
+    public function add_assets_to_page($event)
+    {
+        // Charger le fichier de langue de l'extension (si présent)
+        $this->language->add_lang('common', 'bastien59960/reactions');
 
-    // Chemins relatifs vers les assets de l'extension
-    $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
-    $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
+        // Chemins relatifs vers les assets de l'extension
+        $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
+        $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
-    // URL AJAX globale (route définie dans routing.yml)
-    $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
+        // URL AJAX globale (route définie dans routing.yml)
+        $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
 
-    $this->template->assign_vars([
-        'S_REACTIONS_ENABLED' => true,
-        'REACTIONS_CSS_PATH'  => $css_path,
-        'REACTIONS_JS_PATH'   => $js_path,
-        'U_REACTIONS_AJAX'    => $ajax_url,
-        'S_SESSION_ID'       => $this->user->data['session_id'], // Ajouté pour le template
-    ]);
+        $this->template->assign_vars([
+            'S_REACTIONS_ENABLED' => true,
+            'REACTIONS_CSS_PATH'  => $css_path,
+            'REACTIONS_JS_PATH'   => $js_path,
+            'U_REACTIONS_AJAX'    => $ajax_url,
+            'S_SESSION_ID'        => $this->user->data['session_id'], // Ajouté pour le template
+        ]);
 
-    // Exposer l'URL AJAX et le SID dans le JS global
-    $this->template->assign_var(
-        'REACTIONS_AJAX_URL_JS',
-        'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";'
-    );
-}
+        // Exposer l'URL AJAX et le SID dans le JS global
+        $this->template->assign_var(
+            'REACTIONS_AJAX_URL_JS',
+            'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";'
+        );
+    }
+
     /**
      * Placeholder : enrichir user_cache_data si besoin
      *
@@ -202,10 +145,10 @@ public function add_assets_to_page($event)
             $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
 
             $visible[] = [
-                'EMOJI'        => $emoji,
-                'COUNT'        => $count,
-                'USER_REACTED' => in_array($emoji, $user_reactions, true),
-                'IS_DEFAULT'   => true,
+                'EMOJI'          => $emoji,
+                'COUNT'          => $count,
+                'USER_REACTED'   => in_array($emoji, $user_reactions, true),
+                'IS_DEFAULT'     => true,
             ];
 
             // si l'emoji existe en DB, on l'enlève pour éviter duplication
@@ -217,10 +160,10 @@ public function add_assets_to_page($event)
         // Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
         foreach ($reactions_by_db as $emoji => $count) {
             $visible[] = [
-                'EMOJI'        => $emoji,
-                'COUNT'        => (int) $count,
-                'USER_REACTED' => in_array($emoji, $user_reactions, true),
-                'IS_DEFAULT'   => false,
+                'EMOJI'          => $emoji,
+                'COUNT'          => (int) $count,
+                'USER_REACTED'   => in_array($emoji, $user_reactions, true),
+                'IS_DEFAULT'     => false,
             ];
         }
 
