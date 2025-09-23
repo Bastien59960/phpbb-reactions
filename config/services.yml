@@ -42,3 +42,5 @@ services:
             - '%tables.posts%'
             - '%tables.topics%'
             - '%tables.forums%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
