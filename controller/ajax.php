@@ -174,60 +174,63 @@ class ajax
  */
 private function add_reaction($post_id, $emoji)
 {
-    error_log("[Reactions DEBUG] add_reaction() post_id=$post_id, emoji=$emoji");
+    $rid = bin2hex(random_bytes(8));
+    $t0 = microtime(true);
+    error_log("[Reactions RID=$rid] add_reaction enter post_id=$post_id emoji=$emoji user_id=" . (int)$this->user->data['user_id']);
 
     try {
         $post_id = (int) $post_id;
         $user_id = (int) $this->user->data['user_id'];
 
-        // 1) Récupérer topic_id
-        $sql = 'SELECT topic_id
-                FROM ' . $this->posts_table . '
-                WHERE post_id = ' . $post_id;
-        error_log("[Reactions DEBUG] SQL topic lookup = $sql");
+        // Topic lookup
+        $sql = 'SELECT topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . $post_id;
+        error_log("[Reactions RID=$rid] topic lookup SQL: $sql");
         $result = $this->db->sql_query($sql);
         $row = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
+        error_log("[Reactions RID=$rid] topic lookup fetched=" . json_encode($row));
 
         if (!$row || !isset($row['topic_id'])) {
-            error_log("[Reactions DEBUG] post_id=$post_id introuvable ou sans topic_id");
             return new JsonResponse([
                 'success' => false,
+                'stage'   => 'topic_lookup',
                 'error'   => $this->language->lang('REACTION_INVALID_POST'),
+                'rid'     => $rid,
             ], 400);
         }
-
         $topic_id = (int) $row['topic_id'];
 
-        // 2) Vérifier doublon
-        $sql = 'SELECT reaction_id
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                  AND user_id = ' . $user_id . "
-                  AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
-        error_log("[Reactions DEBUG] SQL check duplicate = $sql");
-        $result = $this->db->sql_query($sql);
+        // Duplicate check
+        $dupSql = 'SELECT reaction_id FROM ' . $this->post_reactions_table . '
+                   WHERE post_id = ' . $post_id . '
+                     AND user_id = ' . $user_id . "
+                     AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
+        error_log("[Reactions RID=$rid] duplicate SQL: $dupSql");
+        $result = $this->db->sql_query($dupSql);
         $already = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
+        error_log("[Reactions RID=$rid] duplicate found=" . json_encode((bool)$already));
 
         if ($already) {
-            error_log("[Reactions DEBUG] doublon: user_id=$user_id, post_id=$post_id, emoji=$emoji");
             return new JsonResponse([
                 'success' => false,
+                'stage'   => 'duplicate',
                 'error'   => $this->language->lang('REACTION_ALREADY_ADDED'),
+                'rid'     => $rid,
             ], 400);
         }
 
-        // 3) Vérification longueur
+        // Length check (20)
         if (strlen($emoji) > 20) {
-            error_log("[Reactions DEBUG] emoji trop long: len=" . strlen($emoji));
             return new JsonResponse([
                 'success' => false,
+                'stage'   => 'validation',
                 'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
+                'rid'     => $rid,
             ], 400);
         }
 
-        // 4) Insertion
+        // Build insert
         $sql_ary = [
             'post_id'        => $post_id,
             'topic_id'       => $topic_id,
@@ -235,38 +238,46 @@ private function add_reaction($post_id, $emoji)
             'reaction_emoji' => $emoji,
             'reaction_time'  => time(),
         ];
-        error_log("[Reactions DEBUG] sql_ary = " . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
+        error_log("[Reactions RID=$rid] sql_ary=" . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
 
         try {
-            $sql = 'INSERT INTO ' . $this->post_reactions_table . ' '
-                 . $this->db->sql_build_array('INSERT', $sql_ary);
-            error_log("[Reactions DEBUG] SQL insert = $sql");
+            $insertSql = 'INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+            error_log("[Reactions RID=$rid] insert SQL: $insertSql");
         } catch (\Throwable $buildEx) {
-            error_log("[Reactions DEBUG] Exception sql_build_array: " . $buildEx->getMessage());
+            error_log("[Reactions RID=$rid] sql_build_array error: " . $buildEx->getMessage());
             return new JsonResponse([
                 'success' => false,
-                'error'   => 'Erreur build SQL: ' . $buildEx->getMessage(),
+                'stage'   => 'sql_build',
+                'error'   => $buildEx->getMessage(),
+                'rid'     => $rid,
             ], 500);
         }
 
         try {
-            $this->db->sql_query($sql);
+            $this->db->sql_query($insertSql);
         } catch (\Throwable $dbEx) {
-            error_log("[Reactions DEBUG] Exception SQL: " . $dbEx->getMessage());
+            $err = $this->db->sql_error();
+            error_log("[Reactions RID=$rid] sql_query error: " . $dbEx->getMessage() . " db=" . json_encode($err));
             return new JsonResponse([
                 'success' => false,
-                'error'   => 'Erreur SQL: ' . $dbEx->getMessage(),
+                'stage'   => 'sql_insert',
+                'error'   => $dbEx->getMessage(),
+                'db_error'=> $err,
+                'rid'     => $rid,
             ], 500);
         }
 
-        // 5) Retourner les réactions mises à jour
+        $elapsed = round((microtime(true) - $t0) * 1000);
+        error_log("[Reactions RID=$rid] add_reaction OK in {$elapsed}ms");
         return $this->get_reactions($post_id);
 
     } catch (\Throwable $e) {
-        error_log("[Reactions DEBUG] Exception add_reaction globale: " . $e->getMessage());
+        error_log("[Reactions RID=$rid] add_reaction fatal: " . $e->getMessage());
         return new JsonResponse([
             'success' => false,
-            'error'   => 'Erreur serveur: ' . $e->getMessage(),
+            'stage'   => 'fatal',
+            'error'   => $e->getMessage(),
+            'rid'     => $rid,
         ], 500);
     }
 }
