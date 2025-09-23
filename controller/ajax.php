@@ -75,6 +75,15 @@ class ajax
     {
         // Log de débogage pour s'assurer que le contrôleur est appelé
         error_log('[phpBB Reactions] Controller handle() called');
+            if (!$this->request->is_valid_csrf_token()) {
+        throw new HttpException(403, 'CSRF token is not valid.');
+    }
+
+    // 2. Vérification de l'authentification de l'utilisateur
+    if ($this->user->data['user_id'] == ANONYMOUS) {
+        // L'utilisateur n'est pas connecté
+        throw new HttpException(403, 'User not logged in.');
+    }
         // Vérifier que c'est une requête AJAX
         if (!$this->request->is_ajax()) {
             return $this->json_response(['error' => 'Invalid request'], 400);
