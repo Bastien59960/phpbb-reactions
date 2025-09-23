@@ -80,34 +80,33 @@
             catTitle.textContent = category;
             picker.appendChild(catTitle);
 
-            Object.values(subcategories).forEach(emojis => {
+            Object.entries(subcategories).forEach(([subcategory, emojis]) => {
                 const grid = document.createElement('div');
                 grid.classList.add('emoji-grid');
 
-                emojis.forEach(emoji => {
-                    const cell = document.createElement('div');
+                emojis.forEach(emojiObj => {
+                    const cell = document.createElement('span');
                     cell.classList.add('emoji-cell');
-                    cell.textContent = emoji.emoji;
-                    cell.title = emoji.name;
+                    cell.textContent = emojiObj.emoji;
                     cell.addEventListener('click', () => {
-                        sendReaction(postId, emoji.emoji);
+                        sendReaction(postId, emojiObj.emoji);
                         closeAllPickers();
                     });
                     grid.appendChild(cell);
                 });
+
                 picker.appendChild(grid);
             });
         });
     }
 
     function buildFallbackPicker(picker, postId) {
-        const fallbackEmojis = ['😀', '😂', '❤️', '👍', '👎', '😮', '😢', '😡', '🔥', '👏', '🎉', '💯'];
-        
+        const fallbackEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
         const grid = document.createElement('div');
         grid.classList.add('emoji-grid');
-        
+
         fallbackEmojis.forEach(emoji => {
-            const cell = document.createElement('div');
+            const cell = document.createElement('span');
             cell.classList.add('emoji-cell');
             cell.textContent = emoji;
             cell.addEventListener('click', () => {
@@ -116,55 +115,49 @@
             });
             grid.appendChild(cell);
         });
-        
+
         picker.appendChild(grid);
     }
 
-    function closeAllPickers() {
-        if (currentPicker) {
+    function closeAllPickers(event) {
+        if (currentPicker && !currentPicker.contains(event.target)) {
             currentPicker.remove();
             currentPicker = null;
         }
     }
 
-    /**
-     * Envoie la requête AJAX au serveur.
-     */
-function sendReaction(postId, emoji) {
-
-    body: JSON.stringify({
-    post_id: postId,
-    reaction_emoji: emoji,
-    sid: REACTIONS_SID  // En supposant que REACTIONS_SID est une variable globale du template
-})
-    // Définir la variable REACTIONS_AJAX_URL dans un script séparé
-    // ou la passer dans le HTML si elle n'est pas déjà disponible.
-    const url = REACTIONS_AJAX_URL; 
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({
-            post_id: postId,
-            reaction_emoji: emoji,
-            // Ajoutez le jeton CSRF ici
-            _method: 'post', // Ne pas oublier la méthode
-            _token: phpbb.get//
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            updateReactionUI(postId, emoji, data.count, data.user_reacted);
-        } else {
-            console.error('Erreur de réaction :', data.message);
+    function sendReaction(postId, emoji) {
+        if (typeof REACTIONS_SID === 'undefined') {
+            console.error('REACTIONS_SID is not defined - CSRF may fail');
+            REACTIONS_SID = ''; // Fallback pour éviter crash, mais CSRF échouera côté serveur
         }
-    })
-    .catch(error => console.error('Erreur:', error));
-}
+
+        fetch(REACTIONS_AJAX_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                reaction_emoji: emoji,
+                sid: REACTIONS_SID
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
+            } else {
+                console.error('Erreur de réaction :', data.message);
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
 
     /**
      * Met à jour l'affichage d'une seule réaction après une réponse réussie.
