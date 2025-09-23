@@ -130,45 +130,45 @@
     /**
      * Envoie la requête AJAX au serveur.
      */
-    function sendReaction(postId, emoji) {
-        const url = window.REACTIONS_AJAX_URL;
+function sendReaction(postId, emoji) {
+    const url = window.REACTIONS_AJAX_URL;
 
-        if (!url) {
-            console.error('REACTIONS_AJAX_URL non définie');
-            return;
-        }
-
-        fetch(url, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                'X-Requested-With': 'XMLHttpRequest' // Important pour is_ajax()
-            },
-            body: new URLSearchParams({
-                'post_id': postId,
-                'emoji': emoji,
-                'action': 'toggle' // Optionnel, mais peut être utile
-            })
-        })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.success) {
-                updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
-            } else {
-                console.error('Erreur serveur:', data.error);
-                alert('Erreur: ' + (data.error || 'Erreur inconnue'));
-            }
-        })
-        .catch(err => {
-            console.error('Erreur AJAX:', err);
-            alert('Erreur de connexion: ' + err.message);
-        });
+    if (!url) {
+        console.error('REACTIONS_AJAX_URL non définie');
+        return;
     }
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            'post_id': postId,
+            'emoji': emoji,
+            'action': 'toggle'
+        })
+    })
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.success) {
+            updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
+        } else {
+            console.error('Erreur serveur:', data.error);
+            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(err => {
+        console.error('Erreur AJAX:', err);
+        alert('Erreur de connexion: ' + err.message);
+    });
+}
 
     /**
      * Met à jour l'affichage d'une seule réaction après une réponse réussie.
