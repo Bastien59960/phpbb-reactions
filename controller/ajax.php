@@ -32,6 +32,9 @@ class ajax
     /** @var string */
     protected $posts_table;
 
+    protected $root_path; 
+    protected $php_ext; 
+
     /**
      * Constructor
      */
@@ -42,7 +45,9 @@ class ajax
         \phpbb\auth\auth $auth,
         \phpbb\language\language $language,
         $post_reactions_table,
-        $posts_table
+        $posts_table,
+        $root_path,
+        $php_ext
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -51,6 +56,8 @@ class ajax
         $this->language = $language;
         $this->post_reactions_table = $post_reactions_table;
         $this->posts_table = $posts_table;
+        $this->root_path = $root_path;
+        $this->php_ext = $php_ext;
         
         $this->language->add_lang('common', 'bastien59960/reactions');
     }
@@ -237,20 +244,32 @@ class ajax
      * Check if emoji is valid (basic Unicode emoji validation)
      */
     private function is_valid_emoji($emoji)
-    {
-        // Liste des emojis autorisés (peut être étendue)
-        $allowed_emojis = [
-            '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊',
-            '😋', '😎', '😍', '😘', '🥰', '😗', '😙', '😚', '😇', '🥳',
-            '😈', '👿', '😠', '😡', '🤬', '😱', '😰', '😨', '😧', '😦',
-            '😮', '😯', '😲', '🤯', '😳', '🥺', '😢', '😭', '😤', '😪',
-            '👍', '👎', '👌', '✌️', '🤞', '👏', '🙌', '👐', '🤲', '🙏',
-            '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
-            '💯', '💥', '💢', '💨', '💫', '⭐', '🌟', '✨', '⚡', '🔥'
-        ];
-        
-        return in_array($emoji, $allowed_emojis) && mb_strlen($emoji, 'UTF-8') <= 4;
+{
+    // Lire le contenu du fichier categories.json
+    $json_path = $this->root_path . 'ext/' . $this->php_ext . 'styles/prosilver/template/categories.json';
+    if (!file_exists($json_path)) {
+        return false;
     }
+    
+    $json_content = file_get_contents($json_path);
+    $data = json_decode($json_content, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($data['emojis'])) {
+        return false;
+    }
+
+    foreach ($data['emojis'] as $category_name => $subcategories) {
+        foreach ($subcategories as $subcategory_name => $emojis) {
+            foreach ($emojis as $emoji_data) {
+                if ($emoji_data['emoji'] === $emoji) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
 
     /**
      * Check if user can react to a post
