@@ -73,70 +73,65 @@ class ajax
     /**
      * Handle AJAX reactions
      */
-    public function handle()
-    {
-        // 1. Log de débogage pour s'assurer que le contrôleur est appelé
-        error_log('[phpBB Reactions] Controller handle() called');
+   public function handle()
+{
+    // 1. Log de débogage pour s'assurer que le contrôleur est appelé
+    error_log('[phpBB Reactions] Controller handle() called');
 
-        // 2. Vérification de la méthode HTTP et du jeton CSRF
-        //if (!$this->request->is_valid_csrf_token()) {
-        //    throw new HttpException(403, 'CSRF token is not valid.');
-        //}
-
-        // 3. Vérification de l'authentification de l'utilisateur
-        if ($this->user->data['user_id'] == ANONYMOUS) {
-            throw new HttpException(403, 'User not logged in.');
-        }
-
-        // 4. Récupérer le corps de la requête JSON
-        $input = file_get_contents('php://input');
-        $data = json_decode($input, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            throw new HttpException(400, 'Invalid JSON data');
-        }
-        
-        $sid = $data['sid'] ?? '';  // Correspond à la clé JS
-        
-        if ($sid !== $this->user->data['session_id']) {
-        throw new HttpException(403, 'Jeton CSRF invalide.');
-        }
-
-        // 5. Récupérer les variables depuis le tableau JSON
-        $post_id = $data['post_id'] ?? 0;
-        $emoji = $data['emoji'] ?? '';
-        $action = $data['action'] ?? '';
-
-        // 6. Vérifications de base
-        if (!in_array($action, ['add', 'remove', 'get'])) {
-            return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
-        }
-        
-        if (!$post_id || !$this->is_valid_post($post_id)) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_POST')], 400);
-        }
-        
-        if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_EMOJI')], 400);
-        }
-
-        // 7. Vérifier les permissions
-        if (!$this->can_react_to_post($post_id)) {
-            return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_NOT_AUTHORIZED')], 403);
-        }
-
-        // 8. Logique principale
-        switch ($action) {
-            case 'add':
-                return $this->add_reaction($post_id, $emoji);
-            case 'remove':
-                return $this->remove_reaction($post_id, $emoji);
-            case 'get':
-                return $this->get_reactions($post_id);
-            default:
-                return new JsonResponse(['success' => false, 'error' => 'Unknown action'], 400);
-        }
+    // 2. Vérification de l'authentification de l'utilisateur
+    if ($this->user->data['user_id'] == ANONYMOUS) {
+        throw new HttpException(403, 'User not logged in.');
     }
+
+    // 3. Récupérer le corps de la requête JSON
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+        throw new HttpException(400, 'Invalid JSON data');
+    }
+    
+    $sid = $data['sid'] ?? '';
+    
+    if ($sid !== $this->user->data['session_id']) {
+        throw new HttpException(403, 'Jeton CSRF invalide.');
+    }
+
+    // 4. Récupérer les variables depuis le tableau JSON
+    $post_id = $data['post_id'] ?? 0;
+    $emoji = $data['emoji'] ?? '';
+    $action = $data['action'] ?? '';
+
+    // 5. Vérifications de base
+    if (!in_array($action, ['add', 'remove', 'get'])) {
+        return new JsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
+    }
+    
+    if (!$post_id || !$this->is_valid_post($post_id)) {
+        return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_POST')], 400);
+    }
+    
+    if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
+        return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_INVALID_EMOJI')], 400);
+    }
+
+    // 6. Vérifier les permissions
+    if (!$this->can_react_to_post($post_id)) {
+        return new JsonResponse(['success' => false, 'error' => $this->language->lang('REACTION_NOT_AUTHORIZED')], 403);
+    }
+
+    // 7. Logique principale
+    switch ($action) {
+        case 'add':
+            return $this->add_reaction($post_id, $emoji);
+        case 'remove':
+            return $this->remove_reaction($post_id, $emoji);
+        case 'get':
+            return $this->get_reactions($post_id);
+        default:
+            return new JsonResponse(['success' => false, 'error' => 'Unknown action'], 400);
+    }
+}
     
     /**
      * Add a reaction
