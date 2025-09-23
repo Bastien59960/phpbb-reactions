@@ -282,35 +282,39 @@ private function is_valid_emoji($emoji)
     /**
      * Check if user can react to a post
      */
-    private function can_react_to_post($post_id)
-    {
-        // Obtenir les informations du post et du forum
-        $sql = 'SELECT p.post_id, p.forum_id, p.poster_id, t.topic_status, f.forum_status
-                FROM ' . $this->posts_table . ' p
-                JOIN ' . TOPICS_TABLE . ' t ON p.topic_id = t.topic_id
-                JOIN ' . FORUMS_TABLE . ' f ON p.forum_id = f.forum_id
-                WHERE p.post_id = ' . (int) $post_id;
-        $result = $this->db->sql_query($sql);
-        $post_data = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-        
-        if (!$post_data) {
-            return false;
-        }
-        
-        // Vérifier les permissions de lecture du forum
-        if (!$this->auth->acl_get('f_read', $post_data['forum_id'])) {
-            return false;
-        }
-        
-        // Vérifier si le topic/forum est ouvert
-        if ($post_data['topic_status'] == ITEM_LOCKED || $post_data['forum_status'] == ITEM_LOCKED) {
-            return false;
-        }
-        
-        // Les utilisateurs peuvent réagir s'ils peuvent lire (peut être personnalisé)
-        return true;
+/**
+ * Check if user can react to a post
+ */
+private function can_react_to_post($post_id)
+{
+    // Si l'utilisateur est anonyme, il ne peut pas réagir
+    if ($this->user->data['user_id'] == ANONYMOUS) {
+        return false;
     }
+
+    // Obtenir les informations du post
+    $sql = 'SELECT p.post_id, p.forum_id, p.poster_id, t.topic_status, f.forum_status
+            FROM ' . $this->posts_table . ' p
+            JOIN ' . $this->topics_table . ' t ON p.topic_id = t.topic_id
+            JOIN ' . $this->forums_table . ' f ON p.forum_id = f.forum_id
+            WHERE p.post_id = ' . (int) $post_id;
+    $result = $this->db->sql_query($sql);
+    $post_data = $this->db->sql_fetchrow($result);
+    $this->db->sql_freeresult($result);
+    
+    if (!$post_data) {
+        return false;
+    }
+    
+    // Vérifier si le topic/forum est verrouillé
+    if ($post_data['topic_status'] == ITEM_LOCKED || $post_data['forum_status'] == ITEM_LOCKED) {
+        return false;
+    }
+    
+    // Pour l'instant, autoriser tous les utilisateurs connectés à réagir
+    // Vous pourrez ajouter des permissions plus fines plus tard
+    return true;
+}
 
     /**
      * Check if reaction already exists
