@@ -95,6 +95,12 @@ class ajax
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
             throw new HttpException(400, 'Invalid JSON data');
         }
+        
+        $sid = $data['sid'] ?? '';  // Correspond à la clé JS
+        
+        if ($sid !== $this->user->data['session_id']) {
+        throw new HttpException(403, 'Jeton CSRF invalide.');
+        }
 
         // 5. Récupérer les variables depuis le tableau JSON
         $post_id = $data['post_id'] ?? 0;
