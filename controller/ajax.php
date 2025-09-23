@@ -276,28 +276,37 @@ private function add_reaction($post_id, $emoji)
             ], 400);
         }
 
-        // Build insert
-        $sql_ary = [
-            'post_id'        => $post_id,
-            'topic_id'       => $topic_id,
-            'user_id'        => $user_id,
-            'reaction_emoji' => $emoji,
-            'reaction_time'  => time(),
-        ];
-        error_log("[Reactions RID=$rid] sql_ary=" . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
+  // Build insert
+$sql_ary = [
+    'post_id'        => $post_id,
+    'topic_id'       => $topic_id,
+    'user_id'        => $user_id,
+    'reaction_emoji' => $emoji,
+    'reaction_time'  => time(),
+];
+error_log("[Reactions RID=$rid] sql_ary=" . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
 
-        try {
-            $insertSql = 'INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-            error_log("[Reactions RID=$rid] insert SQL: $insertSql");
-        } catch (\Throwable $buildEx) {
-            error_log("[Reactions RID=$rid] sql_build_array error: " . $buildEx->getMessage());
-            return new JsonResponse([
-                'success' => false,
-                'stage'   => 'sql_build',
-                'error'   => $buildEx->getMessage(),
-                'rid'     => $rid,
-            ], 500);
-        }
+// 🔍 Vérification du charset de la connexion avant l'INSERT
+$res = $this->db->sql_query("SHOW VARIABLES LIKE 'character_set_connection'");
+$row = $this->db->sql_fetchrow($res);
+$this->db->sql_freeresult($res);
+if ($row) {
+    error_log("[Reactions RID=$rid] Connexion charset=" . $row['Value']);
+}
+
+try {
+    $insertSql = 'INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+    error_log("[Reactions RID=$rid] insert SQL: $insertSql");
+} catch (\Throwable $buildEx) {
+    error_log("[Reactions RID=$rid] sql_build_array error: " . $buildEx->getMessage());
+    return new JsonResponse([
+        'success' => false,
+        'stage'   => 'sql_build',
+        'error'   => $buildEx->getMessage(),
+        'rid'     => $rid,
+    ], 500);
+}
+
 
         try {
             $this->db->sql_query($insertSql);
