@@ -236,6 +236,7 @@ private function add_reaction($post_id, $emoji)
             'reaction_emoji' => $emoji,
             'reaction_time'  => time(),
         ];
+
         $sql = 'INSERT INTO ' . $this->post_reactions_table . ' '
              . $this->db->sql_build_array('INSERT', $sql_ary);
 
@@ -244,6 +245,7 @@ private function add_reaction($post_id, $emoji)
         try {
             $this->db->sql_query($sql);
         } catch (\Throwable $dbEx) {
+            // Ici tu verras l'erreur SQL exacte (ex: Incorrect string value)
             error_log("[Reactions DEBUG] Exception SQL: " . $dbEx->getMessage());
             return new JsonResponse([
                 'success' => false,
@@ -262,6 +264,7 @@ private function add_reaction($post_id, $emoji)
         ], 500);
     }
 }
+
 
 
 /**
