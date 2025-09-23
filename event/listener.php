@@ -79,6 +79,7 @@ class listener implements EventSubscriberInterface
      */
     public function add_assets_to_page($event)
     {
+        $this->template->assign_var('REACTIONS_SID', $this->user->data['session_id']);
         // Charger le fichier de langue de l'extension (si présent)
         $this->language->add_lang('common', 'bastien59960/reactions');
 
