@@ -131,43 +131,33 @@
      * Envoie la requête AJAX au serveur.
      */
 function sendReaction(postId, emoji) {
-    const url = window.REACTIONS_AJAX_URL;
-
-    if (!url) {
-        console.error('REACTIONS_AJAX_URL non définie');
-        return;
-    }
+    // Définir la variable REACTIONS_AJAX_URL dans un script séparé
+    // ou la passer dans le HTML si elle n'est pas déjà disponible.
+    const url = REACTIONS_AJAX_URL; 
 
     fetch(url, {
         method: 'POST',
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify({
-            'post_id': postId,
-            'emoji': emoji,
-            'action': 'toggle'
+            post_id: postId,
+            reaction_emoji: emoji,
+            // Ajoutez le jeton CSRF ici
+            _method: 'post', // Ne pas oublier la méthode
+            _token: phpbb.get//
         })
     })
-    .then(res => {
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        return res.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
-            updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
+            updateReactionUI(postId, emoji, data.count, data.user_reacted);
         } else {
-            console.error('Erreur serveur:', data.error);
-            alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+            console.error('Erreur de réaction :', data.message);
         }
     })
-    .catch(err => {
-        console.error('Erreur AJAX:', err);
-        alert('Erreur de connexion: ' + err.message);
-    });
+    .catch(error => console.error('Erreur:', error));
 }
 
     /**
