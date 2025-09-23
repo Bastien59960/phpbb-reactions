@@ -174,47 +174,79 @@ class ajax
  */
 private function add_reaction($post_id, $emoji)
 {
-    error_log("[Reactions DEBUG] add_reaction() appelé avec post_id=$post_id, emoji=$emoji");
+    error_log("[Reactions DEBUG] add_reaction() post_id=$post_id, emoji=$emoji");
 
     try {
+        $post_id = (int) $post_id;
         $user_id = (int) $this->user->data['user_id'];
 
-        // Vérifier si l’utilisateur a déjà réagi avec ce même emoji
+        // 1) Récupérer topic_id depuis phpbb_posts (posts_table)
+        $sql = 'SELECT topic_id
+                FROM ' . $this->posts_table . '
+                WHERE post_id = ' . $post_id;
+        error_log("[Reactions DEBUG] SQL topic lookup = $sql");
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$row || !isset($row['topic_id'])) {
+            error_log("[Reactions DEBUG] post_id=$post_id introuvable ou sans topic_id");
+            return new JsonResponse([
+                'success' => false,
+                'error'   => $this->language->lang('REACTION_INVALID_POST'),
+            ], 400);
+        }
+
+        $topic_id = (int) $row['topic_id'];
+
+        // 2) Vérifier doublon (même user, même post, même emoji)
         $sql = 'SELECT reaction_id
                 FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . (int) $post_id . '
+                WHERE post_id = ' . $post_id . '
                   AND user_id = ' . $user_id . "
                   AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
+        error_log("[Reactions DEBUG] SQL check duplicate = $sql");
         $result = $this->db->sql_query($sql);
         $already = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
 
         if ($already) {
-            error_log("[Reactions DEBUG] L'utilisateur $user_id a déjà réagi avec $emoji sur post $post_id");
+            error_log("[Reactions DEBUG] doublon: user_id=$user_id, post_id=$post_id, emoji=$emoji");
             return new JsonResponse([
                 'success' => false,
-                'error'   => $this->language->lang('REACTION_ALREADY_ADDED')
+                'error'   => $this->language->lang('REACTION_ALREADY_ADDED'),
             ], 400);
         }
 
-        // Insertion
+        // 3) Validation rapide sur longueur emoji vs varchar(10)
+        // Attention: utf8mb3_bin + emojis multi-octets; si >10 octets, on refuse proprement.
+        if (strlen($emoji) > 10) {
+            error_log("[Reactions DEBUG] emoji trop long pour varchar(10): len=" . strlen($emoji));
+            return new JsonResponse([
+                'success' => false,
+                'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
+            ], 400);
+        }
+
+        // 4) Insertion
         $sql_ary = [
-            'post_id'        => (int) $post_id,
+            'post_id'        => $post_id,
+            'topic_id'       => $topic_id,
             'user_id'        => $user_id,
             'reaction_emoji' => $emoji,
             'reaction_time'  => time(),
         ];
-        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' ' .
-               $this->db->sql_build_array('INSERT', $sql_ary);
+        $sql = 'INSERT INTO ' . $this->post_reactions_table . ' '
+             . $this->db->sql_build_array('INSERT', $sql_ary);
 
         error_log("[Reactions DEBUG] SQL insert = $sql");
         $this->db->sql_query($sql);
 
-        // Retourner la liste mise à jour des réactions
+        // 5) Retourner les réactions mises à jour pour ce post
         return $this->get_reactions($post_id);
 
     } catch (\Throwable $e) {
-        error_log("[Reactions DEBUG] Exception dans add_reaction: " . $e->getMessage());
+        error_log("[Reactions DEBUG] Exception add_reaction: " . $e->getMessage());
         return new JsonResponse([
             'success' => false,
             'error'   => 'Erreur serveur: ' . $e->getMessage(),
