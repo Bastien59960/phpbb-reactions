@@ -115,7 +115,7 @@ class listener implements EventSubscriberInterface
        /**
      * Assigne les réactions à un post pour l'affichage dans le template
      */
-    private function display_reactions(&$post_row)
+    public function display_reactions(&$post_row)
     {
         // Récupérer toutes les réactions pour ce post depuis la base de données
         $reactions_by_db = $this->get_post_reactions($post_row['post_id']);
