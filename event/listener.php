@@ -210,10 +210,11 @@ class listener implements EventSubscriberInterface
      */
     private function get_post_reactions($post_id)
     {
-        $post_id = (int) $post_id;
-        if ($post_id <= 0) {
-            return [];
-        }
+if ($post_id <= 0) {
+    $event['post_row'] = $post_row;
+    return;
+}
+        $is_logged_in = $this->user->data['user_id'] != ANONYMOUS;
 
         $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
                 FROM ' . $this->post_reactions_table . '
