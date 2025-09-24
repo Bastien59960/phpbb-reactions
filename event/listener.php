@@ -270,7 +270,7 @@ class listener implements EventSubscriberInterface
         
         return $row ? (int) $row['user_reaction_count'] : 0;
     }
-
+}
 
 
     
