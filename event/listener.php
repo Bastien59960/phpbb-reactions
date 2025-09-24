@@ -77,7 +77,7 @@ class listener implements EventSubscriberInterface
      */
     public function add_assets_to_page($event)
     {
-        // Charger le fichier de langue de l'extension (si présent)
+        // Charger le fichier de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
 
         // Chemins relatifs vers les assets de l'extension
@@ -92,7 +92,7 @@ class listener implements EventSubscriberInterface
             'REACTIONS_CSS_PATH'  => $css_path,
             'REACTIONS_JS_PATH'   => $js_path,
             'U_REACTIONS_AJAX'    => $ajax_url,
-            'S_SESSION_ID'        => $this->user->data['session_id'], // Ajouté pour le template
+            'S_SESSION_ID'        => $this->user->data['session_id'],
         ]);
 
         // Exposer l'URL AJAX et le SID dans le JS global
@@ -109,11 +109,12 @@ class listener implements EventSubscriberInterface
      */
     public function load_language_and_data($event)
     {
-        // RAS pour l'instant — méthode gardée pour compatibilité
+        // RAS pour l'instant - méthode gardée pour compatibilité
     }
 
     /**
-     * ✅ CORRECTION MAJEURE : Prépare les données des réactions pour chaque post
+     * CORRECTION MAJEURE : Prépare les données des réactions pour chaque post
+     * Selon cahier des charges : SEULEMENT les réactions avec count > 0 sont affichées
      *
      * @param \phpbb\event\data $event
      */
@@ -134,44 +135,24 @@ class listener implements EventSubscriberInterface
         $reactions_by_db = $this->get_post_reactions($post_id); // [emoji => count]
         $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']); // [emoji, ...]
 
-        // ✅ CORRECTION : Réactions par défaut selon le cahier des charges
-        $default_reactions = ['👍', '👎', '❤️', '😂', '😮', '😢'];
-
-        // Construire la liste visible pour ce post
+        // CORRECTION SELON CAHIER DES CHARGES :
+        // NE PAS afficher les émojis courantes par défaut sous les messages
+        // Afficher SEULEMENT les réactions ayant au minimum 1 compteur
         $visible = [];
 
-        // 1) Ajouter les réactions par défaut en premier
-        foreach ($default_reactions as $emoji) {
-            $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
-            $user_reacted = in_array($emoji, $user_reactions, true);
-
-            $visible[] = [
-                'EMOJI'          => $emoji,
-                'COUNT'          => $count,
-                'USER_REACTED'   => $user_reacted,
-                'IS_DEFAULT'     => true,
-            ];
-
-            // Si l'emoji existe en DB, on l'enlève pour éviter duplication
-            if (isset($reactions_by_db[$emoji])) {
-                unset($reactions_by_db[$emoji]);
+        foreach ($reactions_by_db as $emoji => $count) {
+            if ($count > 0) { // Condition stricte selon cahier des charges
+                $visible[] = [
+                    'EMOJI'          => $emoji,
+                    'COUNT'          => (int) $count,
+                    'USER_REACTED'   => in_array($emoji, $user_reactions, true),
+                ];
             }
         }
 
-        // 2) Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
-        foreach ($reactions_by_db as $emoji => $count) {
-            $visible[] = [
-                'EMOJI'          => $emoji,
-                'COUNT'          => (int) $count,
-                'USER_REACTED'   => in_array($emoji, $user_reactions, true),
-                'IS_DEFAULT'     => false,
-            ];
-        }
-
-        // ✅ CORRECTION CRITIQUE : Utiliser le bon nom de variable pour le template
         $post_row = array_merge($post_row, [
             'S_REACTIONS_ENABLED' => true,
-            'post_reactions'      => $visible,  // ← Changé de 'POST_REACTIONS' à 'post_reactions'
+            'post_reactions'      => $visible,
         ]);
 
         error_log('[phpBB Reactions] post_reactions assigned: ' . count($visible) . ' reactions for post ' . $post_id);
@@ -191,46 +172,7 @@ class listener implements EventSubscriberInterface
     }
 
     /**
-     * ✅ MÉTHODE OPTIMISÉE : Récupère le nombre de réactions par emoji pour un post
-     *
-     * @param int $post_id
-     * @return array emoji => count
-     */
-    private function get_post_reactions($post_id)
-    {
-        $post_id = (int) $post_id;
-        if ($post_id <= 0) {
-            return [];
-        }
-
-        $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                GROUP BY reaction_emoji
-                ORDER BY COUNT(*) DESC';  // ✅ Trier par popularité
-        
-        error_log("[Reactions Debug] SQL: $sql");
-        $result = $this->db->sql_query($sql);
-
-        $reactions = [];
-        
-        while ($row = $this->db->sql_fetchrow($result)) {
-            error_log("[Reactions Debug] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
-            
-            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-            if ($key !== '') {
-                $reactions[$key] = (int) $row['reaction_count'];
-            }
-        }
-        $this->db->sql_freeresult($result);
-
-        error_log("[Reactions Debug] Final reactions: " . json_encode($reactions, JSON_UNESCAPED_UNICODE));
-        
-        return $reactions;
-    }
-
-    /**
-     * ✅ MÉTHODE OPTIMISÉE : Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
+     * MÉTHODE OPTIMISÉE : Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
      *
      * @param int $post_id
      * @param int $user_id
@@ -249,7 +191,7 @@ class listener implements EventSubscriberInterface
                 FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . $post_id . '
                   AND user_id = ' . $user_id . '
-                ORDER BY reaction_time ASC';  // ✅ Ordre chronologique
+                ORDER BY reaction_time ASC';
         
         error_log("[Reactions Debug User] SQL: $sql");
         $result = $this->db->sql_query($sql);
@@ -267,12 +209,12 @@ class listener implements EventSubscriberInterface
 
         error_log("[Reactions Debug User] Final user_reactions: " . json_encode($user_reactions, JSON_UNESCAPED_UNICODE));
         
-        // ✅ Supprimer les doublons et réindexer
+        // Supprimer les doublons et réindexer
         return array_values(array_unique($user_reactions));
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Vérification de validité des posts (sécurité)
+     * NOUVELLE MÉTHODE : Vérification de validité des posts (sécurité)
      *
      * @param int $post_id
      * @return bool
@@ -288,7 +230,7 @@ class listener implements EventSubscriberInterface
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Comptage du nombre total de réactions pour un post
+     * NOUVELLE MÉTHODE : Comptage du nombre total de réactions pour un post
      *
      * @param int $post_id
      * @return int
@@ -306,7 +248,7 @@ class listener implements EventSubscriberInterface
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE : Comptage des réactions utilisateur pour un post
+     * NOUVELLE MÉTHODE : Comptage des réactions utilisateur pour un post
      *
      * @param int $post_id
      * @param int $user_id
@@ -328,4 +270,48 @@ class listener implements EventSubscriberInterface
         
         return $row ? (int) $row['user_reaction_count'] : 0;
     }
-}
+}ère le nombre de réactions par emoji pour un post
+     *
+     * @param int $post_id
+     * @return array emoji => count
+     */
+    private function get_post_reactions($post_id)
+    {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                GROUP BY reaction_emoji
+                ORDER BY COUNT(*) DESC';
+        
+        error_log("[Reactions Debug] get_post_reactions SQL: $sql");
+        $result = $this->db->sql_query($sql);
+
+        $reactions = [];
+        $row_count = 0;
+        
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $row_count++;
+            error_log("[Reactions Debug] Row #$row_count: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+            
+            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+            if ($key !== '') {
+                $reactions[$key] = (int) $row['reaction_count'];
+            } else {
+                error_log("[Reactions Debug] ALERTE: reaction_key vide dans la row");
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        error_log("[Reactions Debug] get_post_reactions final pour post_id=$post_id: " . json_encode($reactions, JSON_UNESCAPED_UNICODE));
+        error_log("[Reactions Debug] Nombre total de rows: $row_count");
+        
+        return $reactions;
+    }
+
+    /**
+     * MÉTHODE OPTIMISÉE : Récup
