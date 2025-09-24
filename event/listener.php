@@ -112,86 +112,37 @@ class listener implements EventSubscriberInterface
         // RAS pour l'instant — méthode gardée pour compatibilité
     }
 
-    /**
-     * Prépare les données des réactions pour chaque post (appelé par core.viewtopic_post_row_after)
-     *
-     * @param \phpbb\event\data $event
+       /**
+     * Assigne les réactions à un post pour l'affichage dans le template
      */
-    public function display_reactions($event)
+    private function display_reactions(&$post_row)
     {
-        error_log('[phpBB Reactions] display_reactions called');
+        // Récupérer toutes les réactions pour ce post depuis la base de données
+        $reactions_by_db = $this->get_post_reactions($post_row['post_id']);
 
-        $post_row = isset($event['post_row']) ? $event['post_row'] : [];
-        $row      = isset($event['row']) ? $event['row'] : [];
-        $post_id  = isset($row['post_id']) ? (int) $row['post_id'] : 0;
+        // Récupérer les réactions de l'utilisateur courant pour ce post
+        $user_reactions = $this->get_user_reactions($post_row['post_id'], $this->user->data['user_id']);
 
-        if ($post_id <= 0) {
-            $event['post_row'] = $post_row;
-            return;
-        }
-
-        // Récupération depuis la DB
-        $reactions_by_db = $this->get_post_reactions($post_id); // [emoji => count]
-        $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']); // [emoji, ...]
-
-        // Réactions par défaut visibles (toujours présentes)
-        $default_reactions = ['👍', '❤️', '😂', '😮', '😢'];
-
-        // Construire la liste visible pour ce post :
-        // 1) les défauts (dans l'ordre), 2) les réactions supplémentaires venant de la DB
-        $visible = [];
-
-        foreach ($default_reactions as $emoji) {
-            $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
-
-            $visible[] = [
-                'EMOJI'          => $emoji,
-                'COUNT'          => $count,
-                'USER_REACTED'   => in_array($emoji, $user_reactions, true),
-                'IS_DEFAULT'     => true,
-            ];
-
-            // si l'emoji existe en DB, on l'enlève pour éviter duplication
-            if (isset($reactions_by_db[$emoji])) {
-                unset($reactions_by_db[$emoji]);
-            }
-        }
-
-        // Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
-        foreach ($reactions_by_db as $emoji => $count) {
-            $visible[] = [
-                'EMOJI'          => $emoji,
-                'COUNT'          => (int) $count,
-                'USER_REACTED'   => in_array($emoji, $user_reactions, true),
-                'IS_DEFAULT'     => false,
-            ];
-        }
-
-        // Palette complète (pour reaction-picker) - modifiable selon tes besoins
-        $all_reactions_list = [
-            '👍','❤️','😂','😮','😢','😡','🔥','👏','🥳','🎉',
-            '👌','👀','🤔','🙏','🤩','😴','🤮','💯','🙌','🤝',
-            '😅','🤷','😬','🤗','😇','😎','😤','😱','🎯','🧡'
-        ];
+        // Créer un tableau de toutes les réactions à afficher, y compris celles qui ne sont pas dans les valeurs par défaut
+        // La clé est l'emoji, la valeur est le nombre de réactions
+        $all_reactions_keys = array_keys($reactions_by_db);
         $all_reactions = [];
-        foreach ($all_reactions_list as $emoji) {
-            $all_reactions[] = ['EMOJI' => $emoji];
+
+        foreach ($all_reactions_keys as $emoji) {
+            $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
+            $user_reacted = in_array($emoji, $user_reactions);
+
+            // Le template s'attend à un tableau d'objets ou de tableaux
+            $all_reactions[] = [
+                'EMOJI'         => $emoji,
+                'COUNT'         => $count,
+                'USER_REACTED'  => $user_reacted,
+            ];
         }
 
-        // URL pour action 'add' sur ce post (route attend post_id)
-        $u_react = $this->helper->route('bastien59960_reactions_add', ['post_id' => $post_id]);
-
-        // Fusionner données dans post_row pour le template (accessible via {postrow.*})
-        $post_row = array_merge($post_row, [
-            'S_REACTIONS_ENABLED' => true,
-            'POST_REACTIONS'      => $visible,
-            'ALL_REACTIONS'       => $all_reactions,
-            'U_REACT'             => $u_react,
-        ]);
-
-        $event['post_row'] = $post_row;
+        // Assigner le tableau de réactions au post pour l'affichage
+        $post_row['post_reactions'] = $all_reactions;
     }
-
     /**
      * Placeholder pour données de forum si nécessaire
      *
