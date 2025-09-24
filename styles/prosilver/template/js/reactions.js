@@ -3,6 +3,9 @@
 
     let currentPicker = null;
 
+    // Émojis populaires affichés en premier (modifiables selon vos besoins)
+    const POPULAR_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '👏', '🥳', '🎉'];
+
     // ---------- Initialisation ----------
     function initReactions() {
         attachReactionEvents();
@@ -87,6 +90,45 @@
     }
 
     function buildEmojiPicker(picker, postId, emojiData) {
+        // ✅ NOUVEAU : Section des émojis populaires EN PREMIER
+        const popularSection = document.createElement('div');
+        popularSection.classList.add('emoji-section', 'popular-section');
+        
+        const popularTitle = document.createElement('div');
+        popularTitle.classList.add('emoji-category', 'popular-title');
+        popularTitle.textContent = '⭐ Populaires';
+        popularSection.appendChild(popularTitle);
+
+        const popularGrid = document.createElement('div');
+        popularGrid.classList.add('emoji-grid', 'popular-grid');
+        
+        POPULAR_EMOJIS.forEach(emoji => {
+            const cell = document.createElement('span');
+            cell.classList.add('emoji-cell', 'popular-emoji');
+            cell.textContent = emoji;
+            cell.addEventListener('click', () => {
+                sendReaction(postId, emoji);
+                closeAllPickers();
+            });
+            popularGrid.appendChild(cell);
+        });
+        
+        popularSection.appendChild(popularGrid);
+        picker.appendChild(popularSection);
+
+        // ✅ Séparateur visuel
+        const separator = document.createElement('div');
+        separator.classList.add('emoji-separator');
+        separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
+        picker.appendChild(separator);
+
+        // ✅ Titre pour les autres catégories
+        const otherTitle = document.createElement('div');
+        otherTitle.classList.add('emoji-category', 'other-categories-title');
+        otherTitle.textContent = '📋 Toutes les catégories';
+        picker.appendChild(otherTitle);
+
+        // ✅ Reste des catégories (en excluant les populaires pour éviter doublons)
         Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
             const catTitle = document.createElement('div');
             catTitle.classList.add('emoji-category');
@@ -98,6 +140,11 @@
                 grid.classList.add('emoji-grid');
 
                 emojis.forEach(emojiObj => {
+                    // ✅ Éviter les doublons avec la section populaire
+                    if (POPULAR_EMOJIS.includes(emojiObj.emoji)) {
+                        return; // Skip cet emoji car il est déjà dans la section populaire
+                    }
+
                     const cell = document.createElement('span');
                     cell.classList.add('emoji-cell');
                     cell.textContent = emojiObj.emoji;
@@ -108,13 +155,48 @@
                     grid.appendChild(cell);
                 });
 
-                picker.appendChild(grid);
+                // N'ajouter la grille que si elle contient des émojis
+                if (grid.children.length > 0) {
+                    picker.appendChild(grid);
+                }
             });
         });
     }
 
     function buildFallbackPicker(picker, postId) {
-        const fallbackEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+        // ✅ Section populaire même en mode fallback
+        const popularTitle = document.createElement('div');
+        popularTitle.classList.add('emoji-category', 'popular-title');
+        popularTitle.textContent = '⭐ Populaires';
+        picker.appendChild(popularTitle);
+
+        const popularGrid = document.createElement('div');
+        popularGrid.classList.add('emoji-grid', 'popular-grid');
+
+        POPULAR_EMOJIS.forEach(emoji => {
+            const cell = document.createElement('span');
+            cell.classList.add('emoji-cell', 'popular-emoji');
+            cell.textContent = emoji;
+            cell.addEventListener('click', () => {
+                sendReaction(postId, emoji);
+                closeAllPickers();
+            });
+            popularGrid.appendChild(cell);
+        });
+
+        picker.appendChild(popularGrid);
+
+        // ✅ Autres émojis de base (non populaires)
+        const separator = document.createElement('div');
+        separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
+        picker.appendChild(separator);
+
+        const otherTitle = document.createElement('div');
+        otherTitle.classList.add('emoji-category');
+        otherTitle.textContent = '📋 Autres';
+        picker.appendChild(otherTitle);
+
+        const fallbackEmojis = ['🤔', '🙏', '🤩', '😴', '🤮', '💯', '🙌', '🤝', '😅', '🤷', '😬', '🤗', '😇', '😎', '😤', '😱'];
         const grid = document.createElement('div');
         grid.classList.add('emoji-grid');
 
