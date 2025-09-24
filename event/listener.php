@@ -70,7 +70,7 @@ class listener implements EventSubscriberInterface
         ];
     }
 
-   /**
+    /**
      * Add CSS/JS and load language
      *
      * @param \phpbb\event\data $event
@@ -113,7 +113,7 @@ class listener implements EventSubscriberInterface
     }
 
     /**
-     * Prépare les données des réactions pour chaque post (appelé par core.viewtopic_post_row_after)
+     * ✅ CORRECTION MAJEURE : Prépare les données des réactions pour chaque post
      *
      * @param \phpbb\event\data $event
      */
@@ -134,30 +134,31 @@ class listener implements EventSubscriberInterface
         $reactions_by_db = $this->get_post_reactions($post_id); // [emoji => count]
         $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']); // [emoji, ...]
 
-        // Réactions par défaut visibles (toujours présentes)
-        $default_reactions = ['👍', '❤️', '😂', '😮', '😢'];
+        // ✅ CORRECTION : Réactions par défaut selon le cahier des charges
+        $default_reactions = ['👍', '👎', '❤️', '😂', '😮', '😢'];
 
-        // Construire la liste visible pour ce post :
-        // 1) les défauts (dans l'ordre), 2) les réactions supplémentaires venant de la DB
+        // Construire la liste visible pour ce post
         $visible = [];
 
+        // 1) Ajouter les réactions par défaut en premier
         foreach ($default_reactions as $emoji) {
             $count = isset($reactions_by_db[$emoji]) ? (int) $reactions_by_db[$emoji] : 0;
+            $user_reacted = in_array($emoji, $user_reactions, true);
 
             $visible[] = [
                 'EMOJI'          => $emoji,
                 'COUNT'          => $count,
-                'USER_REACTED'   => in_array($emoji, $user_reactions, true),
+                'USER_REACTED'   => $user_reacted,
                 'IS_DEFAULT'     => true,
             ];
 
-            // si l'emoji existe en DB, on l'enlève pour éviter duplication
+            // Si l'emoji existe en DB, on l'enlève pour éviter duplication
             if (isset($reactions_by_db[$emoji])) {
                 unset($reactions_by_db[$emoji]);
             }
         }
 
-        // Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
+        // 2) Ajouter les autres emojis trouvés en DB (choisis par des utilisateurs)
         foreach ($reactions_by_db as $emoji => $count) {
             $visible[] = [
                 'EMOJI'          => $emoji,
@@ -167,27 +168,14 @@ class listener implements EventSubscriberInterface
             ];
         }
 
-        // Palette complète (pour reaction-picker) - modifiable selon tes besoins
-        $all_reactions_list = [
-            '👍','❤️','😂','😮','😢','😡','🔥','👏','🥳','🎉',
-            '👌','👀','🤔','🙏','🤩','😴','🤮','💯','🙌','🤝',
-            '😅','🤷','😬','🤗','😇','😎','😤','😱','🎯','🧡'
-        ];
-        $all_reactions = [];
-        foreach ($all_reactions_list as $emoji) {
-            $all_reactions[] = ['EMOJI' => $emoji];
-        }
-
-        // URL pour action 'add' sur ce post (route attend post_id)
-        $u_react = $this->helper->route('bastien59960_reactions_add', ['post_id' => $post_id]);
-
-        // Fusionner données dans post_row pour le template (accessible via {postrow.*})
+        // ✅ CORRECTION CRITIQUE : Utiliser le bon nom de variable pour le template
         $post_row = array_merge($post_row, [
             'S_REACTIONS_ENABLED' => true,
-            'POST_REACTIONS'      => $visible,
-            'ALL_REACTIONS'       => $all_reactions,
-            'U_REACT'             => $u_react,
+            'post_reactions'      => $visible,  // ← Changé de 'POST_REACTIONS' à 'post_reactions'
         ]);
+
+        error_log('[phpBB Reactions] post_reactions assigned: ' . count($visible) . ' reactions for post ' . $post_id);
+        error_log('[phpBB Reactions] reactions data: ' . json_encode($visible, JSON_UNESCAPED_UNICODE));
 
         $event['post_row'] = $post_row;
     }
@@ -202,82 +190,142 @@ class listener implements EventSubscriberInterface
         // rien pour l'instant
     }
 
-/**
- * Récupère le nombre de réactions par emoji pour un post
- *
- * @param int $post_id
- * @return array emoji => count
- */
-private function get_post_reactions($post_id)
-{
-    $post_id = (int) $post_id;
-    if ($post_id <= 0) {
-        return []; // ✅ CORRECTION: return [] au lieu d'utiliser $event
-    }
-
-    $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
-            FROM ' . $this->post_reactions_table . '
-            WHERE post_id = ' . $post_id . '
-            GROUP BY reaction_emoji';
-    
-    error_log("[Reactions Debug] SQL: $sql");
-    $result = $this->db->sql_query($sql);
-
-    $reactions = []; // ✅ CORRECTION: Initialiser $reactions AVANT la boucle
-    
-    while ($row = $this->db->sql_fetchrow($result)) {
-        error_log("[Reactions Debug] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
-        
-        $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-        if ($key !== '') {
-            $reactions[$key] = (int) $row['reaction_count'];
+    /**
+     * ✅ MÉTHODE OPTIMISÉE : Récupère le nombre de réactions par emoji pour un post
+     *
+     * @param int $post_id
+     * @return array emoji => count
+     */
+    private function get_post_reactions($post_id)
+    {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return [];
         }
-    }
-    $this->db->sql_freeresult($result);
 
-    error_log("[Reactions Debug] Final reactions: " . json_encode($reactions, JSON_UNESCAPED_UNICODE));
-    
-    return $reactions;
-}
-
-/**
- * Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
- *
- * @param int $post_id
- * @param int $user_id
- * @return array list d'emojis
- */
-private function get_user_reactions($post_id, $user_id)
-{
-    $post_id = (int) $post_id;
-    $user_id = (int) $user_id;
-
-    if ($user_id === ANONYMOUS || $post_id <= 0) {
-        return [];
-    }
-
-    $sql = 'SELECT reaction_emoji AS reaction_key
-            FROM ' . $this->post_reactions_table . '
-            WHERE post_id = ' . $post_id . '
-              AND user_id = ' . $user_id;
-    
-    error_log("[Reactions Debug User] SQL: $sql");
-    $result = $this->db->sql_query($sql);
-
-    $user_reactions = [];
-    while ($row = $this->db->sql_fetchrow($result)) {
-        error_log("[Reactions Debug User] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+        $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                GROUP BY reaction_emoji
+                ORDER BY COUNT(*) DESC';  // ✅ Trier par popularité
         
-        $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-        if ($key !== '') {
-            $user_reactions[] = $key;
-        }
-    }
-    $this->db->sql_freeresult($result);
+        error_log("[Reactions Debug] SQL: $sql");
+        $result = $this->db->sql_query($sql);
 
-    error_log("[Reactions Debug User] Final user_reactions: " . json_encode($user_reactions, JSON_UNESCAPED_UNICODE));
-    
-    // remove duplicates and reindex
-    return array_values(array_unique($user_reactions));
-}
+        $reactions = [];
+        
+        while ($row = $this->db->sql_fetchrow($result)) {
+            error_log("[Reactions Debug] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+            
+            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+            if ($key !== '') {
+                $reactions[$key] = (int) $row['reaction_count'];
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        error_log("[Reactions Debug] Final reactions: " . json_encode($reactions, JSON_UNESCAPED_UNICODE));
+        
+        return $reactions;
+    }
+
+    /**
+     * ✅ MÉTHODE OPTIMISÉE : Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
+     *
+     * @param int $post_id
+     * @param int $user_id
+     * @return array list d'emojis
+     */
+    private function get_user_reactions($post_id, $user_id)
+    {
+        $post_id = (int) $post_id;
+        $user_id = (int) $user_id;
+
+        if ($user_id === ANONYMOUS || $post_id <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT reaction_emoji AS reaction_key
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                  AND user_id = ' . $user_id . '
+                ORDER BY reaction_time ASC';  // ✅ Ordre chronologique
+        
+        error_log("[Reactions Debug User] SQL: $sql");
+        $result = $this->db->sql_query($sql);
+
+        $user_reactions = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            error_log("[Reactions Debug User] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+            
+            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+            if ($key !== '') {
+                $user_reactions[] = $key;
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        error_log("[Reactions Debug User] Final user_reactions: " . json_encode($user_reactions, JSON_UNESCAPED_UNICODE));
+        
+        // ✅ Supprimer les doublons et réindexer
+        return array_values(array_unique($user_reactions));
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Vérification de validité des posts (sécurité)
+     *
+     * @param int $post_id
+     * @return bool
+     */
+    private function is_valid_post($post_id)
+    {
+        $sql = 'SELECT post_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $exists = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return (bool) $exists;
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Comptage du nombre total de réactions pour un post
+     *
+     * @param int $post_id
+     * @return int
+     */
+    private function count_post_reactions($post_id)
+    {
+        $sql = 'SELECT COUNT(DISTINCT reaction_emoji) AS total_reactions
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return $row ? (int) $row['total_reactions'] : 0;
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Comptage des réactions utilisateur pour un post
+     *
+     * @param int $post_id
+     * @param int $user_id
+     * @return int
+     */
+    private function count_user_reactions($post_id, $user_id)
+    {
+        if ($user_id === ANONYMOUS) {
+            return 0;
+        }
+
+        $sql = 'SELECT COUNT(*) AS user_reaction_count
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . (int) $post_id . '
+                  AND user_id = ' . (int) $user_id;
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return $row ? (int) $row['user_reaction_count'] : 0;
+    }
 }
