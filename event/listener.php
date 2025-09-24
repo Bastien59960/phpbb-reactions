@@ -270,11 +270,15 @@ class listener implements EventSubscriberInterface
         
         return $row ? (int) $row['user_reaction_count'] : 0;
     }
-}ère le nombre de réactions par emoji pour un post
+
+
+    
      *
      * @param int $post_id
      * @return array emoji => count
      */
+
+    
     private function get_post_reactions($post_id)
     {
         $post_id = (int) $post_id;
