@@ -202,70 +202,81 @@ class listener implements EventSubscriberInterface
         // rien pour l'instant
     }
 
-    /**
-     * Récupère le nombre de réactions par emoji pour un post
-     *
-     * @param int $post_id
-     * @return array emoji => count
-     */
-    private function get_post_reactions($post_id)
-    {
-if ($post_id <= 0) {
-    $event['post_row'] = $post_row;
-    return;
+/**
+ * Récupère le nombre de réactions par emoji pour un post
+ *
+ * @param int $post_id
+ * @return array emoji => count
+ */
+private function get_post_reactions($post_id)
+{
+    $post_id = (int) $post_id;
+    if ($post_id <= 0) {
+        return []; // ✅ CORRECTION: return [] au lieu d'utiliser $event
+    }
+
+    $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
+            FROM ' . $this->post_reactions_table . '
+            WHERE post_id = ' . $post_id . '
+            GROUP BY reaction_emoji';
+    
+    error_log("[Reactions Debug] SQL: $sql");
+    $result = $this->db->sql_query($sql);
+
+    $reactions = []; // ✅ CORRECTION: Initialiser $reactions AVANT la boucle
+    
+    while ($row = $this->db->sql_fetchrow($result)) {
+        error_log("[Reactions Debug] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+        
+        $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+        if ($key !== '') {
+            $reactions[$key] = (int) $row['reaction_count'];
+        }
+    }
+    $this->db->sql_freeresult($result);
+
+    error_log("[Reactions Debug] Final reactions: " . json_encode($reactions, JSON_UNESCAPED_UNICODE));
+    
+    return $reactions;
 }
-        $is_logged_in = $this->user->data['user_id'] != ANONYMOUS;
 
-        $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                GROUP BY reaction_emoji';
-        $result = $this->db->sql_query($sql);
+/**
+ * Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
+ *
+ * @param int $post_id
+ * @param int $user_id
+ * @return array list d'emojis
+ */
+private function get_user_reactions($post_id, $user_id)
+{
+    $post_id = (int) $post_id;
+    $user_id = (int) $user_id;
 
-        $reactions = [];
-        while ($row = $this->db->sql_fetchrow($result)) {
-            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-            if ($key !== '') {
-                $reactions[$key] = (int) $row['reaction_count'];
-            }
-        }
-        $this->db->sql_freeresult($result);
-
-        return $reactions;
+    if ($user_id === ANONYMOUS || $post_id <= 0) {
+        return [];
     }
 
-    /**
-     * Récupère la liste des emojis que l'utilisateur courant a ajoutés pour ce post
-     *
-     * @param int $post_id
-     * @param int $user_id
-     * @return array list d'emojis
-     */
-    private function get_user_reactions($post_id, $user_id)
-    {
-        $post_id = (int) $post_id;
-        $user_id = (int) $user_id;
+    $sql = 'SELECT reaction_emoji AS reaction_key
+            FROM ' . $this->post_reactions_table . '
+            WHERE post_id = ' . $post_id . '
+              AND user_id = ' . $user_id;
+    
+    error_log("[Reactions Debug User] SQL: $sql");
+    $result = $this->db->sql_query($sql);
 
-        if ($user_id === ANONYMOUS || $post_id <= 0) {
-            return [];
+    $user_reactions = [];
+    while ($row = $this->db->sql_fetchrow($result)) {
+        error_log("[Reactions Debug User] Row: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+        
+        $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
+        if ($key !== '') {
+            $user_reactions[] = $key;
         }
-
-        $sql = 'SELECT reaction_emoji AS reaction_key
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                  AND user_id = ' . $user_id;
-        $result = $this->db->sql_query($sql);
-
-        $user_reactions = [];
-        while ($row = $this->db->sql_fetchrow($result)) {
-            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-            if ($key !== '') {
-                $user_reactions[] = $key;
-            }
-        }
-        $this->db->sql_freeresult($result);
-
-        // remove duplicates and reindex
-        return array_values(array_unique($user_reactions));
     }
+    $this->db->sql_freeresult($result);
+
+    error_log("[Reactions Debug User] Final user_reactions: " . json_encode($user_reactions, JSON_UNESCAPED_UNICODE));
+    
+    // remove duplicates and reindex
+    return array_values(array_unique($user_reactions));
 }
