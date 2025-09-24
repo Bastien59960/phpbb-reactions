@@ -4,14 +4,14 @@
 
         <!-- Réactions depuis la DB (gérées par le listener PHP) -->
         <!-- BEGIN postrow.post_reactions -->
-            <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
-                  data-emoji="{postrow.post_reactions.EMOJI}"
-                  data-count="{postrow.post_reactions.COUNT}"
-                  title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
-                  <!-- IF postrow.post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
-                {postrow.post_reactions.EMOJI}
-                <span class="count">{postrow.post_reactions.COUNT}</span>
-            </span>
+<span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
+      data-emoji="{postrow.post_reactions.EMOJI}"
+      data-count="{postrow.post_reactions.COUNT}"
+      title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
+      <!-- IF postrow.post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
+    {postrow.post_reactions.EMOJI}
+    <span class="count">{postrow.post_reactions.COUNT}</span>
+</span>
         <!-- END postrow.post_reactions -->
 
         <!-- Bouton pour palette - SEULEMENT pour les utilisateurs connectés -->
