@@ -3,8 +3,10 @@
 
     let currentPicker = null;
 
-    // Émojis populaires affichés en premier (modifiables selon vos besoins)
-    const POPULAR_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '👏', '🥳', '🎉'];
+    // CORRECTION MAJEURE : Renommage "POPULAR_EMOJIS" en "COMMON_EMOJIS"
+    // Les 10 émojis courantes affichées dans le pickup avec 👍 et 👎 en positions 1 et 2
+    // À synchroniser avec ajax.php et listener.php
+    const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
     // ---------- Initialisation ----------
     function initReactions() {
@@ -67,7 +69,7 @@
         picker.classList.add('emoji-picker');
         currentPicker = picker;
 
-        // Charger categories.json depuis prosilver - utiliser un chemin relatif
+        // Charger categories.json depuis prosilver
         fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => res.json())
             .then(data => {
@@ -75,7 +77,7 @@
             })
             .catch(err => {
                 console.error('Erreur de chargement categories.json', err);
-                // Fallback avec quelques emojis de base
+                // CORRECTION : Fallback avec seulement les émojis courantes
                 buildFallbackPicker(picker, postId);
             });
 
@@ -90,45 +92,35 @@
     }
 
     function buildEmojiPicker(picker, postId, emojiData) {
-        // ✅ NOUVEAU : Section des émojis populaires EN PREMIER
-        const popularSection = document.createElement('div');
-        popularSection.classList.add('emoji-section', 'popular-section');
-        
-        const popularTitle = document.createElement('div');
-        popularTitle.classList.add('emoji-category', 'popular-title');
-        popularTitle.textContent = '⭐ Populaires';
-        popularSection.appendChild(popularTitle);
+        // CORRECTION : Section des émojis courantes SANS TITRE selon cahier des charges
+        const commonSection = document.createElement('div');
+        commonSection.classList.add('emoji-section', 'common-section');
 
-        const popularGrid = document.createElement('div');
-        popularGrid.classList.add('emoji-grid', 'popular-grid');
+        const commonGrid = document.createElement('div');
+        commonGrid.classList.add('emoji-grid', 'common-grid');
         
-        POPULAR_EMOJIS.forEach(emoji => {
+        // CORRECTION : Utilisation de COMMON_EMOJIS au lieu de POPULAR_EMOJIS
+        COMMON_EMOJIS.forEach(emoji => {
             const cell = document.createElement('span');
-            cell.classList.add('emoji-cell', 'popular-emoji');
+            cell.classList.add('emoji-cell', 'common-emoji');
             cell.textContent = emoji;
             cell.addEventListener('click', () => {
                 sendReaction(postId, emoji);
                 closeAllPickers();
             });
-            popularGrid.appendChild(cell);
+            commonGrid.appendChild(cell);
         });
         
-        popularSection.appendChild(popularGrid);
-        picker.appendChild(popularSection);
+        commonSection.appendChild(commonGrid);
+        picker.appendChild(commonSection);
 
-        // ✅ Séparateur visuel
+        // Séparateur visuel
         const separator = document.createElement('div');
         separator.classList.add('emoji-separator');
         separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
         picker.appendChild(separator);
 
-        // ✅ Titre pour les autres catégories
-        const otherTitle = document.createElement('div');
-        otherTitle.classList.add('emoji-category', 'other-categories-title');
-        otherTitle.textContent = '📋 Toutes les catégories';
-        picker.appendChild(otherTitle);
-
-        // ✅ Reste des catégories (en excluant les populaires pour éviter doublons)
+        // Reste des catégories (en excluant les émojis courantes pour éviter doublons)
         Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
             const catTitle = document.createElement('div');
             catTitle.classList.add('emoji-category');
@@ -140,9 +132,9 @@
                 grid.classList.add('emoji-grid');
 
                 emojis.forEach(emojiObj => {
-                    // ✅ Éviter les doublons avec la section populaire
-                    if (POPULAR_EMOJIS.includes(emojiObj.emoji)) {
-                        return; // Skip cet emoji car il est déjà dans la section populaire
+                    // CORRECTION : Éviter les doublons avec les émojis courantes
+                    if (COMMON_EMOJIS.includes(emojiObj.emoji)) {
+                        return; // Skip cet emoji car il est déjà dans la section courante
                     }
 
                     const cell = document.createElement('span');
@@ -163,55 +155,31 @@
         });
     }
 
+    // CORRECTION MAJEURE : Fallback sans émojis en dur
+    // Affiche seulement les 10 émojis courantes en cas d'échec du JSON
     function buildFallbackPicker(picker, postId) {
-        // ✅ Section populaire même en mode fallback
-        const popularTitle = document.createElement('div');
-        popularTitle.classList.add('emoji-category', 'popular-title');
-        popularTitle.textContent = '⭐ Populaires';
-        picker.appendChild(popularTitle);
+        // Section des émojis courantes uniquement
+        const commonGrid = document.createElement('div');
+        commonGrid.classList.add('emoji-grid', 'common-grid');
 
-        const popularGrid = document.createElement('div');
-        popularGrid.classList.add('emoji-grid', 'popular-grid');
-
-        POPULAR_EMOJIS.forEach(emoji => {
+        COMMON_EMOJIS.forEach(emoji => {
             const cell = document.createElement('span');
-            cell.classList.add('emoji-cell', 'popular-emoji');
+            cell.classList.add('emoji-cell', 'common-emoji');
             cell.textContent = emoji;
             cell.addEventListener('click', () => {
                 sendReaction(postId, emoji);
                 closeAllPickers();
             });
-            popularGrid.appendChild(cell);
+            commonGrid.appendChild(cell);
         });
 
-        picker.appendChild(popularGrid);
+        picker.appendChild(commonGrid);
 
-        // ✅ Autres émojis de base (non populaires)
-        const separator = document.createElement('div');
-        separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
-        picker.appendChild(separator);
-
-        const otherTitle = document.createElement('div');
-        otherTitle.classList.add('emoji-category');
-        otherTitle.textContent = '📋 Autres';
-        picker.appendChild(otherTitle);
-
-        const fallbackEmojis = ['🤔', '🙏', '🤩', '😴', '🤮', '💯', '🙌', '🤝', '😅', '🤷', '😬', '🤗', '😇', '😎', '😤', '😱'];
-        const grid = document.createElement('div');
-        grid.classList.add('emoji-grid');
-
-        fallbackEmojis.forEach(emoji => {
-            const cell = document.createElement('span');
-            cell.classList.add('emoji-cell');
-            cell.textContent = emoji;
-            cell.addEventListener('click', () => {
-                sendReaction(postId, emoji);
-                closeAllPickers();
-            });
-            grid.appendChild(cell);
-        });
-
-        picker.appendChild(grid);
+        // Message d'information pour l'administrateur
+        const infoDiv = document.createElement('div');
+        infoDiv.style.cssText = 'padding: 10px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; margin-top: 10px;';
+        infoDiv.textContent = 'Fichier JSON non accessible. Seuls les émojis courantes sont disponibles.';
+        picker.appendChild(infoDiv);
     }
 
     function closeAllPickers(event) {
@@ -318,7 +286,8 @@
     }
 
     /**
-     * Met à jour l'affichage d'une seule réaction après une réponse réussie.
+     * CORRECTION : Met à jour l'affichage d'une seule réaction après une réponse réussie
+     * Selon cahier des charges : masque si count = 0
      */
     function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
         const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`);
@@ -334,10 +303,16 @@
             reactionElement.innerHTML = `${emoji} <span class="count">0</span>`;
             reactionElement.addEventListener('click', handleReactionClick);
             
-            // L'insérer avant le bouton "+"
+            // CORRECTION : Insérer APRÈS le bouton "+" selon cahier des charges
+            // Les réactions s'accumulent à droite du bouton +
             const moreButton = postContainer.querySelector('.reaction-more');
             if (moreButton) {
-                moreButton.parentNode.insertBefore(reactionElement, moreButton);
+                // Insérer après le bouton + (à droite)
+                if (moreButton.nextSibling) {
+                    moreButton.parentNode.insertBefore(reactionElement, moreButton.nextSibling);
+                } else {
+                    moreButton.parentNode.appendChild(reactionElement);
+                }
             } else {
                 postContainer.querySelector('.post-reactions').appendChild(reactionElement);
             }
@@ -360,7 +335,7 @@
             reactionElement.classList.remove('active');
         }
         
-        // Afficher/masquer l'élément selon le compteur
+        // CORRECTION SELON CAHIER DES CHARGES : Masquer si count = 0
         if (newCount === 0) {
             reactionElement.style.display = 'none';
         } else {
