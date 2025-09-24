@@ -11,7 +11,8 @@
     }
 
     function attachReactionEvents() {
-        document.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
+        // Seulement pour les réactions interactives (non readonly)
+        document.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
             reaction.removeEventListener('click', handleReactionClick);
             reaction.addEventListener('click', handleReactionClick);
         });
@@ -33,12 +34,24 @@
         const postId = getPostIdFromReaction(el);
         if (!emoji || !postId) return;
 
+        // Vérifier si l'utilisateur est connecté
+        if (!isUserLoggedIn()) {
+            showLoginMessage();
+            return;
+        }
+
         sendReaction(postId, emoji);
     }
 
     function handleMoreButtonClick(event) {
         event.preventDefault();
         event.stopPropagation();
+
+        // Vérifier si l'utilisateur est connecté
+        if (!isUserLoggedIn()) {
+            showLoginMessage();
+            return;
+        }
 
         closeAllPickers();
 
@@ -126,14 +139,56 @@
         }
     }
 
+    function isUserLoggedIn() {
+        // Vérifier si REACTIONS_SID existe et n'est pas vide
+        return typeof REACTIONS_SID !== 'undefined' && REACTIONS_SID !== '';
+    }
+
+    function showLoginMessage() {
+        // Afficher un message demandant à l'utilisateur de se connecter
+        const message = document.createElement('div');
+        message.className = 'reactions-login-message';
+        message.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 10001;
+            text-align: center;
+        `;
+        message.innerHTML = `
+            <p>Vous devez être connecté pour réagir aux messages.</p>
+            <button onclick="this.parentNode.remove()" style="margin-top: 10px; padding: 5px 15px;">OK</button>
+        `;
+        document.body.appendChild(message);
+
+        // Supprimer automatiquement après 5 secondes
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.remove();
+            }
+        }, 5000);
+    }
+
     function sendReaction(postId, emoji) {
         if (typeof REACTIONS_SID === 'undefined') {
             console.error('REACTIONS_SID is not defined - CSRF may fail');
             REACTIONS_SID = '';
         }
 
+        // Vérifier à nouveau si l'utilisateur est connecté
+        if (!isUserLoggedIn()) {
+            showLoginMessage();
+            return;
+        }
+
         // Déterminer l'action : add ou remove basé sur l'état actuel
-        const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${emoji}"]`);
+        const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`);
         const hasReacted = reactionElement && reactionElement.classList.contains('active');
         const action = hasReacted ? 'remove' : 'add';
 
@@ -144,13 +199,18 @@
             },
             body: JSON.stringify({
                 post_id: postId,
-                emoji: emoji,           // Changé de 'reaction_emoji' pour correspondre à ajax.php
-                action: action,         // Ajouté l'action requise par ajax.php
+                emoji: emoji,
+                action: action,
                 sid: REACTIONS_SID
             })
         })
         .then(response => {
             if (!response.ok) {
+                // Gérer spécifiquement l'erreur 403 (non connecté)
+                if (response.status === 403) {
+                    showLoginMessage();
+                    throw new Error('User not logged in');
+                }
                 throw new Error('Network response was not ok: ' + response.statusText);
             }
             return response.json();
@@ -160,19 +220,29 @@
                 updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
             } else {
                 console.error('Erreur de réaction :', data.error || data.message);
+                // Si l'erreur indique que l'utilisateur n'est pas connecté
+                if (data.error && data.error.includes('logged in')) {
+                    showLoginMessage();
+                }
             }
         })
-        .catch(error => console.error('Erreur:', error));
+        .catch(error => {
+            console.error('Erreur:', error);
+            if (error.message === 'User not logged in') {
+                // Ne pas afficher d'erreur supplémentaire, le message de connexion est déjà affiché
+                return;
+            }
+        });
     }
 
     /**
      * Met à jour l'affichage d'une seule réaction après une réponse réussie.
      */
     function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
-        const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
+        const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`);
         if (!postContainer) return;
 
-        let reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]`);
+        let reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`);
         
         // Si l'élément n'existe pas, le créer
         if (!reactionElement) {
