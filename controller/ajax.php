@@ -1,7 +1,7 @@
 <?php
 /**
  * Reactions Extension for phpBB 3.3
- * AJAX Controller - Version corrigée
+ * AJAX Controller - Version corrigée avec émojis courantes
  * 
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -38,7 +38,14 @@ class ajax
     protected $forums_table;
     
     protected $root_path; 
-    protected $php_ext; 
+    protected $php_ext;
+
+    /** 
+     * CORRECTION MAJEURE : Renommage "popular_emojis" en "common_emojis"
+     * Liste des 10 émojis courantes du pickup avec 👍 et 👎 en positions 1 et 2
+     * À synchroniser avec reactions.js et listener.php
+     */
+    protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
     /**
      * Constructor
@@ -72,6 +79,8 @@ class ajax
         // Forcer la connexion en utf8mb4
         $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
         error_log('[phpBB Reactions] ajax::__construct → SET NAMES utf8mb4 appliqué');
+        // CORRECTION : Log des émojis courantes au lieu de populaires
+        error_log('[phpBB Reactions] Common emojis loaded: ' . implode(', ', $this->common_emojis));
     }
 
     /**
@@ -356,7 +365,6 @@ class ajax
         $rid = bin2hex(random_bytes(8));
         error_log("[Reactions RID=$rid] remove_reaction enter post_id=$post_id emoji=$emoji");
 
-        // ✅ CORRECTION: utiliser 'reaction_emoji' au lieu de 'emoji'
         $sql = 'DELETE FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . (int) $post_id . '
                   AND user_id = ' . (int) $this->user->data['user_id'] . "
@@ -396,7 +404,7 @@ class ajax
     }
 
     /**
-     * ✅ NOUVELLE MÉTHODE: Récupère les réactions sous forme d'array
+     * Récupère les réactions sous forme d'array
      */
     private function get_reactions_array($post_id)
     {
@@ -429,12 +437,21 @@ class ajax
     }
 
     /**
-     * Check if emoji is valid
+     * CORRECTION MAJEURE : Check if emoji is valid
+     * Accepte les émojis courantes du pickup ET ceux du fichier JSON
      */
     private function is_valid_emoji($emoji)
     {
+        // CORRECTION : Autoriser les 10 émojis courantes (renommage de popular_emojis)
+        if (in_array($emoji, $this->common_emojis, true)) {
+            error_log("[Reactions] Emoji courante autorisé: $emoji");
+            return true;
+        }
+        
+        // Pour les autres, vérifier dans le fichier JSON complet
         $json_path = $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json';
         if (!file_exists($json_path)) {
+            error_log("[Reactions] Fichier JSON manquant: $json_path");
             return false;
         }
         
@@ -442,19 +459,22 @@ class ajax
         $data = json_decode($json_content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || !isset($data['emojis'])) {
+            error_log("[Reactions] Erreur JSON ou clé emojis manquante");
             return false;
         }
 
         foreach ($data['emojis'] as $category_name => $subcategories) {
             foreach ($subcategories as $subcategory_name => $emojis) {
                 foreach ($emojis as $emoji_data) {
-                    if ($emoji_data['emoji'] === $emoji) {
+                    if (isset($emoji_data['emoji']) && $emoji_data['emoji'] === $emoji) {
+                        error_log("[Reactions] Emoji trouvé dans JSON: $emoji");
                         return true;
                     }
                 }
             }
         }
         
+        error_log("[Reactions] Emoji non autorisé: $emoji");
         return false;
     }
 
@@ -487,4 +507,11 @@ class ajax
         return true;
     }
 
-} // fin de la classe ajax
+    /**
+     * CORRECTION : Getter pour les émojis courantes (renommage)
+     */
+    public function get_common_emojis()
+    {
+        return $this->common_emojis;
+    }
+}
