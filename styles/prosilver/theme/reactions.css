@@ -331,3 +331,138 @@
 .reactions-login-message button:hover {
     background-color: #005a87;
 }
+/* Section des émojis populaires */
+.popular-section {
+    background: linear-gradient(135deg, #fff9e6, #fff3d6);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 2px solid #ffd700;
+}
+
+.popular-title {
+    font-weight: bold !important;
+    color: #d4a017 !important;
+    font-size: 14px !important;
+    text-align: center;
+    margin-bottom: 8px !important;
+}
+
+.popular-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 8px !important;
+    justify-items: center;
+}
+
+.popular-emoji {
+    background: linear-gradient(135deg, #ffeb3b, #ffc107) !important;
+    border: 2px solid #ff9800 !important;
+    border-radius: 6px !important;
+    font-size: 20px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3) !important;
+}
+
+.popular-emoji:hover {
+    transform: scale(1.2) !important;
+    background: linear-gradient(135deg, #ffc107, #ff9800) !important;
+    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.5) !important;
+    border-color: #e65100 !important;
+}
+
+/* Séparateur */
+.emoji-separator {
+    margin: 15px 0;
+}
+
+.emoji-separator hr {
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(to right, transparent, #ddd, transparent) !important;
+}
+
+/* Titre des autres catégories */
+.other-categories-title {
+    color: #666 !important;
+    font-size: 13px !important;
+    margin-bottom: 10px !important;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Améliorer le style général du picker */
+.emoji-picker {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    min-width: 280px;
+    max-width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Améliorer les titres de catégorie généraux */
+.emoji-category {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin: 12px 0 6px 0;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Améliorer la grille générale */
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+/* Améliorer les cellules d'émojis générales */
+.emoji-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 18px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.emoji-cell:hover {
+    background: #e3f2fd;
+    transform: scale(1.1);
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+/* Scrollbar personnalisée pour le picker */
+.emoji-picker::-webkit-scrollbar {
+    width: 8px;
+}
+
+.emoji-picker::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.emoji-picker::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.emoji-picker::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
