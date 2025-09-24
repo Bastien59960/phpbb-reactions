@@ -1,45 +1,7 @@
 /* 
  * Extension Reactions pour phpBB 3.3.15
- * Styles pour l'affichage des réactions aux posts
+ * Version corrigée selon cahier des charges
  */
-
-.emoji-picker {
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 8px;
-    border-radius: 6px;
-    max-width: 600px; /* ajuste si besoin */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.emoji-category {
-    font-weight: bold;
-    margin: 12px 0 4px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 4px;
-}
-
-.emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10 colonnes */
-    gap: 6px;
-    margin-bottom: 12px; /* espace entre sous-catégories */
-}
-
-.emoji-cell {
-    font-size: 2rem; /* x2 taille */
-    cursor: pointer;
-    text-align: center;
-    padding: 4px;
-    border-radius: 4px;
-    transition: background 0.2s;
-}
-
-.emoji-cell:hover {
-    background: #f0f0f0;
-}
-
-
 
 /* Conteneur principal des réactions */
 .post-reactions {
@@ -52,7 +14,33 @@
     gap: 6px;
 }
 
-/* Réactions individuelles */
+/* CORRECTION MAJEURE : Bouton "+" fixe à gauche selon cahier des charges */
+.reaction-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 1px dashed #d1d1d1;
+    border-radius: 15px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    height: 28px;
+    order: -1; /* CORRECTION : Force le bouton + en première position à gauche */
+    margin-right: 8px; /* Espacement avec les réactions */
+}
+
+.reaction-more:hover {
+    background: #e9ecef;
+    color: #495057;
+    border-color: #adb5bd;
+}
+
+/* CORRECTION : Réactions s'accumulent à droite du bouton + */
 .post-reactions .reaction {
     display: inline-flex;
     align-items: center;
@@ -66,6 +54,7 @@
     user-select: none;
     min-width: 40px;
     justify-content: center;
+    order: 1; /* S'accumulent après le bouton + */
 }
 
 .post-reactions .reaction:hover {
@@ -92,34 +81,9 @@
     font-size: 12px;
 }
 
-/* Masquer les réactions avec 0 compteur par défaut */
-.post-reactions .reaction[data-count="0"] {
-    display: none;
-}
-
-/* Bouton "+" pour afficher plus d'émojis */
-.reaction-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    border: 1px dashed #d1d1d1;
-    border-radius: 15px;
-    padding: 4px 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    color: #6c757d;
-    transition: all 0.2s ease;
-    min-width: 32px;
-    height: 28px;
-}
-
-.reaction-more:hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #adb5bd;
-}
+/* CORRECTION SUPPRIMÉE selon cahier des charges : 
+   Ne plus masquer automatiquement les count=0 par CSS
+   Le listener ne retourne que les count > 0 */
 
 /* Palette d'émojis déroulante */
 .reaction-picker {
@@ -139,7 +103,7 @@
     display: block;
 }
 
-/* Émojis dans la palette */
+/* Emojis dans la palette */
 .reaction-picker .reaction {
     background: transparent;
     border: 1px solid transparent;
@@ -162,6 +126,122 @@
 /* Conteneur des réactions avec position relative pour la palette */
 .post-reactions-container {
     position: relative;
+}
+
+/* CORRECTION : Section des émojis courantes (SANS TITRE selon cahier des charges) */
+.common-section {
+    margin-bottom: 10px;
+}
+
+.common-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 8px !important;
+    justify-items: center;
+}
+
+.common-emoji {
+    background: linear-gradient(135deg, #ffeb3b, #ffc107) !important;
+    border: 2px solid #ff9800 !important;
+    border-radius: 6px !important;
+    font-size: 20px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3) !important;
+}
+
+.common-emoji:hover {
+    transform: scale(1.2) !important;
+    background: linear-gradient(135deg, #ffc107, #ff9800) !important;
+    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.5) !important;
+    border-color: #e65100 !important;
+}
+
+/* Séparateur */
+.emoji-separator {
+    margin: 15px 0;
+}
+
+.emoji-separator hr {
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(to right, transparent, #ddd, transparent) !important;
+}
+
+/* Améliorer le style général du picker */
+.emoji-picker {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    min-width: 280px;
+    max-width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Améliorer les titres de catégorie généraux */
+.emoji-category {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin: 12px 0 6px 0;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Améliorer la grille générale */
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+/* Améliorer les cellules d'émojis générales */
+.emoji-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 18px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.emoji-cell:hover {
+    background: #e3f2fd;
+    transform: scale(1.1);
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+/* CORRECTION MAJEURE : Scrollbar plus grosse et visible selon cahier des charges */
+.emoji-picker::-webkit-scrollbar {
+    width: 12px; /* Plus large */
+}
+
+.emoji-picker::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+    border: 1px solid #ddd; /* Plus visible */
+}
+
+.emoji-picker::-webkit-scrollbar-thumb {
+    background: #888; /* Plus foncé */
+    border-radius: 6px;
+    border: 1px solid #666; /* Plus contrasté */
+}
+
+.emoji-picker::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Encore plus foncé au survol */
 }
 
 /* Responsive - Mobile */
@@ -193,6 +273,11 @@
         height: 32px;
         font-size: 16px;
         padding: 6px;
+    }
+    
+    /* CORRECTION : Scrollbar encore plus grosse sur mobile selon cahier des charges */
+    .emoji-picker::-webkit-scrollbar {
+        width: 16px; /* Encore plus large sur mobile */
     }
 }
 
@@ -258,6 +343,40 @@
     border-color: #333 transparent transparent transparent;
 }
 
+/* Styles pour les réactions en lecture seule (utilisateurs non connectés) */
+.post-reactions-readonly .reaction {
+    cursor: default !important;
+    opacity: 0.8;
+}
+
+.post-reactions-readonly .reaction:hover {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
+.reaction-readonly {
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/* Message de connexion requis */
+.reactions-login-message {
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+.reactions-login-message button {
+    background-color: #007cba;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.reactions-login-message button:hover {
+    background-color: #005a87;
+}
+
 /* Mode sombre - optionnel */
 @media (prefers-color-scheme: dark) {
     .post-reactions {
@@ -298,171 +417,3 @@
     clear: both;
     margin-top: 8px;
 }
-/* Styles pour les réactions en lecture seule (utilisateurs non connectés) */
-.post-reactions-readonly .reaction {
-    cursor: default !important;
-    opacity: 0.8;
-}
-
-.post-reactions-readonly .reaction:hover {
-    background-color: transparent !important;
-    transform: none !important;
-}
-
-.reaction-readonly {
-    cursor: default !important;
-    pointer-events: none;
-}
-
-/* Message de connexion requis */
-.reactions-login-message {
-    font-family: Arial, sans-serif;
-    color: #333;
-}
-
-.reactions-login-message button {
-    background-color: #007cba;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.reactions-login-message button:hover {
-    background-color: #005a87;
-}
-/* Section des émojis populaires */
-.popular-section {
-    background: linear-gradient(135deg, #fff9e6, #fff3d6);
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 2px solid #ffd700;
-}
-
-.popular-title {
-    font-weight: bold !important;
-    color: #d4a017 !important;
-    font-size: 14px !important;
-    text-align: center;
-    margin-bottom: 8px !important;
-}
-
-.popular-grid {
-    display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
-    gap: 8px !important;
-    justify-items: center;
-}
-
-.popular-emoji {
-    background: linear-gradient(135deg, #ffeb3b, #ffc107) !important;
-    border: 2px solid #ff9800 !important;
-    border-radius: 6px !important;
-    font-size: 20px !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3) !important;
-}
-
-.popular-emoji:hover {
-    transform: scale(1.2) !important;
-    background: linear-gradient(135deg, #ffc107, #ff9800) !important;
-    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.5) !important;
-    border-color: #e65100 !important;
-}
-
-/* Séparateur */
-.emoji-separator {
-    margin: 15px 0;
-}
-
-.emoji-separator hr {
-    border: none !important;
-    height: 2px !important;
-    background: linear-gradient(to right, transparent, #ddd, transparent) !important;
-}
-
-/* Titre des autres catégories */
-.other-categories-title {
-    color: #666 !important;
-    font-size: 13px !important;
-    margin-bottom: 10px !important;
-    text-align: center;
-    font-style: italic;
-}
-
-/* Améliorer le style général du picker */
-.emoji-picker {
-    background: white;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    padding: 15px;
-    min-width: 280px;
-    max-width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Améliorer les titres de catégorie généraux */
-.emoji-category {
-    font-size: 12px;
-    font-weight: 600;
-    color: #555;
-    margin: 12px 0 6px 0;
-    padding: 4px 0;
-    border-bottom: 1px solid #eee;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Améliorer la grille générale */
-.emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    margin-bottom: 10px;
-}
-
-/* Améliorer les cellules d'émojis générales */
-.emoji-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-size: 18px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-}
-
-.emoji-cell:hover {
-    background: #e3f2fd;
-    transform: scale(1.1);
-    border-color: #2196f3;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
-}
-
-/* Scrollbar personnalisée pour le picker */
-.emoji-picker::-webkit-scrollbar {
-    width: 8px;
-}
-
-.emoji-picker::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.emoji-picker::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-.emoji-picker::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
