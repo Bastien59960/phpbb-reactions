@@ -15,7 +15,7 @@ services:
             - '@language'
             - '@controller.helper'
         tags:
-            - { name: event.listener, event: core.viewtopic_body_postrow_content_after, method: display_reactions, pass_by_reference: ['post_row'] }
+            - { name: event.listener }
             
     # Service pour le contrôleur principal (optionnel si non utilisé)
     bastien59960.reactions.main:
