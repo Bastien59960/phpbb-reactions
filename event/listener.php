@@ -272,11 +272,6 @@ class listener implements EventSubscriberInterface
     }
 
 
-    
-     *
-     * @param int $post_id
-     * @return array emoji => count
-     */
 
     
     private function get_post_reactions($post_id)
