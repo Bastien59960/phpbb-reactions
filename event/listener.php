@@ -280,3 +280,4 @@ private function get_user_reactions($post_id, $user_id)
     // remove duplicates and reindex
     return array_values(array_unique($user_reactions));
 }
+}
