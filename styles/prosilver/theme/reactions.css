@@ -298,3 +298,36 @@
     clear: both;
     margin-top: 8px;
 }
+/* Styles pour les réactions en lecture seule (utilisateurs non connectés) */
+.post-reactions-readonly .reaction {
+    cursor: default !important;
+    opacity: 0.8;
+}
+
+.post-reactions-readonly .reaction:hover {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
+.reaction-readonly {
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/* Message de connexion requis */
+.reactions-login-message {
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+.reactions-login-message button {
+    background-color: #007cba;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.reactions-login-message button:hover {
+    background-color: #005a87;
+}
