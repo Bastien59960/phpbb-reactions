@@ -1,6 +1,6 @@
 <?php
 /**
- * Reactions Extension Listener for phpBB 3.3+ (complete)
+ * Reactions Extension Listener for phpBB 3.3+ (CORRIGÉ)
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -34,14 +34,11 @@ class listener implements EventSubscriberInterface
     /** @var \phpbb\controller\helper */
     protected $helper;
 
-    /** @var array Liste des 10 émojis courantes selon le cahier des charges (👍 et 👎 en 1 et 2) */
+    /** @var array Liste des 10 émojis courantes selon le cahier des charges */
     protected $common_emojis = [
-        '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '👏', '🔥', '🎉'
+        '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '👌', '🔥', '🎉'
     ];
 
-    /**
-     * Constructor
-     */
     public function __construct(
         driver_interface $db,
         \phpbb\user $user,
@@ -59,15 +56,11 @@ class listener implements EventSubscriberInterface
         $this->language = $language;
         $this->helper = $helper;
 
-        // Forcer la connexion en utf8mb4 quand c'est possible
         try {
             $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
         } catch (\Exception $e) {
-            // Ne pas planter l'extension si la DB refuse cette commande
             error_log('[phpBB Reactions] Could not set names: ' . $e->getMessage());
         }
-
-        error_log('[phpBB Reactions] Listener::__construct invoked');
     }
 
     public static function getSubscribedEvents()
@@ -80,25 +73,16 @@ class listener implements EventSubscriberInterface
         ];
     }
 
-    /**
-     * Add CSS/JS and load language
-     *
-     * @param \phpbb\event\data $event
-     */
     public function add_assets_to_page($event)
     {
-        // Charger le fichier de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
 
-        // Chemins relatifs vers les assets de l'extension
         $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
         $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
-        // URL AJAX globale (route définie dans routing.yml)
         try {
             $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
         } catch (\Exception $e) {
-            // Fallback: construction manuelle si la route n'existe pas
             $ajax_url = append_sid('app.php/reactions/ajax');
         }
 
@@ -110,32 +94,22 @@ class listener implements EventSubscriberInterface
             'S_SESSION_ID'        => isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '',
         ]);
 
-        // Exposer l'URL AJAX et le SID dans le JS global (variable JS prête à injecter)
         $this->template->assign_var(
             'REACTIONS_AJAX_URL_JS',
             'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '"; window.REACTIONS_SID = "' . addslashes(isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '') . '";'
         );
     }
 
-    /**
-     * Placeholder : enrichir user_cache_data si besoin
-     *
-     * @param \phpbb\event\data $event
-     */
     public function load_language_and_data($event)
     {
-        // Méthode gardée pour compatibilité et éventuelle extension
+        // Placeholder
     }
 
     /**
-     * Prépare et injecte les réactions pour un post (SEULEMENT celles avec count > 0)
-     *
-     * @param \phpbb\event\data $event
+     * CORRECTION MAJEURE : Affiche uniquement les réactions existantes avec count > 0
      */
     public function display_reactions($event)
     {
-        error_log('[phpBB Reactions] display_reactions called');
-
         $post_row = isset($event['post_row']) ? $event['post_row'] : [];
         $row      = isset($event['row']) ? $event['row'] : [];
         $post_id  = isset($row['post_id']) ? (int) $row['post_id'] : 0;
@@ -145,22 +119,21 @@ class listener implements EventSubscriberInterface
             return;
         }
 
-        // Vérifier que le post existe
         if (!$this->is_valid_post($post_id)) {
             error_log('[phpBB Reactions] display_reactions: post_id ' . $post_id . ' not found');
             $event['post_row'] = $post_row;
             return;
         }
 
-        // Récupération depuis la DB
-        $reactions_by_db = $this->get_post_reactions($post_id); // [emoji => count]
-        $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']); // [emoji, ...]
+        // Récupération des réactions depuis la DB
+        $reactions_by_db = $this->get_post_reactions($post_id);
+        $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']);
 
-        // Filtrer selon cahier des charges : seulement count > 0
-        $visible = [];
+        // CORRECTION : Ne retourner que les réactions avec count > 0
+        $visible_reactions = [];
         foreach ($reactions_by_db as $emoji => $count) {
             if ((int) $count > 0) {
-                $visible[] = [
+                $visible_reactions[] = [
                     'EMOJI'        => $emoji,
                     'COUNT'        => (int) $count,
                     'USER_REACTED' => in_array($emoji, $user_reactions, true),
@@ -168,39 +141,25 @@ class listener implements EventSubscriberInterface
             }
         }
 
-        // Pour l'affichage côté template, renvoyer les 10 "émojis courantes" en fallback si aucune reaction stockée
-        if (empty($visible)) {
-            // fallback propre : seulement les 10 émojis courantes, sans compte
-            $visible = array_map(function ($e) {
-                return ['EMOJI' => $e, 'COUNT' => 0, 'USER_REACTED' => false];
-            }, $this->common_emojis);
-        }
+        // CORRECTION : Plus de fallback avec des emojis à count=0
+        // Selon cahier des charges : "les émojis n'apparaissent que s'il y a des réactions"
 
         $post_row = array_merge($post_row, [
             'S_REACTIONS_ENABLED' => true,
-            'post_reactions'      => $visible,
+            'post_reactions'      => $visible_reactions, // Seules les vraies réactions
         ]);
 
-        error_log('[phpBB Reactions] post_reactions assigned: ' . count($visible) . ' entries for post ' . $post_id);
+        error_log('[phpBB Reactions] Réactions assignées pour post ' . $post_id . ': ' . count($visible_reactions) . ' réactions visibles');
         $event['post_row'] = $post_row;
     }
 
-    /**
-     * Placeholder pour données de forum si nécessaire
-     *
-     * @param \phpbb\event\data $event
-     */
     public function add_forum_data($event)
     {
-        // rien pour l'instant
+        // Placeholder
     }
 
     /**
-     * Récupère la liste des emojis que l'utilisateur courant a ajouté pour ce post
-     *
-     * @param int $post_id
-     * @param int $user_id
-     * @return array list d'emojis
+     * CORRECTION : Amélioration du debug pour get_user_reactions
      */
     private function get_user_reactions($post_id, $user_id)
     {
@@ -211,36 +170,27 @@ class listener implements EventSubscriberInterface
             return [];
         }
 
-        $sql = 'SELECT reaction_emoji AS reaction_key
+        $sql = 'SELECT reaction_emoji
                 FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . $post_id . '
-                  AND user_id = ' . $user_id . '
-                ORDER BY reaction_time ASC';
+                  AND user_id = ' . $user_id;
 
-        error_log("[Reactions Debug User] SQL: $sql");
+        error_log("[Reactions Debug] get_user_reactions SQL: $sql");
         $result = $this->db->sql_query($sql);
 
         $user_reactions = [];
         while ($row = $this->db->sql_fetchrow($result)) {
-            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-            if ($key !== '') {
-                $user_reactions[] = $key;
+            if (!empty($row['reaction_emoji'])) {
+                $user_reactions[] = $row['reaction_emoji'];
             }
         }
         $this->db->sql_freeresult($result);
 
-        // Supprimer les doublons et réindexer
         $unique = array_values(array_unique($user_reactions));
-        error_log('[Reactions Debug User] Final user_reactions: ' . json_encode($unique, JSON_UNESCAPED_UNICODE));
+        error_log('[Reactions Debug] User reactions pour post_id=' . $post_id . ' user_id=' . $user_id . ': ' . json_encode($unique, JSON_UNESCAPED_UNICODE));
         return $unique;
     }
 
-    /**
-     * Vérifie que le post existe en DB
-     *
-     * @param int $post_id
-     * @return bool
-     */
     private function is_valid_post($post_id)
     {
         $sql = 'SELECT post_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
@@ -252,10 +202,39 @@ class listener implements EventSubscriberInterface
     }
 
     /**
+     * CORRECTION : Amélioration du debug pour get_post_reactions
+     */
+    private function get_post_reactions($post_id)
+    {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT reaction_emoji, COUNT(*) AS reaction_count
+                FROM ' . $this->post_reactions_table . '
+                WHERE post_id = ' . $post_id . '
+                GROUP BY reaction_emoji
+                HAVING COUNT(*) > 0
+                ORDER BY COUNT(*) DESC';
+
+        error_log("[Reactions Debug] get_post_reactions SQL: $sql");
+        $result = $this->db->sql_query($sql);
+
+        $reactions = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            if (!empty($row['reaction_emoji'])) {
+                $reactions[$row['reaction_emoji']] = (int) $row['reaction_count'];
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        error_log('[Reactions Debug] Réactions trouvées pour post_id=' . $post_id . ': ' . json_encode($reactions, JSON_UNESCAPED_UNICODE));
+        return $reactions;
+    }
+
+    /**
      * Comptage du nombre total de réactions pour un post (distinct emojis)
-     *
-     * @param int $post_id
-     * @return int
      */
     private function count_post_reactions($post_id)
     {
@@ -271,10 +250,6 @@ class listener implements EventSubscriberInterface
 
     /**
      * Comptage des réactions d'un utilisateur pour un post
-     *
-     * @param int $post_id
-     * @param int $user_id
-     * @return int
      */
     private function count_user_reactions($post_id, $user_id)
     {
@@ -294,68 +269,63 @@ class listener implements EventSubscriberInterface
     }
 
     /**
-     * Récupère depuis la DB le nombre de réactions par emoji pour un post
-     * Retourne un tableau associatif [emoji => count]
-     *
-     * @param int $post_id
-     * @return array
+     * Récupère la liste des utilisateurs ayant réagi avec un emoji spécifique
      */
-    private function get_post_reactions($post_id)
+    private function get_users_by_reaction($post_id, $emoji)
     {
-        $post_id = (int) $post_id;
-        if ($post_id <= 0) {
-            return [];
-        }
-
-        $sql = 'SELECT reaction_emoji AS reaction_key, COUNT(*) AS reaction_count
-                FROM ' . $this->post_reactions_table . '
-                WHERE post_id = ' . $post_id . '
-                GROUP BY reaction_emoji
-                ORDER BY COUNT(*) DESC';
-
-        error_log("[Reactions Debug] get_post_reactions SQL: $sql");
+        $sql = 'SELECT u.user_id, u.username
+                FROM ' . $this->post_reactions_table . ' pr
+                JOIN ' . USERS_TABLE . ' u ON pr.user_id = u.user_id
+                WHERE pr.post_id = ' . (int) $post_id . "
+                  AND pr.reaction_emoji = '" . $this->db->sql_escape($emoji) . "'
+                ORDER BY pr.reaction_time ASC";
+        
         $result = $this->db->sql_query($sql);
-
-        $reactions = [];
-        $row_count = 0;
-
+        $users = [];
         while ($row = $this->db->sql_fetchrow($result)) {
-            $row_count++;
-            $key = isset($row['reaction_key']) ? $row['reaction_key'] : '';
-            if ($key !== '') {
-                $reactions[$key] = (int) $row['reaction_count'];
-            } else {
-                error_log('[Reactions Debug] ALERTE: reaction_key vide dans la row');
-            }
+            $users[] = [
+                'user_id' => (int) $row['user_id'],
+                'username' => $row['username']
+            ];
         }
         $this->db->sql_freeresult($result);
 
-        error_log('[Reactions Debug] get_post_reactions final for post_id=' . $post_id . ': ' . json_encode($reactions, JSON_UNESCAPED_UNICODE));
-        error_log('[Reactions Debug] Nombre total de rows: ' . $row_count);
-
-        return $reactions;
+        return $users;
     }
 
     /**
-     * Validation utilitaire d'un emoji (utilisable depuis ajax.php)
-     * Accepte les 10 émojis courantes + tout emoji non vide si souhaité.
-     *
-     * @param string $emoji
-     * @return bool
+     * Vérifie les limites selon le cahier des charges
      */
+    public function check_reaction_limits($post_id, $user_id)
+    {
+        // B.1 - Limite de types par post (défaut: 20)
+        $max_types = 20; // À rendre configurable via ACP
+        $current_types = $this->count_post_reactions($post_id);
+        
+        // B.2 - Limite par utilisateur/post (défaut: 10)  
+        $max_user_reactions = 10; // À rendre configurable via ACP
+        $current_user_reactions = $this->count_user_reactions($post_id, $user_id);
+        
+        return [
+            'can_add_new_type' => $current_types < $max_types,
+            'can_add_reaction' => $current_user_reactions < $max_user_reactions,
+            'current_types' => $current_types,
+            'max_types' => $max_types,
+            'current_user_reactions' => $current_user_reactions,
+            'max_user_reactions' => $max_user_reactions
+        ];
+    }
+
     public function is_valid_emoji($emoji)
     {
         if (!is_string($emoji) || $emoji === '') {
             return false;
         }
 
-        // Vérifier dans la liste des 10 émojis courantes
         if (in_array($emoji, $this->common_emojis, true)) {
             return true;
         }
 
-        // Fallback permissif : autoriser d'autres emojis (peut être restreint dans ajax.php)
-        // Ici on vérifie juste qu'il y a au moins un caractère unicode (non vide)
         return (mb_strlen(trim($emoji)) > 0);
     }
 }
