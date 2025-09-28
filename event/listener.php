@@ -177,11 +177,15 @@ class listener implements EventSubscriberInterface
 
         error_log("[Reactions Debug] get_user_reactions SQL: $sql");
         $result = $this->db->sql_query($sql);
+        error_log("[LISTENER DEBUG] SQL executed: $sql");
+error_log("[LISTENER DEBUG] SQL result rows: " . $this->db->sql_affectedrows());
 
         $user_reactions = [];
         while ($row = $this->db->sql_fetchrow($result)) {
             if (!empty($row['reaction_emoji'])) {
                 $user_reactions[] = $row['reaction_emoji'];
+                error_log("\$row : $row, [LISTENER DEBUG] SQL executed: $sql");
+error_log("\$row : $row, [LISTENER DEBUG] SQL result rows: " . $this->db->sql_affectedrows());
             }
         }
         $this->db->sql_freeresult($result);
