@@ -52,7 +52,7 @@
     font-size: 14px;
     transition: all 0.2s ease;
     user-select: none;
-    min-width: 10px;
+    min-width: 35px; /* à vérifier */
     justify-content: center;
     order: 1; /* S'accumulent après le bouton + */
 }
