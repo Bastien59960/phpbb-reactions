@@ -1,6 +1,6 @@
-# On définit le paramètre pour votre table ici, en utilisant le bon préfixe de phpBB
+# Définition du paramètre avec le nom correct fourni par l'erreur.
 parameters:
-    bastien59960.reactions.table.post_reactions: '%phpbb.table_prefix%post_reactions'
+    bastien59960.reactions.table.post_reactions: '%core.table_prefix%post_reactions'
 
 services:
     # Service pour le listener d'événements
@@ -9,15 +9,12 @@ services:
         arguments:
             - '@dbal.conn'
             - '@user'
-            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
             - '%phpbb.table.posts%'
             - '@template'
             - '@language'
             - '@controller.helper'
         tags:
-            # CORRECTION CRITIQUE : Votre ancien fichier avait "event.listener" ici.
-            # "event.subscriber" est obligatoire pour que le listener fonctionne.
             - { name: event.subscriber }
 
     # Service pour le contrôleur principal
@@ -30,7 +27,6 @@ services:
             - '@template'
             - '@auth'
             - '@controller.helper'
-            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
             - '%phpbb.table.posts%'
 
@@ -43,7 +39,6 @@ services:
             - '@request'
             - '@auth'
             - '@language'
-            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
             - '%phpbb.table.posts%'
             - '%phpbb.table.topics%'
@@ -58,7 +53,6 @@ services:
             - '@dbal.conn'
             - '@config'
             - '@notification.manager'
-            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
         tags:
             - { name: cron.task }
