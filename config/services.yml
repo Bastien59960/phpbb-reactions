@@ -1,7 +1,6 @@
-# On définit les paramètres directement ici, c'est la convention moderne.
-# Plus besoin d'importer un fichier parameters.yml.
+# On définit le paramètre pour votre table ici, en utilisant le bon préfixe de phpBB
 parameters:
-    bastien59960.reactions.table.post_reactions: '%tables.prefix%post_reactions'
+    bastien59960.reactions.table.post_reactions: '%phpbb.table_prefix%post_reactions'
 
 services:
     # Service pour le listener d'événements
@@ -10,14 +9,15 @@ services:
         arguments:
             - '@dbal.conn'
             - '@user'
-            # STANDARDISÉ : On utilise notre paramètre unifié
+            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
-            - '%phpbb.table.posts%' # CORRIGÉ : Utilisation du paramètre standard de phpBB
+            - '%phpbb.table.posts%'
             - '@template'
             - '@language'
             - '@controller.helper'
         tags:
-            # CORRECTION CRITIQUE : Le tag doit être "event.subscriber" pour que le listener soit enregistré correctement.
+            # CORRECTION CRITIQUE : Votre ancien fichier avait "event.listener" ici.
+            # "event.subscriber" est obligatoire pour que le listener fonctionne.
             - { name: event.subscriber }
 
     # Service pour le contrôleur principal
@@ -30,9 +30,9 @@ services:
             - '@template'
             - '@auth'
             - '@controller.helper'
-            # STANDARDISÉ : On utilise notre paramètre unifié
+            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
-            - '%phpbb.table.posts%' # CORRIGÉ : Utilisation du paramètre standard de phpBB
+            - '%phpbb.table.posts%'
 
     # Service pour le contrôleur AJAX
     bastien59960.reactions.ajax:
@@ -43,27 +43,27 @@ services:
             - '@request'
             - '@auth'
             - '@language'
-            # STANDARDISÉ : On utilise notre paramètre unifié
+            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
-            - '%phpbb.table.posts%' # CORRIGÉ : Utilisation du paramètre standard de phpBB
-            - '%phpbb.table.topics%' # CORRIGÉ : Utilisation du paramètre standard de phpBB
-            - '%phpbb.table.forums%' # CORRIGÉ : Utilisation du paramètre standard de phpBB
+            - '%phpbb.table.posts%'
+            - '%phpbb.table.topics%'
+            - '%phpbb.table.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
 
-    # Service pour la tâche Cron (celui-ci était déjà correct)
+    # Service pour la tâche Cron
     bastien59960.reactions.cron.notification_task:
         class: bastien59960\reactions\cron\notification_task
         arguments:
             - '@dbal.conn'
             - '@config'
             - '@notification.manager'
-            # OK : On conserve notre paramètre unifié
+            # On utilise notre paramètre unifié et correct
             - '%bastien59960.reactions.table.post_reactions%'
         tags:
             - { name: cron.task }
 
-    # Service pour le type de notification (celui-ci était déjà correct)
+    # Service pour le type de notification
     bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
