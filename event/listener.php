@@ -143,13 +143,14 @@ class listener implements EventSubscriberInterface
 
         // CORRECTION : Plus de fallback avec des emojis à count=0
         // Selon cahier des charges : "les émojis n'apparaissent que s'il y a des réactions"
+$post_row['S_REACTIONS_ENABLED'] = true;
 
-        $post_row = array_merge($post_row, [
-            'S_REACTIONS_ENABLED' => true,
-            'post_reactions'      => $visible_reactions, // Seules les vraies réactions
-        ]);
+// Assigner les réactions via le système de blocs de template
+foreach ($visible_reactions as $reaction) {
+    $post_row['post_reactions'][] = $reaction;
+}
 
-        error_log('[phpBB Reactions] Réactions assignées pour post ' . $post_id . ': ' . count($visible_reactions) . ' réactions visibles');
+error_log('[phpBB Reactions] post_reactions assignées pour post ' . $post_id . ': ' . count($visible_reactions) . ' réactions, structure: ' . print_r($post_row['post_reactions'], true));
         $event['post_row'] = $post_row;
     }
 
