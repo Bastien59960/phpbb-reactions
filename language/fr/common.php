@@ -66,4 +66,9 @@ $lang = array_merge($lang, array(
     'REACTIONS_LIMIT_POST'      => 'Maximum %d types de réactions par message',
     'REACTIONS_LIMIT_USER'      => 'Maximum %d réactions par utilisateur et par message',
     'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
+
+    'REACTIONS_NOTIFICATION_TITLE'      => '%1$s a réagi à votre message.',
+'REACTIONS_NOTIFICATION_TITLE_PLURAL' => '%1$s et %2$d autres personnes ont réagi à votre message.',
+'REACTIONS_NOTIFICATION_AND_OTHERS' => '%1$s et %2$d autre(s)',
+'REACTIONS_NOTIFICATION_EMAIL_SUBJECT' => 'Nouvelles réactions à votre message "%2$s"',
 ));
