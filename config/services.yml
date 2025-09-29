@@ -1,6 +1,5 @@
-# Définition du paramètre avec le nom correct fourni par l'erreur.
-parameters:
-    bastien59960.reactions.table.post_reactions: '%core.table_prefix%post_reactions'
+imports:
+    - { resource: 'parameters.yml' }
 
 services:
     # Service pour le listener d'événements
@@ -8,59 +7,43 @@ services:
         class: bastien59960\reactions\event\listener
         arguments:
             - '@dbal.conn'
+            #- '@db'
             - '@user'
-            - '%bastien59960.reactions.table.post_reactions%'
-            - '%phpbb.table.posts%'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
             - '@template'
             - '@language'
             - '@controller.helper'
         tags:
-            - { name: event.subscriber }
-
-    # Service pour le contrôleur principal
+            - { name: event.listener }
+            
+    # Service pour le contrôleur principal (optionnel si non utilisé)
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
         arguments:
             - '@dbal.conn'
+            #- '@db'
             - '@user'
             - '@request'
             - '@template'
             - '@auth'
             - '@controller.helper'
-            - '%bastien59960.reactions.table.post_reactions%'
-            - '%phpbb.table.posts%'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
 
-    # Service pour le contrôleur AJAX
+    # Service pour le contrôleur AJAX (C'est celui qui manquait !)
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
             - '@dbal.conn'
+            #- '@db'
             - '@user'
             - '@request'
             - '@auth'
             - '@language'
-            - '%bastien59960.reactions.table.post_reactions%'
-            - '%phpbb.table.posts%'
-            - '%phpbb.table.topics%'
-            - '%phpbb.table.forums%'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
-
-    # Service pour la tâche Cron
-    bastien59960.reactions.cron.notification_task:
-        class: bastien59960\reactions\cron\notification_task
-        arguments:
-            - '@dbal.conn'
-            - '@config'
-            - '@notification.manager'
-            - '%bastien59960.reactions.table.post_reactions%'
-        tags:
-            - { name: cron.task }
-
-    # Service pour le type de notification
-    bastien59960.reactions.notification.type.reaction:
-        class: bastien59960\reactions\notification\type\reaction
-        arguments:
-            - '@user_loader'
-        tags:
-            - { name: notification.type }
