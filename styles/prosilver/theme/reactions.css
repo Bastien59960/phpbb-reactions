@@ -22,7 +22,7 @@
     background: #f8f9fa;
     border: 1px dashed #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px;
+    padding: 4px 2px; /* 2px au lieu de 8px test pour réduire la largeur de la réaction */
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
