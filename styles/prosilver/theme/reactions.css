@@ -22,7 +22,7 @@
     background: #f8f9fa;
     border: 1px dashed #d1d1d1;
     border-radius: 15px;
-    padding: 4px 2px; /* 2px au lieu de 8px test pour réduire la largeur de la réaction */
+    padding: 4px 4px; 
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
@@ -47,12 +47,12 @@
     background: #f3f3f3;
     border: 1px solid #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px;
+    padding: 4px 2px; /* 2px au lieu de 8px test pour réduire la largeur de la réaction */
     cursor: pointer;
     font-size: 14px;
     transition: all 0.2s ease;
     user-select: none;
-    min-width: 40px;
+    min-width: 10px;
     justify-content: center;
     order: 1; /* S'accumulent après le bouton + */
 }
