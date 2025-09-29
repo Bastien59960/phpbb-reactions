@@ -47,3 +47,20 @@ services:
             - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
+
+    bastien59960.reactions.cron.notification_task:
+        class: bastien59960\reactions\cron\notification_task
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@notification.manager'
+            - '%bastien59960.reactions.table.post_reactions%'
+        tags:
+            - { name: cron.task }
+
+    bastien59960.reactions.notification.type.reaction:
+        class: bastien59960\reactions\notification\type\reaction
+        arguments:
+            - '@user_loader'
+        tags:
+            - { name: notification.type }
