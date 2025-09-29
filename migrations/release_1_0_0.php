@@ -26,19 +26,22 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             'add_tables' => array(
                 $this->table_prefix . 'post_reactions' => array(
                     'COLUMNS' => array(
-                        'reaction_id'      => array('UINT', null, 'auto_increment'),
-                        'post_id'          => array('UINT', 0),
-                        'user_id'          => array('UINT', 0),
-                        'reaction_emoji'   => array('VCHAR:20', ''), // Sera modifié par la suite
-                        'reaction_time'    => array('TIMESTAMP', 0, 'DEFAULT CURRENT_TIMESTAMP'),
-                        // NOUVELLE COLONNE : Par défaut à 0 (false). Passera à 1 (true) une fois la notif envoyée.
-                        'reaction_notified'=> array('BOOL', 0),
+                        'reaction_id'      => array('MINT', null, 'auto_increment'), // MINT pour MEDIUMINT
+                        'post_id'          => array('MINT', 0),
+                        'topic_id'         => array('MINT', 0), // Ajout du topic_id comme dans votre table
+                        'user_id'          => array('MINT', 0),
+                        'reaction_emoji'   => array('VCHAR:20', ''),
+                        'reaction_time'    => array('UINT', 0), // UINT pour INT(11) UNSIGNED
+                        // COLONNE CORRIGÉE : TINYINT(1) qui ne peut pas être NULL, avec une valeur par défaut de 0.
+                        'reaction_notified'=> array('TINT:1', 0),
                     ),
                     'PRIMARY_KEY' => 'reaction_id',
                     'KEYS' => array(
+                        'post_id'           => array('INDEX', 'post_id'),
+                        'topic_id'          => array('INDEX', 'topic_id'),
+                        'user_id'           => array('INDEX', 'user_id'),
                         // NOUVEL INDEX : Pour chercher rapidement les notifications à envoyer.
                         'post_notified_idx' => array('INDEX', array('post_id', 'reaction_notified')),
-                        'user_idx'         => array('INDEX', 'user_id'),
                     ),
                 ),
             ),
@@ -53,7 +56,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             ),
         );
     }
-
+    
+    // La fonction update_data() reste la même pour forcer utf8mb4_bin
     public function update_data()
     {
         return array(
@@ -64,9 +68,12 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     public function set_utf8mb4_bin()
     {
         $table_name = $this->table_prefix . 'post_reactions';
-        // Cette instruction est idempotente et sûre à ré-exécuter
         $sql = "ALTER TABLE {$table_name}
                 MODIFY `reaction_emoji` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL";
+        // On s'assure aussi que reaction_notified a la bonne valeur par défaut
+        $sql_notified = "ALTER TABLE {$table_name}
+                         MODIFY `reaction_notified` TINYINT(1) NOT NULL DEFAULT 0";
         $this->db->sql_query($sql);
+        $this->db->sql_query($sql_notified);
     }
 }
