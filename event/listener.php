@@ -144,12 +144,12 @@ class listener implements EventSubscriberInterface
         // CORRECTION : Plus de fallback avec des emojis à count=0
         // Selon cahier des charges : "les émojis n'apparaissent que s'il y a des réactions"
 $post_row['S_REACTIONS_ENABLED'] = true;
+$post_row['post_reactions'] = [];
 
 // Assigner les réactions via le système de blocs de template
 foreach ($visible_reactions as $reaction) {
-    $post_row['post_reactions'][] = $reaction;
+    $this->template->assign_block_vars('postrow.post_reactions', $reaction);
 }
-
 error_log('[phpBB Reactions] post_reactions assignées pour post ' . $post_id . ': ' . count($visible_reactions) . ' réactions, structure: ' . print_r($post_row['post_reactions'], true));
         $event['post_row'] = $post_row;
     }
@@ -185,8 +185,8 @@ error_log("[LISTENER DEBUG] SQL result rows: " . $this->db->sql_affectedrows());
         while ($row = $this->db->sql_fetchrow($result)) {
             if (!empty($row['reaction_emoji'])) {
                 $user_reactions[] = $row['reaction_emoji'];
-                error_log("\$row : $row, [LISTENER DEBUG] SQL executed: $sql");
-error_log("\$row : $row, [LISTENER DEBUG] SQL result rows: " . $this->db->sql_affectedrows());
+error_log('$row : ' . print_r($row, true) . ', [LISTENER DEBUG] SQL executed: ' . $sql);
+error_log('$row : ' . print_r($row, true) . ', [LISTENER DEBUG] SQL result rows: ' . $this->db->sql_affectedrows());
             }
         }
         $this->db->sql_freeresult($result);
