@@ -47,6 +47,7 @@ services:
             - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '@config'
             
 # Type de notification pour les réactions
     bastien59960.reactions.notification.type.reaction:
