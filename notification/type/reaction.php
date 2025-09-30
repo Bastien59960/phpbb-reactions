@@ -13,6 +13,19 @@ class reaction extends \phpbb\notification\type\base
     {
         $this->user_loader = $user_loader;
     }
+
+    /**
+ * Récupère le titre du post
+ */
+private function get_post_title($post_id)
+{
+    $sql = 'SELECT post_subject FROM ' . POSTS_TABLE . ' WHERE post_id = ' . (int) $post_id;
+    $result = $this->db->sql_query($sql);
+    $row = $this->db->sql_fetchrow($result);
+    $this->db->sql_freeresult($result);
+    
+    return $row ? $row['post_subject'] : '';
+}
     
     /**
      * Le nom du type de notification.
