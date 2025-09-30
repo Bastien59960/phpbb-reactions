@@ -6,7 +6,15 @@
         <legend>{L_SETTINGS}</legend>
         <dl>
             <dt><label for="spam_time">{L_REACTIONS_SPAM_TIME}:</label><br><span>{L_REACTIONS_SPAM_TIME_EXPLAIN}</span></dt>
-            <dd><input type="number" id="spam_time" name="spam_time" value="{REACTIONS_SPAM_TIME}" /> {L_MINUTES}</dd>
+            <dd><input type="number" id="spam_time" name="spam_time" value="{REACTIONS_SPAM_TIME}" min="0" /> {L_MINUTES}</dd>
+        </dl>
+        <dl>
+            <dt><label for="max_per_post">{L_REACTIONS_MAX_PER_POST}:</label><br><span>{L_REACTIONS_MAX_PER_POST_EXPLAIN}</span></dt>
+            <dd><input type="number" id="max_per_post" name="max_per_post" value="{REACTIONS_MAX_PER_POST}" min="1" max="100" /></dd>
+        </dl>
+        <dl>
+            <dt><label for="max_per_user">{L_REACTIONS_MAX_PER_USER}:</label><br><span>{L_REACTIONS_MAX_PER_USER_EXPLAIN}</span></dt>
+            <dd><input type="number" id="max_per_user" name="max_per_user" value="{REACTIONS_MAX_PER_USER}" min="1" max="50" /></dd>
         </dl>
     </fieldset>
     <fieldset class="submit-buttons">
