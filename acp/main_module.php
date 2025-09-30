@@ -18,15 +18,19 @@ class main_module
                 trigger_error('FORM_INVALID');
             }
 
-            $config->set('bastien59960_reactions_spam_time', $request->variable('spam_time', 0));
-            // ... sauvegarder les autres réglages de la même manière ...
+            // Sauvegarder LES TROIS paramètres
+            $config->set('bastien59960_reactions_spam_time', $request->variable('spam_time', 45));
+            $config->set('bastien59960_reactions_max_per_post', $request->variable('max_per_post', 20));
+            $config->set('bastien59960_reactions_max_per_user', $request->variable('max_per_user', 10));
 
             trigger_error($user->lang('CONFIG_UPDATED') . adm_back_link($this->u_action));
         }
 
         $template->assign_vars([
-            'U_ACTION'              => $this->u_action,
-            'REACTIONS_SPAM_TIME'   => $config['bastien59960_reactions_spam_time'],
+            'U_ACTION'                  => $this->u_action,
+            'REACTIONS_SPAM_TIME'       => $config['bastien59960_reactions_spam_time'],
+            'REACTIONS_MAX_PER_POST'    => $config['bastien59960_reactions_max_per_post'],
+            'REACTIONS_MAX_PER_USER'    => $config['bastien59960_reactions_max_per_user'],
         ]);
     }
 }
