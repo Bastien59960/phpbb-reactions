@@ -28,6 +28,21 @@ class release_1_0_1 extends \phpbb\db\migration\migration
             ['config.add', ['bastien59960_reactions_spam_time', 45]],     // Fenêtre en minutes
             ['config.add', ['bastien59960_reactions_max_per_post', 20]],   // Max de réactions différentes par post
             ['config.add', ['bastien59960_reactions_max_per_user', 10]],  // Max de réactions par utilisateur par post
+
+            // Ajout du module dans le PCA
+        ['module.add', [
+            'acp', // C'est un module ACP
+            'ACP_CAT_DOT_MODS', // On le met dans l'onglet "Extensions"
+            'ACP_REACTIONS_TITLE' // Le nom de notre catégorie de module
+        ]],
+        ['module.add', [
+            'acp', // C'est un module ACP
+            'ACP_REACTIONS_TITLE', // Le parent est la catégorie créée juste au-dessus
+            [
+                'module_basename'   => '\bastien59960\reactions\acp\reactions_module',
+                'modes'             => ['settings'], // Le mode géré par notre contrôleur
+            ]
+        ]],
         ];
     }
 
