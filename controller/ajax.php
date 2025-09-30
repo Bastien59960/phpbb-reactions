@@ -171,6 +171,33 @@ class ajax
             }
 
             // 9) Dispatch logique principale
+
+
+// Vérifier les limites si on veut ajouter
+if ($action === 'add') {
+    $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
+    $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
+    
+    // Compte types actuels
+    $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
+    $result = $this->db->sql_query($sql);
+    $current_types = (int) $this->db->sql_fetchfield('count');
+    $this->db->sql_freeresult($result);
+    
+    // Compte réactions de l'user
+    $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
+    $result = $this->db->sql_query($sql);
+    $user_reactions = (int) $this->db->sql_fetchfield('count');
+    $this->db->sql_freeresult($result);
+    
+    if ($current_types >= $max_per_post) {
+        return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
+    }
+    if ($user_reactions >= $max_per_user) {
+        return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
+    }
+}
+            
             switch ($action) {
                 case 'add':
                     $resp = $this->add_reaction($post_id, $emoji);
