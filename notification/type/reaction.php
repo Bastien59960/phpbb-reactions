@@ -8,24 +8,15 @@ namespace bastien59960\reactions\notification\type;
 class reaction extends \phpbb\notification\type\base
 {
     protected $user_loader;
+    protected $db;
+    protected $phpbb_root_path;
 
-    public function __construct(\phpbb\user_loader $user_loader)
+    public function __construct(\phpbb\user_loader $user_loader, \phpbb\db\driver\driver_interface $db, $phpbb_root_path)
     {
         $this->user_loader = $user_loader;
+        $this->db = $db;
+        $this->phpbb_root_path = $phpbb_root_path;
     }
-
-    /**
- * Récupère le titre du post
- */
-private function get_post_title($post_id)
-{
-    $sql = 'SELECT post_subject FROM ' . POSTS_TABLE . ' WHERE post_id = ' . (int) $post_id;
-    $result = $this->db->sql_query($sql);
-    $row = $this->db->sql_fetchrow($result);
-    $this->db->sql_freeresult($result);
-    
-    return $row ? $row['post_subject'] : '';
-}
     
     /**
      * Le nom du type de notification.
@@ -88,6 +79,19 @@ private function get_post_title($post_id)
     public static function get_item_id($data)
     {
         return (int) $data['post_id'];
+    }
+    
+    /**
+     * Récupère le titre du post
+     */
+    private function get_post_title($post_id)
+    {
+        $sql = 'SELECT post_subject FROM ' . POSTS_TABLE . ' WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return $row ? $row['post_subject'] : '';
     }
     
     /**
