@@ -47,6 +47,16 @@ class ajax
      */
     protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
+    protected $config;
+
+public function __construct(
+    // ... existant ...
+    \phpbb\config\config $config // AJOUTER
+) {
+    // ... existant ...
+    $this->config = $config; // AJOUTER
+}
+
     /**
      * Constructor
      */
