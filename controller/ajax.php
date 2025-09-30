@@ -49,13 +49,7 @@ class ajax
 
     protected $config;
 
-public function __construct(
-    // ... existant ...
-    \phpbb\config\config $config // AJOUTER
-) {
-    // ... existant ...
-    $this->config = $config; // AJOUTER
-}
+
 
     /**
      * Constructor
@@ -71,7 +65,8 @@ public function __construct(
         $topics_table,
         $forums_table,
         $root_path,
-        $php_ext
+        $php_ext,
+        \phpbb\config\config $config
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -84,6 +79,7 @@ public function __construct(
         $this->forums_table = $forums_table;
         $this->root_path = $root_path;
         $this->php_ext = $php_ext;
+        $this->config = $config;
         
         $this->language->add_lang('common', 'bastien59960/reactions');
         // Forcer la connexion en utf8mb4
