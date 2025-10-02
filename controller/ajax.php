@@ -176,8 +176,10 @@ class ajax
                 ], 403);
             }
 
-            // 9) Dispatch logique principale
+// 9) Dispatch logique principale
 
+// Récupérer l'user_id une seule fois pour toutes les vérifications
+$user_id = (int)$this->user->data['user_id'];
 
 // Vérifier les limites si on veut ajouter
 if ($action === 'add') {
@@ -203,20 +205,20 @@ if ($action === 'add') {
         return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
     }
 }
-            
-            switch ($action) {
-                case 'add':
-                    $resp = $this->add_reaction($post_id, $emoji);
-                    break;
 
-                case 'remove':
-                    $resp = $this->remove_reaction($post_id, $emoji);
-                    break;
+switch ($action) {
+    case 'add':
+        $resp = $this->add_reaction($post_id, $emoji);
+        break;
 
-                case 'get':
-                    $resp = $this->get_reactions($post_id);
-                    break;
-            }
+    case 'remove':
+        $resp = $this->remove_reaction($post_id, $emoji);
+        break;
+
+    case 'get':
+        $resp = $this->get_reactions($post_id);
+        break;
+}
 
             // 10) Ajoute le RID dans la réponse si possible
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
