@@ -47,7 +47,6 @@ services:
             - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
-<<<<<<< HEAD
 
     # Service pour le contrôleur de test
     bastien59960.reactions.test:
@@ -57,16 +56,3 @@ services:
             - '@user'
             - '%tables.post_reactions%'
             - '%tables.posts%'
-=======
-            - '@config'
-            
-# Type de notification pour les réactions
-    bastien59960.reactions.notification.type.reaction:
-        class: bastien59960\reactions\notification\type\reaction
-        scope: prototype
-        parent: notification.type.base
-        calls:
-            - [set_user_loader, ['@user_loader']]
-        tags:
-            - { name: notification.type }
->>>>>>> 08b5b5e2ae9268ffa7689bf0c291d27aaf7ff784
