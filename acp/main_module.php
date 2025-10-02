@@ -92,7 +92,7 @@ class main_module
         // Charger le fichier de langue ACP de notre extension
         // Chemin : language/[langue_actuelle]/acp/common.php
         // Cela permet d'utiliser $user->lang('ACP_REACTIONS_TITLE') etc.
-        $language->add_lang('common', 'bastien59960/reactions/acp');
+        $language->add_lang('acp/common', 'bastien59960/reactions/acp');
 
         // ====================================================================
         // ÉTAPE 3 : DÉFINIR LES PROPRIÉTÉS DE LA PAGE
