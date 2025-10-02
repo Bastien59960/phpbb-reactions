@@ -21,3 +21,8 @@ bastien59960_reactions_remove:
   requirements:
     post_id: \d+
   methods: [POST]
+
+bastien59960_reactions_test:
+  path: /reactions/test
+  defaults: { _controller: bastien59960.reactions.test:handle }
+  methods: [GET]

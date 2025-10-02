@@ -47,3 +47,12 @@ services:
             - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
+
+    # Service pour le contrôleur de test
+    bastien59960.reactions.test:
+        class: bastien59960\reactions\controller\test
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'

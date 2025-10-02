@@ -2,11 +2,8 @@
 <!-- Bloc pour les utilisateurs connectés avec interactions complètes -->
 <div class="post-reactions-container" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
-
         <!-- Réactions depuis la DB (gérées par le listener PHP) -->
-        <!-- DEBUG: Nombre de réactions = {postrow.post_reactions|length} -->
         <!-- BEGIN postrow.post_reactions -->
-        <!-- DEBUG: Reaction trouvée = {postrow.post_reactions.EMOJI} Count = {postrow.post_reactions.COUNT} -->
         <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
               data-emoji="{postrow.post_reactions.EMOJI}"
               data-count="{postrow.post_reactions.COUNT}"
@@ -16,7 +13,6 @@
             <span class="count">{postrow.post_reactions.COUNT}</span>
         </span>
         <!-- END postrow.post_reactions -->
-
         <!-- Bouton pour palette - SEULEMENT pour les utilisateurs connectés -->
         <span class="reaction-more" title="Ajouter une réaction">+</span>
     </div>
@@ -25,9 +21,7 @@
 <!-- Affichage en lecture seule pour les utilisateurs non connectés -->
 <div class="post-reactions-container post-reactions-readonly" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
-        <!-- DEBUG: Nombre de réactions (readonly) = {postrow.post_reactions|length} -->
         <!-- BEGIN postrow.post_reactions -->
-        <!-- DEBUG: Reaction readonly = {postrow.post_reactions.EMOJI} Count = {postrow.post_reactions.COUNT} -->
             <!-- IF postrow.post_reactions.COUNT > 0 -->
             <span class="reaction reaction-readonly"
                   data-emoji="{postrow.post_reactions.EMOJI}"

@@ -36,7 +36,7 @@ class listener implements EventSubscriberInterface
 
     /** @var array Liste des 10 émojis courantes selon le cahier des charges */
     protected $common_emojis = [
-        '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '👌', '🔥', '🎉'
+        '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'
     ];
 
     public function __construct(
@@ -149,7 +149,6 @@ class listener implements EventSubscriberInterface
             'post_reactions'      => $visible_reactions, // Seules les vraies réactions
         ]);
 
-        error_log('[phpBB Reactions] Réactions assignées pour post ' . $post_id . ': ' . count($visible_reactions) . ' réactions visibles');
         $event['post_row'] = $post_row;
     }
 
@@ -175,23 +174,17 @@ class listener implements EventSubscriberInterface
                 WHERE post_id = ' . $post_id . '
                   AND user_id = ' . $user_id;
 
-        error_log("[Reactions Debug] get_user_reactions SQL: $sql");
         $result = $this->db->sql_query($sql);
-        error_log("[LISTENER DEBUG] SQL executed: $sql");
-error_log("[LISTENER DEBUG] SQL result rows: " . $this->db->sql_affectedrows());
 
         $user_reactions = [];
         while ($row = $this->db->sql_fetchrow($result)) {
             if (!empty($row['reaction_emoji'])) {
                 $user_reactions[] = $row['reaction_emoji'];
-                error_log("\$row : $row, [LISTENER DEBUG] SQL executed: $sql");
-error_log("\$row : $row, [LISTENER DEBUG] SQL result rows: " . $this->db->sql_affectedrows());
             }
         }
         $this->db->sql_freeresult($result);
 
         $unique = array_values(array_unique($user_reactions));
-        error_log('[Reactions Debug] User reactions pour post_id=' . $post_id . ' user_id=' . $user_id . ': ' . json_encode($unique, JSON_UNESCAPED_UNICODE));
         return $unique;
     }
 
@@ -222,7 +215,6 @@ error_log("\$row : $row, [LISTENER DEBUG] SQL result rows: " . $this->db->sql_af
                 HAVING COUNT(*) > 0
                 ORDER BY COUNT(*) DESC';
 
-        error_log("[Reactions Debug] get_post_reactions SQL: $sql");
         $result = $this->db->sql_query($sql);
 
         $reactions = [];
@@ -233,7 +225,6 @@ error_log("\$row : $row, [LISTENER DEBUG] SQL result rows: " . $this->db->sql_af
         }
         $this->db->sql_freeresult($result);
 
-        error_log('[Reactions Debug] Réactions trouvées pour post_id=' . $post_id . ': ' . json_encode($reactions, JSON_UNESCAPED_UNICODE));
         return $reactions;
     }
 

@@ -1,0 +1,46 @@
+Voici la table phpbb3_reaction_types
+
+Textes complets
+reaction_type_id 	reaction_type_order_id 	reaction_file_name 	reaction_type_title 	reaction_type_enable 	
+1 			1 			1f44d.png 		Like 			1
+2 			2 			1f44e.png 		Dislike 		1
+3 			5 			1f642.png 		Happy 			1
+4 			3 			1f60d.png 		Love 			1
+5 			6 			1f602.png 		Funny 			1
+6 			7 			1f611.png 		Neutral 		1
+7 			8 			1f641.png 		Unhappy 		1
+8 			9 			1f62f.png 		Surprised 		1
+9 			10 			1f62d.png 		Cry 			1
+10 			11 			1f621.png 		Mad 			1
+11 			4 			OMG.png 		OMG 			1
+
+Et la table phpbb3_reactions elle ressemble à ça :
+
+Textes complets
+reaction_id 	reaction_user_id 	poster_id 	post_id 	topic_id 	reaction_type_id  reaction_file_name reaction_type_title reaction_time 	
+1 	  	3 			163 		186867 		15371 		9 		  1f62d.png 	     Cry 		1587603626
+2 	  	3 			13518 		187225 		15371 		9 		  1f62d.png 	     Cry 		1587603791
+3 	  	3 			1700 		187223 		15371 		10 		  1f621.png 	     Mad 		1587603809
+4 	  	3 			12541 		187444 		15113 		1 		  1f44d.png 	     Like 		1587603996
+5 	  	3 			10464 		187424 		9032 		9 		  1f62d.png 	     Cry 		1587605490
+7 	  	129 			3 		187446 		15414 		1 		  1f44d.png 	     Like 		1587622228
+8 	  	11801 			3		187446 		15414 		1 		  1f44d.png 	     Like 		1587624047
+9 	 	10962 			3 		187445 		15371 		1 		  1f44d.png 	     Like 		1587625137
+10 	 	10962 			163 		186867 		15371 		9 		  1f62d.png 	     Cry 		1587625153
+11 	 	10962 			3 		187446 		15414 		1 		  1f44d.png 	     Like 		1587626009
+12 	 	13292 			10464 		187424 		9032 		9 		  1f62d.png 	     Cry 		1587626917
+13 	 	13621 			3 		187446 		15414 		1 		  1f44d.png 	     Like 		1587628478
+14 	  	10950 			3 		187446 		15414 		1 		  1f44d.png 	     Like 		1587641088
+15 	 	3 			11474 		187465 		15113 		1 		  1f44d.png 	     Like 		1587646862
+16 	 	3 			12541 		187466 		15113 		5 		  1f602.png 	     Funny 		1587652284
+17 	  	3 			12541 		184075 		15113 		1 		  1f44d.png 	     Like 		1587658195
+18 	  	3 			12578 		186911 		15358 		8 		  1f62f.png 	     Surprised 		1587658492
+19 	  	10962 			156		187249 		15399 		5 		  1f602.png 	     Funny 		1587667495
+20 	  	3 			11835 		180133 		14663 		1 		  1f44d.png 	     Like 		1587673264
+21 	  	3 			11835 		180134 		14664 		1 		  1f44d.png 	     Like 		1587673313
+22 	  	3 			14080 		186634 		15352 		1 		  1f44d.png 	     Like 		1587677591
+23 	  	3 			12578 		187478 		15418 		1 	 	  1f44d.png 	     Like 		1587678217
+24 	  	15 			14129 		187416 		15411 		10 	  	  1f621.png 	     Mad 		1587682508
+25 	  	14121 			335 		187397 		15374 		1 		  1f44d.png 	     Like 		1587727144
+26 	  	3 			14129 		187421 		15337 		1 		  1f44d.png 	     Like	 	1587750202
+

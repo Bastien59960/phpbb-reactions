@@ -78,9 +78,6 @@ class ajax
         $this->language->add_lang('common', 'bastien59960/reactions');
         // Forcer la connexion en utf8mb4
         $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
-        error_log('[phpBB Reactions] ajax::__construct → SET NAMES utf8mb4 appliqué');
-        // CORRECTION : Log des émojis courantes au lieu de populaires
-        error_log('[phpBB Reactions] Common emojis loaded: ' . implode(', ', $this->common_emojis));
     }
 
     /**
