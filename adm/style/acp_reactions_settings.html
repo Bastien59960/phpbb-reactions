@@ -1,25 +1,32 @@
-<a name="maincontent"></a>
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
 <h1>{L_ACP_REACTIONS_SETTINGS}</h1>
 <p>{L_ACP_REACTIONS_SETTINGS_EXPLAIN}</p>
+
 <form id="acp_reactions" method="post" action="{U_ACTION}">
     <fieldset>
         <legend>{L_SETTINGS}</legend>
         <dl>
-            <dt><label for="spam_time">{L_REACTIONS_SPAM_TIME}:</label><br><span>{L_REACTIONS_SPAM_TIME_EXPLAIN}</span></dt>
+            <dt><label for="spam_time">{L_REACTIONS_SPAM_TIME}{L_COLON}</label><br><span>{L_REACTIONS_SPAM_TIME_EXPLAIN}</span></dt>
             <dd><input type="number" id="spam_time" name="spam_time" value="{REACTIONS_SPAM_TIME}" min="0" /> {L_MINUTES}</dd>
         </dl>
         <dl>
-            <dt><label for="max_per_post">{L_REACTIONS_MAX_PER_POST}:</label><br><span>{L_REACTIONS_MAX_PER_POST_EXPLAIN}</span></dt>
+            <dt><label for="max_per_post">{L_REACTIONS_MAX_PER_POST}{L_COLON}</label><br><span>{L_REACTIONS_MAX_PER_POST_EXPLAIN}</span></dt>
             <dd><input type="number" id="max_per_post" name="max_per_post" value="{REACTIONS_MAX_PER_POST}" min="1" max="100" /></dd>
         </dl>
         <dl>
-            <dt><label for="max_per_user">{L_REACTIONS_MAX_PER_USER}:</label><br><span>{L_REACTIONS_MAX_PER_USER_EXPLAIN}</span></dt>
+            <dt><label for="max_per_user">{L_REACTIONS_MAX_PER_USER}{L_COLON}</label><br><span>{L_REACTIONS_MAX_PER_USER_EXPLAIN}</span></dt>
             <dd><input type="number" id="max_per_user" name="max_per_user" value="{REACTIONS_MAX_PER_USER}" min="1" max="50" /></dd>
         </dl>
     </fieldset>
+    
     <fieldset class="submit-buttons">
-        <input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+        <input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />
         <input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
         {S_FORM_TOKEN}
     </fieldset>
 </form>
+
+<!-- INCLUDE overall_footer.html -->
