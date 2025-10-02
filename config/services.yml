@@ -47,6 +47,7 @@ services:
             - '%tables.forums%'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '@config'
 
     # Service pour le contrôleur de test
     bastien59960.reactions.test:

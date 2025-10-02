@@ -10,52 +10,51 @@ namespace bastien59960\reactions\migrations;
 
 class release_1_0_1 extends \phpbb\db\migration\migration
 {
+    /**
+    * Check if the migration is effectively installed
+    *
+    * @return bool True if this migration is installed, False if this migration is not installed
+    */
     public function effectively_installed()
     {
-        return isset($this->config['bastien59960_reactions_spam_time']);
+        return isset($this->config['bastien59960_reactions_max_per_post']);
     }
 
+    /**
+    * Assign migration file dependencies for this migration
+    *
+    * @return array Array of migration files
+    */
     static public function depends_on()
     {
-        // Cette migration dépend de la création de la table principale
         return array('\bastien59960\reactions\migrations\release_1_0_0');
     }
 
-   public function update_data()
-{
-    return [
-        // Ajoute les variables de configuration
-        ['config.add', ['bastien59960_reactions_spam_time', 45]],
-        ['config.add', ['bastien59960_reactions_max_per_post', 20]],
-        ['config.add', ['bastien59960_reactions_max_per_user', 10]],
-        
-        // Ajout de la catégorie du module
-        ['module.add', [
-            'acp',
-            'ACP_CAT_DOT_MODS',
-            'ACP_REACTIONS_TITLE'
-        ]],
-        
-        // Ajout du module avec ses paramètres complets
-        ['module.add', [
-            'acp',
-            'ACP_REACTIONS_TITLE',
-            [
-                'module_basename'   => '\bastien59960\reactions\acp\main_module',
-                'modes'             => ['settings'],
-                'auth'              => 'ext_bastien59960/reactions && acl_a_board', // AJOUT OBLIGATOIRE
-            ]
-        ]],
-    ];
-}
+    /**
+    * Add the configuration options used by this extension
+    *
+    * @return array Array of configuration options
+    */
+    public function update_data()
+    {
+        return array(
+            array('config.add', array('bastien59960_reactions_max_per_post', 20)),
+            array('config.add', array('bastien59960_reactions_max_per_user', 10)),
+            array('config.add', array('bastien59960_reactions_enabled', 1)),
+        );
+    }
 
+    /**
+    * Remove the configuration options used by this extension
+    *
+    * @return array Array of configuration options
+    */
     public function revert_data()
     {
-        return [
-            // Supprime les variables de configuration lors de la désactivation
-            ['config.remove', ['bastien59960_reactions_spam_time']],
-            ['config.remove', ['bastien59960_reactions_max_per_post']],
-            ['config.remove', ['bastien59960_reactions_max_per_user']],
-        ];
+        return array(
+            array('config.remove', array('bastien59960_reactions_max_per_post')),
+            array('config.remove', array('bastien59960_reactions_max_per_user')),
+            array('config.remove', array('bastien59960_reactions_enabled')),
+        );
     }
 }

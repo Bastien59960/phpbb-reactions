@@ -12,6 +12,11 @@ namespace bastien59960\reactions\controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+// Définir la constante ANONYMOUS si elle n'est pas définie
+if (!defined('ANONYMOUS')) {
+    define('ANONYMOUS', 1);
+}
+
 class ajax
 {
     /** @var \phpbb\db\driver\driver_interface */
@@ -39,6 +44,7 @@ class ajax
     
     protected $root_path; 
     protected $php_ext;
+    protected $config;
 
     /** 
      * CORRECTION MAJEURE : Renommage "popular_emojis" en "common_emojis"
@@ -46,10 +52,6 @@ class ajax
      * À synchroniser avec reactions.js et listener.php
      */
     protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
-
-    protected $config;
-
-
 
     /**
      * Constructor
@@ -94,23 +96,19 @@ class ajax
         // Identifiant unique de requête + timer
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
-        error_log("[Reactions RID=$rid] handle() démarré");
 
         try {
             // 1) Vérification utilisateur
             if ($this->user->data['user_id'] == ANONYMOUS) {
-                error_log("[Reactions RID=$rid] Utilisateur anonyme → refus");
                 throw new HttpException(403, 'User not logged in.');
             }
 
             // 2) Lecture du JSON
             $raw = file_get_contents('php://input');
-            error_log("[Reactions RID=$rid] Corps brut reçu: $raw");
 
             try {
                 $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
             } catch (\Throwable $jsonEx) {
-                error_log("[Reactions RID=$rid] JSON invalide: " . $jsonEx->getMessage());
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'json_decode',
@@ -125,17 +123,13 @@ class ajax
             $emoji   = $data['emoji'] ?? '';
             $action  = $data['action'] ?? '';
 
-            error_log("[Reactions RID=$rid] Données extraites: sid=$sid, post_id=$post_id, emoji=$emoji, action=$action, user_id=" . (int)$this->user->data['user_id']);
-
             // 4) Vérification CSRF
             if ($sid !== $this->user->data['session_id']) {
-                error_log("[Reactions RID=$rid] SID invalide: attendu=" . $this->user->data['session_id']);
                 throw new HttpException(403, 'Jeton CSRF invalide.');
             }
 
             // 5) Vérification action
             if (!in_array($action, ['add', 'remove', 'get'], true)) {
-                error_log("[Reactions RID=$rid] Action invalide: $action");
                 return new JsonResponse([
                     'success' => false,
                     'error'   => 'Invalid action',
@@ -145,7 +139,6 @@ class ajax
 
             // 6) Vérification post
             if (!$post_id || !$this->is_valid_post($post_id)) {
-                error_log("[Reactions RID=$rid] Post invalide: $post_id");
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_INVALID_POST'),
@@ -155,7 +148,6 @@ class ajax
 
             // 7) Vérification emoji (sauf action get)
             if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
-                error_log("[Reactions RID=$rid] Emoji invalide: $emoji");
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
@@ -165,7 +157,6 @@ class ajax
 
             // 8) Vérification permissions
             if (!$this->can_react_to_post($post_id)) {
-                error_log("[Reactions RID=$rid] Permission refusée pour post_id=$post_id");
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED'),
@@ -173,37 +164,35 @@ class ajax
                 ], 403);
             }
 
-// 9) Dispatch logique principale
+            // 9) Dispatch logique principale
+            $user_id = (int)$this->user->data['user_id'];
 
-// Récupérer l'user_id une seule fois pour toutes les vérifications
-$user_id = (int)$this->user->data['user_id'];
+            // Vérifier les limites si on veut ajouter
+            if ($action === 'add') {
+                $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
+                $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
+                
+                // Compte types actuels
+                $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
+                $result = $this->db->sql_query($sql);
+                $current_types = (int) $this->db->sql_fetchfield('count');
+                $this->db->sql_freeresult($result);
+                
+                // Compte réactions de l'user
+                $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
+                $result = $this->db->sql_query($sql);
+                $user_reactions = (int) $this->db->sql_fetchfield('count');
+                $this->db->sql_freeresult($result);
+                
+                if ($current_types >= $max_per_post) {
+                    return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
+                }
+                if ($user_reactions >= $max_per_user) {
+                    return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
+                }
+            }
 
-// Vérifier les limites si on veut ajouter
-if ($action === 'add') {
-    $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
-    $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
-    
-    // Compte types actuels
-    $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
-    $result = $this->db->sql_query($sql);
-    $current_types = (int) $this->db->sql_fetchfield('count');
-    $this->db->sql_freeresult($result);
-    
-    // Compte réactions de l'user
-    $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
-    $result = $this->db->sql_query($sql);
-    $user_reactions = (int) $this->db->sql_fetchfield('count');
-    $this->db->sql_freeresult($result);
-    
-    if ($current_types >= $max_per_post) {
-        return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
-    }
-    if ($user_reactions >= $max_per_user) {
-        return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
-    }
-}
-
-switch ($action) {
+            switch ($action) {
     case 'add':
         $resp = $this->add_reaction($post_id, $emoji);
         break;
@@ -469,45 +458,22 @@ switch ($action) {
     }
 
     /**
-     * CORRECTION MAJEURE : Check if emoji is valid
-     * Accepte les émojis courantes du pickup ET ceux du fichier JSON
+     * Check if emoji is valid - Version simplifiée
      */
     private function is_valid_emoji($emoji)
     {
-        // CORRECTION : Autoriser les 10 émojis courantes (renommage de popular_emojis)
+        // Vérifier d'abord les émojis courantes
         if (in_array($emoji, $this->common_emojis, true)) {
-            error_log("[Reactions] Emoji courante autorisé: $emoji");
             return true;
         }
         
-        // Pour les autres, vérifier dans le fichier JSON complet
-        $json_path = $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json';
-        if (!file_exists($json_path)) {
-            error_log("[Reactions] Fichier JSON manquant: $json_path");
+        // Pour les autres émojis, validation basique
+        if (empty($emoji) || strlen($emoji) > 20) {
             return false;
         }
         
-        $json_content = file_get_contents($json_path);
-        $data = json_decode($json_content, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($data['emojis'])) {
-            error_log("[Reactions] Erreur JSON ou clé emojis manquante");
-            return false;
-        }
-
-        foreach ($data['emojis'] as $category_name => $subcategories) {
-            foreach ($subcategories as $subcategory_name => $emojis) {
-                foreach ($emojis as $emoji_data) {
-                    if (isset($emoji_data['emoji']) && $emoji_data['emoji'] === $emoji) {
-                        error_log("[Reactions] Emoji trouvé dans JSON: $emoji");
-                        return true;
-                    }
-                }
-            }
-        }
-        
-        error_log("[Reactions] Emoji non autorisé: $emoji");
-        return false;
+        // Vérifier que c'est un emoji Unicode valide
+        return mb_strlen($emoji) > 0 && mb_strlen($emoji) <= 4;
     }
 
     /**

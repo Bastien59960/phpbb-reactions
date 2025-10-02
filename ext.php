@@ -27,15 +27,15 @@ class ext extends \phpbb\extension\base
 		return phpbb_version_compare($config['version'], '3.3.0', '>=');
 	}
 
-	/**
-	* Return the current version of the extension.
-	*
-	* This should match the version used in the migration class.
-	*
-	* @return string
-	*/
-	public function get_version()
-	{
-		return '1.0.0';
-	}
+    /**
+    * Return the current version of the extension.
+    *
+    * This should match the version used in the migration class.
+    *
+    * @return string
+    */
+    public function get_version()
+    {
+        return '1.0.1';
+    }
 }
