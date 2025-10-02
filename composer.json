@@ -1,0 +1,29 @@
+{
+    "name": "bastien59960/reactions",
+    "type": "phpbb-extension",
+    "description": "Extension phpBB 3.3.15 permettant aux utilisateurs de réagir aux posts avec des émojis Unicode",
+    "homepage": "https://github.com/Bastien59960/phpbb-reactions",
+    "version": "1.0.0-dev",
+    "keywords": ["phpbb", "extension", "reactions", "emoji"],
+    "license": "GPL-2.0-only",
+    "authors": [
+        {
+            "name": "Bastien59960",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.3.0",
+        "phpbb/phpbb": ">=3.3.0,<4.0.0@dev",
+	    "composer/installers": "~1.0"
+    },
+    "require-dev": {
+        "phpbb/epv": "dev-master"
+    },
+    "extra": {
+        "display-name": "Post Reactions",
+        "soft-require": {
+            "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+        }
+    }
+}

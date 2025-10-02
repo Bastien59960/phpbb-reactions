@@ -1,0 +1,23 @@
+services:
+    bastien59960.reactions.controller.main:
+        class: bastien59960\reactions\controller\main
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@template'
+            - '@auth'
+            - '@controller.helper'
+            - '%tables%'
+
+    bastien59960.reactions.event.listener:
+        class: bastien59960\reactions\event\listener
+        arguments:
+            - '@bastien59960.reactions.controller.main'
+            - '@user'
+            - '@template'
+            - '@auth'
+            - '@router.url_generator'
+            - '@assets.manager'
+        tags:
+            - { name: event.listener }

@@ -1,0 +1,59 @@
+imports:
+    - { resource: 'parameters.yml' }
+
+services:
+    # Service pour le listener d'événements
+    bastien59960.reactions.listener:
+        class: bastien59960\reactions\event\listener
+        arguments:
+            - '@dbal.conn'
+            #- '@db'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '@template'
+            - '@language'
+            - '@controller.helper'
+        tags:
+            - { name: event.listener }
+            
+    # Service pour le contrôleur principal (optionnel si non utilisé)
+    bastien59960.reactions.main:
+        class: bastien59960\reactions\controller\main
+        arguments:
+            - '@dbal.conn'
+            #- '@db'
+            - '@user'
+            - '@request'
+            - '@template'
+            - '@auth'
+            - '@controller.helper'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+
+    # Service pour le contrôleur AJAX (C'est celui qui manquait !)
+    bastien59960.reactions.ajax:
+        class: bastien59960\reactions\controller\ajax
+        arguments:
+            - '@dbal.conn'
+            #- '@db'
+            - '@user'
+            - '@request'
+            - '@auth'
+            - '@language'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.forums%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '@config'
+
+    # Service pour le contrôleur de test
+    bastien59960.reactions.test:
+        class: bastien59960\reactions\controller\test
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'

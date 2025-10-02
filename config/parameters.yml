@@ -1,0 +1,5 @@
+parameters:
+    tables.post_reactions: phpbb_post_reactions
+    tables.topics: phpbb_topics
+    tables.forums: phpbb_forums
+    tables.posts: phpbb_posts
