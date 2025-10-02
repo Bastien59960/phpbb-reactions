@@ -93,6 +93,9 @@ class main_module
         // Chemin : language/[langue_actuelle]/acp/common.php
         // Cela permet d'utiliser $user->lang('ACP_REACTIONS_TITLE') etc.
         $language->add_lang('acp/common', 'bastien59960/reactions');
+        
+        // Charger aussi les traductions générales
+        $language->add_lang('common', 'bastien59960/reactions');
 
         // ====================================================================
         // ÉTAPE 3 : DÉFINIR LES PROPRIÉTÉS DE LA PAGE

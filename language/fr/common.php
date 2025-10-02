@@ -19,6 +19,14 @@ if (empty($lang) || !is_array($lang))
 
 // Fusionner le tableau de langues existant
 $lang = array_merge($lang, array(
+    // Messages ACP
+    'ACP_REACTIONS_TITLE'       => 'Réglages des réactions',
+    'ACP_REACTIONS_SETTINGS'    => 'Configuration des réactions',
+    'ACP_REACTIONS_ENABLED'     => 'Activer les réactions',
+    'ACP_REACTIONS_MAX_PER_POST' => 'Nombre maximum de types de réactions par post',
+    'ACP_REACTIONS_MAX_PER_USER' => 'Nombre maximum de réactions par utilisateur et par post',
+    'ACP_REACTIONS_EXPLAIN'     => 'Configurez les paramètres des réactions aux messages.',
+    
     // Messages de base
     'REACTION_ADD'              => 'Ajouter une réaction',
     'REACTION_REMOVE'           => 'Retirer votre réaction',

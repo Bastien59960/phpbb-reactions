@@ -18,6 +18,18 @@ namespace bastien59960\reactions\acp;
 class main_info
 {
     /**
+     * Charger les traductions ACP
+     */
+    public function __construct()
+    {
+        global $phpbb_container;
+        
+        if (isset($phpbb_container)) {
+            $language = $phpbb_container->get('language');
+            $language->add_lang('acp/common', 'bastien59960/reactions');
+        }
+    }
+    /**
      * Retourne la configuration du module
      * 
      * phpBB lit ce tableau pour :
