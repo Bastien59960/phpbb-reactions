@@ -170,7 +170,6 @@ class listener implements EventSubscriberInterface
 		}
 		//~ error_log('[phpBB Reactions] list_reactions assignees pour post ' . $post_id . ': ' . count($visible_users) . ' reactions, structure: ' . print_r($post_row['list_reactions'], true));
 
-<<<<<<< HEAD
         $post_row = array_merge($post_row, [
             'S_REACTIONS_ENABLED' => true,
             'post_reactions'      => $visible_reactions, // Seules les vraies réactions
@@ -178,9 +177,6 @@ class listener implements EventSubscriberInterface
 
         $event['post_row'] = $post_row;
     }
-=======
-	}
->>>>>>> 08b5b5e2ae9268ffa7689bf0c291d27aaf7ff784
 
     public function add_forum_data($event)
     {
@@ -210,11 +206,6 @@ class listener implements EventSubscriberInterface
         while ($row = $this->db->sql_fetchrow($result)) {
             if (!empty($row['reaction_emoji'])) {
                 $user_reactions[] = $row['reaction_emoji'];
-<<<<<<< HEAD
-=======
-error_log('$row : ' . print_r($row, true) . ', [LISTENER DEBUG] SQL executed: ' . $sql);
-error_log('$row : ' . print_r($row, true) . ', [LISTENER DEBUG] SQL result rows: ' . $this->db->sql_affectedrows());
->>>>>>> 08b5b5e2ae9268ffa7689bf0c291d27aaf7ff784
             }
         }
         $this->db->sql_freeresult($result);
