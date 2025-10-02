@@ -128,6 +128,7 @@ class listener implements EventSubscriberInterface
         // Récupération des réactions depuis la DB
         $reactions_by_db = $this->get_post_reactions($post_id);
         $user_reactions = $this->get_user_reactions($post_id, (int) $this->user->data['user_id']);
+        $list_users_reaction = $this->get_list_users_reactions($post_id);
 
         // CORRECTION : Ne retourner que les réactions avec count > 0
         $visible_reactions = [];
@@ -140,10 +141,36 @@ class listener implements EventSubscriberInterface
                 ];
             }
         }
-
+		
+		$visible_users = [];
+		foreach ($list_users_reaction as $emoji => $nom)
+		{
+			$visible_users[] = [
+				'EMOJI'		=> $emoji,
+				'NOM'		=> $nom,
+			];
+		}
+		
         // CORRECTION : Plus de fallback avec des emojis à count=0
         // Selon cahier des charges : "les émojis n'apparaissent que s'il y a des réactions"
+		$post_row['S_REACTIONS_ENABLED'] = true;
+		$post_row['post_reactions'] = [];
+		$post_row['list_reactions'] = [];
+		
+		// Assigner les réactions via le système de blocs de template
+		foreach ($visible_reactions as $reaction) {
+		    $this->template->assign_block_vars('postrow.post_reactions', $reaction);
+		}
+		
+		//~ error_log('[phpBB Reactions] post_reactions assignees pour post ' . $post_id . ': ' . count($visible_reactions) . ' reactions, structure: ' . print_r($post_row['post_reactions'], true));
+		        //~ $event['post_row'] = $post_row;
+		
+		foreach ($visible_users as $users_name) {
+		    $this->template->assign_block_vars('postrow.list_reactions', $users_name);
+		}
+		//~ error_log('[phpBB Reactions] list_reactions assignees pour post ' . $post_id . ': ' . count($visible_users) . ' reactions, structure: ' . print_r($post_row['list_reactions'], true));
 
+<<<<<<< HEAD
         $post_row = array_merge($post_row, [
             'S_REACTIONS_ENABLED' => true,
             'post_reactions'      => $visible_reactions, // Seules les vraies réactions
@@ -151,6 +178,9 @@ class listener implements EventSubscriberInterface
 
         $event['post_row'] = $post_row;
     }
+=======
+	}
+>>>>>>> 08b5b5e2ae9268ffa7689bf0c291d27aaf7ff784
 
     public function add_forum_data($event)
     {
@@ -180,6 +210,11 @@ class listener implements EventSubscriberInterface
         while ($row = $this->db->sql_fetchrow($result)) {
             if (!empty($row['reaction_emoji'])) {
                 $user_reactions[] = $row['reaction_emoji'];
+<<<<<<< HEAD
+=======
+error_log('$row : ' . print_r($row, true) . ', [LISTENER DEBUG] SQL executed: ' . $sql);
+error_log('$row : ' . print_r($row, true) . ', [LISTENER DEBUG] SQL result rows: ' . $this->db->sql_affectedrows());
+>>>>>>> 08b5b5e2ae9268ffa7689bf0c291d27aaf7ff784
             }
         }
         $this->db->sql_freeresult($result);
@@ -198,6 +233,30 @@ class listener implements EventSubscriberInterface
         return (bool) $exists;
     }
 
+/**	ajout liste users **/
+    private function get_list_users_reactions($post_id)
+    {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return [];
+        }
+        
+        $sql = 'SELECT r.reaction_emoji as emo, u.username_clean as nom FROM `phpbb_users` u INNER JOIN `phpbb_post_reactions` r ON u.user_id=r.user_id WHERE r.post_id=' . $post_id ;
+        error_log("[Reactions Debug] get_list_users_reactions SQL: $sql");
+        $result = $this->db->sql_query($sql);
+
+        $reactions_users = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            if (!empty($row['emo'])) {
+                $reactions_users[$row['emo']] = $row['nom'];
+            }
+        }
+        $this->db->sql_freeresult($result);
+
+        error_log('[Reactions Debug] Users trouves pour post_id=' . $post_id . ': ' . json_encode($reactions_users, JSON_UNESCAPED_UNICODE));
+        return $reactions_users;
+	}
+	
     /**
      * CORRECTION : Amélioration du debug pour get_post_reactions
      */

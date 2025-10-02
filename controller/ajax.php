@@ -47,6 +47,10 @@ class ajax
      */
     protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
+    protected $config;
+
+
+
     /**
      * Constructor
      */
@@ -61,7 +65,8 @@ class ajax
         $topics_table,
         $forums_table,
         $root_path,
-        $php_ext
+        $php_ext,
+        \phpbb\config\config $config
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -74,6 +79,7 @@ class ajax
         $this->forums_table = $forums_table;
         $this->root_path = $root_path;
         $this->php_ext = $php_ext;
+        $this->config = $config;
         
         $this->language->add_lang('common', 'bastien59960/reactions');
         // Forcer la connexion en utf8mb4
@@ -167,20 +173,49 @@ class ajax
                 ], 403);
             }
 
-            // 9) Dispatch logique principale
-            switch ($action) {
-                case 'add':
-                    $resp = $this->add_reaction($post_id, $emoji);
-                    break;
+// 9) Dispatch logique principale
 
-                case 'remove':
-                    $resp = $this->remove_reaction($post_id, $emoji);
-                    break;
+// Récupérer l'user_id une seule fois pour toutes les vérifications
+$user_id = (int)$this->user->data['user_id'];
 
-                case 'get':
-                    $resp = $this->get_reactions($post_id);
-                    break;
-            }
+// Vérifier les limites si on veut ajouter
+if ($action === 'add') {
+    $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
+    $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
+    
+    // Compte types actuels
+    $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
+    $result = $this->db->sql_query($sql);
+    $current_types = (int) $this->db->sql_fetchfield('count');
+    $this->db->sql_freeresult($result);
+    
+    // Compte réactions de l'user
+    $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
+    $result = $this->db->sql_query($sql);
+    $user_reactions = (int) $this->db->sql_fetchfield('count');
+    $this->db->sql_freeresult($result);
+    
+    if ($current_types >= $max_per_post) {
+        return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
+    }
+    if ($user_reactions >= $max_per_user) {
+        return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
+    }
+}
+
+switch ($action) {
+    case 'add':
+        $resp = $this->add_reaction($post_id, $emoji);
+        break;
+
+    case 'remove':
+        $resp = $this->remove_reaction($post_id, $emoji);
+        break;
+
+    case 'get':
+        $resp = $this->get_reactions($post_id);
+        break;
+}
 
             // 10) Ajoute le RID dans la réponse si possible
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
