@@ -355,3 +355,4 @@ public function import($id, $mode)
         'OLD_TYPES_TABLE' => $old_types_table,
     ]);
 }
+}
