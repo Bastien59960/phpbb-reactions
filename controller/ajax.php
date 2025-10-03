@@ -193,18 +193,29 @@ class ajax
             }
 
             switch ($action) {
-    case 'add':
-        $resp = $this->add_reaction($post_id, $emoji);
-        break;
-
-    case 'remove':
-        $resp = $this->remove_reaction($post_id, $emoji);
-        break;
-
-    case 'get':
-        $resp = $this->get_reactions($post_id);
-        break;
-}
+                case 'add':
+                    $resp = $this->add_reaction($post_id, $emoji);
+                    break;
+            
+                case 'remove':
+                    $resp = $this->remove_reaction($post_id, $emoji);
+                    break;
+            
+                case 'get':
+                    $resp = $this->get_reactions($post_id);
+                    break;
+            
+                case 'get_users':  // NOUVEAU
+                    $resp = $this->get_users_for_emoji($post_id, $emoji);
+                    break;
+                    
+                default:
+                    return new JsonResponse([
+                        'success' => false,
+                        'error' => 'Invalid action',
+                        'rid' => $rid
+                    ], 400);
+            }
 
             // 10) Ajoute le RID dans la réponse si possible
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
@@ -423,6 +434,38 @@ class ajax
             'reactions' => $reactions,
         ]);
     }
+
+    /**
+ * Get users who reacted with a specific emoji
+ */
+private function get_users_for_emoji($post_id, $emoji)
+{
+    $sql = 'SELECT DISTINCT u.user_id, u.username, u.username_clean
+            FROM ' . $this->post_reactions_table . ' r
+            LEFT JOIN ' . USERS_TABLE . ' u ON r.user_id = u.user_id
+            WHERE r.post_id = ' . (int) $post_id . "
+              AND r.reaction_emoji = '" . $this->db->sql_escape($emoji) . "'
+            ORDER BY r.reaction_time ASC";
+    
+    $result = $this->db->sql_query($sql);
+    
+    $users = [];
+    while ($row = $this->db->sql_fetchrow($result)) {
+        $users[] = [
+            'user_id' => (int) $row['user_id'],
+            'username' => $row['username'],
+            'username_clean' => $row['username_clean']
+        ];
+    }
+    $this->db->sql_freeresult($result);
+    
+    return new JsonResponse([
+        'success' => true,
+        'post_id' => $post_id,
+        'emoji' => $emoji,
+        'users' => $users
+    ]);
+}
 
     /**
      * Récupère les réactions sous forme d'array

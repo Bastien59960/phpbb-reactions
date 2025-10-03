@@ -1,25 +1,23 @@
-	// ------------- Ajouts -----------
-	function toggle_visible(id) {
-		var x = document.getElementById(id);
-		if (x.style.display === "block") {
-			x.style.display = "none";
-		} else {
-			x.style.display = "block";
-		}
-	} 
-	
+// ------------- Ajouts -----------
+function toggle_visible(id) {
+    var x = document.getElementById(id);
+    if (x.style.display === "block") {
+        x.style.display = "none";
+    } else {
+        x.style.display = "block";
+    }
+} 
 
 (function () {
     'use strict';
 
     let currentPicker = null;
+    let currentTooltip = null;
 
     // CORRECTION MAJEURE : Renommage "POPULAR_EMOJIS" en "COMMON_EMOJIS"
     // Les 10 émojis courantes affichées dans le pickup avec 👍 et 👎 en positions 1 et 2
     // À synchroniser avec ajax.php et listener.php
     const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
-
-
 
     // ---------- Initialisation ----------
     function initReactions() {
@@ -354,7 +352,121 @@
         } else {
             reactionElement.style.display = '';
         }
+
+        // NOUVEAU : Ajouter tooltip au survol
+        setupReactionTooltip(reactionElement, postId, emoji);
     }
+
+    // ========================================================================
+    // NOUVELLE FONCTIONNALITÉ : TOOLTIP AU SURVOL AVEC LISTE DES UTILISATEURS
+    // ========================================================================
+
+    /**
+     * Configure le tooltip au survol d'une réaction
+     */
+    function setupReactionTooltip(reactionElement, postId, emoji) {
+        let tooltipTimeout;
+
+        // Retirer les anciens listeners pour éviter les doublons
+        reactionElement.onmouseenter = null;
+        reactionElement.onmouseleave = null;
+
+        reactionElement.addEventListener('mouseenter', function(e) {
+            // Délai de 500ms avant d'afficher le tooltip
+            tooltipTimeout = setTimeout(() => {
+                // Charger les utilisateurs ayant réagi
+                fetch(REACTIONS_AJAX_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        post_id: postId,
+                        emoji: emoji,
+                        action: 'get_users',
+                        sid: REACTIONS_SID
+                    })
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success && data.users && data.users.length > 0) {
+                        showUserTooltip(reactionElement, data.users);
+                    }
+                })
+                .catch(err => {
+                    console.error('Erreur chargement users:', err);
+                });
+            }, 500);
+        });
+
+        reactionElement.addEventListener('mouseleave', function() {
+            clearTimeout(tooltipTimeout);
+            hideUserTooltip();
+        });
+    }
+
+    /**
+     * Affiche le tooltip avec la liste des utilisateurs
+     */
+    function showUserTooltip(element, users) {
+        hideUserTooltip(); // Fermer tooltip existant
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'reaction-user-tooltip';
+        
+        // Créer les liens vers les profils
+        const userLinks = users.map(user => 
+            `<a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" 
+                class="reaction-user-link" 
+                target="_blank">${escapeHtml(user.username)}</a>`
+        ).join('');
+        
+        tooltip.innerHTML = userLinks;
+        document.body.appendChild(tooltip);
+        currentTooltip = tooltip;
+
+        // Positionner le tooltip sous la réaction
+        const rect = element.getBoundingClientRect();
+        tooltip.style.position = 'absolute';
+        tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        tooltip.style.left = `${rect.left + window.scrollX}px`;
+        tooltip.style.zIndex = '10001';
+
+        // Empêcher le tooltip de disparaître quand on passe la souris dessus
+        tooltip.addEventListener('mouseenter', () => {
+            // Le tooltip reste visible
+        });
+
+        tooltip.addEventListener('mouseleave', () => {
+            hideUserTooltip();
+        });
+    }
+
+    /**
+     * Cache le tooltip
+     */
+    function hideUserTooltip() {
+        if (currentTooltip) {
+            currentTooltip.remove();
+            currentTooltip = null;
+        }
+    }
+
+    /**
+     * Échappe le HTML pour éviter les injections XSS
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ========================================================================
+    // FIN DES NOUVELLES FONCTIONNALITÉS TOOLTIP
+    // ========================================================================
 
     function getPostIdFromReaction(el) {
         const container = el.closest('.post-reactions-container');

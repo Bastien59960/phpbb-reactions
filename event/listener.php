@@ -46,7 +46,8 @@ class listener implements EventSubscriberInterface
         $posts_table,
         \phpbb\template\template $template,
         \phpbb\language\language $language,
-        \phpbb\controller\helper $helper
+        \phpbb\controller\helper $helper,
+        \phpbb\config\config $config  
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -55,6 +56,8 @@ class listener implements EventSubscriberInterface
         $this->template = $template;
         $this->language = $language;
         $this->helper = $helper;
+        $this->config = $config;
+        
 
         try {
             $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
