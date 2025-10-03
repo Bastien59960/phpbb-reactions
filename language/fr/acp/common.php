@@ -33,6 +33,10 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, array(
     // Titre principal ACP
     'ACP_REACTIONS_TITLE'                   => 'Réglages des réactions',
+    'ACP_REACTIONS_SETTINGS'                => 'Configuration des réactions',
+    'ACP_REACTIONS_SETTINGS_EXPLAIN'        => 'Ici, vous pouvez gérer les paramètres pour l\'extension de réactions aux messages.',
+    'ACP_REACTIONS_IMPORT'                  => 'Importer les réactions anciennes',
+    'ACP_REACTIONS_IMPORT_EXPLAIN'          => 'Ici, vous pouvez importer les réactions anciennes depuis la table des réactions anciennes.',
 
     // Page de paramètres ACP
     'ACP_REACTIONS_SETTINGS'                => 'Configuration des réactions',
