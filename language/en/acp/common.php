@@ -32,11 +32,11 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
     // ACP Main Title
-    'ACP_REACTIONS_TITLE'    => 'Reactions',
+
+    'ACP_REACTIONS_TITLE'                   => 'Post Reactions',
     'ACP_REACTIONS_SETTINGS' => 'Reactions settings',
     'ACP_REACTIONS_IMPORT'   => 'Import old reactions',
     'ACP_REACTIONS_IMPORT_EXPLAIN'   => 'Here you can import old reactions from the old reactions table.',
-    'ACP_REACTIONS_TITLE'                   => 'Post Reactions',
 
     // ACP Settings page
     'ACP_REACTIONS_SETTINGS'                => 'Reactions Settings',
