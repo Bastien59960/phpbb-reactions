@@ -160,7 +160,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     color: #666;
     transition: all 0.2s ease;
     flex-shrink: 0;
@@ -223,7 +223,7 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.15s ease;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .emoji-cell:hover {
@@ -263,7 +263,7 @@
     height: 40px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 18px;
     transition: background-color 0.15s ease;
     background: transparent;
     border: none;
@@ -476,7 +476,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     color: #666;
     transition: all 0.2s ease;
     flex-shrink: 0;
@@ -552,7 +552,7 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.15s ease;
-    font-size: 24px;
+    font-size: 20px;
     border: none;
     background: transparent;
 }
