@@ -13,11 +13,9 @@ function toggle_visible(id) {
 
     let currentPicker = null;
     let currentTooltip = null;
+    let allEmojisData = null; // Stocke toutes les données d'emojis pour la recherche
 
-    // CORRECTION MAJEURE : Renommage "POPULAR_EMOJIS" en "COMMON_EMOJIS"
-    // Les 10 émojis courantes affichées dans le pickup avec 👍 et 👎 en positions 1 et 2
-    // À synchroniser avec ajax.php et listener.php
-    const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
+    const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '💌', '🥳'];
 
     // ---------- Initialisation ----------
     function initReactions() {
@@ -27,7 +25,6 @@ function toggle_visible(id) {
     }
 
     function attachReactionEvents() {
-        // Seulement pour les réactions interactives (non readonly)
         document.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
             reaction.removeEventListener('click', handleReactionClick);
             reaction.addEventListener('click', handleReactionClick);
@@ -50,7 +47,6 @@ function toggle_visible(id) {
         const postId = getPostIdFromReaction(el);
         if (!emoji || !postId) return;
 
-        // Vérifier si l'utilisateur est connecté
         if (!isUserLoggedIn()) {
             showLoginMessage();
             return;
@@ -63,7 +59,6 @@ function toggle_visible(id) {
         event.preventDefault();
         event.stopPropagation();
 
-        // Vérifier si l'utilisateur est connecté
         if (!isUserLoggedIn()) {
             showLoginMessage();
             return;
@@ -75,26 +70,24 @@ function toggle_visible(id) {
         const postId = getPostIdFromReaction(button);
         if (!postId) return;
 
-        // Création du picker flottant
         const picker = document.createElement('div');
         picker.classList.add('emoji-picker');
         currentPicker = picker;
 
-        // Charger categories.json depuis prosilver
+        // Charger categories.json
         fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => res.json())
             .then(data => {
+                allEmojisData = data; // Stocker pour la recherche
                 buildEmojiPicker(picker, postId, data);
             })
             .catch(err => {
                 console.error('Erreur de chargement categories.json', err);
-                // CORRECTION : Fallback avec seulement les émojis courantes
                 buildFallbackPicker(picker, postId);
             });
 
         document.body.appendChild(picker);
 
-        // Positionnement sous le bouton
         const rect = button.getBoundingClientRect();
         picker.style.position = 'absolute';
         picker.style.top = `${rect.bottom + window.scrollY}px`;
@@ -103,93 +96,201 @@ function toggle_visible(id) {
     }
 
     function buildEmojiPicker(picker, postId, emojiData) {
-        // CORRECTION : Section des émojis courantes SANS TITRE selon cahier des charges
+        // ========== NOUVEAU : CHAMP DE RECHERCHE ==========
+        const searchContainer = document.createElement('div');
+        searchContainer.classList.add('emoji-search-container');
+        
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.classList.add('emoji-search-input');
+        searchInput.placeholder = 'Rechercher un emoji...';
+        searchInput.autocomplete = 'off';
+        
+        searchContainer.appendChild(searchInput);
+        picker.appendChild(searchContainer);
+
+        // Conteneur pour les résultats de recherche
+        const searchResults = document.createElement('div');
+        searchResults.classList.add('emoji-search-results');
+        searchResults.style.display = 'none';
+        picker.appendChild(searchResults);
+
+        // Conteneur principal des catégories
+        const categoriesContainer = document.createElement('div');
+        categoriesContainer.classList.add('emoji-categories-container');
+        
+        // Section des emojis courantes
         const commonSection = document.createElement('div');
         commonSection.classList.add('emoji-section', 'common-section');
 
         const commonGrid = document.createElement('div');
         commonGrid.classList.add('emoji-grid', 'common-grid');
         
-        // CORRECTION : Utilisation de COMMON_EMOJIS au lieu de POPULAR_EMOJIS
         COMMON_EMOJIS.forEach(emoji => {
-            const cell = document.createElement('span');
-            cell.classList.add('emoji-cell', 'common-emoji');
-            cell.textContent = emoji;
-            cell.addEventListener('click', () => {
-                sendReaction(postId, emoji);
-                closeAllPickers();
-            });
+            const cell = createEmojiCell(emoji, postId);
             commonGrid.appendChild(cell);
         });
         
         commonSection.appendChild(commonGrid);
-        picker.appendChild(commonSection);
+        categoriesContainer.appendChild(commonSection);
 
-        // Séparateur visuel
+        // Séparateur
         const separator = document.createElement('div');
         separator.classList.add('emoji-separator');
         separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
-        picker.appendChild(separator);
+        categoriesContainer.appendChild(separator);
 
-        // Reste des catégories (en excluant les émojis courantes pour éviter doublons)
+        // Reste des catégories
         Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
             const catTitle = document.createElement('div');
             catTitle.classList.add('emoji-category');
             catTitle.textContent = category;
-            picker.appendChild(catTitle);
+            categoriesContainer.appendChild(catTitle);
 
             Object.entries(subcategories).forEach(([subcategory, emojis]) => {
                 const grid = document.createElement('div');
                 grid.classList.add('emoji-grid');
 
                 emojis.forEach(emojiObj => {
-                    // CORRECTION : Éviter les doublons avec les émojis courantes
                     if (COMMON_EMOJIS.includes(emojiObj.emoji)) {
-                        return; // Skip cet emoji car il est déjà dans la section courante
+                        return;
                     }
 
-                    const cell = document.createElement('span');
-                    cell.classList.add('emoji-cell');
-                    cell.textContent = emojiObj.emoji;
-                    cell.addEventListener('click', () => {
-                        sendReaction(postId, emojiObj.emoji);
-                        closeAllPickers();
-                    });
+                    const cell = createEmojiCell(emojiObj.emoji, postId, emojiObj.name);
                     grid.appendChild(cell);
                 });
 
-                // N'ajouter la grille que si elle contient des émojis
                 if (grid.children.length > 0) {
-                    picker.appendChild(grid);
+                    categoriesContainer.appendChild(grid);
                 }
             });
         });
+
+        picker.appendChild(categoriesContainer);
+
+        // ========== GESTION DE LA RECHERCHE ==========
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            
+            if (query.length === 0) {
+                // Afficher les catégories normales
+                searchResults.style.display = 'none';
+                categoriesContainer.style.display = 'block';
+                return;
+            }
+
+            // Masquer les catégories et afficher les résultats
+            categoriesContainer.style.display = 'none';
+            searchResults.style.display = 'block';
+            
+            // Rechercher les emojis
+            const results = searchEmojis(query, emojiData);
+            
+            // Afficher les résultats
+            displaySearchResults(searchResults, results, postId);
+        });
+
+        // Focus automatique sur le champ de recherche
+        setTimeout(() => searchInput.focus(), 100);
     }
 
-    // CORRECTION MAJEURE : Fallback sans émojis en dur
-    // Affiche seulement les 10 émojis courantes en cas d'échec du JSON
+    /**
+     * NOUVEAU : Crée une cellule d'emoji réutilisable
+     */
+    function createEmojiCell(emoji, postId, name = '') {
+        const cell = document.createElement('span');
+        cell.classList.add('emoji-cell');
+        cell.textContent = emoji;
+        cell.title = name; // Tooltip avec le nom
+        cell.addEventListener('click', () => {
+            sendReaction(postId, emoji);
+            closeAllPickers();
+        });
+        return cell;
+    }
+
+    /**
+     * NOUVEAU : Recherche d'emojis avec support bilingue FR+EN
+     */
+    function searchEmojis(query, emojiData) {
+        const results = [];
+        const maxResults = 50; // Limite de résultats
+        
+        // Charger les keywords français si disponibles
+        const keywordsFr = typeof EMOJI_KEYWORDS_FR !== 'undefined' ? EMOJI_KEYWORDS_FR : {};
+        
+        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
+            Object.entries(subcategories).forEach(([subcategory, emojis]) => {
+                emojis.forEach(emojiObj => {
+                    if (results.length >= maxResults) return;
+                    
+                    // Recherche dans le nom anglais
+                    if (emojiObj.name.toLowerCase().includes(query)) {
+                        results.push(emojiObj);
+                        return;
+                    }
+                    
+                    // Recherche dans les keywords français
+                    if (keywordsFr[emojiObj.emoji]) {
+                        const frKeywords = keywordsFr[emojiObj.emoji];
+                        if (frKeywords.some(keyword => keyword.toLowerCase().includes(query))) {
+                            results.push(emojiObj);
+                            return;
+                        }
+                    }
+                    
+                    // Recherche directe dans l'emoji (pour les emojis tapés directement)
+                    if (emojiObj.emoji.includes(query)) {
+                        results.push(emojiObj);
+                    }
+                });
+            });
+        });
+        
+        return results;
+    }
+
+    /**
+     * NOUVEAU : Affiche les résultats de recherche
+     */
+    function displaySearchResults(container, results, postId) {
+        container.innerHTML = '';
+        
+        if (results.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.classList.add('emoji-no-results');
+            noResults.textContent = 'Aucun emoji trouvé';
+            container.appendChild(noResults);
+            return;
+        }
+        
+        const resultsGrid = document.createElement('div');
+        resultsGrid.classList.add('emoji-grid', 'emoji-results-grid');
+        
+        results.forEach(emojiObj => {
+            const cell = createEmojiCell(emojiObj.emoji, postId, emojiObj.name);
+            cell.classList.add('emoji-result');
+            resultsGrid.appendChild(cell);
+        });
+        
+        container.appendChild(resultsGrid);
+    }
+
     function buildFallbackPicker(picker, postId) {
-        // Section des émojis courantes uniquement
         const commonGrid = document.createElement('div');
         commonGrid.classList.add('emoji-grid', 'common-grid');
 
         COMMON_EMOJIS.forEach(emoji => {
-            const cell = document.createElement('span');
-            cell.classList.add('emoji-cell', 'common-emoji');
-            cell.textContent = emoji;
-            cell.addEventListener('click', () => {
-                sendReaction(postId, emoji);
-                closeAllPickers();
-            });
+            const cell = createEmojiCell(emoji, postId);
+            cell.classList.add('common-emoji');
             commonGrid.appendChild(cell);
         });
 
         picker.appendChild(commonGrid);
 
-        // Message d'information pour l'administrateur
         const infoDiv = document.createElement('div');
         infoDiv.style.cssText = 'padding: 10px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; margin-top: 10px;';
-        infoDiv.textContent = 'Fichier JSON non accessible. Seuls les émojis courantes sont disponibles.';
+        infoDiv.textContent = 'Fichier JSON non accessible. Seuls les emojis courantes sont disponibles.';
         picker.appendChild(infoDiv);
     }
 
@@ -201,12 +302,10 @@ function toggle_visible(id) {
     }
 
     function isUserLoggedIn() {
-        // Vérifier si REACTIONS_SID existe et n'est pas vide
         return typeof REACTIONS_SID !== 'undefined' && REACTIONS_SID !== '';
     }
 
     function showLoginMessage() {
-        // Afficher un message demandant à l'utilisateur de se connecter
         const message = document.createElement('div');
         message.className = 'reactions-login-message';
         message.style.cssText = `
@@ -228,7 +327,6 @@ function toggle_visible(id) {
         `;
         document.body.appendChild(message);
 
-        // Supprimer automatiquement après 5 secondes
         setTimeout(() => {
             if (message.parentNode) {
                 message.remove();
@@ -242,13 +340,11 @@ function toggle_visible(id) {
             REACTIONS_SID = '';
         }
 
-        // Vérifier à nouveau si l'utilisateur est connecté
         if (!isUserLoggedIn()) {
             showLoginMessage();
             return;
         }
 
-        // Déterminer l'action : add ou remove basé sur l'état actuel
         const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`);
         const hasReacted = reactionElement && reactionElement.classList.contains('active');
         const action = hasReacted ? 'remove' : 'add';
@@ -267,7 +363,6 @@ function toggle_visible(id) {
         })
         .then(response => {
             if (!response.ok) {
-                // Gérer spécifiquement l'erreur 403 (non connecté)
                 if (response.status === 403) {
                     showLoginMessage();
                     throw new Error('User not logged in');
@@ -281,7 +376,6 @@ function toggle_visible(id) {
                 updateSingleReactionDisplay(postId, emoji, data.count, data.user_reacted);
             } else {
                 console.error('Erreur de réaction :', data.error || data.message);
-                // Si l'erreur indique que l'utilisateur n'est pas connecté
                 if (data.error && data.error.includes('logged in')) {
                     showLoginMessage();
                 }
@@ -290,23 +384,17 @@ function toggle_visible(id) {
         .catch(error => {
             console.error('Erreur:', error);
             if (error.message === 'User not logged in') {
-                // Ne pas afficher d'erreur supplémentaire, le message de connexion est déjà affiché
                 return;
             }
         });
     }
 
-    /**
-     * CORRECTION : Met à jour l'affichage d'une seule réaction après une réponse réussie
-     * Selon cahier des charges : masque si count = 0
-     */
     function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
         const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`);
         if (!postContainer) return;
 
         let reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`);
         
-        // Si l'élément n'existe pas, le créer
         if (!reactionElement) {
             reactionElement = document.createElement('span');
             reactionElement.classList.add('reaction');
@@ -314,11 +402,8 @@ function toggle_visible(id) {
             reactionElement.innerHTML = `${emoji} <span class="count">0</span>`;
             reactionElement.addEventListener('click', handleReactionClick);
             
-            // CORRECTION : Insérer APRÈS le bouton "+" selon cahier des charges
-            // Les réactions s'accumulent à droite du bouton +
             const moreButton = postContainer.querySelector('.reaction-more');
             if (moreButton) {
-                // Insérer après le bouton + (à droite)
                 if (moreButton.nextSibling) {
                     moreButton.parentNode.insertBefore(reactionElement, moreButton.nextSibling);
                 } else {
@@ -331,7 +416,6 @@ function toggle_visible(id) {
 
         const countSpan = reactionElement.querySelector('.count');
 
-        // Mettre à jour le compteur
         if (countSpan) {
             countSpan.textContent = newCount;
         }
@@ -339,42 +423,29 @@ function toggle_visible(id) {
         reactionElement.setAttribute('data-count', newCount);
         reactionElement.title = `${newCount} réaction${newCount > 1 ? 's' : ''}`;
 
-        // Gérer l'état "actif" pour l'utilisateur
         if (userHasReacted) {
             reactionElement.classList.add('active');
         } else {
             reactionElement.classList.remove('active');
         }
         
-        // CORRECTION SELON CAHIER DES CHARGES : Masquer si count = 0
         if (newCount === 0) {
             reactionElement.style.display = 'none';
         } else {
             reactionElement.style.display = '';
         }
 
-        // NOUVEAU : Ajouter tooltip au survol
         setupReactionTooltip(reactionElement, postId, emoji);
     }
 
-    // ========================================================================
-    // NOUVELLE FONCTIONNALITÉ : TOOLTIP AU SURVOL AVEC LISTE DES UTILISATEURS
-    // ========================================================================
-
-    /**
-     * Configure le tooltip au survol d'une réaction
-     */
     function setupReactionTooltip(reactionElement, postId, emoji) {
         let tooltipTimeout;
 
-        // Retirer les anciens listeners pour éviter les doublons
         reactionElement.onmouseenter = null;
         reactionElement.onmouseleave = null;
 
         reactionElement.addEventListener('mouseenter', function(e) {
-            // Délai de 500ms avant d'afficher le tooltip
             tooltipTimeout = setTimeout(() => {
-                // Charger les utilisateurs ayant réagi
                 fetch(REACTIONS_AJAX_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -408,16 +479,12 @@ function toggle_visible(id) {
         });
     }
 
-    /**
-     * Affiche le tooltip avec la liste des utilisateurs
-     */
     function showUserTooltip(element, users) {
-        hideUserTooltip(); // Fermer tooltip existant
+        hideUserTooltip();
 
         const tooltip = document.createElement('div');
         tooltip.className = 'reaction-user-tooltip';
         
-        // Créer les liens vers les profils
         const userLinks = users.map(user => 
             `<a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" 
                 class="reaction-user-link" 
@@ -428,26 +495,18 @@ function toggle_visible(id) {
         document.body.appendChild(tooltip);
         currentTooltip = tooltip;
 
-        // Positionner le tooltip sous la réaction
         const rect = element.getBoundingClientRect();
         tooltip.style.position = 'absolute';
         tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
         tooltip.style.left = `${rect.left + window.scrollX}px`;
         tooltip.style.zIndex = '10001';
 
-        // Empêcher le tooltip de disparaître quand on passe la souris dessus
-        tooltip.addEventListener('mouseenter', () => {
-            // Le tooltip reste visible
-        });
-
+        tooltip.addEventListener('mouseenter', () => {});
         tooltip.addEventListener('mouseleave', () => {
             hideUserTooltip();
         });
     }
 
-    /**
-     * Cache le tooltip
-     */
     function hideUserTooltip() {
         if (currentTooltip) {
             currentTooltip.remove();
@@ -455,18 +514,11 @@ function toggle_visible(id) {
         }
     }
 
-    /**
-     * Échappe le HTML pour éviter les injections XSS
-     */
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-
-    // ========================================================================
-    // FIN DES NOUVELLES FONCTIONNALITÉS TOOLTIP
-    // ========================================================================
 
     function getPostIdFromReaction(el) {
         const container = el.closest('.post-reactions-container');
