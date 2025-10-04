@@ -1,3 +1,4 @@
+'JSON'
 {
     "name": "bastien59960/reactions",
     "type": "phpbb-extension",
@@ -31,5 +32,5 @@
             "bastien59960\\reactions\\": "./"
         }
     }
-} tagadada
-
+}
+JSON
