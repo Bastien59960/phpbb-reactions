@@ -98,12 +98,7 @@ class ajax
         $t0 = microtime(true);
 
         try {
-            // 1) Vérification utilisateur
-            if ($this->user->data['user_id'] == ANONYMOUS) {
-                throw new HttpException(403, 'User not logged in.');
-            }
-
-            // 2) Lecture du JSON
+            // 1) Lecture du JSON (en premier pour connaître l'action)
             $raw = file_get_contents('php://input');
 
             try {
@@ -117,19 +112,37 @@ class ajax
                 ], 400);
             }
 
-            // 3) Extraction des variables
+            // 2) Extraction des variables
             $sid     = $data['sid'] ?? '';
             $post_id = (int) ($data['post_id'] ?? 0);
             $emoji   = $data['emoji'] ?? '';
             $action  = $data['action'] ?? '';
 
-            // 4) Vérification CSRF
+            // 2.bis) Action en lecture (get_users) autorisée pour invités, sans CSRF
+            if ($action === 'get_users') {
+                $resp = $this->get_users_for_emoji($post_id, $emoji);
+                if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
+                    $payload = json_decode($resp->getContent(), true);
+                    if (is_array($payload)) {
+                        $payload['rid'] = $rid;
+                        $resp->setData($payload);
+                    }
+                }
+                return $resp;
+            }
+
+            // 3) Vérification utilisateur (pour actions d'écriture)
+            if ($this->user->data['user_id'] == ANONYMOUS) {
+                throw new HttpException(403, 'User not logged in.');
+            }
+
+            // 4) Vérification CSRF (pas requis pour get_users ci-dessus)
             if ($sid !== $this->user->data['session_id']) {
                 throw new HttpException(403, 'Jeton CSRF invalide.');
             }
 
             // 5) Vérification action
-            if (!in_array($action, ['add', 'remove', 'get'], true)) {
+            if (!in_array($action, ['add', 'remove', 'get', 'get_users'], true)) {
                 return new JsonResponse([
                     'success' => false,
                     'error'   => 'Invalid action',
@@ -205,7 +218,7 @@ class ajax
                     $resp = $this->get_reactions($post_id);
                     break;
             
-                case 'get_users':  // NOUVEAU
+                case 'get_users':  // Fallback: normalement géré plus haut
                     $resp = $this->get_users_for_emoji($post_id, $emoji);
                     break;
                     

@@ -19,25 +19,26 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
-    border: 1px dashed #d1d1d1;
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
     border-radius: 15px;
     padding: 4px 8px;
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
-    color: #6c757d;
+    color: #1976d2;
     transition: all 0.2s ease;
     min-width: 32px;
     height: 28px;
-    order: -1; /* CORRECTION : Force le bouton + en première position à gauche */
+    order: -1; /* Bouton à gauche */
     margin-right: 8px; /* Espacement avec les réactions */
 }
 
 .reaction-more:hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #adb5bd;
+    background: #bbdefb;
+    color: #0d47a1;
+    border-color: #1976d2;
+    transform: scale(1.05);
 }
 
 .reaction-who {
@@ -291,65 +292,9 @@
         font-size: 13px;
         border-radius: 12px;
     }
-    
-    .reaction-more {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #e3f2fd; /* Bleu clair */
-        border: 1px solid #2196f3; /* Bleu */
-        border-radius: 15px;
-        padding: 4px 8px;
-        cursor: pointer;
-        font-size: 18px;
-        color: #1976d2;
-        transition: all 0.2s ease;
-        min-width: 32px;
-        height: 28px;
-        order: -1;
-        margin-right: 8px;
-        position: relative;
-    }
 
-    .reaction-more::before {
-        content: '👍'; /* Pouce bleu emoji */
-        font-size: 16px;
-    }
-    
-    .reaction-more:hover {
-        background: #bbdefb;
-        border-color: #1976d2;
-        transform: scale(1.05);
-    }
-    
-    /* Tooltip au survol du bouton de réaction */
-.reaction-more::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    margin-bottom: 5px;
-}
-
-.reaction-more:hover::after {
-    opacity: 1;
-}
-
-/* SUPPRESSION DU BOUTON ? */
-.reaction-who {
-    display: none !important;
-}
-
+/* SUPPRESSION DU BOUTON ? et de la liste associée */
+.reaction-who,
 .list-who {
     display: none !important;
 }

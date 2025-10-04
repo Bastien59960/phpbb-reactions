@@ -15,18 +15,7 @@
         <!-- END postrow.post_reactions -->
         
         <!-- Bouton pour palette avec recherche - SEULEMENT pour les utilisateurs connectés -->
-        <span class="reaction-more" title="Ajouter une réaction" data-tooltip="Cliquer pour rechercher un emoji">+</span>
-        
-        <!-- IF postrow.list_reactions|length > 0 -->
-            <span class="reaction-who" title="Qui a réagi ?" onclick="toggle_visible('lst_{postrow.POST_ID}')">?</span>
-            <div class="list-who" id="lst_{postrow.POST_ID}" style="display:none;">
-                <ul>
-                <!-- BEGIN postrow.list_reactions -->
-                    <li>{postrow.list_reactions.EMOJI} {postrow.list_reactions.NOM}</li>
-                <!-- END postrow.list_reactions -->
-                </ul>
-            </div>
-        <!-- ENDIF -->
+        <span class="reaction-more" title="Ajouter une réaction" data-tooltip="Cliquer pour rechercher un emoji">👍</span>
     </div>
 </div>
 
@@ -46,16 +35,7 @@
             <!-- ENDIF -->
         <!-- END postrow.post_reactions -->
         
-        <!-- IF postrow.list_reactions|length > 0 -->
-            <span class="reaction-who" title="Qui a réagi ?" onclick="toggle_visible('lst_{postrow.POST_ID}')">?</span>
-            <div class="list-who" id="lst_{postrow.POST_ID}" style="display:none;">
-                <ul>
-                <!-- BEGIN postrow.list_reactions -->
-                    <li>{postrow.list_reactions.EMOJI} {postrow.list_reactions.NOM}</li>
-                <!-- END postrow.list_reactions -->
-                </ul>
-            </div>
-        <!-- ENDIF -->
+        
     </div>
 </div>
 <!-- ENDIF -->
