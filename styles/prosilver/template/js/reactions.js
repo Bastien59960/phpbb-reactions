@@ -28,6 +28,13 @@ function toggle_visible(id) {
         document.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
             reaction.removeEventListener('click', handleReactionClick);
             reaction.addEventListener('click', handleReactionClick);
+            
+            // Attacher le tooltip pour les réactions existantes
+            const postId = getPostIdFromReaction(reaction);
+            const emoji = reaction.getAttribute('data-emoji');
+            if (postId && emoji) {
+                setupReactionTooltip(reaction, postId, emoji);
+            }
         });
     }
 

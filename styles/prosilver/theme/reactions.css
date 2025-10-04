@@ -14,30 +14,59 @@
     gap: 6px;
 }
 
-/* CORRECTION MAJEURE : Bouton "+" fixe à gauche selon cahier des charges */
+/* CORRECTION MAJEURE : Bouton "+" transformé en pouce bleu */
 .reaction-more {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
-    border: 1px dashed #d1d1d1;
+    background: #e3f2fd; /* Bleu clair */
+    border: 1px solid #2196f3; /* Bordure bleue */
     border-radius: 15px;
     padding: 4px 8px;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    color: #6c757d;
+    font-size: 18px;
+    color: #1976d2;
     transition: all 0.2s ease;
     min-width: 32px;
     height: 28px;
-    order: -1; /* CORRECTION : Force le bouton + en première position à gauche */
+    order: -1; /* CORRECTION : Force le bouton en première position à gauche */
     margin-right: 8px; /* Espacement avec les réactions */
+    position: relative;
+}
+
+/* Remplacer le texte par l'emoji pouce bleu */
+.reaction-more::before {
+    content: '👍'; /* Pouce bleu emoji */
+    font-size: 16px;
 }
 
 .reaction-more:hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #adb5bd;
+    background: #bbdefb;
+    border-color: #1976d2;
+    transform: scale(1.05);
+}
+
+/* Tooltip au survol du bouton de réaction */
+.reaction-more::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    margin-bottom: 5px;
+}
+
+.reaction-more:hover::after {
+    opacity: 1;
 }
 
 .reaction-who {
@@ -292,57 +321,25 @@
         border-radius: 12px;
     }
     
-    .reaction-more {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #e3f2fd; /* Bleu clair */
-        border: 1px solid #2196f3; /* Bleu */
-        border-radius: 15px;
-        padding: 4px 8px;
-        cursor: pointer;
-        font-size: 18px;
-        color: #1976d2;
-        transition: all 0.2s ease;
+    /* Pas de redéfinition nécessaire pour mobile - le style principal s'applique */
+    
+    .reaction-picker {
+        max-width: 280px;
+        left: 0 !important;
+        right: auto !important;
+    }
+    
+    .reaction-picker .reaction {
         min-width: 32px;
-        height: 28px;
-        order: -1;
-        margin-right: 8px;
-        position: relative;
-    }
-
-    .reaction-more::before {
-        content: '👍'; /* Pouce bleu emoji */
+        height: 32px;
         font-size: 16px;
+        padding: 6px;
     }
     
-    .reaction-more:hover {
-        background: #bbdefb;
-        border-color: #1976d2;
-        transform: scale(1.05);
+    /* CORRECTION : Scrollbar encore plus grosse sur mobile selon cahier des charges */
+    .emoji-picker::-webkit-scrollbar {
+        width: 16px; /* Encore plus large sur mobile */
     }
-    
-    /* Tooltip au survol du bouton de réaction */
-.reaction-more::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    margin-bottom: 5px;
-}
-
-.reaction-more:hover::after {
-    opacity: 1;
 }
 
 /* SUPPRESSION DU BOUTON ? */
@@ -384,24 +381,6 @@
 .reaction-user-tooltip .reaction-user-link:not(:last-child)::after {
     content: ', ';
     color: #666;
-}
-    .reaction-picker {
-        max-width: 280px;
-        left: 0 !important;
-        right: auto !important;
-    }
-    
-    .reaction-picker .reaction {
-        min-width: 32px;
-        height: 32px;
-        font-size: 16px;
-        padding: 6px;
-    }
-    
-    /* CORRECTION : Scrollbar encore plus grosse sur mobile selon cahier des charges */
-    .emoji-picker::-webkit-scrollbar {
-        width: 16px; /* Encore plus large sur mobile */
-    }
 }
 
 /* Animation pour l'apparition des nouvelles réactions */
