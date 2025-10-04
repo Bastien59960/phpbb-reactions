@@ -164,120 +164,240 @@
     position: relative;
 }
 
-/* CORRECTION : Section des émojis courantes (SANS TITRE selon cahier des charges) */
+/* Section des émojis courantes - Style LinkedIn */
 .common-section {
-    margin-bottom: 10px;
+    padding: 12px 16px;
+}
+
+.common-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: none;
 }
 
 .common-grid {
     display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
-    gap: 8px !important;
+    grid-template-columns: repeat(8, 1fr) !important;
+    gap: 4px !important;
     justify-items: center;
 }
 
 .common-emoji {
-    background: linear-gradient(135deg, #ffeb3b, #ffc107) !important;
-    border: 2px solid #ff9800 !important;
-    border-radius: 6px !important;
-    font-size: 20px !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 24px !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    width: 36px !important;
+    height: 36px !important;
 }
 
 .common-emoji:hover {
-    transform: scale(1.2) !important;
-    background: linear-gradient(135deg, #ffc107, #ff9800) !important;
-    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.5) !important;
-    border-color: #e65100 !important;
+    transform: scale(1.15) !important;
+    background: #f3f6f8 !important;
+    box-shadow: none !important;
+}
+
+/* Tabs de catégories - Style LinkedIn */
+.emoji-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.emoji-tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.emoji-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.15s ease;
+    background: transparent;
+    border: none;
+    flex-shrink: 0;
+}
+
+.emoji-tab:hover {
+    background: #f3f6f8;
+}
+
+.emoji-tab.active {
+    background: #e8f5ff;
+    position: relative;
+}
+
+.emoji-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 2px;
+    background: #0a66c2;
+    border-radius: 2px;
+}
+
+/* Bouton "Voir plus" / "Voir moins" */
+.emoji-show-more {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 12px 16px;
+    padding: 10px;
+    background: #f3f6f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    color: #0a66c2;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.emoji-show-more:hover {
+    background: #e8f5ff;
+    border-color: #0a66c2;
+}
+
+/* Section des catégories cachées */
+.emoji-categories-hidden {
+    display: none;
+}
+
+.emoji-categories-hidden.show {
+    display: block;
 }
 
 /* Séparateur */
 .emoji-separator {
-    margin: 15px 0;
+    margin: 0;
+    border-top: 1px solid #e0e0e0;
 }
 
-.emoji-separator hr {
-    border: none !important;
-    height: 2px !important;
-    background: linear-gradient(to right, transparent, #ddd, transparent) !important;
-}
-
-/* Améliorer le style général du picker */
+/* Style LinkedIn pour le picker */
 .emoji-picker {
     background: white;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    padding: 15px;
-    min-width: 280px;
-    max-width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    min-width: 340px;
+    max-width: 340px;
+    max-height: 450px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    position: relative;
 }
 
-/* Améliorer les titres de catégorie généraux */
+/* Bouton de fermeture (X) - Style LinkedIn */
+.emoji-picker-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #666;
+    transition: all 0.2s ease;
+    z-index: 20;
+}
+
+.emoji-picker-close:hover {
+    background: #f3f6f8;
+    color: #333;
+}
+
+.emoji-picker-close::before {
+    content: '✕';
+    font-weight: normal;
+}
+
+/* Titres de catégorie - Style LinkedIn */
 .emoji-category {
     font-size: 12px;
     font-weight: 600;
-    color: #555;
-    margin: 12px 0 6px 0;
-    padding: 4px 0;
-    border-bottom: 1px solid #eee;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: #666;
+    margin: 0;
+    padding: 12px 16px 8px 16px;
+    border-bottom: none;
+    text-transform: none;
+    letter-spacing: 0;
+    background: #fafafa;
 }
 
-/* Améliorer la grille générale */
+/* Grille générale - Style LinkedIn */
 .emoji-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    margin-bottom: 10px;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 8px 16px;
 }
 
-/* Améliorer les cellules d'émojis générales */
+/* Cellules d'émojis - Style LinkedIn */
 .emoji-cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s ease;
-    font-size: 18px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    font-size: 24px;
+    background: transparent;
+    border: none;
 }
 
 .emoji-cell:hover {
-    background: #e3f2fd;
-    transform: scale(1.1);
-    border-color: #2196f3;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    background: #f3f6f8;
+    transform: scale(1.15);
 }
 
-/* CORRECTION MAJEURE : Scrollbar plus grosse et visible selon cahier des charges */
-.emoji-picker::-webkit-scrollbar {
-    width: 12px; /* Plus large */
+/* Scrollbar - Style LinkedIn */
+.emoji-picker-content {
+    max-height: 350px;
+    overflow-y: auto;
 }
 
-.emoji-picker::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 6px;
-    border: 1px solid #ddd; /* Plus visible */
+.emoji-picker-content::-webkit-scrollbar {
+    width: 8px;
 }
 
-.emoji-picker::-webkit-scrollbar-thumb {
-    background: #888; /* Plus foncé */
-    border-radius: 6px;
-    border: 1px solid #666; /* Plus contrasté */
+.emoji-picker-content::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-.emoji-picker::-webkit-scrollbar-thumb:hover {
-    background: #555; /* Encore plus foncé au survol */
+.emoji-picker-content::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 4px;
+}
+
+.emoji-picker-content::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
 }
 
 /* Responsive - Mobile */
@@ -540,63 +660,78 @@
     clear: both;
     margin-top: 8px;
 }
-/* Conteneur du champ de recherche */
+/* Conteneur du champ de recherche - Style LinkedIn */
 .emoji-search-container {
-    padding: 10px;
-    border-bottom: 2px solid #e3f2fd;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 12px 16px;
+    padding-right: 45px; /* Espace pour le bouton de fermeture */
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
     position: sticky;
     top: 0;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Champ de recherche */
+/* Emoji de la main (👋) - Style LinkedIn */
+.emoji-hand-wave {
+    font-size: 20px;
+    animation: wave 0.5s ease-in-out 2;
+}
+
+@keyframes wave {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+
+/* Champ de recherche - Style LinkedIn */
 .emoji-search-input {
     width: 100%;
-    padding: 10px 15px 10px 40px;
-    border: 2px solid #2196f3;
-    border-radius: 25px;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
     font-size: 14px;
     outline: none;
-    transition: all 0.3s ease;
-    background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%232196f3" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat 12px center;
-    background-size: 18px;
+    transition: all 0.2s ease;
+    background: #f3f6f8 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat 10px center;
+    background-size: 16px;
 }
 
 .emoji-search-input:focus {
-    border-color: #1976d2;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-    background-color: #fff;
+    border-color: #0a66c2;
+    background-color: white;
 }
 
 .emoji-search-input::placeholder {
-    color: #9e9e9e;
-    font-style: italic;
+    color: #666;
+    font-style: normal;
 }
 
-/* Résultats de recherche */
+/* Résultats de recherche - Style LinkedIn */
 .emoji-search-results {
-    padding: 10px;
-    max-height: 300px;
+    padding: 8px 16px;
+    max-height: 350px;
     overflow-y: auto;
 }
 
 .emoji-results-grid {
     display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
-    gap: 8px !important;
+    grid-template-columns: repeat(8, 1fr) !important;
+    gap: 4px !important;
 }
 
 .emoji-result {
-    background: #e3f2fd !important;
-    border: 2px solid #2196f3 !important;
-    transition: all 0.2s ease !important;
+    background: transparent !important;
+    border: none !important;
+    transition: all 0.15s ease !important;
 }
 
 .emoji-result:hover {
-    background: #bbdefb !important;
+    background: #f3f6f8 !important;
     transform: scale(1.15) !important;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4) !important;
+    box-shadow: none !important;
 }
 
 /* Message "Aucun résultat" */
@@ -650,17 +785,50 @@
 
 /* Responsive Mobile */
 @media (max-width: 768px) {
+    .emoji-picker {
+        min-width: 320px;
+        max-width: 320px;
+        max-height: 400px;
+    }
+    
     .emoji-search-input {
         font-size: 16px; /* Évite le zoom auto sur iOS */
-        padding: 12px 15px 12px 40px;
+        padding: 8px 12px 8px 36px;
     }
     
     .emoji-results-grid {
-        grid-template-columns: repeat(5, 1fr) !important;
-        gap: 6px !important;
+        grid-template-columns: repeat(6, 1fr) !important;
+        gap: 4px !important;
+    }
+    
+    .common-grid {
+        grid-template-columns: repeat(6, 1fr) !important;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
     }
     
     .emoji-search-container {
-        padding: 8px;
+        padding: 10px 12px;
+        padding-right: 45px;
+    }
+    
+    .emoji-tab {
+        min-width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .emoji-cell {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+    
+    .common-emoji {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 20px !important;
     }
 }
