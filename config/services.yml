@@ -59,7 +59,7 @@ services:
             - '%tables.post_reactions%'
             - '%tables.posts%'
 
-bastien59960.reactions.cron.notification_task:
+bastien59960.reactions.notificationtask:
     class: bastien59960\reactions\cron\notification_task
     arguments:
         - '@dbal.conn'
