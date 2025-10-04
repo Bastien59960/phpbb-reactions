@@ -135,7 +135,8 @@ class notification_task extends \phpbb\cron\task\base
 
             try
             {
-                // utiliser notification manager pour créer la notification
+                // Envoyer uniquement les emails avec anti-spam
+                // Les notifications par cloche sont déjà envoyées immédiatement
                 $this->notification_manager->add_notifications(
                     'bastien59960.reactions.notification',
                     [$author_id],

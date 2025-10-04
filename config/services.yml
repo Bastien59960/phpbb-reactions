@@ -46,6 +46,7 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '@config'
+            - '@notification_manager'
 
     # Service pour le contrôleur de test
     bastien59960.reactions.test:
@@ -69,3 +70,13 @@ services:
             - '%core.php_ext%'
         tags:
             - { name: cron.task }
+
+    # Service pour le type de notification
+    bastien59960.reactions.notification:
+        class: bastien59960\reactions\notification\type\reaction
+        arguments:
+            - '@user_loader'
+            - '@dbal.conn'
+            - '%core.root_path%'
+        tags:
+            - { name: notification.type }

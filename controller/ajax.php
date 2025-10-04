@@ -44,6 +44,9 @@ class ajax
     protected $root_path; 
     protected $php_ext;
     protected $config;
+    
+    /** @var \phpbb\notification\manager */
+    protected $notification_manager;
 
     /** * CORRECTION MAJEURE : Renommage "popular_emojis" en "common_emojis"
      * Liste des 10 émojis courantes du pickup avec 👍 et 👎 en positions 1 et 2
@@ -66,7 +69,8 @@ class ajax
         $forums_table,
         $root_path,
         $php_ext,
-        \phpbb\config\config $config
+        \phpbb\config\config $config,
+        \phpbb\notification\manager $notification_manager
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -80,6 +84,7 @@ class ajax
         $this->root_path = $root_path;
         $this->php_ext = $php_ext;
         $this->config = $config;
+        $this->notification_manager = $notification_manager;
         
         $this->language->add_lang('common', 'bastien59960/reactions');
         // Forcer la connexion en utf8mb4
@@ -360,8 +365,8 @@ class ajax
             $reactions = $this->get_reactions_array($post_id);
             $count = isset($reactions[$emoji]) ? $reactions[$emoji] : 1;
 
-            // Les notifications seront gérées par le cron avec anti-spam
-            // Pas besoin de déclencher immédiatement
+            // Déclencher immédiatement la notification par cloche
+            $this->trigger_immediate_notification($post_id, $user_id, $emoji);
 
             // Retourne une réponse JSON valide
             return new JsonResponse([
@@ -569,6 +574,64 @@ class ajax
     public function get_common_emojis()
     {
         return $this->common_emojis;
+    }
+
+    /**
+     * Déclencher immédiatement une notification par cloche (sans anti-spam)
+     */
+    private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
+    {
+        try {
+            // Récupérer l'auteur du post
+            $sql = 'SELECT poster_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+            $result = $this->db->sql_query($sql);
+            $post_data = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if (!$post_data || !$post_data['poster_id']) {
+                return;
+            }
+
+            $post_author_id = (int) $post_data['poster_id'];
+
+            // Ne pas notifier l'utilisateur qui a réagi
+            if ($post_author_id === $reacter_id) {
+                return;
+            }
+
+            // Récupérer les données des réactions pour ce post
+            $sql = 'SELECT user_id FROM ' . $this->post_reactions_table . ' 
+                    WHERE post_id = ' . (int) $post_id . ' 
+                    ORDER BY reaction_time ASC';
+            $result = $this->db->sql_query($sql);
+            
+            $reacter_ids = [];
+            while ($row = $this->db->sql_fetchrow($result)) {
+                $reacter_ids[] = (int) $row['user_id'];
+            }
+            $this->db->sql_freeresult($result);
+
+            // Compter le nombre total de réactions pour ce post
+            $sql = 'SELECT COUNT(*) as total FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . (int) $post_id;
+            $result = $this->db->sql_query($sql);
+            $reaction_count = (int) $this->db->sql_fetchfield('total');
+            $this->db->sql_freeresult($result);
+
+            // Préparer les données de notification
+            $notification_data = [
+                'post_id' => $post_id,
+                'post_author' => $post_author_id,
+                'reacter_ids' => $reacter_ids,
+                'reaction_count' => $reaction_count,
+                'emoji' => $emoji,
+            ];
+
+            // Déclencher la notification immédiatement (cloche)
+            $this->notification_manager->add_notifications('bastien59960.reactions.notification', $notification_data);
+
+        } catch (\Exception $e) {
+            error_log('[Reactions] Erreur lors de la notification immédiate: ' . $e->getMessage());
+        }
     }
 
 }
