@@ -22,6 +22,7 @@ function toggle_visible(id) {
         attachReactionEvents();
         attachMoreButtonEvents();
         document.addEventListener('click', closeAllPickers);
+        attachTooltipsToExistingReactions();
     }
 
     function attachReactionEvents() {
@@ -35,6 +36,18 @@ function toggle_visible(id) {
         document.querySelectorAll('.reaction-more').forEach(button => {
             button.removeEventListener('click', handleMoreButtonClick);
             button.addEventListener('click', handleMoreButtonClick);
+        });
+    }
+
+    function attachTooltipsToExistingReactions() {
+        document.querySelectorAll('.post-reactions-container').forEach(container => {
+            const postId = container.getAttribute('data-post-id');
+            if (!postId) return;
+            container.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
+                const emoji = reaction.getAttribute('data-emoji');
+                if (!emoji) return;
+                setupReactionTooltip(reaction, postId, emoji);
+            });
         });
     }
 
