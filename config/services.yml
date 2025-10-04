@@ -7,7 +7,6 @@ services:
         class: bastien59960\reactions\event\listener
         arguments:
             - '@dbal.conn'
-            #- '@db'
             - '@user'
             - '%tables.post_reactions%'
             - '%tables.posts%'
@@ -17,13 +16,12 @@ services:
             - '@config'
         tags:
             - { name: event.listener }
-            
-    # Service pour le contrôleur principal (optionnel si non utilisé)
+
+    # Service pour le contrôleur principal
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
         arguments:
             - '@dbal.conn'
-            #- '@db'
             - '@user'
             - '@request'
             - '@template'
@@ -32,12 +30,11 @@ services:
             - '%tables.post_reactions%'
             - '%tables.posts%'
 
-    # Service pour le contrôleur AJAX (C'est celui qui manquait !)
+    # Service pour le contrôleur AJAX
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
             - '@dbal.conn'
-            #- '@db'
             - '@user'
             - '@request'
             - '@auth'
@@ -59,16 +56,16 @@ services:
             - '%tables.post_reactions%'
             - '%tables.posts%'
 
-bastien59960.reactions.notificationtask:
-    class: bastien59960\reactions\cron\notification_task
-    arguments:
-        - '@dbal.conn'
-        - '@config'
-        - '@notification_manager'
-        - '@user_loader'
-        - '%tables.post_reactions%'
-        - '%core.root_path%'
-        - '%core.php_ext%'
-    tags:
-        - { name: cron.task }
-
+    # Service pour la tâche cron de notification
+    bastien59960.reactions.notificationtask:
+        class: bastien59960\reactions\cron\notification_task
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@notification_manager'
+            - '@user_loader'
+            - '%tables.post_reactions%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: cron.task }
