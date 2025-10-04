@@ -96,15 +96,58 @@ function toggle_visible(id) {
     }
 
     function buildEmojiPicker(picker, postId, emojiData) {
-        // ========== NOUVEAU : CHAMP DE RECHERCHE ==========
+        // ========== BOUTON DE FERMETURE ==========
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('emoji-picker-close');
+        closeBtn.title = 'Fermer';
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllPickers();
+        });
+        picker.appendChild(closeBtn);
+        
+        // ========== TABS DE CATÉGORIES (STYLE LINKEDIN) ==========
+        const tabsContainer = document.createElement('div');
+        tabsContainer.classList.add('emoji-tabs');
+        
+        const categoryIcons = [
+            { emoji: '🕒', title: 'Utilisé fréquemment' },
+            { emoji: '😊', title: 'Smileys' },
+            { emoji: '🐻', title: 'Animaux' },
+            { emoji: '🍔', title: 'Nourriture' },
+            { emoji: '⚽', title: 'Activités' },
+            { emoji: '🚗', title: 'Voyages' },
+            { emoji: '💡', title: 'Objets' },
+            { emoji: '🔥', title: 'Symboles' }
+        ];
+        
+        categoryIcons.forEach((cat, index) => {
+            const tab = document.createElement('button');
+            tab.classList.add('emoji-tab');
+            tab.textContent = cat.emoji;
+            tab.title = cat.title;
+            if (index === 0) tab.classList.add('active');
+            tabsContainer.appendChild(tab);
+        });
+        
+        picker.appendChild(tabsContainer);
+        
+        // ========== CHAMP DE RECHERCHE ==========
         const searchContainer = document.createElement('div');
         searchContainer.classList.add('emoji-search-container');
+        
+        const handWave = document.createElement('span');
+        handWave.classList.add('emoji-hand-wave');
+        handWave.textContent = '👋';
+        handWave.title = 'Bonjour!';
+        searchContainer.appendChild(handWave);
         
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.classList.add('emoji-search-input');
-        searchInput.placeholder = 'Rechercher un emoji...';
+        searchInput.placeholder = 'Recherche';
         searchInput.autocomplete = 'off';
+        searchInput.style.flex = '1';
         
         searchContainer.appendChild(searchInput);
         picker.appendChild(searchContainer);
@@ -115,32 +158,47 @@ function toggle_visible(id) {
         searchResults.style.display = 'none';
         picker.appendChild(searchResults);
 
-        // Conteneur principal des catégories
-        const categoriesContainer = document.createElement('div');
-        categoriesContainer.classList.add('emoji-categories-container');
+        // Conteneur scrollable principal
+        const pickerContent = document.createElement('div');
+        pickerContent.classList.add('emoji-picker-content');
         
-        // Section des emojis courantes
+        // Section des emojis courantes TOUJOURS VISIBLE
         const commonSection = document.createElement('div');
-        commonSection.classList.add('emoji-section', 'common-section');
+        commonSection.classList.add('common-section');
+        
+        const commonTitle = document.createElement('div');
+        commonTitle.classList.add('common-section-title');
+        commonTitle.textContent = 'Utilisé fréquemment';
+        commonSection.appendChild(commonTitle);
 
         const commonGrid = document.createElement('div');
         commonGrid.classList.add('emoji-grid', 'common-grid');
         
         COMMON_EMOJIS.forEach(emoji => {
             const cell = createEmojiCell(emoji, postId);
+            cell.classList.add('common-emoji');
             commonGrid.appendChild(cell);
         });
         
         commonSection.appendChild(commonGrid);
-        categoriesContainer.appendChild(commonSection);
-
+        pickerContent.appendChild(commonSection);
+        
         // Séparateur
         const separator = document.createElement('div');
         separator.classList.add('emoji-separator');
-        separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
-        categoriesContainer.appendChild(separator);
+        pickerContent.appendChild(separator);
+        
+        // Bouton "Voir plus"
+        const showMoreBtn = document.createElement('button');
+        showMoreBtn.classList.add('emoji-show-more');
+        showMoreBtn.textContent = 'Voir toutes les catégories';
+        pickerContent.appendChild(showMoreBtn);
+        
+        // Conteneur des catégories (caché par défaut)
+        const categoriesContainer = document.createElement('div');
+        categoriesContainer.classList.add('emoji-categories-hidden');
 
-        // Reste des catégories
+        // Reste des catégories (initialement cachées)
         Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
             const catTitle = document.createElement('div');
             catTitle.classList.add('emoji-category');
@@ -165,22 +223,40 @@ function toggle_visible(id) {
                 }
             });
         });
-
-        picker.appendChild(categoriesContainer);
+        
+        pickerContent.appendChild(categoriesContainer);
+        picker.appendChild(pickerContent);
+        
+        // ========== GESTION DU BOUTON "VOIR PLUS" ==========
+        let categoriesExpanded = false;
+        showMoreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            categoriesExpanded = !categoriesExpanded;
+            
+            if (categoriesExpanded) {
+                categoriesContainer.classList.add('show');
+                showMoreBtn.textContent = 'Voir moins';
+            } else {
+                categoriesContainer.classList.remove('show');
+                showMoreBtn.textContent = 'Voir toutes les catégories';
+                // Scroll vers le haut
+                pickerContent.scrollTop = 0;
+            }
+        });
 
         // ========== GESTION DE LA RECHERCHE ==========
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
             
             if (query.length === 0) {
-                // Afficher les catégories normales
+                // Afficher le contenu normal
                 searchResults.style.display = 'none';
-                categoriesContainer.style.display = 'block';
+                pickerContent.style.display = 'block';
                 return;
             }
 
-            // Masquer les catégories et afficher les résultats
-            categoriesContainer.style.display = 'none';
+            // Masquer le contenu normal et afficher les résultats
+            pickerContent.style.display = 'none';
             searchResults.style.display = 'block';
             
             // Rechercher les emojis
@@ -277,6 +353,17 @@ function toggle_visible(id) {
     }
 
     function buildFallbackPicker(picker, postId) {
+        const pickerContent = document.createElement('div');
+        pickerContent.classList.add('emoji-picker-content');
+        
+        const commonSection = document.createElement('div');
+        commonSection.classList.add('common-section');
+        
+        const commonTitle = document.createElement('div');
+        commonTitle.classList.add('common-section-title');
+        commonTitle.textContent = 'Utilisé fréquemment';
+        commonSection.appendChild(commonTitle);
+        
         const commonGrid = document.createElement('div');
         commonGrid.classList.add('emoji-grid', 'common-grid');
 
@@ -285,13 +372,16 @@ function toggle_visible(id) {
             cell.classList.add('common-emoji');
             commonGrid.appendChild(cell);
         });
-
-        picker.appendChild(commonGrid);
+        
+        commonSection.appendChild(commonGrid);
+        pickerContent.appendChild(commonSection);
 
         const infoDiv = document.createElement('div');
-        infoDiv.style.cssText = 'padding: 10px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; margin-top: 10px;';
+        infoDiv.style.cssText = 'padding: 16px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #e0e0e0;';
         infoDiv.textContent = 'Fichier JSON non accessible. Seuls les emojis courantes sont disponibles.';
-        picker.appendChild(infoDiv);
+        pickerContent.appendChild(infoDiv);
+        
+        picker.appendChild(pickerContent);
     }
 
     function closeAllPickers(event) {
