@@ -1,9 +1,13 @@
 /* 
  * Extension Reactions pour phpBB 3.3.15
- * Version corrigée selon cahier des charges
+ * Version corrigée et optimisée
  */
 
-/* Conteneur principal des réactions */
+/* ========== CONTENEUR PRINCIPAL ========== */
+.post-reactions-container {
+    position: relative;
+}
+
 .post-reactions {
     margin-top: 10px;
     padding: 8px 0;
@@ -14,7 +18,7 @@
     gap: 6px;
 }
 
-/* CORRECTION MAJEURE : Bouton "+" fixe à gauche selon cahier des charges */
+/* ========== BOUTON "+" (TOUJOURS À GAUCHE) ========== */
 .reaction-more {
     display: inline-flex;
     align-items: center;
@@ -30,8 +34,8 @@
     transition: all 0.2s ease;
     min-width: 32px;
     height: 28px;
-    order: -1; /* CORRECTION : Force le bouton + en première position à gauche */
-    margin-right: 8px; /* Espacement avec les réactions */
+    order: -1;
+    margin-right: 8px;
 }
 
 .reaction-more:hover {
@@ -40,43 +44,13 @@
     border-color: #adb5bd;
 }
 
-.reaction-who {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    border: 1px dashed #d1d1d1;
-    border-radius: 15px;
-    padding: 4px 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    color: #6c757d;
-    transition: all 0.2s ease;
-    min-width: 32px;
-    height: 28px;
-    order: -1; /* CORRECTION : Force le bouton + en première position à gauche */
-    margin-right: 8px; /* Espacement avec les réactions */
-}
-
-.reaction-who:hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #adb5bd;
-}
-
+/* ========== BOUTONS ? ET LISTE (MASQUÉS) ========== */
+.reaction-who,
 .list-who {
-	background-color:#ececb0;
-	font-size: 1.3em;
-	overflow-x: auto;
-	padding: 5px 5px;
-	border: 1px dashed black;
-	border-radius: 5px;
+    display: none !important;
 }
-.list-who li {
-	list-style: none;
-}
-/* CORRECTION : Réactions s'accumulent à droite du bouton + */
+
+/* ========== RÉACTIONS ========== */
 .post-reactions .reaction {
     display: inline-flex;
     align-items: center;
@@ -90,7 +64,7 @@
     user-select: none;
     min-width: 40px;
     justify-content: center;
-    order: 1; /* S'accumulent après le bouton + */
+    order: 1;
 }
 
 .post-reactions .reaction:hover {
@@ -99,7 +73,6 @@
     transform: translateY(-1px);
 }
 
-/* Réaction active (utilisateur a réagi) */
 .post-reactions .reaction.active {
     background: #4a90c2;
     color: white;
@@ -110,112 +83,176 @@
     background: #3a7ca8;
 }
 
-/* Compteur dans les réactions */
 .post-reactions .reaction .count {
     margin-left: 4px;
     font-weight: 500;
     font-size: 12px;
 }
 
-/* CORRECTION SUPPRIMÉE selon cahier des charges : 
-   Ne plus masquer automatiquement les count=0 par CSS
-   Le listener ne retourne que les count > 0 */
+/* ========== RÉACTIONS EN LECTURE SEULE ========== */
+.post-reactions-readonly .reaction {
+    cursor: default !important;
+    opacity: 0.8;
+}
 
-/* Palette d'émojis déroulante */
-.reaction-picker {
-    position: absolute;
+.post-reactions-readonly .reaction:hover {
+    background: #f3f3f3 !important;
+    transform: none !important;
+}
+
+.reaction-readonly {
+    cursor: default !important;
+    pointer-events: none;
+}
+
+/* ========== PICKER D'EMOJIS ========== */
+.emoji-picker {
     background: white;
-    border: 1px solid #d1d1d1;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 12px;
-    z-index: 1000;
-    max-width: 300px;
-    display: none;
-    margin-top: 5px;
-}
-
-.reaction-picker.show {
-    display: block;
-}
-
-/* Emojis dans la palette */
-.reaction-picker .reaction {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    padding: 8px;
-    margin: 2px;
-    font-size: 18px;
-    min-width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.reaction-picker .reaction:hover {
-    background: #f8f9fa;
-    border-color: #dee2e6;
-}
-
-/* Conteneur des réactions avec position relative pour la palette */
-.post-reactions-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    min-width: 340px;
+    max-width: 340px;
+    max-height: 450px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     position: relative;
 }
 
-/* Section des émojis courantes - Style LinkedIn */
-.common-section {
-    padding: 12px 16px;
-}
-
-.common-section-title {
-    font-size: 12px;
-    font-weight: 600;
+/* ========== BOUTON DE FERMETURE (X) ========== */
+.emoji-picker-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
     color: #666;
-    margin-bottom: 8px;
-    text-transform: none;
+    transition: all 0.2s ease;
+    z-index: 30;
 }
 
-.common-grid {
+.emoji-picker-close:hover {
+    background: #f3f6f8;
+    color: #333;
+}
+
+.emoji-picker-close::before {
+    content: '✕';
+    font-weight: normal;
+}
+
+/* ========== CHAMP DE RECHERCHE ========== */
+.emoji-search-container {
+    padding: 12px 16px;
+    padding-right: 50px;
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.emoji-search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+    background: #f3f6f8 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat 10px center;
+    background-size: 16px;
+}
+
+.emoji-search-input:focus {
+    border-color: #0a66c2;
+    background-color: white;
+}
+
+.emoji-search-input::placeholder {
+    color: #666;
+    font-style: normal;
+}
+
+/* ========== RÉSULTATS DE RECHERCHE ========== */
+.emoji-search-results {
+    padding: 8px 16px;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.emoji-results-grid {
     display: grid !important;
     grid-template-columns: repeat(8, 1fr) !important;
     gap: 4px !important;
-    justify-items: center;
 }
 
-.common-emoji {
+.emoji-result {
     background: transparent !important;
     border: none !important;
-    border-radius: 4px !important;
-    font-size: 24px !important;
     transition: all 0.15s ease !important;
-    box-shadow: none !important;
-    width: 36px !important;
-    height: 36px !important;
 }
 
-.common-emoji:hover {
-    transform: scale(1.15) !important;
+.emoji-result:hover {
     background: #f3f6f8 !important;
+    transform: scale(1.15) !important;
     box-shadow: none !important;
 }
 
-/* Tabs de catégories - Style LinkedIn */
+.emoji-no-results {
+    text-align: center;
+    padding: 30px 15px;
+    color: #757575;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.emoji-search-results::-webkit-scrollbar {
+    width: 8px;
+}
+
+.emoji-search-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.emoji-search-results::-webkit-scrollbar-thumb {
+    background: #2196f3;
+    border-radius: 4px;
+}
+
+.emoji-search-results::-webkit-scrollbar-thumb:hover {
+    background: #1976d2;
+}
+
+/* ========== TABS DE CATÉGORIES ========== */
 .emoji-tabs {
     display: flex;
     align-items: center;
     gap: 4px;
     padding: 8px 12px;
+    padding-right: 50px;
     border-bottom: 1px solid #e0e0e0;
     background: white;
     overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .emoji-tabs::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
 }
 
 .emoji-tab {
@@ -254,130 +291,7 @@
     border-radius: 2px;
 }
 
-/* Bouton "Voir plus" / "Voir moins" */
-.emoji-show-more {
-    display: block;
-    width: calc(100% - 32px);
-    margin: 12px 16px;
-    padding: 10px;
-    background: #f3f6f8;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    color: #0a66c2;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.emoji-show-more:hover {
-    background: #e8f5ff;
-    border-color: #0a66c2;
-}
-
-/* Section des catégories cachées */
-.emoji-categories-hidden {
-    display: none;
-}
-
-.emoji-categories-hidden.show {
-    display: block;
-}
-
-/* Séparateur */
-.emoji-separator {
-    margin: 0;
-    border-top: 1px solid #e0e0e0;
-}
-
-/* Style LinkedIn pour le picker */
-.emoji-picker {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-    padding: 0;
-    min-width: 340px;
-    max-width: 340px;
-    max-height: 450px;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    position: relative;
-}
-
-/* Bouton de fermeture (X) - Style LinkedIn */
-.emoji-picker-close {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    color: #666;
-    transition: all 0.2s ease;
-    z-index: 20;
-}
-
-.emoji-picker-close:hover {
-    background: #f3f6f8;
-    color: #333;
-}
-
-.emoji-picker-close::before {
-    content: '✕';
-    font-weight: normal;
-}
-
-/* Titres de catégorie - Style LinkedIn */
-.emoji-category {
-    font-size: 12px;
-    font-weight: 600;
-    color: #666;
-    margin: 0;
-    padding: 12px 16px 8px 16px;
-    border-bottom: none;
-    text-transform: none;
-    letter-spacing: 0;
-    background: #fafafa;
-}
-
-/* Grille générale - Style LinkedIn */
-.emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
-    padding: 8px 16px;
-}
-
-/* Cellules d'émojis - Style LinkedIn */
-.emoji-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-size: 24px;
-    background: transparent;
-    border: none;
-}
-
-.emoji-cell:hover {
-    background: #f3f6f8;
-    transform: scale(1.15);
-}
-
-/* Scrollbar - Style LinkedIn */
+/* ========== CONTENU DU PICKER ========== */
 .emoji-picker-content {
     max-height: 350px;
     overflow-y: auto;
@@ -400,81 +314,118 @@
     background: #b0b0b0;
 }
 
-/* Responsive - Mobile */
-@media (max-width: 768px) {
-    .post-reactions {
-        gap: 4px;
-    }
-    
-    .post-reactions .reaction {
-        padding: 3px 6px;
-        font-size: 13px;
-        border-radius: 12px;
-    }
-    
-    .reaction-more {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #e3f2fd; /* Bleu clair */
-        border: 1px solid #2196f3; /* Bleu */
-        border-radius: 15px;
-        padding: 4px 8px;
-        cursor: pointer;
-        font-size: 18px;
-        color: #1976d2;
-        transition: all 0.2s ease;
-        min-width: 32px;
-        height: 28px;
-        order: -1;
-        margin-right: 8px;
-        position: relative;
-    }
+/* ========== SECTION EMOJIS COURANTES ========== */
+.common-section {
+    padding: 12px 16px;
+}
 
-    .reaction-more::before {
-        content: '👍'; /* Pouce bleu emoji */
-        font-size: 16px;
-    }
-    
-    .reaction-more:hover {
-        background: #bbdefb;
-        border-color: #1976d2;
-        transform: scale(1.05);
-    }
-    
-    /* Tooltip au survol du bouton de réaction */
-.reaction-more::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 4px 8px;
+.common-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: none;
+}
+
+.common-grid {
+    display: grid !important;
+    grid-template-columns: repeat(8, 1fr) !important;
+    gap: 4px !important;
+    justify-items: center;
+}
+
+.common-emoji {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 24px !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    width: 36px !important;
+    height: 36px !important;
+}
+
+.common-emoji:hover {
+    transform: scale(1.15) !important;
+    background: #f3f6f8 !important;
+    box-shadow: none !important;
+}
+
+/* ========== CATÉGORIES ========== */
+.emoji-category {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin: 0;
+    padding: 12px 16px 8px 16px;
+    border-bottom: none;
+    text-transform: none;
+    letter-spacing: 0;
+    background: #fafafa;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 8px 16px;
+}
+
+.emoji-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     border-radius: 4px;
-    font-size: 11px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    margin-bottom: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 24px;
+    background: transparent;
+    border: none;
 }
 
-.reaction-more:hover::after {
-    opacity: 1;
+.emoji-cell:hover {
+    background: #f3f6f8;
+    transform: scale(1.15);
 }
 
-/* SUPPRESSION DU BOUTON ? */
-.reaction-who {
-    display: none !important;
+/* ========== BOUTON "VOIR PLUS" ========== */
+.emoji-show-more {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 12px 16px;
+    padding: 10px;
+    background: #f3f6f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    color: #0a66c2;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
 }
 
-.list-who {
-    display: none !important;
+.emoji-show-more:hover {
+    background: #e8f5ff;
+    border-color: #0a66c2;
 }
 
-/* NOUVEAU : Tooltip utilisateurs au survol des réactions */
+.emoji-separator {
+    margin: 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+.emoji-categories-hidden {
+    display: none;
+}
+
+.emoji-categories-hidden.show {
+    display: block;
+}
+
+/* ========== TOOLTIP UTILISATEURS ========== */
 .reaction-user-tooltip {
     background: white;
     border: 1px solid #ddd;
@@ -500,31 +451,12 @@
     color: #0d47a1;
 }
 
-/* Style pour les séparateurs entre utilisateurs */
 .reaction-user-tooltip .reaction-user-link:not(:last-child)::after {
     content: ', ';
     color: #666;
 }
-    .reaction-picker {
-        max-width: 280px;
-        left: 0 !important;
-        right: auto !important;
-    }
-    
-    .reaction-picker .reaction {
-        min-width: 32px;
-        height: 32px;
-        font-size: 16px;
-        padding: 6px;
-    }
-    
-    /* CORRECTION : Scrollbar encore plus grosse sur mobile selon cahier des charges */
-    .emoji-picker::-webkit-scrollbar {
-        width: 16px; /* Encore plus large sur mobile */
-    }
-}
 
-/* Animation pour l'apparition des nouvelles réactions */
+/* ========== ANIMATIONS ========== */
 .post-reactions .reaction.new {
     animation: reactionAppear 0.3s ease-out;
 }
@@ -540,7 +472,6 @@
     }
 }
 
-/* Animation pour la suppression de réaction */
 .post-reactions .reaction.removing {
     animation: reactionDisappear 0.2s ease-in forwards;
 }
@@ -556,53 +487,7 @@
     }
 }
 
-/* Style pour les tooltips des réactions */
-.reaction-tooltip {
-    position: absolute;
-    background: #333;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    z-index: 1001;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-}
-
-.reaction-tooltip.show {
-    opacity: 1;
-}
-
-.reaction-tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: #333 transparent transparent transparent;
-}
-
-/* Styles pour les réactions en lecture seule (utilisateurs non connectés) */
-.post-reactions-readonly .reaction {
-    cursor: default !important;
-    opacity: 0.8;
-}
-
-.post-reactions-readonly .reaction:hover {
-    background-color: transparent !important;
-    transform: none !important;
-}
-
-.reaction-readonly {
-    cursor: default !important;
-    pointer-events: none;
-}
-
-/* Message de connexion requis */
+/* ========== MESSAGE DE CONNEXION ========== */
 .reactions-login-message {
     font-family: Arial, sans-serif;
     color: #333;
@@ -620,7 +505,117 @@
     background-color: #005a87;
 }
 
-/* Mode sombre - optionnel */
+/* ========== INTÉGRATION PROSILVER ========== */
+.postbody .post-reactions {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.post .post-reactions {
+    clear: both;
+    margin-top: 8px;
+}
+
+/* ========== RESPONSIVE MOBILE ========== */
+@media (max-width: 768px) {
+    .post-reactions {
+        gap: 4px;
+    }
+    
+    .post-reactions .reaction {
+        padding: 3px 6px;
+        font-size: 13px;
+        border-radius: 12px;
+    }
+    
+    .reaction-more {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        color: #1976d2;
+        font-size: 18px;
+    }
+
+    .reaction-more::before {
+        content: '👍';
+        font-size: 16px;
+    }
+    
+    .reaction-more:hover {
+        background: #bbdefb;
+        border-color: #1976d2;
+        transform: scale(1.05);
+    }
+    
+    .reaction-more::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        margin-bottom: 5px;
+    }
+
+    .reaction-more:hover::after {
+        opacity: 1;
+    }
+    
+    .emoji-picker {
+        min-width: 320px;
+        max-width: 320px;
+        max-height: 400px;
+    }
+    
+    .emoji-search-container {
+        padding: 10px 12px;
+        padding-right: 45px;
+    }
+    
+    .emoji-tabs {
+        padding-right: 45px;
+    }
+    
+    .emoji-search-input {
+        font-size: 16px;
+    }
+    
+    .emoji-results-grid,
+    .common-grid {
+        grid-template-columns: repeat(6, 1fr) !important;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .emoji-tab {
+        min-width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .emoji-cell {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+    
+    .common-emoji {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 20px !important;
+    }
+}
+
+/* ========== MODE SOMBRE (OPTIONNEL) ========== */
 @media (prefers-color-scheme: dark) {
     .post-reactions {
         border-color: #4a4a4a;
@@ -643,192 +638,8 @@
         border-color: #555;
     }
     
-    .reaction-picker {
+    .emoji-picker {
         background: #2a2a2a;
         border-color: #555;
-    }
-}
-
-/* Intégration avec le style prosilver */
-.postbody .post-reactions {
-    margin-left: 0;
-    margin-right: 0;
-}
-
-/* Alignement avec les autres éléments du post */
-.post .post-reactions {
-    clear: both;
-    margin-top: 8px;
-}
-/* Conteneur du champ de recherche - Style LinkedIn */
-.emoji-search-container {
-    padding: 12px 16px;
-    padding-right: 45px; /* Espace pour le bouton de fermeture */
-    border-bottom: 1px solid #e0e0e0;
-    background: white;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Emoji de la main (👋) - Style LinkedIn */
-.emoji-hand-wave {
-    font-size: 20px;
-    animation: wave 0.5s ease-in-out 2;
-}
-
-@keyframes wave {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(15deg); }
-    75% { transform: rotate(-15deg); }
-}
-
-/* Champ de recherche - Style LinkedIn */
-.emoji-search-input {
-    width: 100%;
-    padding: 8px 12px 8px 36px;
-    border: 1px solid #d0d0d0;
-    border-radius: 4px;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s ease;
-    background: #f3f6f8 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat 10px center;
-    background-size: 16px;
-}
-
-.emoji-search-input:focus {
-    border-color: #0a66c2;
-    background-color: white;
-}
-
-.emoji-search-input::placeholder {
-    color: #666;
-    font-style: normal;
-}
-
-/* Résultats de recherche - Style LinkedIn */
-.emoji-search-results {
-    padding: 8px 16px;
-    max-height: 350px;
-    overflow-y: auto;
-}
-
-.emoji-results-grid {
-    display: grid !important;
-    grid-template-columns: repeat(8, 1fr) !important;
-    gap: 4px !important;
-}
-
-.emoji-result {
-    background: transparent !important;
-    border: none !important;
-    transition: all 0.15s ease !important;
-}
-
-.emoji-result:hover {
-    background: #f3f6f8 !important;
-    transform: scale(1.15) !important;
-    box-shadow: none !important;
-}
-
-/* Message "Aucun résultat" */
-.emoji-no-results {
-    text-align: center;
-    padding: 30px 15px;
-    color: #757575;
-    font-size: 14px;
-    font-style: italic;
-}
-
-/* Conteneur des catégories (caché lors de la recherche) */
-.emoji-categories-container {
-    display: block;
-}
-
-/* Animation d'apparition des résultats */
-@keyframes fadeInResults {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.emoji-search-results {
-    animation: fadeInResults 0.3s ease;
-}
-
-/* Scrollbar pour les résultats de recherche */
-.emoji-search-results::-webkit-scrollbar {
-    width: 8px;
-}
-
-.emoji-search-results::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.emoji-search-results::-webkit-scrollbar-thumb {
-    background: #2196f3;
-    border-radius: 4px;
-}
-
-.emoji-search-results::-webkit-scrollbar-thumb:hover {
-    background: #1976d2;
-}
-
-/* Responsive Mobile */
-@media (max-width: 768px) {
-    .emoji-picker {
-        min-width: 320px;
-        max-width: 320px;
-        max-height: 400px;
-    }
-    
-    .emoji-search-input {
-        font-size: 16px; /* Évite le zoom auto sur iOS */
-        padding: 8px 12px 8px 36px;
-    }
-    
-    .emoji-results-grid {
-        grid-template-columns: repeat(6, 1fr) !important;
-        gap: 4px !important;
-    }
-    
-    .common-grid {
-        grid-template-columns: repeat(6, 1fr) !important;
-    }
-    
-    .emoji-grid {
-        grid-template-columns: repeat(6, 1fr);
-    }
-    
-    .emoji-search-container {
-        padding: 10px 12px;
-        padding-right: 45px;
-    }
-    
-    .emoji-tab {
-        min-width: 36px;
-        height: 36px;
-        font-size: 18px;
-    }
-    
-    .emoji-cell {
-        width: 32px;
-        height: 32px;
-        font-size: 20px;
-    }
-    
-    .common-emoji {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 20px !important;
     }
 }

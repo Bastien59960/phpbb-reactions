@@ -500,23 +500,41 @@ private function get_users_for_emoji($post_id, $emoji)
         return (bool) $exists;
     }
 
-    /**
-     * Check if emoji is valid - Version simplifiée
+   /**
+     * CORRIGÉ : Validation emoji pour supporter les séquences ZWJ (Zero Width Joiner)
+     * Exemples: 🏃‍♀️‍➡️, 👨‍👩‍👧‍👦, etc.
      */
     private function is_valid_emoji($emoji)
     {
-        // Vérifier d'abord les émojis courantes
+        // Vérifier d'abord les emojis courantes
         if (in_array($emoji, $this->common_emojis, true)) {
             return true;
         }
         
-        // Pour les autres émojis, validation basique
-        if (empty($emoji) || strlen($emoji) > 20) {
+        // Pour les autres emojis, validation basique
+        if (empty($emoji)) {
+            return false;
+        }
+        
+        // CORRIGÉ : Augmenter la limite à 50 caractères pour les emojis composés
+        // Les emojis avec ZWJ peuvent faire jusqu'à 40-50 octets
+        if (strlen($emoji) > 50) {
             return false;
         }
         
         // Vérifier que c'est un emoji Unicode valide
-        return mb_strlen($emoji) > 0 && mb_strlen($emoji) <= 4;
+        // Les emojis peuvent avoir entre 1 et 15 caractères Unicode
+        $mb_length = mb_strlen($emoji, 'UTF-8');
+        if ($mb_length === 0 || $mb_length > 15) {
+            return false;
+        }
+        
+        // Vérifier qu'il n'y a pas de caractères de contrôle dangereux
+        if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $emoji)) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
