@@ -68,7 +68,7 @@ class notification_task extends \phpbb\cron\task\base
         $threshold_timestamp = time() - $spam_delay;
 
         // 1) Récupérer toutes les réactions non notifiées plus anciennes que le seuil
-        $sql = 'SELECT r.reaction_id, r.post_id, r.user_id as reacter_id, p.post_author
+        $sql = 'SELECT r.reaction_id, r.post_id, r.user_id AS reacter_id, p.poster_id AS author_id
                 FROM ' . $this->post_reactions_table . ' r
                 LEFT JOIN ' . POSTS_TABLE . ' p ON (r.post_id = p.post_id)
                 WHERE r.reaction_notified = 0
@@ -82,8 +82,8 @@ class notification_task extends \phpbb\cron\task\base
 
         while ($row = $this->db->sql_fetchrow($result))
         {
-            $post_id = (int) $row['post_id'];
-            $author_id = (int) $row['post_author'];
+            $post_id    = (int) $row['post_id'];
+            $author_id  = isset($row['author_id']) ? (int) $row['author_id'] : 0;
             $reacter_id = (int) $row['reacter_id'];
             $reaction_id = (int) $row['reaction_id'];
 
@@ -91,9 +91,9 @@ class notification_task extends \phpbb\cron\task\base
             if (!isset($grouped[$post_id]))
             {
                 $grouped[$post_id] = [
-                    'post_id' => $post_id,
-                    'author_id' => $author_id,
-                    'reacter_ids' => [],
+                    'post_id'      => $post_id,
+                    'author_id'    => $author_id,
+                    'reacter_ids'  => [],
                     'reaction_ids' => [],
                 ];
             }
@@ -123,27 +123,29 @@ class notification_task extends \phpbb\cron\task\base
 
             // construire les données de notification
             $notification_data = [
-                'post_id' => $post_id,
+                'post_id'     => $post_id,
                 'reacter_ids' => array_values(array_unique($data['reacter_ids'])),
             ];
 
             try
             {
                 // utiliser notification manager pour créer la notification
-                $this->notification_manager->add_notifications('bastien59960.reaction', [$author_id], $notification_data);
+                $this->notification_manager->add_notifications(
+                    'bastien59960.reaction',
+                    [$author_id],
+                    $notification_data
+                );
             }
             catch (\Exception $e)
             {
                 // éviter d'interrompre le cron si une notification échoue
-                // loggable si tu veux : error_log($e->getMessage());
                 continue;
             }
         }
 
-        // 3) Marquer toutes les réactions traitées comme notifiées (atomique possible)
+        // 3) Marquer toutes les réactions traitées comme notifiées
         if (!empty($mark_ids))
         {
-            // sécuriser la liste d'ids
             $mark_ids = array_map('intval', $mark_ids);
             $sql = 'UPDATE ' . $this->post_reactions_table . '
                     SET reaction_notified = 1
