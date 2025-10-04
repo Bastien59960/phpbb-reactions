@@ -13,21 +13,23 @@
             <span class="count">{postrow.post_reactions.COUNT}</span>
         </span>
         <!-- END postrow.post_reactions -->
+        
         <!-- Bouton pour palette - SEULEMENT pour les utilisateurs connectés -->
         <span class="reaction-more" title="Ajouter une réaction">+</span>
+        
         <!-- IF postrow.list_reactions|length > 0 -->
-			<span class="reaction-who" title="Qui a réagi ?" onclick="toggle_visible('lst_{postrow.POST_ID}')">?</span>
-			<div class="list-who" id="lst_{postrow.POST_ID}" style="display:none;">
-	        <!-- BEGIN postrow.list_reactions -->
-	        <UL>
-				<LI>{postrow.list_reactions.EMOJI} {postrow.list_reactions.NOM}</LI>
-			</UL>
-	        <!-- END postrow.list_reactions -->
-	        </div>
-	        
+            <span class="reaction-who" title="Qui a réagi ?" onclick="toggle_visible('lst_{postrow.POST_ID}')">?</span>
+            <div class="list-who" id="lst_{postrow.POST_ID}" style="display:none;">
+                <ul>
+                <!-- BEGIN postrow.list_reactions -->
+                    <li>{postrow.list_reactions.EMOJI} {postrow.list_reactions.NOM}</li>
+                <!-- END postrow.list_reactions -->
+                </ul>
+            </div>
         <!-- ENDIF -->
-  </div>
+    </div>
 </div>
+
 <!-- ELSEIF S_REACTIONS_ENABLED and not S_IS_BOT and not S_USER_LOGGED_IN -->
 <!-- Affichage en lecture seule pour les utilisateurs non connectés -->
 <div class="post-reactions-container post-reactions-readonly" data-post-id="{postrow.POST_ID}">
@@ -40,19 +42,19 @@
                   title="{postrow.post_reactions.COUNT} réaction<!-- IF postrow.post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
                 {postrow.post_reactions.EMOJI}
                 <span class="count">{postrow.post_reactions.COUNT}</span>
-           </span>
+            </span>
             <!-- ENDIF -->
         <!-- END postrow.post_reactions -->
         
         <!-- IF postrow.list_reactions|length > 0 -->
-			<span class="reaction-who" title="Qui a réagi ?" onclick="toggle_visible('lst_{postrow.POST_ID}')">?</span>
-			<div class="list-who" id="lst_{postrow.POST_ID}" style="display:none;">
-	        <!-- BEGIN postrow.list_reactions -->
-	        <UL>
-				<LI>{postrow.list_reactions.EMOJI} {postrow.list_reactions.NOM}</LI>
-			</UL>
-	        <!-- END postrow.list_reactions -->
-	        </div>
+            <span class="reaction-who" title="Qui a réagi ?" onclick="toggle_visible('lst_{postrow.POST_ID}')">?</span>
+            <div class="list-who" id="lst_{postrow.POST_ID}" style="display:none;">
+                <ul>
+                <!-- BEGIN postrow.list_reactions -->
+                    <li>{postrow.list_reactions.EMOJI} {postrow.list_reactions.NOM}</li>
+                <!-- END postrow.list_reactions -->
+                </ul>
+            </div>
         <!-- ENDIF -->
     </div>
 </div>
