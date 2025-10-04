@@ -60,15 +60,17 @@ services:
             - '%tables.posts%'
 
 
-bastien59960.reactions.cron.notification_task:
-    class: bastien59960\reactions\cron\notification_task
-    arguments:
-        - '@dbal.conn'
-        - '@config'
-        - '@notification_manager'
-        - '@user_loader'
-        - '%tables.post_reactions%'
-        - '%core.root_path%'
-        - '%core.php_ext%'
-    tags:
-        - { name: cron.task }
+services:
+    bastien59960.reactions.cron.notification_task:
+        class: bastien59960\reactions\cron\notification_task
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@notification_manager'
+            - '@user_loader'
+            - '%tables.post_reactions%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: cron.task }
+
