@@ -25,9 +25,9 @@
     background: #f8f9fa;
     border: 1px dashed #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px;
+    padding: 8px 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 24px;
     font-weight: bold;
     color: #6c757d;
     transition: all 0.2s ease;
@@ -329,9 +329,9 @@
     background: #f8f9fa;
     border: 1px dashed #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px;
+    padding: 8px 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 24px;
     font-weight: bold;
     color: #6c757d;
     transition: all 0.2s ease;
@@ -355,9 +355,9 @@
     background: #f3f3f3;
     border: 1px solid #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px;
+    padding: 8px 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 24px;
     transition: all 0.2s ease;
     user-select: none;
     min-width: 40px;
