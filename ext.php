@@ -38,4 +38,46 @@ class ext extends \phpbb\extension\base
     {
         return '1.0.1';
     }
+
+    /**
+     * Enable step for notifications
+     */
+    public function enable_step($old_state)
+    {
+        if ($old_state === false)
+        {
+            $notification_manager = $this->container->get('notification_manager');
+            $notification_manager->enable_notifications('bastien59960.reactions.notification');
+            return 'notification';
+        }
+        return parent::enable_step($old_state);
+    }
+
+    /**
+     * Disable step for notifications
+     */
+    public function disable_step($old_state)
+    {
+        if ($old_state === false)
+        {
+            $notification_manager = $this->container->get('notification_manager');
+            $notification_manager->disable_notifications('bastien59960.reactions.notification');
+            return 'notification';
+        }
+        return parent::disable_step($old_state);
+    }
+
+    /**
+     * Purge step for notifications
+     */
+    public function purge_step($old_state)
+    {
+        if ($old_state === false)
+        {
+            $notification_manager = $this->container->get('notification_manager');
+            $notification_manager->purge_notifications('bastien59960.reactions.notification');
+            return 'notification';
+        }
+        return parent::purge_step($old_state);
+    }
 }

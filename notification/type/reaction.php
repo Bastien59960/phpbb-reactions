@@ -21,7 +21,7 @@ class reaction extends \phpbb\notification\type\base
     /**
      * Le nom du type de notification.
      */
-    public static $notification_type = 'bastien59960.reactions.notification.type.reaction';
+    public static $notification_type = 'bastien59960.reactions.notification';
 
     /**
      * Les données requises pour cette notification.
@@ -50,6 +50,9 @@ class reaction extends \phpbb\notification\type\base
 
         return [
             'TITLE' => $this->user->lang('REACTIONS_NOTIFICATION_EMAIL_SUBJECT', $reacter_names, $post_title),
+            'REACTOR_NAMES' => $reacter_names,
+            'POST_TITLE' => $post_title,
+            'U_POST_LINK' => $this->get_url(),
         ];
     }
 
@@ -79,6 +82,40 @@ class reaction extends \phpbb\notification\type\base
     public static function get_item_id($data)
     {
         return (int) $data['post_id'];
+    }
+
+    /**
+     * Fonction pour créer l'ID de l'utilisateur.
+     */
+    public static function get_item_parent_id($data)
+    {
+        return (int) $data['post_author'];
+    }
+
+    /**
+     * Fonction pour créer l'ID du forum.
+     */
+    public function get_forum_id()
+    {
+        $sql = 'SELECT forum_id FROM ' . POSTS_TABLE . ' WHERE post_id = ' . (int) $this->notification_data['post_id'];
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return $row ? (int) $row['forum_id'] : 0;
+    }
+
+    /**
+     * Fonction pour créer l'ID du topic.
+     */
+    public function get_topic_id()
+    {
+        $sql = 'SELECT topic_id FROM ' . POSTS_TABLE . ' WHERE post_id = ' . (int) $this->notification_data['post_id'];
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        
+        return $row ? (int) $row['topic_id'] : 0;
     }
     
     /**

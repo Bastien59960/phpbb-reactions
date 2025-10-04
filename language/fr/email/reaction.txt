@@ -1,0 +1,11 @@
+Subject: {TITLE}
+
+Bonjour {USERNAME},
+
+{REACTOR_NAMES} a réagi à votre message "{POST_TITLE}".
+
+Vous pouvez voir votre message et les réactions en cliquant sur le lien suivant :
+{U_POST_LINK}
+
+---
+{EMAIL_SIG}

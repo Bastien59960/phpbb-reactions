@@ -1,0 +1,11 @@
+Subject: {TITLE}
+
+Hello {USERNAME},
+
+{REACTOR_NAMES} reacted to your message "{POST_TITLE}".
+
+You can view your message and the reactions by clicking the following link:
+{U_POST_LINK}
+
+---
+{EMAIL_SIG}

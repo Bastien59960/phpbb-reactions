@@ -360,6 +360,9 @@ class ajax
             $reactions = $this->get_reactions_array($post_id);
             $count = isset($reactions[$emoji]) ? $reactions[$emoji] : 1;
 
+            // Les notifications seront gérées par le cron avec anti-spam
+            // Pas besoin de déclencher immédiatement
+
             // Retourne une réponse JSON valide
             return new JsonResponse([
                 'success'      => true,
@@ -567,4 +570,5 @@ class ajax
     {
         return $this->common_emojis;
     }
+
 }

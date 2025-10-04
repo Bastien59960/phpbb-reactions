@@ -137,7 +137,7 @@ class notification_task extends \phpbb\cron\task\base
             {
                 // utiliser notification manager pour créer la notification
                 $this->notification_manager->add_notifications(
-                    'bastien59960.reaction',
+                    'bastien59960.reactions.notification',
                     [$author_id],
                     $notification_data
                 );
