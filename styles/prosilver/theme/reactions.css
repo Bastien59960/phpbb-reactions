@@ -56,9 +56,9 @@
     background: #f3f3f3;
     border: 1px solid #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px;
+    padding: 8px 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 28px;
     transition: all 0.2s ease;
     user-select: none;
     min-width: 40px;
@@ -263,7 +263,7 @@
     height: 40px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     transition: background-color 0.15s ease;
     background: transparent;
     border: none;
@@ -518,6 +518,7 @@
 }
 .emoji-picker-main::-webkit-scrollbar-thumb:hover {
     background-color: #cccccc;
+    min-height: 200px;
 }
 
 /* ========== TITRES DE CATÉGORIE (Commun aux deux sections) ========== */
@@ -547,12 +548,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.15s ease;
-    font-size: 20px;
+    font-size: 16px;
     border: none;
     background: transparent;
 }
