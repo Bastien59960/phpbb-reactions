@@ -98,12 +98,75 @@ function toggle_visible(id) {
     // NOUVELLE STRUCTURE DU PICKER
     // =========================================================================
     function buildEmojiPicker(picker, postId, emojiData) {
-        // --- NOUVEL ORDRE DES ÉLÉMENTS ---
-
-        // --- 1. ONGLETS (MAINTENANT EN HAUT) ---
+        // --- 1. ONGLETS ---
         const tabsContainer = document.createElement('div');
         tabsContainer.className = 'emoji-tabs';
+        picker.appendChild(tabsContainer);
 
+        // --- 2. HEADER (Recherche et Fermeture) ---
+        const header = document.createElement('div');
+        header.className = 'emoji-picker-header';
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'emoji-search-input';
+        searchInput.placeholder = 'Rechercher...';
+        searchInput.autocomplete = 'off';
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'emoji-picker-close';
+        closeBtn.title = 'Fermer';
+        closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeAllPickers(); });
+        header.appendChild(searchInput);
+        header.appendChild(closeBtn);
+        picker.appendChild(header);
+
+        // --- NOUVEAU CONTENEUR POUR LE CORPS DU PICKER ---
+        const pickerBody = document.createElement('div');
+        pickerBody.className = 'emoji-picker-body';
+        picker.appendChild(pickerBody);
+
+        // --- 3. SECTION "FRÉQUEMMENT UTILISÉ" (FIXE) ---
+        const frequentSection = document.createElement('div');
+        frequentSection.className = 'emoji-frequent-section';
+        const frequentTitle = document.createElement('div');
+        frequentTitle.className = 'emoji-category-title';
+        frequentTitle.textContent = 'Utilisé fréquemment';
+        const frequentGrid = document.createElement('div');
+        frequentGrid.className = 'emoji-grid';
+        COMMON_EMOJIS.forEach(emoji => {
+            frequentGrid.appendChild(createEmojiCell(emoji, postId));
+        });
+        frequentSection.appendChild(frequentTitle);
+        frequentSection.appendChild(frequentGrid);
+        pickerBody.appendChild(frequentSection);
+
+        // --- 4. CONTENU PRINCIPAL (SCROLLABLE) ---
+        const mainContent = document.createElement('div');
+        mainContent.className = 'emoji-picker-main';
+        const categoriesContainer = document.createElement('div');
+        categoriesContainer.className = 'emoji-categories-container';
+        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
+            const catTitle = document.createElement('div');
+            catTitle.className = 'emoji-category-title';
+            catTitle.textContent = category;
+            catTitle.dataset.categoryName = category;
+            categoriesContainer.appendChild(catTitle);
+            const grid = document.createElement('div');
+            grid.className = 'emoji-grid';
+            Object.values(subcategories).flat().forEach(emojiObj => {
+                grid.appendChild(createEmojiCell(emojiObj.emoji, postId, emojiObj.name));
+            });
+            categoriesContainer.appendChild(grid);
+        });
+        mainContent.appendChild(categoriesContainer);
+        pickerBody.appendChild(mainContent);
+
+        // Conteneur pour les résultats de recherche (remplace tout le corps)
+        const searchResults = document.createElement('div');
+        searchResults.className = 'emoji-search-results';
+        searchResults.style.display = 'none';
+        pickerBody.appendChild(searchResults);
+
+        // --- Logique des onglets ---
         const categoryData = [
             { key: 'frequent', emoji: '🕒', title: 'Utilisé fréquemment' },
             { key: 'smileys', emoji: '😊', title: 'Smileys & Émotions' },
@@ -114,96 +177,24 @@ function toggle_visible(id) {
             { key: 'objects', emoji: '💡', title: 'Objets' },
             { key: 'symbols', emoji: '🔥', title: 'Symboles' }
         ];
-        
-        // On attache les onglets au picker en premier
-        picker.appendChild(tabsContainer);
-
-        // --- 2. HEADER (Recherche et Fermeture) ---
-        const header = document.createElement('div');
-        header.className = 'emoji-picker-header';
-
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.className = 'emoji-search-input';
-        searchInput.placeholder = 'Rechercher...';
-        searchInput.autocomplete = 'off';
-
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'emoji-picker-close';
-        closeBtn.title = 'Fermer';
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeAllPickers();
-        });
-
-        header.appendChild(searchInput);
-        header.appendChild(closeBtn);
-        picker.appendChild(header);
-
-        // --- 3. CONTENU PRINCIPAL (scrollable) ---
-        const mainContent = document.createElement('div');
-        mainContent.className = 'emoji-picker-main';
-
-        const searchResults = document.createElement('div');
-        searchResults.className = 'emoji-search-results';
-        searchResults.style.display = 'none';
-
-        const categoriesContainer = document.createElement('div');
-        categoriesContainer.className = 'emoji-categories-container';
-
-        // Catégorie "Utilisé fréquemment"
-        const frequentCategory = document.createElement('div');
-        frequentCategory.className = 'emoji-category';
-        frequentCategory.textContent = 'Utilisé fréquemment';
-        frequentCategory.dataset.categoryName = 'frequent';
-        categoriesContainer.appendChild(frequentCategory);
-
-        const frequentGrid = document.createElement('div');
-        frequentGrid.className = 'emoji-grid';
-        COMMON_EMOJIS.forEach(emoji => {
-            frequentGrid.appendChild(createEmojiCell(emoji, postId));
-        });
-        categoriesContainer.appendChild(frequentGrid);
-
-        // Reste des catégories
-        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
-            const catTitle = document.createElement('div');
-            catTitle.className = 'emoji-category';
-            catTitle.textContent = category;
-            catTitle.dataset.categoryName = category;
-            categoriesContainer.appendChild(catTitle);
-
-            const grid = document.createElement('div');
-            grid.className = 'emoji-grid';
-            Object.values(subcategories).flat().forEach(emojiObj => {
-                grid.appendChild(createEmojiCell(emojiObj.emoji, postId, emojiObj.name));
-            });
-            categoriesContainer.appendChild(grid);
-        });
-
-        mainContent.appendChild(searchResults);
-        mainContent.appendChild(categoriesContainer);
-        picker.appendChild(mainContent);
-
-        // --- Logique des onglets (après que mainContent soit ajouté au DOM) ---
         categoryData.forEach((cat, index) => {
             const tab = document.createElement('button');
             tab.className = 'emoji-tab';
             tab.textContent = cat.emoji;
             tab.title = cat.title;
             if (index === 0) tab.classList.add('active');
-
             tab.addEventListener('click', (e) => {
                 e.stopPropagation();
                 tabsContainer.querySelectorAll('.emoji-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
-                // Le nom de la catégorie dans les données peut différer de data-category-name
-                const categoryNameToFind = cat.key === 'frequent' ? 'frequent' : Object.keys(emojiData.emojis)[index - 1];
-                const categoryElement = mainContent.querySelector(`[data-category-name="${categoryNameToFind}"]`);
-                if (categoryElement) {
-                    // Fait défiler l'élément en haut du conteneur scrollable
-                    mainContent.scrollTop = categoryElement.offsetTop;
+                if (cat.key === 'frequent') {
+                    mainContent.scrollTop = 0; // Remonte la liste principale au cas où
+                } else {
+                    const categoryNameToFind = Object.keys(emojiData.emojis)[index - 1];
+                    const categoryElement = mainContent.querySelector(`[data-category-name="${categoryNameToFind}"]`);
+                    if (categoryElement) {
+                        mainContent.scrollTop = categoryElement.offsetTop;
+                    }
                 }
             });
             tabsContainer.appendChild(tab);
@@ -213,18 +204,22 @@ function toggle_visible(id) {
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
             if (query.length > 0) {
-                categoriesContainer.style.display = 'none';
+                frequentSection.style.display = 'none';
+                mainContent.style.display = 'none';
                 searchResults.style.display = 'block';
                 const results = searchEmojis(query, emojiData);
                 displaySearchResults(searchResults, results, postId);
             } else {
-                categoriesContainer.style.display = 'block';
+                frequentSection.style.display = 'block';
+                mainContent.style.display = 'block';
                 searchResults.style.display = 'none';
             }
         });
 
         setTimeout(() => searchInput.focus(), 50);
     }
+
+    // ... (Le reste du fichier JS reste identique)
     
     /**
      * Crée une cellule d'emoji réutilisable
