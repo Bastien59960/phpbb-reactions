@@ -15,7 +15,71 @@ function toggle_visible(id) {
     let currentTooltip = null;
     let allEmojisData = null; // Stocke toutes les données d'emojis pour la recherche
 
+    // Stockage local des usages d'emojis pour la section "Utilisé fréquemment"
+    const LOCAL_STORAGE_USAGE_KEY = 'reactions_emoji_usage_v1';
+
     const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '💌', '🥳'];
+
+    // Icônes de catégories pour une barre d'onglets façon LinkedIn
+    const CATEGORY_TABS = [
+        { key: 'recent', icon: '🕘', label: 'Récents' },
+        { key: 'Smileys & Emotion', icon: '🙂', label: 'Smileys' },
+        { key: 'Animals & Nature', icon: '🐻', label: 'Animaux' },
+        { key: 'Food & Drink', icon: '🍔', label: 'Nourriture' },
+        { key: 'Activities', icon: '🏀', label: 'Activités' },
+        { key: 'Travel & Places', icon: '🚗', label: 'Lieux' },
+        { key: 'Objects', icon: '💡', label: 'Objets' },
+        { key: 'Symbols', icon: '％', label: 'Symboles' },
+        { key: 'Flags', icon: '🏁', label: 'Drapeaux' }
+    ];
+
+    // ---------- Utilitaires usage fréquemment ----------
+    function getEmojiUsageMap() {
+        try {
+            const raw = localStorage.getItem(LOCAL_STORAGE_USAGE_KEY);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            return typeof parsed === 'object' && parsed ? parsed : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    function saveEmojiUsageMap(map) {
+        try {
+            localStorage.setItem(LOCAL_STORAGE_USAGE_KEY, JSON.stringify(map));
+        } catch (_) {
+            // ignore quota errors
+        }
+    }
+
+    function incrementEmojiUsage(emoji) {
+        const map = getEmojiUsageMap();
+        map[emoji] = (map[emoji] || 0) + 1;
+        saveEmojiUsageMap(map);
+    }
+
+    function getFrequentEmojis(fallbackList = COMMON_EMOJIS, max = 12) {
+        const map = getEmojiUsageMap();
+        const entries = Object.entries(map);
+        if (entries.length === 0) {
+            return fallbackList.slice(0, max);
+        }
+        const sorted = entries
+            .sort((a, b) => b[1] - a[1])
+            .map(([emoji]) => emoji);
+        // compléter avec fallback si pas assez d'éléments
+        const merged = [...new Set([...sorted, ...fallbackList])];
+        return merged.slice(0, max);
+    }
+
+    function slugify(text) {
+        return String(text)
+            .toLowerCase()
+            .replace(/&/g, ' and ')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+    }
 
     // ---------- Initialisation ----------
     function initReactions() {
@@ -96,7 +160,11 @@ function toggle_visible(id) {
     }
 
     function buildEmojiPicker(picker, postId, emojiData) {
-        // ========== NOUVEAU : CHAMP DE RECHERCHE ==========
+        // Attributs d'accessibilité de base
+        picker.setAttribute('role', 'dialog');
+        picker.setAttribute('aria-label', 'Sélecteur d’emoji');
+
+        // ========== En-tête : CHAMP DE RECHERCHE ==========
         const searchContainer = document.createElement('div');
         searchContainer.classList.add('emoji-search-container');
         
@@ -109,64 +177,101 @@ function toggle_visible(id) {
         searchContainer.appendChild(searchInput);
         picker.appendChild(searchContainer);
 
+        // Barre d'onglets (catégories) façon LinkedIn
+        const tabsContainer = document.createElement('div');
+        tabsContainer.classList.add('emoji-tabs');
+        CATEGORY_TABS.forEach(tab => {
+            const tabEl = document.createElement('button');
+            tabEl.type = 'button';
+            tabEl.classList.add('emoji-tab');
+            tabEl.setAttribute('aria-label', tab.label);
+            tabEl.textContent = tab.icon;
+            tabsContainer.appendChild(tabEl);
+        });
+        picker.appendChild(tabsContainer);
+
         // Conteneur pour les résultats de recherche
         const searchResults = document.createElement('div');
         searchResults.classList.add('emoji-search-results');
         searchResults.style.display = 'none';
         picker.appendChild(searchResults);
 
-        // Conteneur principal des catégories
+        // Section "Utilisé fréquemment"
+        const frequentTitle = document.createElement('div');
+        frequentTitle.classList.add('emoji-section-title');
+        frequentTitle.textContent = 'Utilisé fréquemment';
+        picker.appendChild(frequentTitle);
+
+        const frequentGrid = document.createElement('div');
+        frequentGrid.classList.add('emoji-grid', 'common-grid');
+        const frequentEmojis = getFrequentEmojis(COMMON_EMOJIS, 18);
+        frequentEmojis.forEach(emoji => {
+            const cell = createEmojiCell(emoji, postId);
+            frequentGrid.appendChild(cell);
+        });
+        picker.appendChild(frequentGrid);
+
+        // Bouton "Voir tout" et conteneur des catégories (lazy load)
+        const showAllWrapper = document.createElement('div');
+        showAllWrapper.classList.add('emoji-show-all-wrapper');
+
+        const showAllBtn = document.createElement('button');
+        showAllBtn.type = 'button';
+        showAllBtn.classList.add('emoji-show-all');
+        showAllBtn.innerHTML = '<span class="chevron">▾</span> Afficher toutes les émojis';
+        showAllWrapper.appendChild(showAllBtn);
+        picker.appendChild(showAllWrapper);
+
         const categoriesContainer = document.createElement('div');
         categoriesContainer.classList.add('emoji-categories-container');
-        
-        // Section des emojis courantes
-        const commonSection = document.createElement('div');
-        commonSection.classList.add('emoji-section', 'common-section');
+        categoriesContainer.style.display = 'none';
+        picker.appendChild(categoriesContainer);
 
-        const commonGrid = document.createElement('div');
-        commonGrid.classList.add('emoji-grid', 'common-grid');
-        
-        COMMON_EMOJIS.forEach(emoji => {
-            const cell = createEmojiCell(emoji, postId);
-            commonGrid.appendChild(cell);
+        let categoriesBuilt = false;
+        function ensureCategoriesBuilt() {
+            if (categoriesBuilt) return;
+            const built = buildFullCategoriesElement(emojiData, postId);
+            categoriesContainer.appendChild(built);
+            categoriesBuilt = true;
+        }
+
+        function expandCategories() {
+            ensureCategoriesBuilt();
+            categoriesContainer.style.display = 'block';
+            showAllBtn.classList.add('expanded');
+            showAllBtn.innerHTML = '<span class="chevron">▴</span> Masquer la liste complète';
+        }
+
+        function collapseCategories() {
+            categoriesContainer.style.display = 'none';
+            showAllBtn.classList.remove('expanded');
+            showAllBtn.innerHTML = '<span class="chevron">▾</span> Afficher toutes les émojis';
+        }
+
+        showAllBtn.addEventListener('click', () => {
+            if (showAllBtn.classList.contains('expanded')) {
+                collapseCategories();
+            } else {
+                expandCategories();
+            }
         });
-        
-        commonSection.appendChild(commonGrid);
-        categoriesContainer.appendChild(commonSection);
 
-        // Séparateur
-        const separator = document.createElement('div');
-        separator.classList.add('emoji-separator');
-        separator.innerHTML = '<hr style="margin: 10px 0; border: 1px solid #ddd;">';
-        categoriesContainer.appendChild(separator);
-
-        // Reste des catégories
-        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
-            const catTitle = document.createElement('div');
-            catTitle.classList.add('emoji-category');
-            catTitle.textContent = category;
-            categoriesContainer.appendChild(catTitle);
-
-            Object.entries(subcategories).forEach(([subcategory, emojis]) => {
-                const grid = document.createElement('div');
-                grid.classList.add('emoji-grid');
-
-                emojis.forEach(emojiObj => {
-                    if (COMMON_EMOJIS.includes(emojiObj.emoji)) {
-                        return;
-                    }
-
-                    const cell = createEmojiCell(emojiObj.emoji, postId, emojiObj.name);
-                    grid.appendChild(cell);
-                });
-
-                if (grid.children.length > 0) {
-                    categoriesContainer.appendChild(grid);
+        // Navigation via onglets: si on clique, on ouvre et on scroll sur la catégorie
+        tabsContainer.querySelectorAll('.emoji-tab').forEach((tabEl, idx) => {
+            const tab = CATEGORY_TABS[idx];
+            tabEl.addEventListener('click', () => {
+                // Ouvrir si fermé
+                if (categoriesContainer.style.display === 'none') expandCategories();
+                // Tenter le scroll vers la catégorie
+                if (tab.key === 'recent') {
+                    frequentTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    const id = 'cat-' + slugify(tab.key);
+                    const target = categoriesContainer.querySelector('#' + id);
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
-
-        picker.appendChild(categoriesContainer);
 
         // ========== GESTION DE LA RECHERCHE ==========
         searchInput.addEventListener('input', (e) => {
@@ -175,7 +280,10 @@ function toggle_visible(id) {
             if (query.length === 0) {
                 // Afficher les catégories normales
                 searchResults.style.display = 'none';
-                categoriesContainer.style.display = 'block';
+                // Ne ré-ouvre pas automatiquement la liste complète si elle était masquée
+                if (showAllBtn.classList.contains('expanded')) {
+                    categoriesContainer.style.display = 'block';
+                }
                 return;
             }
 
@@ -203,10 +311,42 @@ function toggle_visible(id) {
         cell.textContent = emoji;
         cell.title = name; // Tooltip avec le nom
         cell.addEventListener('click', () => {
+            incrementEmojiUsage(emoji);
             sendReaction(postId, emoji);
             closeAllPickers();
         });
         return cell;
+    }
+
+    // Construit paresseusement la liste complète des catégories
+    function buildFullCategoriesElement(emojiData, postId) {
+        const container = document.createElement('div');
+
+        Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
+            const catTitle = document.createElement('div');
+            catTitle.classList.add('emoji-category');
+            catTitle.textContent = category;
+            catTitle.id = 'cat-' + slugify(category);
+            container.appendChild(catTitle);
+
+            Object.entries(subcategories).forEach(([subcategory, emojis]) => {
+                const grid = document.createElement('div');
+                grid.classList.add('emoji-grid');
+
+                emojis.forEach(emojiObj => {
+                    // Evite les doublons avec la section fréquente
+                    if (COMMON_EMOJIS.includes(emojiObj.emoji)) return;
+                    const cell = createEmojiCell(emojiObj.emoji, postId, emojiObj.name);
+                    grid.appendChild(cell);
+                });
+
+                if (grid.children.length > 0) {
+                    container.appendChild(grid);
+                }
+            });
+        });
+
+        return container;
     }
 
     /**
