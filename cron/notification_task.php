@@ -39,6 +39,12 @@ class notification_task extends \phpbb\cron\task\base
         $this->php_ext = $php_ext;
     }
 
+    public function get_name()
+    {
+        return 'cron.task.reactions.notification_task';
+    }
+
+
     /**
      * Si l'admin a défini le temps anti-spam > 0 on lance la tâche.
      */
