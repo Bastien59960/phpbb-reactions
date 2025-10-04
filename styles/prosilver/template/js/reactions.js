@@ -98,7 +98,27 @@ function toggle_visible(id) {
     // NOUVELLE STRUCTURE DU PICKER
     // =========================================================================
     function buildEmojiPicker(picker, postId, emojiData) {
-        // --- 1. HEADER (Recherche et Fermeture) ---
+        // --- NOUVEL ORDRE DES ÉLÉMENTS ---
+
+        // --- 1. ONGLETS (MAINTENANT EN HAUT) ---
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'emoji-tabs';
+
+        const categoryData = [
+            { key: 'frequent', emoji: '🕒', title: 'Utilisé fréquemment' },
+            { key: 'smileys', emoji: '😊', title: 'Smileys & Émotions' },
+            { key: 'animals', emoji: '🐻', title: 'Animaux & Nature' },
+            { key: 'food', emoji: '🍔', title: 'Nourriture & Boisson' },
+            { key: 'activities', emoji: '⚽', title: 'Activités' },
+            { key: 'travel', emoji: '🚗', title: 'Voyages & Lieux' },
+            { key: 'objects', emoji: '💡', title: 'Objets' },
+            { key: 'symbols', emoji: '🔥', title: 'Symboles' }
+        ];
+        
+        // On attache les onglets au picker en premier
+        picker.appendChild(tabsContainer);
+
+        // --- 2. HEADER (Recherche et Fermeture) ---
         const header = document.createElement('div');
         header.className = 'emoji-picker-header';
 
@@ -120,16 +140,14 @@ function toggle_visible(id) {
         header.appendChild(closeBtn);
         picker.appendChild(header);
 
-        // --- 2. CONTENU PRINCIPAL (scrollable) ---
+        // --- 3. CONTENU PRINCIPAL (scrollable) ---
         const mainContent = document.createElement('div');
         mainContent.className = 'emoji-picker-main';
 
-        // Conteneur pour les résultats de recherche (remplace le contenu principal)
         const searchResults = document.createElement('div');
         searchResults.className = 'emoji-search-results';
         searchResults.style.display = 'none';
 
-        // Conteneur pour les catégories
         const categoriesContainer = document.createElement('div');
         categoriesContainer.className = 'emoji-categories-container';
 
@@ -167,24 +185,7 @@ function toggle_visible(id) {
         mainContent.appendChild(categoriesContainer);
         picker.appendChild(mainContent);
 
-        // --- 3. FOOTER (Onglets) ---
-        const footer = document.createElement('div');
-        footer.className = 'emoji-picker-footer';
-
-        const tabsContainer = document.createElement('div');
-        tabsContainer.className = 'emoji-tabs';
-
-        const categoryData = [
-            { key: 'frequent', emoji: '🕒', title: 'Utilisé fréquemment' },
-            { key: 'smileys', emoji: '😊', title: 'Smileys & Émotions' },
-            { key: 'animals', emoji: '🐻', title: 'Animaux & Nature' },
-            { key: 'food', emoji: '🍔', title: 'Nourriture & Boisson' },
-            { key: 'activities', emoji: '⚽', title: 'Activités' },
-            { key: 'travel', emoji: '🚗', title: 'Voyages & Lieux' },
-            { key: 'objects', emoji: '💡', title: 'Objets' },
-            { key: 'symbols', emoji: '🔥', title: 'Symboles' }
-        ];
-
+        // --- Logique des onglets (après que mainContent soit ajouté au DOM) ---
         categoryData.forEach((cat, index) => {
             const tab = document.createElement('button');
             tab.className = 'emoji-tab';
@@ -197,16 +198,16 @@ function toggle_visible(id) {
                 tabsContainer.querySelectorAll('.emoji-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                const categoryElement = mainContent.querySelector(`[data-category-name="${cat.key === 'frequent' ? 'Utilisé fréquemment' : Object.keys(emojiData.emojis)[index - 1]}"]`);
+                // Le nom de la catégorie dans les données peut différer de data-category-name
+                const categoryNameToFind = cat.key === 'frequent' ? 'frequent' : Object.keys(emojiData.emojis)[index - 1];
+                const categoryElement = mainContent.querySelector(`[data-category-name="${categoryNameToFind}"]`);
                 if (categoryElement) {
-                    mainContent.scrollTop = categoryElement.offsetTop - mainContent.offsetTop;
+                    // Fait défiler l'élément en haut du conteneur scrollable
+                    mainContent.scrollTop = categoryElement.offsetTop;
                 }
             });
             tabsContainer.appendChild(tab);
         });
-
-        footer.appendChild(tabsContainer);
-        picker.appendChild(footer);
 
         // --- GESTION DE LA RECHERCHE ---
         searchInput.addEventListener('input', (e) => {
