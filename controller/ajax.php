@@ -2,8 +2,7 @@
 /**
  * Reactions Extension for phpBB 3.3
  * AJAX Controller - Version corrigée avec émojis courantes
- * 
- * @copyright (c) 2025 Bastien59960
+ * * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
@@ -46,8 +45,7 @@ class ajax
     protected $php_ext;
     protected $config;
 
-    /** 
-     * CORRECTION MAJEURE : Renommage "popular_emojis" en "common_emojis"
+    /** * CORRECTION MAJEURE : Renommage "popular_emojis" en "common_emojis"
      * Liste des 10 émojis courantes du pickup avec 👍 et 👎 en positions 1 et 2
      * À synchroniser avec reactions.js et listener.php
      */
@@ -129,7 +127,7 @@ class ajax
             }
 
             // 5) Vérification action
-            if (!in_array($action, ['add', 'remove', 'get'], true)) {
+            if (!in_array($action, ['add', 'remove', 'get', 'get_users'], true)) {
                 return new JsonResponse([
                     'success' => false,
                     'error'   => 'Invalid action',
@@ -146,10 +144,11 @@ class ajax
                 ], 400);
             }
 
-            // 7) Vérification emoji (sauf action get)
+            // 7) Vérification emoji (sauf pour les actions 'get')
             if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
                 return new JsonResponse([
                     'success' => false,
+                    'stage'   => 'validation',
                     'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
                     'rid'     => $rid,
                 ], 400);
@@ -286,9 +285,9 @@ class ajax
 
             // Duplicate check
             $dupSql = 'SELECT reaction_id FROM ' . $this->post_reactions_table . '
-                       WHERE post_id = ' . $post_id . '
-                         AND user_id = ' . $user_id . "
-                         AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
+                            WHERE post_id = ' . $post_id . '
+                              AND user_id = ' . $user_id . "
+                              AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
             error_log("[Reactions RID=$rid] duplicate SQL: $dupSql");
             $result = $this->db->sql_query($dupSql);
             $already = $this->db->sql_fetchrow($result);
@@ -304,15 +303,10 @@ class ajax
                 ], 400);
             }
 
-            // Length check (20)
-            if (strlen($emoji) > 20) {
-                return new JsonResponse([
-                    'success' => false,
-                    'stage'   => 'validation',
-                    'error'   => $this->language->lang('REACTION_INVALID_EMOJI'),
-                    'rid'     => $rid,
-                ], 400);
-            }
+            // =========================================================================
+            // CORRECTION : Suppression de la vérification de longueur redondante et trop stricte.
+            // La validation est déjà faite correctement par is_valid_emoji() dans handle().
+            // =========================================================================
 
             // Build insert
             $sql_ary = [
@@ -351,11 +345,11 @@ class ajax
                 $err = $this->db->sql_error();
                 error_log("[Reactions RID=$rid] sql_query error: " . $dbEx->getMessage() . " db=" . json_encode($err));
                 return new JsonResponse([
-                    'success' => false,
-                    'stage'   => 'sql_insert',
-                    'error'   => $dbEx->getMessage(),
-                    'db_error'=> $err,
-                    'rid'     => $rid,
+                    'success'  => false,
+                    'stage'    => 'sql_insert',
+                    'error'    => $dbEx->getMessage(),
+                    'db_error' => $err,
+                    'rid'      => $rid,
                 ], 500);
             }
 
@@ -436,36 +430,36 @@ class ajax
     }
 
     /**
- * Get users who reacted with a specific emoji
- */
-private function get_users_for_emoji($post_id, $emoji)
-{
-    $sql = 'SELECT DISTINCT u.user_id, u.username, u.username_clean
-            FROM ' . $this->post_reactions_table . ' r
-            LEFT JOIN ' . USERS_TABLE . ' u ON r.user_id = u.user_id
-            WHERE r.post_id = ' . (int) $post_id . "
-              AND r.reaction_emoji = '" . $this->db->sql_escape($emoji) . "'
-            ORDER BY r.reaction_time ASC";
-    
-    $result = $this->db->sql_query($sql);
-    
-    $users = [];
-    while ($row = $this->db->sql_fetchrow($result)) {
-        $users[] = [
-            'user_id' => (int) $row['user_id'],
-            'username' => $row['username'],
-            'username_clean' => $row['username_clean']
-        ];
+    * Get users who reacted with a specific emoji
+    */
+    private function get_users_for_emoji($post_id, $emoji)
+    {
+        $sql = 'SELECT DISTINCT u.user_id, u.username, u.username_clean
+                FROM ' . $this->post_reactions_table . ' r
+                LEFT JOIN ' . USERS_TABLE . ' u ON r.user_id = u.user_id
+                WHERE r.post_id = ' . (int) $post_id . "
+                  AND r.reaction_emoji = '" . $this->db->sql_escape($emoji) . "'
+                ORDER BY r.reaction_time ASC";
+        
+        $result = $this->db->sql_query($sql);
+        
+        $users = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $users[] = [
+                'user_id' => (int) $row['user_id'],
+                'username' => $row['username'],
+                'username_clean' => $row['username_clean']
+            ];
+        }
+        $this->db->sql_freeresult($result);
+        
+        return new JsonResponse([
+            'success' => true,
+            'post_id' => $post_id,
+            'emoji' => $emoji,
+            'users' => $users
+        ]);
     }
-    $this->db->sql_freeresult($result);
-    
-    return new JsonResponse([
-        'success' => true,
-        'post_id' => $post_id,
-        'emoji' => $emoji,
-        'users' => $users
-    ]);
-}
 
     /**
      * Récupère les réactions sous forme d'array
@@ -500,7 +494,7 @@ private function get_users_for_emoji($post_id, $emoji)
         return (bool) $exists;
     }
 
-   /**
+    /**
      * CORRIGÉ : Validation emoji pour supporter les séquences ZWJ (Zero Width Joiner)
      * Exemples: 🏃‍♀️‍➡️, 👨‍👩‍👧‍👦, etc.
      */
