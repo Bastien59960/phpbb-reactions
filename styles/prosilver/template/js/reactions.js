@@ -255,6 +255,8 @@ function toggle_visible(id) {
         picker.classList.add('emoji-picker');
         currentPicker = picker;
 
+
+        console.debug('REACTIONS payload', payload)
         // Essaye de charger la version complète des emojis (catégories)
         fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => {
@@ -450,17 +452,19 @@ function toggle_visible(id) {
      * Le click sur la cellule envoie la réaction au serveur et ferme le picker.
      */
     function createEmojiCell(emoji, postId, name = '') {
+        const cleanEmoji = safeEmoji(String(emoji)); // 🧩 FIX : normalisation côté client
         const cell = document.createElement('button');
         cell.classList.add('emoji-cell');
-        cell.textContent = emoji;
+        cell.textContent = cleanEmoji;               // affiche la version nettoyée
+        cell.setAttribute('data-emoji', cleanEmoji); // important: stocker la valeur "propre"
         cell.title = name;
         cell.addEventListener('click', () => {
-            // IMPORTANT: envoyer emoji "propre"
-            sendReaction(postId, emoji);
+            sendReaction(postId, cleanEmoji);
             closeAllPickers();
         });
         return cell;
     }
+    
 
     /* ---------------------------------------------------------------------- */
     /* -------------------------- RECHERCHE EMOJI --------------------------- */
@@ -774,8 +778,8 @@ function toggle_visible(id) {
             // Si introuvable, on crée et on l'insère avant/à côté du bouton "plus"
             reactionElement = document.createElement('span');
             reactionElement.classList.add('reaction');
-            reactionElement.setAttribute('data-emoji', emoji);
-            reactionElement.innerHTML = `${emoji} <span class="count">0</span>`;
+            reactionElement.setAttribute('data-emoji', safeEmoji(String(emoji)));
+            reactionElement.innerHTML = `${safeEmoji(String(emoji))} <span class="count">0</span>`;
             // Attacher le click pour mutualiser la logique (handleReactionClick)
             reactionElement.addEventListener('click', handleReactionClick);
 

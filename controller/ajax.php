@@ -321,6 +321,13 @@ try {
                 if ($user_reactions >= $max_per_user) {
                     return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
                 }
+                // === DEBUG LOG: configuration & compteurs ===
+error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
+error_log("[Reactions RID=$rid] SQL current_types_sql: " . $sql);
+error_log("[Reactions RID=$rid] current_types (fetched) = " . json_encode($current_types));
+error_log("[Reactions RID=$rid] SQL for user_reactions: SELECT COUNT(*) as count FROM " . $this->post_reactions_table . " WHERE post_id = " . $post_id . " AND user_id = " . $user_id);
+error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user_reactions));
+
             }
 
             // =====================================================================
@@ -409,6 +416,18 @@ try {
      */
     private function add_reaction($post_id, $emoji)
     {
+        // Normalize emoji server-side (safe)
+$emoji = (string) $emoji; // forcer string
+// retirer contrôles ASCII
+$emoji = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $emoji);
+
+// Si l'extension intl est disponible, normaliser en NFC pour éviter différences de forme
+if (extension_loaded('intl') && class_exists('\Normalizer')) {
+    $emoji = \Normalizer::normalize($emoji, \Normalizer::FORM_C);
+}
+
+// NOTE: pour la comparaison/duplicate check, on forcera la collation binaire dans la requête
+
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
         error_log("[Reactions RID=$rid] add_reaction enter post_id=$post_id emoji=$emoji user_id=" . (int)$this->user->data['user_id']);
@@ -437,9 +456,10 @@ try {
 
             // Duplicate check
             $dupSql = 'SELECT reaction_id FROM ' . $this->post_reactions_table . '
-                            WHERE post_id = ' . $post_id . '
-                              AND user_id = ' . $user_id . "
-                              AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
+            WHERE post_id = ' . $post_id . '
+              AND user_id = ' . $user_id . "
+              AND reaction_emoji COLLATE utf8mb4_bin = '" . $this->db->sql_escape($emoji) . "'";
+
             error_log("[Reactions RID=$rid] duplicate SQL: $dupSql");
             $result = $this->db->sql_query($dupSql);
             $already = $this->db->sql_fetchrow($result);
