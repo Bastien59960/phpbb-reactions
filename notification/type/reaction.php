@@ -16,6 +16,7 @@
  * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
  * - AJOUT : Insertion dummy initiale en DB si type inexistant ET colonne 'notification_type_name' existe (fixe UCP sans crash si schéma incomplet).
  * - FIX SQL : Guillemets autour de la valeur échappée dans la query dummy (évite [1054] "Unknown column 'notification.reaction'").
+ * - FIX INSERT : Ajout 'notification_data' sérialisée vide + 'notification_type_id', 'item_id', 'item_parent_id' = 0 dans dummy (fixe [1364] "doesn't have a default value" et champs NOT NULL).
  * - AJOUT : Implémentation get_insert_sql() et create_insert_array() (requis pour persistance DB et conformité).
  * - CORRECTION FINALE : Signature de create_insert_array SANS type hints (compatible parent).
  * - Signatures conformes à type_interface.
@@ -150,13 +151,18 @@ class reaction extends base
 			$this->db->sql_freeresult($result);
 
 			if (!$exists) {
-				// Insère une entrée dummy (standards + read=1 pour ignorer)
+				// Insère une entrée dummy (standards + read=1 pour ignorer, + champs core NOT NULL)
 				$dummy_data = array(
+					'notification_type_id'      => 0,  // FIX : ID type neutre (core field)
+					'item_id'                   => 0,  // FIX : ID item neutre (core field)
+					'item_parent_id'            => 0,  // FIX : ID parent neutre (core field)
 					'notification_type_name'    => $type_name,
 					'notification_time'         => time(),
 					'user_id'                   => ANONYMOUS,  // Pas d'user spécifique
 					'notification_read'         => 1,           // Marquée comme lue (ignore)
 					'notification_is_bookmark'  => 0,
+					'notification_data'         => serialize(array()),  // FIX : Données vides sérialisées (core field NOT NULL)
+					'reaction_emoji'            => '',           // Custom vide
 				);
 				$this->db->sql_query('INSERT INTO ' . $this->notifications_table . ' ' . $this->db->sql_build_array('INSERT', $dummy_data));
 				if (defined('DEBUG') && DEBUG) {
