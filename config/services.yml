@@ -89,8 +89,13 @@ services:
         arguments:
             - '@user'
             - '@auth'
-            - '@template'
+            - '@dbal.conn'
             - '@config'
+            - '@user_loader'
+            - '@controller.helper'
             - '@request'
+            - '@template'
+            - '%core.root_path%'
+            - '%core.php_ext%'
         tags:
-            - { name: notification.type }
+          - { name: notification.type }

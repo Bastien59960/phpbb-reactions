@@ -753,7 +753,18 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
         if (!$post_data) {
             return false;
         }
+
+        // NOUVEAU : Vérifier si l'utilisateur a le droit de répondre dans ce forum.
+        // C'est une bonne pratique pour contrôler qui peut réagir.
+        if (!$this->auth->acl_get('f_reply', $post_data['forum_id'])) {
+            return false;
+        }
         
+        // OPTIONNEL : Interdire de réagir à ses propres messages (à décommenter si besoin)
+        // if ($post_data['poster_id'] == $this->user->data['user_id']) {
+        //     return false;
+        // }
+
         // Vérifier que le sujet et le forum ne sont pas verrouillés
         if ($post_data['topic_status'] == ITEM_LOCKED || $post_data['forum_status'] == ITEM_LOCKED) {
             return false;
