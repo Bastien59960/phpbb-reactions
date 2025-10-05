@@ -115,9 +115,9 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@user_loader'            # Chargeur d'utilisateurs
+            - '@user'                   # ✅ Utilisateur phpBB (et non user_loader)
             - '@dbal.conn'              # Connexion base de données
             - '%core.root_path%'        # Chemin racine du forum
-            - '@user'                   # Utilisateur actuel
+            - '%core.php_ext%'          # Extension des fichiers PHP
         tags:
             - { name: notification.type } # Tag pour le type de notification
