@@ -79,7 +79,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                         'post_id'          => array('UINT', 0),                      // ID du message réagi
                         'topic_id'         => array('UINT', 0),                      // ID du sujet (optimisation)
                         'user_id'          => array('UINT', 0),                      // ID de l'utilisateur qui réagit
-                        'reaction_emoji'   => array('VCHAR:20', ''),                 // Emoji de la réaction
+                        'reaction_emoji'   => array('VCHAR:191', ''),                 // Emoji de la réaction
                         'reaction_time'    => array('UINT:11', 0),                   // Timestamp de la réaction
                         'reaction_notified'=> array('BOOL', 0),                      // Flag anti-spam notifications
                     ),
@@ -139,7 +139,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     {
         $table_name = $this->table_prefix . 'post_reactions';
         $sql = "ALTER TABLE {$table_name}
-                MODIFY `reaction_emoji` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL";
+        MODIFY `reaction_emoji` VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
+
         $this->db->sql_query($sql);
     }
 }

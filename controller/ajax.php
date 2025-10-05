@@ -703,15 +703,17 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
         
         // Limite de longueur pour les emojis composés (ZWJ)
         // Les emojis avec ZWJ peuvent faire jusqu'à 40-50 octets
-        if (strlen($emoji) > 50) {
-            return false;
-        }
-        
-        // Vérifier la longueur Unicode (1 à 15 caractères Unicode)
-        $mb_length = mb_strlen($emoji, 'UTF-8');
-        if ($mb_length === 0 || $mb_length > 15) {
-            return false;
-        }
+// Les emojis peuvent être composés : autoriser jusqu'à 191 octets (sécurité côté app)
+if (strlen($emoji) > 191 * 4) { // 4 octets max / point Unicode en UTF-8
+    return false;
+}
+
+// Vérifier la longueur Unicode (par point de code) : tolérer plus de points de code si nécessaire
+$mb_length = mb_strlen($emoji, 'UTF-8');
+if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une séquence emoji
+    return false;
+}
+
         
         // Vérifier qu'il n'y a pas de caractères de contrôle dangereux
         if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $emoji)) {
