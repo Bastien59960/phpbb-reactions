@@ -14,9 +14,10 @@
  * Correction :
  * - Ordre des dépendances du constructeur aligné sur base::__construct (db, language, user, auth...).
  * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
- * - AJOUT : Insertion dummy initiale en DB si type inexistant (fixe UCP "NOTIFICATION_TYPE_NOT_EXIST").
+ * - AJOUT : Insertion dummy initiale en DB si type inexistant ET colonne 'notification_type_name' existe (fixe UCP sans crash si schéma incomplet).
+ * - FIX SQL : Guillemets autour de la valeur échappée dans la query dummy (évite [1054] "Unknown column 'notification.reaction'").
  * - AJOUT : Implémentation get_insert_sql() et create_insert_array() (requis pour persistance DB et conformité).
- * - CORRECTION FINALE : Signature de create_insert_array SANS type hints (compatible parent : $type_data, $pre_create_data = []).
+ * - CORRECTION FINALE : Signature de create_insert_array SANS type hints (compatible parent).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -132,26 +133,40 @@ class reaction extends base
 			throw new \InvalidArgumentException('DB driver invalide injecté dans Reaction notification.');
 		}
 
-		// AJOUT : Insertion dummy initiale si le type n'existe pas en DB (fixe UCP "NOTIFICATION_TYPE_NOT_EXIST")
-		// Crée une entrée prototype pour 'notification.reaction' avec user_id=ANONYMOUS (ne notifie personne)
+		// AJOUT : Insertion dummy initiale si le type n'existe pas en DB ET colonne existe (fixe UCP sans crash si schéma incomplet)
 		$type_name = 'notification.' . $this->get_type();  // 'notification.reaction'
-		$sql = 'SELECT notification_id FROM ' . $this->notifications_table . ' WHERE notification_type_name = ' . $this->db->sql_escape($type_name) . ' LIMIT 1';
-		$result = $this->db->sql_query($sql);
-		$exists = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
+		
+		// NOUVEAU : Vérifier si la colonne 'notification_type_name' existe pour éviter SQL error [1054]
+		$col_check_sql = 'SHOW COLUMNS FROM ' . $this->notifications_table . " LIKE 'notification_type_name'";
+		$col_result = $this->db->sql_query($col_check_sql);
+		$col_exists = $this->db->sql_fetchrow($col_result);
+		$this->db->sql_freeresult($col_result);
 
-		if (!$exists) {
-			// Insère une entrée dummy (standards + read=1 pour ignorer)
-			$dummy_data = array(
-				'notification_type_name'    => $type_name,
-				'notification_time'         => time(),
-				'user_id'                   => ANONYMOUS,  // Pas d'user spécifique
-				'notification_read'         => 1,           // Marquée comme lue (ignore)
-				'notification_is_bookmark'  => 0,
-			);
-			$this->db->sql_query('INSERT INTO ' . $this->notifications_table . ' ' . $this->db->sql_build_array('INSERT', $dummy_data));
+		if ($col_exists) {
+			// FIX SQL : Guillemets explicites autour de la valeur échappée pour éviter "notification.reaction" vu comme colonne
+			$sql = 'SELECT notification_id FROM ' . $this->notifications_table . ' WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\' LIMIT 1';
+			$result = $this->db->sql_query($sql);
+			$exists = $this->db->sql_fetchrow($result);
+			$this->db->sql_freeresult($result);
+
+			if (!$exists) {
+				// Insère une entrée dummy (standards + read=1 pour ignorer)
+				$dummy_data = array(
+					'notification_type_name'    => $type_name,
+					'notification_time'         => time(),
+					'user_id'                   => ANONYMOUS,  // Pas d'user spécifique
+					'notification_read'         => 1,           // Marquée comme lue (ignore)
+					'notification_is_bookmark'  => 0,
+				);
+				$this->db->sql_query('INSERT INTO ' . $this->notifications_table . ' ' . $this->db->sql_build_array('INSERT', $dummy_data));
+				if (defined('DEBUG') && DEBUG) {
+					error_log('[Reactions Notification] Entrée dummy insérée pour type: ' . $type_name);
+				}
+			}
+		} else {
+			// Si colonne manquante, log et skip (recommandez migration)
 			if (defined('DEBUG') && DEBUG) {
-				error_log('[Reactions Notification] Entrée dummy insérée pour type: ' . $type_name);
+				error_log('[Reactions Notification] Colonne notification_type_name manquante dans ' . $this->notifications_table . ' - Skip dummy (ajoutez migration).');
 			}
 		}
 	}
