@@ -1,12 +1,3 @@
-# Configuration des services pour l'extension Reactions
-# 
-# Ce fichier définit tous les services utilisés par l'extension :
-# - Listener d'événements : Gère l'affichage des réactions sur les pages
-# - Contrôleur AJAX : Traite les requêtes AJAX pour ajouter/supprimer des réactions
-# - Contrôleur principal : Gère les pages principales de l'extension
-# - Tâche cron : Envoie les notifications par email avec délai anti-spam
-# - Type de notification : Définit le format des notifications
-
 imports:
     - { resource: 'parameters.yml' }
 
@@ -14,112 +5,92 @@ services:
     # =============================================================================
     # LISTENER D'ÉVÉNEMENTS
     # =============================================================================
-    # Gère l'affichage des réactions sur les pages du forum
-    # - Ajoute les CSS/JS nécessaires
-    # - Charge les réactions existantes pour chaque message
-    # - Configure les données pour les templates
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
         arguments:
-            - '@dbal.conn'              # Connexion base de données
-            - '@user'                   # Utilisateur actuel
-            - '%tables.post_reactions%' # Table des réactions
-            - '%tables.posts%'          # Table des messages
-            - '@template'               # Moteur de templates
-            - '@language'               # Gestionnaire de langues
-            - '@controller.helper'      # Helper pour les URLs
-            - '@config'                 # Configuration du forum
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '@template'
+            - '@language'
+            - '@controller.helper'
+            - '@config'
         tags:
-            - { name: event.listener }  # Tag pour écouter les événements phpBB
+            - { name: event.listener }
 
     # =============================================================================
     # CONTRÔLEUR PRINCIPAL
     # =============================================================================
-    # Gère les pages principales de l'extension (si nécessaire)
     bastien59960.reactions.main:
         class: bastien59960\reactions\controller\main
         arguments:
-            - '@dbal.conn'              # Connexion base de données
-            - '@user'                   # Utilisateur actuel
-            - '@request'                # Requête HTTP
-            - '@template'               # Moteur de templates
-            - '@auth'                   # Gestionnaire d'autorisations
-            - '@controller.helper'      # Helper pour les URLs
-            - '%tables.post_reactions%' # Table des réactions
-            - '%tables.posts%'          # Table des messages
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@template'
+            - '@auth'
+            - '@controller.helper'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
 
     # =============================================================================
     # CONTRÔLEUR AJAX
     # =============================================================================
-    # Traite les requêtes AJAX pour les réactions
-    # - Ajouter/supprimer des réactions
-    # - Récupérer les réactions d'un message
-    # - Récupérer les utilisateurs ayant réagi
-    # - Déclencher les notifications immédiates (cloche)
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
-            - '@dbal.conn'              # Connexion base de données
-            - '@user'                   # Utilisateur actuel
-            - '@request'                # Requête HTTP
-            - '@auth'                   # Gestionnaire d'autorisations
-            - '@language'               # Gestionnaire de langues
-            - '%tables.post_reactions%' # Table des réactions
-            - '%tables.posts%'          # Table des messages
-            - '%tables.topics%'         # Table des sujets
-            - '%tables.forums%'         # Table des forums
-            - '%core.root_path%'        # Chemin racine du forum
-            - '%core.php_ext%'          # Extension des fichiers PHP
-            - '@config'                 # Configuration du forum
-            - '@notification_manager'   # Gestionnaire de notifications
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@auth'
+            - '@language'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.forums%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '@config'
+            - '@notification_manager'
 
     # =============================================================================
     # CONTRÔLEUR DE TEST
     # =============================================================================
-    # Contrôleur pour les tests de l'extension
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
         arguments:
-            - '@dbal.conn'              # Connexion base de données
-            - '@user'                   # Utilisateur actuel
-            - '%tables.post_reactions%' # Table des réactions
-            - '%tables.posts%'          # Table des messages
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
 
     # =============================================================================
     # TÂCHE CRON DE NOTIFICATION
     # =============================================================================
-    # Envoie les notifications par email avec délai anti-spam
-    # - Vérifie les réactions non notifiées plus anciennes que le délai configuré
-    # - Envoie les emails groupés par message
-    # - Marque les réactions comme notifiées
     bastien59960.reactions.notificationtask:
         class: bastien59960\reactions\cron\notification_task
         arguments:
-            - '@dbal.conn'              # Connexion base de données
-            - '@config'                 # Configuration du forum
-            - '@notification_manager'   # Gestionnaire de notifications
-            - '@user_loader'            # Chargeur d'utilisateurs
-            - '%tables.post_reactions%' # Table des réactions
-            - '%core.root_path%'        # Chemin racine du forum
-            - '%core.php_ext%'          # Extension des fichiers PHP
+            - '@dbal.conn'
+            - '@config'
+            - '@notification_manager'
+            - '@user_loader'
+            - '%tables.post_reactions%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
         tags:
-            - { name: cron.task }       # Tag pour la tâche cron
+            - { name: cron.task }
 
-# =============================================================================
-# TYPE DE NOTIFICATION
-# =============================================================================
-# Définit le format et le comportement des notifications de réactions
-# - Format des notifications par cloche
-# - Format des emails
-# - Gestion des utilisateurs à notifier
-bastien59960.reactions.notification:
-    class: bastien59960\reactions\notification\type\reaction
-    arguments:
-        - '@user'          # Utilisateur phpBB
-        - '@auth'          # Gestionnaire d’autorisations phpBB
-        - '@template'      # Moteur de templates
-        - '@config'        # Configuration du forum
-        - '@request'       # Requête HTTP
-    tags:
-        - { name: notification.type } # Type de notification
-
+    # =============================================================================
+    # TYPE DE NOTIFICATION
+    # =============================================================================
+    bastien59960.reactions.notification:
+        class: bastien59960\reactions\notification\type\reaction
+        arguments:
+            - '@user'
+            - '@auth'
+            - '@template'
+            - '@config'
+            - '@request'
+        tags:
+            - { name: notification.type }
