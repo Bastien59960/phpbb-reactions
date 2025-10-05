@@ -137,10 +137,14 @@ class listener implements EventSubscriberInterface
         $visible_reactions = [];
         foreach ($reactions_by_db as $emoji => $count) {
             if ((int) $count > 0) {
+                // Récupérer les utilisateurs qui ont réagi avec cet emoji
+                $users_for_emoji = $this->get_users_by_reaction($post_id, $emoji);
+                
                 $visible_reactions[] = [
                     'EMOJI'        => $emoji,
                     'COUNT'        => (int) $count,
                     'USER_REACTED' => in_array($emoji, $user_reactions, true),
+                    'USERS'        => $users_for_emoji,
                 ];
             }
         }

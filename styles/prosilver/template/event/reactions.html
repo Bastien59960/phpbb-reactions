@@ -7,6 +7,7 @@
         <span class="reaction<!-- IF post_reactions.USER_REACTED --> active<!-- ENDIF -->"
               data-emoji="{post_reactions.EMOJI}"
               data-count="{post_reactions.COUNT}"
+              data-users="{post_reactions.USERS}"
               title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
               <!-- IF post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
             {post_reactions.EMOJI}

@@ -21,6 +21,7 @@ function toggle_visible(id) {
     function initReactions() {
         attachReactionEvents();
         attachMoreButtonEvents();
+        attachTooltipEvents();
         document.addEventListener('click', closeAllPickers);
     }
 
@@ -35,6 +36,16 @@ function toggle_visible(id) {
         document.querySelectorAll('.reaction-more').forEach(button => {
             button.removeEventListener('click', handleMoreButtonClick);
             button.addEventListener('click', handleMoreButtonClick);
+        });
+    }
+
+    function attachTooltipEvents() {
+        document.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
+            const emoji = reaction.getAttribute('data-emoji');
+            const postId = getPostIdFromReaction(reaction);
+            if (emoji && postId) {
+                setupReactionTooltip(reaction, postId, emoji);
+            }
         });
     }
 
@@ -477,6 +488,21 @@ function toggle_visible(id) {
 
         reactionElement.addEventListener('mouseenter', function(e) {
             tooltipTimeout = setTimeout(() => {
+                // D'abord, essayer d'utiliser les données déjà disponibles
+                const usersData = reactionElement.getAttribute('data-users');
+                if (usersData && usersData !== '[]') {
+                    try {
+                        const users = JSON.parse(usersData);
+                        if (users && users.length > 0) {
+                            showUserTooltip(reactionElement, users);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Erreur parsing users data:', e);
+                    }
+                }
+                
+                // Si pas de données disponibles, faire un appel AJAX
                 fetch(REACTIONS_AJAX_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

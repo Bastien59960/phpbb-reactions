@@ -10,12 +10,14 @@ class reaction extends \phpbb\notification\type\base
     protected $user_loader;
     protected $db;
     protected $phpbb_root_path;
+    protected $user;
 
-    public function __construct(\phpbb\user_loader $user_loader, \phpbb\db\driver\driver_interface $db, $phpbb_root_path)
+    public function __construct(\phpbb\user_loader $user_loader, \phpbb\db\driver\driver_interface $db, $phpbb_root_path, \phpbb\user $user)
     {
         $this->user_loader = $user_loader;
         $this->db = $db;
         $this->phpbb_root_path = $phpbb_root_path;
+        $this->user = $user;
     }
     
     /**
@@ -116,6 +118,22 @@ class reaction extends \phpbb\notification\type\base
         $this->db->sql_freeresult($result);
         
         return $row ? (int) $row['topic_id'] : 0;
+    }
+
+    /**
+     * Fonction pour créer l'ID de l'utilisateur parent.
+     */
+    public static function get_item_parent_id($data)
+    {
+        return (int) $data['post_author'];
+    }
+
+    /**
+     * Fonction pour créer l'ID de l'utilisateur parent.
+     */
+    public function get_item_parent_id()
+    {
+        return (int) $this->notification_data['post_author'];
     }
     
     /**
