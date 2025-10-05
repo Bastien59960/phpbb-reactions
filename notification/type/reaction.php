@@ -11,9 +11,10 @@
  * - Détermine les utilisateurs à notifier (find_users_for_notification).
  * - Définit les variables pour le rendu et les e-mails (facultatif).
  *
- * Corrections :
- * - Signature du constructeur corrigée (ordre conforme à phpBB).
+ * Correction :
+ * - Ordre des dépendances du constructeur corrigé (user, auth, db, config...).
  * - Ajout de get_url() pour éviter l’erreur fatale 500.
+ * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
  */
@@ -27,10 +28,12 @@ if (!defined('IN_PHPBB')) {
 use phpbb\notification\type\base;
 use phpbb\user;
 use phpbb\auth\auth;
-use phpbb\template\template;
-use phpbb\config\config;
-use phpbb\request\request_interface;
 use phpbb\db\driver\driver_interface;
+use phpbb\config\config;
+use phpbb\template\template;
+use phpbb\controller\helper;
+use phpbb\user_loader;
+use phpbb\request\request_interface;
 
 class reaction extends base
 {
@@ -43,32 +46,62 @@ class reaction extends base
 	/** @var driver_interface */
 	protected $db;
 
-	/** @var template */
-	protected $template;
-
 	/** @var config */
 	protected $config;
+
+	/** @var helper */
+	protected $helper;
 
 	/** @var request_interface */
 	protected $request;
 
+	/** @var template */
+	protected $template;
+
+	/** @var user_loader */
+	protected $user_loader;
+
+	protected $phpbb_root_path;
+	protected $php_ext;
+
 	/**
-	 * Constructeur — injection conforme au container phpBB.
+	 * Constructeur — injection des dépendances phpBB dans le bon ordre.
 	 */
 	public function __construct(
 		user $user,
 		auth $auth,
 		driver_interface $db,
-		template $template,
 		config $config,
-		request_interface $request
+		user_loader $user_loader,
+		helper $helper,
+		request_interface $request,
+		template $template,
+		$phpbb_root_path,
+		$php_ext
 	) {
+		parent::__construct(
+			$user,
+			$auth,
+			$db,
+			$config,
+			$user_loader,
+			$helper,
+			$request,
+			$template,
+			$phpbb_root_path,
+			$php_ext
+		);
+
 		$this->user = $user;
 		$this->auth = $auth;
 		$this->db = $db;
-		$this->template = $template;
 		$this->config = $config;
+		$this->user_loader = $user_loader;
+		$this->helper = $helper;
 		$this->request = $request;
+		$this->template = $template;
+		$this->phpbb_root_path = $phpbb_root_path;
+		$this->php_ext = $php_ext;
 	}
 
 	/**
@@ -122,8 +155,7 @@ class reaction extends base
 			return '';
 		}
 
-		global $phpbb_root_path, $phpEx;
-		return append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id;
+		return append_sid("{$this->phpbb_root_path}viewtopic.{$this->php_ext}", 'p=' . $post_id) . '#p' . $post_id;
 	}
 
 	/**
@@ -219,7 +251,6 @@ class reaction extends base
 			'emoji'             => $this->data['emoji'] ?? '',
 			'reacter_username'  => $this->data['reacter_username'] ?? '',
 			'post_id'           => $this->get_item_id($this->data ?? []),
-			'url'               => $this->get_url(),
 		];
 	}
 
