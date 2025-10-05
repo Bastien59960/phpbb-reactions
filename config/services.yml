@@ -87,9 +87,9 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
+            - '@dbal.conn'
             - '@user'
             - '@auth'
-            - '@dbal.conn'
             - '@config'
             - '@user_loader'
             - '@controller.helper'
