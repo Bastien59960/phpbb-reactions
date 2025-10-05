@@ -101,7 +101,7 @@ class reaction extends base
      */
     public function get_item_id()
     {
-        return (int) ($this->data['post_id'] ?? 0);
+        return (int) ($data['post_id'] ?? 0);
     }
 
     /**
