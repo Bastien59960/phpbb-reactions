@@ -189,18 +189,47 @@ class ajax
             // =====================================================================
             
             // Lire les données JSON de la requête
-            $raw = file_get_contents('php://input');
+// === robust JSON input handling + verbose logging ===
+$raw = file_get_contents('php://input');
+error_log("[Reactions RID=$rid] raw payload (".strlen($raw)." bytes): " . $raw);
 
-            try {
-                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-            } catch (\Throwable $jsonEx) {
-                return new JsonResponse([
-                    'success' => false,
-                    'stage'   => 'json_decode',
-                    'error'   => $jsonEx->getMessage(),
-                    'rid'     => $rid,
-                ], 400);
-            }
+// try normal decode first
+try {
+    $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+} catch (\Throwable $jsonEx) {
+    error_log("[Reactions RID=$rid] json_decode first attempt failed: " . $jsonEx->getMessage());
+
+    // Try to fix invalid UTF-8 bytes by substituting invalid sequences
+    // PHP constant JSON_INVALID_UTF8_SUBSTITUTE exists in many versions, try that first
+    try {
+        if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+            $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+        } else {
+            // Fallback: try to force UTF-8 by re-encoding (may mangle data but avoids crash)
+            $fixed = mb_convert_encoding($raw, 'UTF-8', 'UTF-8');
+            $data = json_decode($fixed, true, 512, JSON_THROW_ON_ERROR);
+        }
+    } catch (\Throwable $jsonEx2) {
+        error_log("[Reactions RID=$rid] json_decode second attempt failed: " . $jsonEx2->getMessage());
+
+        // Last resort: maybe client sent form-encoded body
+        parse_str($raw, $parsed);
+        if (!empty($parsed)) {
+            $data = $parsed;
+            error_log("[Reactions RID=$rid] parsed form-encoded payload as fallback.");
+        } else {
+            // Return the original structured JSON error (and include last json error msg)
+            return new JsonResponse([
+                'success' => false,
+                'stage'   => 'json_decode',
+                'error'   => $jsonEx2->getMessage(),
+                'raw_len' => strlen($raw),
+                'rid'     => $rid,
+            ], 400);
+        }
+    }
+}
+
 
             // =====================================================================
             // 3. EXTRACTION ET VALIDATION DES PARAMÈTRES
