@@ -16,6 +16,7 @@
  * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
  * - AJOUT : Insertion dummy initiale en DB si type inexistant (fixe UCP "NOTIFICATION_TYPE_NOT_EXIST").
  * - AJOUT : Implémentation get_insert_sql() et create_insert_array() (requis pour persistance DB et conformité).
+ * - CORRECTION : Signature de create_insert_array alignée sur parent (array $type_data, array $pre_create_data = array()).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -310,7 +311,7 @@ class reaction extends base
 
 	/**
 	 * AJOUT : Colonnes custom en DB pour ce type de notification (requis par type_interface).
-	 * Ajoute 'emoji' pour persister l'emoji de la réaction.
+	 * Ajoute 'reaction_emoji' pour persister l'emoji de la réaction.
 	 */
 	public function get_insert_sql()
 	{
@@ -320,32 +321,18 @@ class reaction extends base
 	}
 
 	/**
-	 * AJOUT : Construit l'array d'insertion DB pour les notifications (requis par type_interface).
-	 * Remplit les champs standards + custom (e.g., emoji).
+	 * CORRECTION : Construit l'array d'insertion DB pour les notifications (signature alignée sur parent).
+	 * Remplit les champs standards via parent + custom (e.g., emoji).
+	 * Retourne un array unique (le manager gère la duplication par user).
 	 */
-	public function create_insert_array(array $notification_data, array $notify_users)
+	public function create_insert_array(array $type_data, array $pre_create_data = array())
 	{
-		// Champs standards (phpBB les gère, mais on les complète)
-		$insert_array = array(
-			'notification_type_name'    => 'notification.' . $this->get_type(),  // 'notification.reaction'
-			'notification_time'         => time(),
-			'notification_read'         => 0,
-			'notification_is_bookmark'  => 0,
-			'item_id'                   => $this->get_item_id($notification_data),
-			'item_parent_id'            => $this->get_item_parent_id($notification_data),
-		);
+		// Appel parent pour les champs standards (type_name, item_id, etc.)
+		$insert_array = parent::create_insert_array($type_data, $pre_create_data);
 
-		// AJOUT : Champs custom pour ce type
-		$insert_array['reaction_emoji'] = $notification_data['emoji'] ?? '';
+		// AJOUT : Ajout des champs custom
+		$insert_array['reaction_emoji'] = $type_data['emoji'] ?? '';
 
-		// Pour chaque user notifié, duplique l'array avec user_id
-		$insert_ary = array();
-		foreach ($notify_users as $notify_user) {
-			$user_insert = $insert_array;
-			$user_insert['user_id'] = $notify_user;
-			$insert_ary[] = $user_insert;
-		}
-
-		return $insert_ary;
+		return $insert_array;
 	}
 }
