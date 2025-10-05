@@ -11,9 +11,9 @@
  * - Détermine les utilisateurs à notifier (find_users_for_notification).
  * - Définit les variables pour le rendu et les e-mails (facultatif).
  *
- * Correction :
+ * Corrections :
+ * - Signature du constructeur corrigée (ordre conforme à phpBB).
  * - Ajout de get_url() pour éviter l’erreur fatale 500.
- * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
  */
@@ -30,6 +30,7 @@ use phpbb\auth\auth;
 use phpbb\template\template;
 use phpbb\config\config;
 use phpbb\request\request_interface;
+use phpbb\db\driver\driver_interface;
 
 class reaction extends base
 {
@@ -38,6 +39,9 @@ class reaction extends base
 
 	/** @var auth */
 	protected $auth;
+
+	/** @var driver_interface */
+	protected $db;
 
 	/** @var template */
 	protected $template;
@@ -49,17 +53,19 @@ class reaction extends base
 	protected $request;
 
 	/**
-	 * Constructeur — injection des dépendances phpBB.
+	 * Constructeur — injection conforme au container phpBB.
 	 */
 	public function __construct(
 		user $user,
 		auth $auth,
+		driver_interface $db,
 		template $template,
 		config $config,
 		request_interface $request
 	) {
 		$this->user = $user;
 		$this->auth = $auth;
+		$this->db = $db;
 		$this->template = $template;
 		$this->config = $config;
 		$this->request = $request;
@@ -213,6 +219,7 @@ class reaction extends base
 			'emoji'             => $this->data['emoji'] ?? '',
 			'reacter_username'  => $this->data['reacter_username'] ?? '',
 			'post_id'           => $this->get_item_id($this->data ?? []),
+			'url'               => $this->get_url(),
 		];
 	}
 
