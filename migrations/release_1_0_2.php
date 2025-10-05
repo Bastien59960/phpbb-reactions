@@ -1,6 +1,6 @@
 <?php
 /**
- * Migration v_1_0_2 : Ajout des colonnes pour notifications de réactions
+ * Migration release_1_0_2 : Ajout des colonnes pour notifications de réactions
  * 
  * Ajoute 'notification_type_name' et 'reaction_emoji' à phpbb_notifications.
  * Nécessaire pour supporter les notifications de réactions (type 'notification.reaction').
@@ -10,7 +10,7 @@
 
 namespace bastien59960\reactions\migrations;
 
-class v_1_0_2 extends \phpbb\db\migration\migration
+class release_1_0_2 extends \phpbb\db\migration\migration
 {
 	/**
 	 * Vérifie si la migration est déjà appliquée (via config flag).
@@ -21,11 +21,11 @@ class v_1_0_2 extends \phpbb\db\migration\migration
 	}
 
 	/**
-	 * Dépendances : Suit v_1_0_1 (comme les précédentes).
+	 * Dépendances : Suit release_1_0_1 (comme les précédentes).
 	 */
 	public static function depends_on()
 	{
-		return array('bastien59960\reactions\migrations\v_1_0_1');
+		return array('bastien59960\reactions\migrations\release_1_0_1');
 	}
 
 	/**
