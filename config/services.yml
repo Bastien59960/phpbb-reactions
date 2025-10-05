@@ -87,10 +87,10 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@dbal.conn'
-            - '@user'
-            - '@auth'
-            - '@config'
+            - '@user'                          # 1er : user (CORRECTION : était @dbal.conn)
+            - '@auth'                          # 2e : auth
+            - '@dbal.conn'                     # 3e : db (CORRECTION : déplacé de la 1re position)
+            - '@config'                        # 4e : config
             - '@user_loader'
             - '@controller.helper'
             - '@request'

@@ -105,6 +105,16 @@ class reaction extends base
 		$this->template = $template;
 		$this->phpbb_root_path = $phpbb_root_path;
 		$this->php_ext = $php_ext;
+
+		// AJOUT : Debug basique (retirez en prod)
+		if (defined('DEBUG') && DEBUG) {
+			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db));
+		}
+
+		// AJOUT : Vérification basique pour éviter des crashes futurs (optionnel)
+		if (!$db instanceof \phpbb\db\driver\driver_interface) {
+			throw new \InvalidArgumentException('DB driver invalide injecté dans Reaction notification.');
+		}
 	}
 
 	/**
