@@ -16,7 +16,7 @@
  * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
  * - AJOUT : Insertion dummy initiale en DB si type inexistant ET colonne 'notification_type_name' existe (fixe UCP sans crash si schéma incomplet).
  * - FIX SQL : Guillemets autour de la valeur échappée dans la query dummy (évite [1054] "Unknown column 'notification.reaction'").
- * - FIX INSERT : Ajout 'notification_data' sérialisée vide + 'notification_type_id', 'item_id', 'item_parent_id' = 0 dans dummy (fixe [1364] "doesn't have a default value" et champs NOT NULL).
+ * - FIX NOTIFICATION_TYPE_NOT_EXIST : Insertion prototype dans phpbb_notification_types (table des types, pas notifications) pour obtenir notification_type_id (fixe manager.php:967).
  * - AJOUT : Implémentation get_insert_sql() et create_insert_array() (requis pour persistance DB et conformité).
  * - CORRECTION FINALE : Signature de create_insert_array SANS type hints (compatible parent).
  * - Signatures conformes à type_interface.
@@ -34,6 +34,9 @@ if (!defined('IN_PHPBB')) {
 if (!defined('ANONYMOUS')) {
 	define('ANONYMOUS', 1);
 }
+
+// AJOUT : Nom standard de la table des types de notifications (core phpBB)
+$notification_types_table = 'phpbb_notification_types';
 
 use phpbb\notification\type\base;
 use phpbb\user;
@@ -134,45 +137,37 @@ class reaction extends base
 			throw new \InvalidArgumentException('DB driver invalide injecté dans Reaction notification.');
 		}
 
-		// AJOUT : Insertion dummy initiale si le type n'existe pas en DB ET colonne existe (fixe UCP sans crash si schéma incomplet)
+		// AJOUT : Insertion prototype du type dans phpbb_notification_types si inexistant (fixe NOTIFICATION_TYPE_NOT_EXIST)
 		$type_name = 'notification.' . $this->get_type();  // 'notification.reaction'
 		
-		// NOUVEAU : Vérifier si la colonne 'notification_type_name' existe pour éviter SQL error [1054]
-		$col_check_sql = 'SHOW COLUMNS FROM ' . $this->notifications_table . " LIKE 'notification_type_name'";
+		// Vérifier si la colonne 'notification_type_name' existe dans phpbb_notification_types (table des types)
+		$types_table = 'phpbb_notification_types';
+		$col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
 		$col_result = $this->db->sql_query($col_check_sql);
 		$col_exists = $this->db->sql_fetchrow($col_result);
 		$this->db->sql_freeresult($col_result);
 
 		if ($col_exists) {
 			// FIX SQL : Guillemets explicites autour de la valeur échappée pour éviter "notification.reaction" vu comme colonne
-			$sql = 'SELECT notification_id FROM ' . $this->notifications_table . ' WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\' LIMIT 1';
+			$sql = 'SELECT notification_type_id FROM ' . $types_table . ' WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\' LIMIT 1';
 			$result = $this->db->sql_query($sql);
 			$exists = $this->db->sql_fetchrow($result);
 			$this->db->sql_freeresult($result);
 
 			if (!$exists) {
-				// Insère une entrée dummy (standards + read=1 pour ignorer, + champs core NOT NULL)
-				$dummy_data = array(
-					'notification_type_id'      => 0,  // FIX : ID type neutre (core field)
-					'item_id'                   => 0,  // FIX : ID item neutre (core field)
-					'item_parent_id'            => 0,  // FIX : ID parent neutre (core field)
-					'notification_type_name'    => $type_name,
-					'notification_time'         => time(),
-					'user_id'                   => ANONYMOUS,  // Pas d'user spécifique
-					'notification_read'         => 1,           // Marquée comme lue (ignore)
-					'notification_is_bookmark'  => 0,
-					'notification_data'         => serialize(array()),  // FIX : Données vides sérialisées (core field NOT NULL)
-					'reaction_emoji'            => '',           // Custom vide
+				// Insère une entrée prototype dans phpbb_notification_types (core table pour types)
+				$proto_data = array(
+					'notification_type_name' => $type_name,
 				);
-				$this->db->sql_query('INSERT INTO ' . $this->notifications_table . ' ' . $this->db->sql_build_array('INSERT', $dummy_data));
+				$this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $proto_data));
 				if (defined('DEBUG') && DEBUG) {
-					error_log('[Reactions Notification] Entrée dummy insérée pour type: ' . $type_name);
+					error_log('[Reactions Notification] Prototype type inséré pour: ' . $type_name);
 				}
 			}
 		} else {
-			// Si colonne manquante, log et skip (recommandez migration)
+			// Si colonne manquante, log et skip (recommandez migration core)
 			if (defined('DEBUG') && DEBUG) {
-				error_log('[Reactions Notification] Colonne notification_type_name manquante dans ' . $this->notifications_table . ' - Skip dummy (ajoutez migration).');
+				error_log('[Reactions Notification] Colonne notification_type_name manquante dans ' . $types_table . ' - Skip prototype (vérifiez schéma core).');
 			}
 		}
 	}
@@ -361,4 +356,4 @@ class reaction extends base
 
 		return $insert_array;
 	}
-} 
+}
