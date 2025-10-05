@@ -33,7 +33,7 @@ class release_1_0_3 extends \phpbb\db\migration\migration
 	{
 		$sql = 'SELECT notification_type_id
 				FROM ' . $this->table_prefix . "notification_types
-				WHERE notification_type_name = 'notification.reaction'";
+				WHERE notification_type_name = 'bastien59960.reactions.notification'";
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
@@ -69,7 +69,7 @@ class release_1_0_3 extends \phpbb\db\migration\migration
 	{
 		$sql = 'SELECT notification_type_id
 				FROM ' . $this->table_prefix . "notification_types
-				WHERE notification_type_name = 'notification.reaction'";
+				WHERE notification_type_name = 'bastien59960.reactions.notification'";
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
@@ -77,7 +77,7 @@ class release_1_0_3 extends \phpbb\db\migration\migration
 		if (!$row)
 		{
 			$sql = 'INSERT INTO ' . $this->table_prefix . "notification_types (notification_type_name, notification_type_enabled)
-					VALUES ('notification.reaction', 1)";
+					VALUES ('bastien59960.reactions.notification', 1)";
 			$this->db->sql_query($sql);
 		}
 	}
@@ -102,7 +102,7 @@ class release_1_0_3 extends \phpbb\db\migration\migration
 	{
 		$sql = 'SELECT notification_type_id
 				FROM ' . $this->table_prefix . "notification_types
-				WHERE notification_type_name = 'notification.reaction'";
+				WHERE notification_type_name = 'bastien59960.reactions.notification'";
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
@@ -110,7 +110,7 @@ class release_1_0_3 extends \phpbb\db\migration\migration
 		if ($row)
 		{
 			$sql = 'DELETE FROM ' . $this->table_prefix . "notification_types
-					WHERE notification_type_name = 'notification.reaction'";
+					WHERE notification_type_name = 'bastien59960.reactions.notification'";
 			$this->db->sql_query($sql);
 		}
 	}
