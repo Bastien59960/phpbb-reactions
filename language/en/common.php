@@ -115,4 +115,7 @@ $lang = array_merge($lang, array(
     'REACTIONS_NOTIFICATION_EMAIL_SUBJECT' => 'New reactions to your message "%2$s"',
     'REACTIONS_NOTIFICATION_TYPE' => 'Post reactions',
     'REACTIONS_NOTIFICATION_GROUP' => 'Reaction notifications',
+
+    'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi %2$s à votre message',
+
 ));
