@@ -16,7 +16,7 @@
  * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
  * - AJOUT : Insertion dummy initiale en DB si type inexistant (fixe UCP "NOTIFICATION_TYPE_NOT_EXIST").
  * - AJOUT : Implémentation get_insert_sql() et create_insert_array() (requis pour persistance DB et conformité).
- * - CORRECTION : Signature de create_insert_array alignée sur parent (array $type_data, array $pre_create_data = array()).
+ * - CORRECTION FINALE : Signature de create_insert_array SANS type hints (compatible parent : $type_data, $pre_create_data = []).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -26,6 +26,11 @@ namespace bastien59960\reactions\notification\type;
 
 if (!defined('IN_PHPBB')) {
 	exit;
+}
+
+// AJOUT : Définit ANONYMOUS si pas déjà fait (pour dummy safe)
+if (!defined('ANONYMOUS')) {
+	define('ANONYMOUS', 1);
 }
 
 use phpbb\notification\type\base;
@@ -321,17 +326,17 @@ class reaction extends base
 	}
 
 	/**
-	 * CORRECTION : Construit l'array d'insertion DB pour les notifications (signature alignée sur parent).
+	 * CORRECTION FINALE : Construit l'array d'insertion DB pour les notifications (signature SANS type hints, compatible parent).
 	 * Remplit les champs standards via parent + custom (e.g., emoji).
 	 * Retourne un array unique (le manager gère la duplication par user).
 	 */
-	public function create_insert_array(array $type_data, array $pre_create_data = array())
+	public function create_insert_array($type_data, $pre_create_data = array())
 	{
 		// Appel parent pour les champs standards (type_name, item_id, etc.)
 		$insert_array = parent::create_insert_array($type_data, $pre_create_data);
 
 		// AJOUT : Ajout des champs custom
-		$insert_array['reaction_emoji'] = $type_data['emoji'] ?? '';
+		$insert_array['reaction_emoji'] = isset($type_data['emoji']) ? $type_data['emoji'] : '';
 
 		return $insert_array;
 	}
