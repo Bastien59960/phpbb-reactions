@@ -361,4 +361,4 @@ class reaction extends base
 
 		return $insert_array;
 	}
-}
+} 
