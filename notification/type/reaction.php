@@ -79,6 +79,8 @@ class reaction extends base
 		$phpbb_root_path,
 		$php_ext
 	) {
+		// CORRECTION : On appelle le constructeur parent avec les services DANS LE BON ORDRE
+		// La classe de base de phpBB attend l'utilisateur en premier.
 		parent::__construct(
 			$user,
 			$auth,
@@ -92,6 +94,7 @@ class reaction extends base
 			$php_ext
 		);
 
+		// On assigne les propriétés nécessaires pour notre classe (cette partie était déjà bonne)
 		$this->user = $user;
 		$this->auth = $auth;
 		$this->db = $db;
