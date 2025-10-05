@@ -1,17 +1,57 @@
 <?php
 /**
-* @copyright (c) 2025 Bastien59960
-* @license GNU General Public License, version 2 (GPL-2.0)
-*/
+ * Type de notification pour les réactions
+ * 
+ * Ce fichier définit le type de notification utilisé pour notifier les utilisateurs
+ * quand quelqu'un réagit à leurs messages. Il gère :
+ * - Le format des notifications par cloche
+ * - Le format des emails
+ * - La détermination des utilisateurs à notifier
+ * - Les données nécessaires pour les notifications
+ * 
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 namespace bastien59960\reactions\notification\type;
 
+/**
+ * Type de notification pour les réactions
+ * 
+ * Gère les notifications envoyées aux auteurs de messages quand quelqu'un réagit.
+ * Supporte les notifications par cloche et par email.
+ */
 class reaction extends \phpbb\notification\type\base
 {
+    // =============================================================================
+    // PROPRIÉTÉS DE LA CLASSE
+    // =============================================================================
+    
+    /** @var \phpbb\user_loader Chargeur d'utilisateurs */
     protected $user_loader;
+    
+    /** @var \phpbb\db\driver\driver_interface Connexion à la base de données */
     protected $db;
+    
+    /** @var string Chemin racine du forum */
     protected $phpbb_root_path;
+    
+    /** @var \phpbb\user Utilisateur actuel */
     protected $user;
 
+    // =============================================================================
+    // CONSTRUCTEUR
+    // =============================================================================
+    
+    /**
+     * Constructeur du type de notification
+     * 
+     * Initialise les services nécessaires pour gérer les notifications de réactions.
+     * 
+     * @param \phpbb\user_loader $user_loader Chargeur d'utilisateurs
+     * @param \phpbb\db\driver\driver_interface $db Connexion base de données
+     * @param string $phpbb_root_path Chemin racine du forum
+     * @param \phpbb\user $user Utilisateur actuel
+     */
     public function __construct(\phpbb\user_loader $user_loader, \phpbb\db\driver\driver_interface $db, $phpbb_root_path, \phpbb\user $user)
     {
         $this->user_loader = $user_loader;
@@ -20,13 +60,31 @@ class reaction extends \phpbb\notification\type\base
         $this->user = $user;
     }
     
+    // =============================================================================
+    // CONFIGURATION DU TYPE DE NOTIFICATION
+    // =============================================================================
+    
     /**
-     * Le nom du type de notification.
+     * Nom du type de notification
+     * 
+     * Ce nom doit correspondre au service défini dans services.yml
+     * et être utilisé dans les appels au notification_manager.
+     * 
+     * @var string Nom du type de notification
      */
     public static $notification_type = 'bastien59960.reactions.notification';
 
+    // =============================================================================
+    // MÉTHODES REQUISES PAR LE SYSTÈME DE NOTIFICATIONS
+    // =============================================================================
+    
     /**
-     * Les données requises pour cette notification.
+     * Récupérer le type de notification
+     * 
+     * Cette méthode est requise par le système de notifications phpBB.
+     * Elle retourne le nom du type de notification.
+     * 
+     * @return string Nom du type de notification
      */
     public function get_type()
     {
@@ -34,16 +92,33 @@ class reaction extends \phpbb\notification\type\base
     }
 
     /**
-     * Trouve les utilisateurs à notifier.
+     * Déterminer les utilisateurs à notifier
+     * 
+     * Cette méthode est appelée par le système de notifications pour déterminer
+     * quels utilisateurs doivent recevoir la notification.
+     * Pour les réactions, on notifie uniquement l'auteur du message.
+     * 
+     * @param array $data Données de la notification
+     * @param array $options Options supplémentaires
+     * @return array Liste des IDs des utilisateurs à notifier
      */
     public function find_users_for_notification($data, $options = [])
     {
-        // On notifie uniquement l'auteur du message.
+        // On notifie uniquement l'auteur du message
         return [$data['post_author']];
     }
     
+    // =============================================================================
+    // MÉTHODES DE FORMATAGE DES NOTIFICATIONS
+    // =============================================================================
+    
     /**
-     * Récupère le titre de la notification (pour l'email).
+     * Récupérer les variables pour le template d'email
+     * 
+     * Cette méthode est appelée pour générer les variables utilisées
+     * dans le template d'email des notifications.
+     * 
+     * @return array Variables pour le template d'email
      */
     public function get_email_template_variables()
     {
@@ -59,7 +134,12 @@ class reaction extends \phpbb\notification\type\base
     }
 
     /**
-     * Récupère le message de la notification.
+     * Récupérer le titre de la notification
+     * 
+     * Cette méthode génère le titre affiché dans les notifications par cloche.
+     * Elle utilise le système de pluriels de phpBB pour gérer les cas singulier/pluriel.
+     * 
+     * @return string Titre de la notification
      */
     public function get_title()
     {
@@ -71,7 +151,12 @@ class reaction extends \phpbb\notification\type\base
     }
 
     /**
-     * Récupère le lien de la notification.
+     * Récupérer l'URL de la notification
+     * 
+     * Cette méthode génère l'URL vers le message concerné par la notification.
+     * L'URL inclut un ancrage vers le message spécifique.
+     * 
+     * @return string URL vers le message
      */
     public function get_url()
     {
@@ -87,7 +172,13 @@ class reaction extends \phpbb\notification\type\base
     }
 
     /**
-     * Fonction pour créer l'ID de l'utilisateur.
+     * Récupérer l'ID de l'élément parent (statique)
+     * 
+     * Cette méthode statique est requise par le système de notifications phpBB.
+     * Elle retourne l'ID de l'auteur du message à partir des données fournies.
+     * 
+     * @param array $data Données de la notification
+     * @return int ID de l'auteur du message
      */
     public static function get_item_parent_id($data)
     {
@@ -95,7 +186,12 @@ class reaction extends \phpbb\notification\type\base
     }
 
     /**
-     * Fonction pour créer l'ID du forum.
+     * Récupérer l'ID du forum
+     * 
+     * Cette méthode retourne l'ID du forum contenant le message concerné.
+     * Elle est utilisée pour les autorisations et le filtrage des notifications.
+     * 
+     * @return int ID du forum
      */
     public function get_forum_id()
     {
@@ -108,7 +204,12 @@ class reaction extends \phpbb\notification\type\base
     }
 
     /**
-     * Fonction pour créer l'ID du topic.
+     * Récupérer l'ID du sujet
+     * 
+     * Cette méthode retourne l'ID du sujet contenant le message concerné.
+     * Elle est utilisée pour les autorisations et le filtrage des notifications.
+     * 
+     * @return int ID du sujet
      */
     public function get_topic_id()
     {
@@ -119,25 +220,19 @@ class reaction extends \phpbb\notification\type\base
         
         return $row ? (int) $row['topic_id'] : 0;
     }
-
-    /**
-     * Fonction pour créer l'ID de l'utilisateur parent.
-     */
-    public static function get_item_parent_id($data)
-    {
-        return (int) $data['post_author'];
-    }
-
-    /**
-     * Fonction pour créer l'ID de l'utilisateur parent.
-     */
-    public function get_item_parent_id()
-    {
-        return (int) $this->notification_data['post_author'];
-    }
+    
+    // =============================================================================
+    // MÉTHODES UTILITAIRES
+    // =============================================================================
     
     /**
-     * Récupère le titre du post
+     * Récupérer le titre d'un message
+     * 
+     * Cette méthode récupère le titre (sujet) d'un message depuis la base de données.
+     * Elle est utilisée pour afficher le titre du message dans les notifications.
+     * 
+     * @param int $post_id ID du message
+     * @return string Titre du message ou chaîne vide si non trouvé
      */
     private function get_post_title($post_id)
     {
@@ -150,11 +245,18 @@ class reaction extends \phpbb\notification\type\base
     }
     
     /**
-     * Helper pour charger les noms des utilisateurs ayant réagi.
+     * Récupérer les noms des utilisateurs ayant réagi
+     * 
+     * Cette méthode génère une chaîne de caractères avec les noms des utilisateurs
+     * qui ont réagi au message. Elle limite l'affichage à 3 noms maximum
+     * et ajoute "et X autres" si nécessaire.
+     * 
+     * @param array $user_ids Liste des IDs des utilisateurs ayant réagi
+     * @return string Chaîne formatée avec les noms des utilisateurs
      */
     private function get_reacter_names($user_ids)
     {
-        // Limite à 3 noms pour ne pas surcharger la notification
+        // Limiter à 3 noms pour ne pas surcharger la notification
         $user_ids = array_slice($user_ids, 0, 3);
         $this->user_loader->load_users($user_ids);
         
@@ -163,6 +265,7 @@ class reaction extends \phpbb\notification\type\base
             $names[] = $this->user_loader->get_username($user_id, 'username');
         }
         
+        // Calculer le nombre d'utilisateurs supplémentaires
         $others = count($this->notification_data['reacter_ids']) - count($names);
         if ($others > 0) {
             return $this->user->lang('REACTIONS_NOTIFICATION_AND_OTHERS', implode(', ', $names), $others);

@@ -1,25 +1,40 @@
 <?php
 /**
- * Reactions Extension for phpBB 3.3
- * English language file - Corrected version
+ * English language file for the Reactions extension
+ * 
+ * This file contains all English language strings used by the Reactions extension.
+ * It includes:
+ * - User interface messages
+ * - Error and success messages
+ * - Notification texts
+ * - Administration messages
+ * - Tooltips and contextual help
  * 
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
+// Security check
 if (!defined('IN_PHPBB'))
 {
     exit;
 }
 
+// Initialize language array
 if (empty($lang) || !is_array($lang))
 {
     $lang = array();
 }
 
+// =============================================================================
+// LANGUAGE STRINGS DEFINITION
+// =============================================================================
+
 // Merge the existing language array
 $lang = array_merge($lang, array(
-    // ACP messages
+    // =============================================================================
+    // ADMINISTRATION MESSAGES (ACP)
+    // =============================================================================
     'ACP_REACTIONS_TITLE'       => 'Reactions settings',
     'ACP_REACTIONS_SETTINGS'    => 'Reactions configuration',
     'ACP_REACTIONS_ENABLED'     => 'Enable reactions',
@@ -27,7 +42,9 @@ $lang = array_merge($lang, array(
     'ACP_REACTIONS_MAX_PER_USER' => 'Maximum number of reactions per user per post',
     'ACP_REACTIONS_EXPLAIN'     => 'Configure the settings for post reactions.',
     
-    // Basic messages
+    // =============================================================================
+    // USER INTERFACE MESSAGES
+    // =============================================================================
     'REACTION_ADD'              => 'Add a reaction',
     'REACTION_REMOVE'           => 'Remove your reaction',
     'REACTION_MORE'             => 'More reactions',
@@ -36,15 +53,19 @@ $lang = array_merge($lang, array(
     'REACTION_SUCCESS_ADD'      => 'Reaction added successfully',
     'REACTION_SUCCESS_REMOVE'   => 'Reaction removed successfully',
     
-    // Error messages - CORRECTIONS according to code changes
+    // =============================================================================
+    // ERROR AND VALIDATION MESSAGES
+    // =============================================================================
     'REACTION_NOT_AUTHORIZED'   => 'You are not authorized to react',
     'REACTION_INVALID_POST'     => 'Invalid post',
     'REACTION_INVALID_EMOJI'    => 'Invalid emoji',
-    'REACTION_ALREADY_ADDED'    => 'You have already reacted with this emoji', // CORRECTION: consistent with ajax.php
-    'REACTION_ALREADY_EXISTS'   => 'You have already reacted with this emoji', // Keep both for compatibility
+    'REACTION_ALREADY_ADDED'    => 'You have already reacted with this emoji',
+    'REACTION_ALREADY_EXISTS'   => 'You have already reacted with this emoji', // Compatibility
     'REACTION_NOT_FOUND'        => 'Reaction not found',
     
-    // Counters and display
+    // =============================================================================
+    // COUNTERS AND DISPLAY
+    // =============================================================================
     'REACTION_COUNT_SINGULAR'   => '%d reaction',
     'REACTION_COUNT_PLURAL'     => '%d reactions',
     'REACTIONS_TITLE'           => 'Reactions',
@@ -54,30 +75,40 @@ $lang = array_merge($lang, array(
     'REACTIONS_SEPARATOR'       => ', ',
     'REACTION_AND'              => ' and ',
     
-    // NEW according to specifications and corrections
-    'REACTIONS_COMMON_EMOJIS'   => 'Common emojis', // Replaces "popular"
+    // =============================================================================
+    // EMOJIS AND INTERFACE
+    // =============================================================================
+    'REACTIONS_COMMON_EMOJIS'   => 'Common emojis',
     'REACTIONS_LOGIN_REQUIRED'  => 'You must be logged in to react to posts',
     'REACTIONS_JSON_ERROR'      => 'Error loading emojis',
     'REACTIONS_FALLBACK_INFO'   => 'JSON file not accessible. Only common emojis are available.',
     
-    // Tooltips and help
+    // =============================================================================
+    // TOOLTIPS AND CONTEXTUAL HELP
+    // =============================================================================
     'REACTIONS_ADD_TOOLTIP'     => 'Add a reaction',
     'REACTIONS_MORE_TOOLTIP'    => 'More emojis',
     'REACTIONS_COUNT_TOOLTIP'   => '%d reaction(s)',
     
-    // Technical messages for debugging (optional)
+    // =============================================================================
+    // TECHNICAL AND DEBUG MESSAGES
+    // =============================================================================
     'REACTIONS_DEBUG_ENABLED'   => 'Reactions debug mode enabled',
     'REACTIONS_CSRF_ERROR'      => 'Invalid CSRF token',
     'REACTIONS_SERVER_ERROR'    => 'Server error during reaction',
     
-    // Limits according to specifications
+    // =============================================================================
+    // LIMITS AND RESTRICTIONS
+    // =============================================================================
     'REACTIONS_LIMIT_POST'      => 'Maximum %d reaction types per post',
     'REACTIONS_LIMIT_USER'      => 'Maximum %d reactions per user per post',
     'REACTIONS_LIMIT_REACHED'   => 'Reaction limit reached',
     'REACTION_LIMIT_POST'       => 'Post reaction type limit reached',
     'REACTION_LIMIT_USER'       => 'User reaction limit reached',
 
-    // Notifications
+    // =============================================================================
+    // NOTIFICATIONS
+    // =============================================================================
     'REACTIONS_NOTIFICATION_TITLE'      => '%1$s reacted to your message',
     'REACTIONS_NOTIFICATION_TITLE_PLURAL' => '%1$s and %2$d others reacted to your message',
     'REACTIONS_NOTIFICATION_AND_OTHERS' => '%1$s and %2$d other(s)',

@@ -1,5 +1,32 @@
+# Configuration des paramètres pour l'extension Reactions
+# 
+# Ce fichier définit les noms des tables de base de données utilisées
+# par l'extension. Ces paramètres permettent de personnaliser les noms
+# des tables si nécessaire (par exemple, pour des installations avec
+# des préfixes de table personnalisés).
+#
+# Utilisation :
+# - Les noms de tables sont injectés dans les services via ces paramètres
+# - Permet la flexibilité pour différentes configurations de base de données
+# - Facilite la maintenance et les tests
+
 parameters:
+    # =============================================================================
+    # TABLES DE BASE DE DONNÉES
+    # =============================================================================
+    
+    # Table principale des réactions
+    # Stocke toutes les réactions aux messages du forum
     tables.post_reactions: phpbb_post_reactions
+    
+    # Table des sujets (référence)
+    # Utilisée pour les jointures et les vérifications d'autorisation
     tables.topics: phpbb_topics
+    
+    # Table des forums (référence)
+    # Utilisée pour les jointures et les vérifications d'autorisation
     tables.forums: phpbb_forums
+    
+    # Table des messages (référence)
+    # Utilisée pour les jointures et les vérifications d'autorisation
     tables.posts: phpbb_posts

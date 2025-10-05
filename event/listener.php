@@ -1,7 +1,20 @@
 <?php
 /**
- * Reactions Extension Listener for phpBB 3.3+ (CORRIGÉ)
- *
+ * Listener d'événements pour l'extension Reactions
+ * 
+ * Ce listener gère l'affichage des réactions sur les pages du forum.
+ * Il écoute les événements phpBB pour :
+ * - Ajouter les CSS/JS nécessaires aux pages
+ * - Charger les réactions existantes pour chaque message
+ * - Configurer les données pour les templates
+ * - Gérer l'affichage des réactions avec les utilisateurs
+ * 
+ * Événements écoutés :
+ * - core.page_header : Ajoute les assets CSS/JS
+ * - core.viewtopic_cache_user_data : Charge les données utilisateur
+ * - core.viewtopic_post_row_after : Affiche les réactions pour chaque message
+ * - core.viewforum_modify_topicrow : Ajoute les données du forum
+ * 
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -11,34 +24,72 @@ namespace bastien59960\reactions\event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use phpbb\db\driver\driver_interface;
 
+/**
+ * Listener d'événements pour les réactions
+ * 
+ * Gère l'affichage et la configuration des réactions sur les pages du forum.
+ */
 class listener implements EventSubscriberInterface
 {
-    /** @var driver_interface */
+    // =============================================================================
+    // PROPRIÉTÉS DE LA CLASSE
+    // =============================================================================
+    
+    /** @var driver_interface Connexion à la base de données */
     protected $db;
 
-    /** @var \phpbb\user */
+    /** @var \phpbb\user Utilisateur actuel */
     protected $user;
 
-    /** @var string */
+    /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
 
-    /** @var string */
+    /** @var string Nom de la table des messages */
     protected $posts_table;
 
-    /** @var \phpbb\template\template */
+    /** @var \phpbb\template\template Moteur de templates */
     protected $template;
 
-    /** @var \phpbb\language\language */
+    /** @var \phpbb\language\language Gestionnaire de langues */
     protected $language;
 
-    /** @var \phpbb\controller\helper */
+    /** @var \phpbb\controller\helper Helper pour les URLs */
     protected $helper;
 
-    /** @var array Liste des 10 émojis courantes selon le cahier des charges */
+    /** @var \phpbb\config\config Configuration du forum */
+    protected $config;
+
+    /**
+     * Liste des 10 emojis courantes utilisées par défaut
+     * 
+     * Ces emojis sont affichés en priorité dans l'interface utilisateur.
+     * Ils doivent être synchronisés avec reactions.js et ajax.php.
+     * 
+     * @var array Liste des emojis courantes
+     */
     protected $common_emojis = [
         '👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'
     ];
 
+    // =============================================================================
+    // CONSTRUCTEUR
+    // =============================================================================
+    
+    /**
+     * Constructeur du listener d'événements
+     * 
+     * Initialise tous les services nécessaires pour gérer l'affichage des réactions.
+     * Configure la connexion base de données en UTF8MB4 pour supporter les emojis.
+     * 
+     * @param driver_interface $db Connexion base de données
+     * @param \phpbb\user $user Utilisateur actuel
+     * @param string $post_reactions_table Nom de la table des réactions
+     * @param string $posts_table Nom de la table des messages
+     * @param \phpbb\template\template $template Moteur de templates
+     * @param \phpbb\language\language $language Gestionnaire de langues
+     * @param \phpbb\controller\helper $helper Helper pour les URLs
+     * @param \phpbb\config\config $config Configuration du forum
+     */
     public function __construct(
         driver_interface $db,
         \phpbb\user $user,
@@ -49,6 +100,7 @@ class listener implements EventSubscriberInterface
         \phpbb\controller\helper $helper,
         \phpbb\config\config $config  
     ) {
+        // Initialisation des propriétés
         $this->db = $db;
         $this->user = $user;
         $this->post_reactions_table = $post_reactions_table;
@@ -58,7 +110,7 @@ class listener implements EventSubscriberInterface
         $this->helper = $helper;
         $this->config = $config;
         
-
+        // Configurer la connexion en utf8mb4 pour supporter les emojis
         try {
             $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
         } catch (\Exception $e) {
@@ -66,50 +118,97 @@ class listener implements EventSubscriberInterface
         }
     }
 
+    // =============================================================================
+    // CONFIGURATION DES ÉVÉNEMENTS
+    // =============================================================================
+    
+    /**
+     * Définir les événements écoutés par ce listener
+     * 
+     * Cette méthode indique à phpBB quels événements ce listener doit écouter
+     * et quelle méthode appeler pour chaque événement.
+     * 
+     * @return array Tableau associatif événement => méthode
+     */
     public static function getSubscribedEvents()
     {
         return [
-            'core.page_header'               => 'add_assets_to_page',
-            'core.viewtopic_cache_user_data' => 'load_language_and_data',
-            'core.viewtopic_post_row_after'  => 'display_reactions',
-            'core.viewforum_modify_topicrow' => 'add_forum_data',
+            'core.page_header'               => 'add_assets_to_page',      // Ajouter CSS/JS
+            'core.viewtopic_cache_user_data' => 'load_language_and_data',  // Charger données utilisateur
+            'core.viewtopic_post_row_after'  => 'display_reactions',       // Afficher réactions
+            'core.viewforum_modify_topicrow' => 'add_forum_data',          // Ajouter données forum
         ];
     }
 
+    // =============================================================================
+    // MÉTHODES D'ÉVÉNEMENTS
+    // =============================================================================
+    
+    /**
+     * Ajouter les assets CSS/JS aux pages
+     * 
+     * Cette méthode est appelée sur l'événement 'core.page_header'.
+     * Elle ajoute les fichiers CSS et JavaScript nécessaires pour les réactions,
+     * ainsi que les variables JavaScript pour l'AJAX.
+     * 
+     * @param array $event Données de l'événement
+     * @return void
+     */
     public function add_assets_to_page($event)
     {
+        // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
 
+        // Définir les chemins vers les assets
         $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
         $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
+        // Générer l'URL AJAX pour les réactions
         try {
             $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
         } catch (\Exception $e) {
             $ajax_url = append_sid('app.php/reactions/ajax');
         }
 
+        // Assigner les variables au template
         $this->template->assign_vars([
-            'S_REACTIONS_ENABLED' => true,
-            'REACTIONS_CSS_PATH'  => $css_path,
-            'REACTIONS_JS_PATH'   => $js_path,
-            'U_REACTIONS_AJAX'    => $ajax_url,
+            'S_REACTIONS_ENABLED' => true,                    // Indique que les réactions sont activées
+            'REACTIONS_CSS_PATH'  => $css_path,               // Chemin vers le CSS
+            'REACTIONS_JS_PATH'   => $js_path,                // Chemin vers le JS
+            'U_REACTIONS_AJAX'    => $ajax_url,               // URL AJAX
             'S_SESSION_ID'        => isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '',
         ]);
 
+        // Assigner les variables JavaScript pour l'AJAX
         $this->template->assign_var(
             'REACTIONS_AJAX_URL_JS',
             'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '"; window.REACTIONS_SID = "' . addslashes(isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '') . '";'
         );
     }
 
+    /**
+     * Charger les données de langue et utilisateur
+     * 
+     * Cette méthode est appelée sur l'événement 'core.viewtopic_cache_user_data'.
+     * Actuellement utilisée comme placeholder pour de futures fonctionnalités.
+     * 
+     * @param array $event Données de l'événement
+     * @return void
+     */
     public function load_language_and_data($event)
     {
-        // Placeholder
+        // Placeholder pour de futures fonctionnalités
     }
 
     /**
-     * CORRECTION MAJEURE : Affiche uniquement les réactions existantes avec count > 0
+     * Afficher les réactions pour un message
+     * 
+     * Cette méthode est appelée sur l'événement 'core.viewtopic_post_row_after'.
+     * Elle récupère les réactions existantes pour un message et les affiche
+     * avec les données des utilisateurs pour les tooltips.
+     * 
+     * @param array $event Données de l'événement contenant les informations du message
+     * @return void
      */
     public function display_reactions($event)
     {

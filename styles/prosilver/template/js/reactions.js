@@ -1,4 +1,34 @@
-// ------------- Ajouts -----------
+/**
+ * JavaScript pour l'extension Reactions
+ * 
+ * Ce fichier gère toute l'interactivité côté client pour les réactions aux messages.
+ * Il inclut :
+ * - Gestion des clics sur les réactions existantes
+ * - Affichage de la palette d'emojis
+ * - Requêtes AJAX vers le serveur
+ * - Gestion des tooltips avec les utilisateurs
+ * - Support des emojis courantes et étendues
+ * 
+ * Fonctionnalités principales :
+ * - Ajout/suppression de réactions
+ * - Affichage des compteurs en temps réel
+ * - Tooltips avec liste des utilisateurs
+ * - Gestion des erreurs et états de chargement
+ * - Support des emojis composés (ZWJ)
+ * 
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
+
+// =============================================================================
+// FONCTION UTILITAIRE GLOBALE
+// =============================================================================
+
+/**
+ * Basculer la visibilité d'un élément
+ * 
+ * @param {string} id ID de l'élément à basculer
+ */
 function toggle_visible(id) {
     var x = document.getElementById(id);
     if (x.style.display === "block") {
@@ -8,23 +38,52 @@ function toggle_visible(id) {
     }
 }
 
+// =============================================================================
+// MODULE PRINCIPAL DES RÉACTIONS
+// =============================================================================
+
 (function () {
     'use strict';
 
-    let currentPicker = null;
-    let currentTooltip = null;
-    let allEmojisData = null;
+    // =============================================================================
+    // VARIABLES GLOBALES
+    // =============================================================================
+    
+    let currentPicker = null;      // Palette d'emojis actuellement ouverte
+    let currentTooltip = null;     // Tooltip actuellement affiché
+    let allEmojisData = null;      // Données des emojis étendus
 
+    /**
+     * Liste des 10 emojis courantes utilisées par défaut
+     * 
+     * Ces emojis sont affichés en priorité dans l'interface utilisateur.
+     * Ils doivent être synchronisés avec ajax.php et listener.php.
+     */
     const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
-    // ---------- Initialisation ----------
+    // =============================================================================
+    // INITIALISATION ET CONFIGURATION DES ÉVÉNEMENTS
+    // =============================================================================
+    
+    /**
+     * Initialiser le système de réactions
+     * 
+     * Cette fonction configure tous les événements nécessaires
+     * pour le fonctionnement des réactions.
+     */
     function initReactions() {
-        attachReactionEvents();
-        attachMoreButtonEvents();
-        attachTooltipEvents();
-        document.addEventListener('click', closeAllPickers);
+        attachReactionEvents();      // Événements sur les réactions existantes
+        attachMoreButtonEvents();    // Événements sur le bouton "plus"
+        attachTooltipEvents();       // Événements sur les tooltips
+        document.addEventListener('click', closeAllPickers); // Fermeture des palettes
     }
 
+    /**
+     * Attacher les événements aux réactions existantes
+     * 
+     * Cette fonction configure les événements de clic sur les réactions
+     * existantes pour permettre l'ajout/suppression de réactions.
+     */
     function attachReactionEvents() {
         document.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
             reaction.removeEventListener('click', handleReactionClick);
@@ -32,6 +91,12 @@ function toggle_visible(id) {
         });
     }
 
+    /**
+     * Attacher les événements au bouton "plus"
+     * 
+     * Cette fonction configure les événements de clic sur le bouton
+     * "plus" pour ouvrir la palette d'emojis.
+     */
     function attachMoreButtonEvents() {
         document.querySelectorAll('.reaction-more').forEach(button => {
             button.removeEventListener('click', handleMoreButtonClick);
@@ -39,6 +104,12 @@ function toggle_visible(id) {
         });
     }
 
+    /**
+     * Attacher les événements aux tooltips
+     * 
+     * Cette fonction configure les événements de survol sur les réactions
+     * pour afficher les tooltips avec la liste des utilisateurs.
+     */
     function attachTooltipEvents() {
         document.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
             const emoji = reaction.getAttribute('data-emoji');

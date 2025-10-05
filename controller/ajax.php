@@ -1,8 +1,20 @@
 <?php
 /**
- * Reactions Extension for phpBB 3.3
- * AJAX Controller - Version corrigée avec émojis courantes
- * * @copyright (c) 2025 Bastien59960
+ * Contrôleur AJAX pour l'extension Reactions
+ * 
+ * Ce contrôleur gère toutes les requêtes AJAX liées aux réactions :
+ * - Ajouter/supprimer des réactions
+ * - Récupérer les réactions d'un message
+ * - Récupérer les utilisateurs ayant réagi avec un emoji spécifique
+ * - Déclencher les notifications immédiates (cloche)
+ * 
+ * Actions supportées :
+ * - 'add' : Ajouter une réaction
+ * - 'remove' : Supprimer une réaction
+ * - 'get' : Récupérer toutes les réactions d'un message
+ * - 'get_users' : Récupérer les utilisateurs ayant réagi avec un emoji
+ * 
+ * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
@@ -16,46 +28,90 @@ if (!defined('ANONYMOUS')) {
     define('ANONYMOUS', 1);
 }
 
+/**
+ * Contrôleur AJAX pour les réactions
+ * 
+ * Gère les interactions AJAX avec les réactions aux messages.
+ * Inclut la validation, les autorisations, les limites et les notifications.
+ */
 class ajax
 {
-    /** @var \phpbb\db\driver\driver_interface */
+    // =============================================================================
+    // PROPRIÉTÉS DE LA CLASSE
+    // =============================================================================
+    
+    /** @var \phpbb\db\driver\driver_interface Connexion à la base de données */
     protected $db;
     
-    /** @var \phpbb\user */
+    /** @var \phpbb\user Utilisateur actuel */
     protected $user;
     
-    /** @var \phpbb\request\request */
+    /** @var \phpbb\request\request Gestionnaire de requêtes HTTP */
     protected $request;
     
-    /** @var \phpbb\auth\auth */
+    /** @var \phpbb\auth\auth Gestionnaire d'autorisations */
     protected $auth;
     
-    /** @var \phpbb\language\language */
+    /** @var \phpbb\language\language Gestionnaire de langues */
     protected $language;
     
-    /** @var string */
+    /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
     
-    /** @var string */
+    /** @var string Nom de la table des messages */
     protected $posts_table;
+    
+    /** @var string Nom de la table des sujets */
     protected $topics_table; 
+    
+    /** @var string Nom de la table des forums */
     protected $forums_table;
     
+    /** @var string Chemin racine du forum */
     protected $root_path; 
+    
+    /** @var string Extension des fichiers PHP */
     protected $php_ext;
+    
+    /** @var \phpbb\config\config Configuration du forum */
     protected $config;
     
-    /** @var \phpbb\notification\manager */
+    /** @var \phpbb\notification\manager Gestionnaire de notifications */
     protected $notification_manager;
 
-    /** * CORRECTION MAJEURE : Renommage "popular_emojis" en "common_emojis"
-     * Liste des 10 émojis courantes du pickup avec 👍 et 👎 en positions 1 et 2
-     * À synchroniser avec reactions.js et listener.php
+    /**
+     * Liste des 10 emojis courantes utilisées par défaut
+     * 
+     * Ces emojis sont affichés en priorité dans l'interface utilisateur.
+     * Ils doivent être synchronisés avec reactions.js et listener.php.
+     * 
+     * @var array Liste des emojis courantes
      */
     protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
+    // =============================================================================
+    // CONSTRUCTEUR
+    // =============================================================================
+    
     /**
-     * Constructor
+     * Constructeur du contrôleur AJAX
+     * 
+     * Initialise tous les services nécessaires pour gérer les réactions.
+     * Configure la connexion base de données en UTF8MB4 pour supporter les emojis.
+     * 
+     * @param \phpbb\db\driver\driver_interface $db Connexion base de données
+     * @param \phpbb\user $user Utilisateur actuel
+     * @param \phpbb\request\request $request Gestionnaire de requêtes
+     * @param \phpbb\auth\auth $auth Gestionnaire d'autorisations
+     * @param \phpbb\language\language $language Gestionnaire de langues
+     * @param string $post_reactions_table Nom de la table des réactions
+     * @param string $posts_table Nom de la table des messages
+     * @param string $topics_table Nom de la table des sujets
+     * @param string $forums_table Nom de la table des forums
+     * @param string $root_path Chemin racine du forum
+     * @param string $php_ext Extension des fichiers PHP
+     * @param \phpbb\config\config $config Configuration du forum
+     * @param \phpbb\notification\manager $notification_manager Gestionnaire de notifications
      */
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
@@ -72,6 +128,7 @@ class ajax
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager
     ) {
+        // Initialisation des propriétés
         $this->db = $db;
         $this->user = $user;
         $this->request = $request;
@@ -86,27 +143,52 @@ class ajax
         $this->config = $config;
         $this->notification_manager = $notification_manager;
         
+        // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
-        // Forcer la connexion en utf8mb4
+        
+        // Forcer la connexion en utf8mb4 pour supporter les emojis
         $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
     }
 
+    // =============================================================================
+    // MÉTHODE PRINCIPALE
+    // =============================================================================
+    
     /**
-     * Handle AJAX reactions
+     * Point d'entrée principal pour toutes les requêtes AJAX
+     * 
+     * Cette méthode traite toutes les requêtes AJAX liées aux réactions.
+     * Elle effectue les validations nécessaires et délègue l'action appropriée.
+     * 
+     * Actions supportées :
+     * - 'add' : Ajouter une réaction à un message
+     * - 'remove' : Supprimer une réaction d'un message
+     * - 'get' : Récupérer toutes les réactions d'un message
+     * - 'get_users' : Récupérer les utilisateurs ayant réagi avec un emoji
+     * 
+     * @return JsonResponse Réponse JSON avec le résultat de l'opération
      */
     public function handle()
     {
-        // Identifiant unique de requête + timer
+        // Génération d'un identifiant unique pour le debug et le chronométrage
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
 
         try {
-            // 1) Vérification utilisateur
+            // =====================================================================
+            // 1. VÉRIFICATIONS PRÉLIMINAIRES
+            // =====================================================================
+            
+            // Vérifier que l'utilisateur est connecté
             if ($this->user->data['user_id'] == ANONYMOUS) {
                 throw new HttpException(403, 'User not logged in.');
             }
 
-            // 2) Lecture du JSON
+            // =====================================================================
+            // 2. PARSING DE LA REQUÊTE JSON
+            // =====================================================================
+            
+            // Lire les données JSON de la requête
             $raw = file_get_contents('php://input');
 
             try {
@@ -120,18 +202,22 @@ class ajax
                 ], 400);
             }
 
-            // 3) Extraction des variables
-            $sid     = $data['sid'] ?? '';
-            $post_id = (int) ($data['post_id'] ?? 0);
-            $emoji   = $data['emoji'] ?? '';
-            $action  = $data['action'] ?? '';
+            // =====================================================================
+            // 3. EXTRACTION ET VALIDATION DES PARAMÈTRES
+            // =====================================================================
+            
+            // Extraire les paramètres de la requête
+            $sid     = $data['sid'] ?? '';           // Jeton de session CSRF
+            $post_id = (int) ($data['post_id'] ?? 0); // ID du message
+            $emoji   = $data['emoji'] ?? '';         // Emoji de la réaction
+            $action  = $data['action'] ?? '';        // Action à effectuer
 
-            // 4) Vérification CSRF
+            // Vérifier le jeton CSRF pour la sécurité
             if ($sid !== $this->user->data['session_id']) {
                 throw new HttpException(403, 'Jeton CSRF invalide.');
             }
 
-            // 5) Vérification action
+            // Vérifier que l'action est valide
             if (!in_array($action, ['add', 'remove', 'get', 'get_users'], true)) {
                 return new JsonResponse([
                     'success' => false,
@@ -140,7 +226,11 @@ class ajax
                 ], 400);
             }
 
-            // 6) Vérification post
+            // =====================================================================
+            // 4. VALIDATION DES DONNÉES
+            // =====================================================================
+            
+            // Vérifier que le message existe et est valide
             if (!$post_id || !$this->is_valid_post($post_id)) {
                 return new JsonResponse([
                     'success' => false,
@@ -149,7 +239,7 @@ class ajax
                 ], 400);
             }
 
-            // 7) Vérification emoji (sauf pour les actions 'get')
+            // Vérifier l'emoji (sauf pour l'action 'get' qui n'en a pas besoin)
             if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
                 return new JsonResponse([
                     'success' => false,
@@ -159,7 +249,11 @@ class ajax
                 ], 400);
             }
 
-            // 8) Vérification permissions
+            // =====================================================================
+            // 5. VÉRIFICATION DES AUTORISATIONS
+            // =====================================================================
+            
+            // Vérifier que l'utilisateur peut réagir à ce message
             if (!$this->can_react_to_post($post_id)) {
                 return new JsonResponse([
                     'success' => false,
@@ -168,26 +262,30 @@ class ajax
                 ], 403);
             }
 
-            // 9) Dispatch logique principale
+            // =====================================================================
+            // 6. VÉRIFICATION DES LIMITES (pour l'action 'add')
+            // =====================================================================
+            
             $user_id = (int)$this->user->data['user_id'];
 
-            // Vérifier les limites si on veut ajouter
             if ($action === 'add') {
+                // Récupérer les limites configurées
                 $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
                 $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
                 
-                // Compte types actuels
+                // Compter les types de réactions actuels sur ce message
                 $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
                 $result = $this->db->sql_query($sql);
                 $current_types = (int) $this->db->sql_fetchfield('count');
                 $this->db->sql_freeresult($result);
                 
-                // Compte réactions de l'user
+                // Compter les réactions de l'utilisateur sur ce message
                 $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
                 $result = $this->db->sql_query($sql);
                 $user_reactions = (int) $this->db->sql_fetchfield('count');
                 $this->db->sql_freeresult($result);
                 
+                // Vérifier les limites
                 if ($current_types >= $max_per_post) {
                     return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
                 }
@@ -196,6 +294,10 @@ class ajax
                 }
             }
 
+            // =====================================================================
+            // 7. EXÉCUTION DE L'ACTION
+            // =====================================================================
+            
             switch ($action) {
                 case 'add':
                     $resp = $this->add_reaction($post_id, $emoji);
@@ -209,7 +311,7 @@ class ajax
                     $resp = $this->get_reactions($post_id);
                     break;
             
-                case 'get_users':  // NOUVEAU
+                case 'get_users':
                     $resp = $this->get_users_for_emoji($post_id, $emoji);
                     break;
                     
@@ -221,7 +323,11 @@ class ajax
                     ], 400);
             }
 
-            // 10) Ajoute le RID dans la réponse si possible
+            // =====================================================================
+            // 8. FINALISATION DE LA RÉPONSE
+            // =====================================================================
+            
+            // Ajouter l'ID de requête dans la réponse pour le debug
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
                 $payload = json_decode($resp->getContent(), true);
                 if (is_array($payload)) {
@@ -233,7 +339,7 @@ class ajax
             return $resp;
 
         } catch (\phpbb\exception\http_exception $httpEx) {
-            // Erreurs contrôlées (403/400…) → réponse claire
+            // Erreurs HTTP contrôlées (403, 400, etc.)
             error_log("[Reactions RID=$rid] HttpException: " . $httpEx->getMessage());
             return new JsonResponse([
                 'success' => false,
@@ -242,7 +348,7 @@ class ajax
             ], $httpEx->get_status_code());
 
         } catch (\Throwable $e) {
-            // Erreurs fatales → plus jamais de 503 silencieux
+            // Erreurs fatales non contrôlées
             error_log("[Reactions RID=$rid] Exception attrapée: " . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             return new JsonResponse([
                 'success' => false,
@@ -251,14 +357,26 @@ class ajax
             ], 500);
 
         } finally {
-            // 11) Chronométrage global
+            // Chronométrage de la requête pour le debug
             $elapsed = round((microtime(true) - $t0) * 1000);
             error_log("[Reactions RID=$rid] handle() terminé en {$elapsed}ms");
         }
     }
 
+    // =============================================================================
+    // MÉTHODES D'ACTIONS
+    // =============================================================================
+    
     /**
-     * Add a reaction - Version corrigée
+     * Ajouter une réaction à un message
+     * 
+     * Cette méthode ajoute une nouvelle réaction à un message spécifique.
+     * Elle vérifie les doublons, récupère les informations nécessaires,
+     * insère la réaction en base et déclenche les notifications.
+     * 
+     * @param int $post_id ID du message auquel ajouter la réaction
+     * @param string $emoji Emoji de la réaction à ajouter
+     * @return JsonResponse Réponse JSON avec le résultat de l'opération
      */
     private function add_reaction($post_id, $emoji)
     {
@@ -489,8 +607,18 @@ class ajax
         return $reactions;
     }
 
+    // =============================================================================
+    // MÉTHODES DE VALIDATION
+    // =============================================================================
+    
     /**
-     * Check if a post is valid
+     * Vérifier si un message existe et est valide
+     * 
+     * Cette méthode vérifie qu'un message existe dans la base de données.
+     * Elle est utilisée pour valider les requêtes avant de traiter les réactions.
+     * 
+     * @param int $post_id ID du message à vérifier
+     * @return bool True si le message existe, False sinon
      */
     private function is_valid_post($post_id)
     {
@@ -503,29 +631,34 @@ class ajax
     }
 
     /**
-     * CORRIGÉ : Validation emoji pour supporter les séquences ZWJ (Zero Width Joiner)
-     * Exemples: 🏃‍♀️‍➡️, 👨‍👩‍👧‍👦, etc.
+     * Valider un emoji
+     * 
+     * Cette méthode valide qu'un emoji est valide et sécurisé.
+     * Elle supporte les emojis courantes, les emojis composés avec ZWJ
+     * et effectue des vérifications de sécurité.
+     * 
+     * @param string $emoji Emoji à valider
+     * @return bool True si l'emoji est valide, False sinon
      */
     private function is_valid_emoji($emoji)
     {
-        // Vérifier d'abord les emojis courantes
+        // Vérifier d'abord les emojis courantes (plus rapide)
         if (in_array($emoji, $this->common_emojis, true)) {
             return true;
         }
         
-        // Pour les autres emojis, validation basique
+        // Vérifier que l'emoji n'est pas vide
         if (empty($emoji)) {
             return false;
         }
         
-        // CORRIGÉ : Augmenter la limite à 50 caractères pour les emojis composés
+        // Limite de longueur pour les emojis composés (ZWJ)
         // Les emojis avec ZWJ peuvent faire jusqu'à 40-50 octets
         if (strlen($emoji) > 50) {
             return false;
         }
         
-        // Vérifier que c'est un emoji Unicode valide
-        // Les emojis peuvent avoir entre 1 et 15 caractères Unicode
+        // Vérifier la longueur Unicode (1 à 15 caractères Unicode)
         $mb_length = mb_strlen($emoji, 'UTF-8');
         if ($mb_length === 0 || $mb_length > 15) {
             return false;
@@ -540,14 +673,22 @@ class ajax
     }
 
     /**
-     * Check if user can react to a post
+     * Vérifier si l'utilisateur peut réagir à un message
+     * 
+     * Cette méthode vérifie les autorisations pour réagir à un message.
+     * Elle vérifie que le sujet et le forum ne sont pas verrouillés.
+     * 
+     * @param int $post_id ID du message à vérifier
+     * @return bool True si l'utilisateur peut réagir, False sinon
      */
     private function can_react_to_post($post_id)
     {
+        // Vérifier que l'utilisateur est connecté
         if ($this->user->data['user_id'] == ANONYMOUS) {
             return false;
         }
 
+        // Récupérer les informations du message, sujet et forum
         $sql = 'SELECT p.post_id, p.forum_id, p.poster_id, t.topic_status, f.forum_status
                 FROM ' . $this->posts_table . ' p
                 JOIN ' . $this->topics_table . ' t ON p.topic_id = t.topic_id
@@ -557,10 +698,12 @@ class ajax
         $post_data = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
         
+        // Vérifier que le message existe
         if (!$post_data) {
             return false;
         }
         
+        // Vérifier que le sujet et le forum ne sont pas verrouillés
         if ($post_data['topic_status'] == ITEM_LOCKED || $post_data['forum_status'] == ITEM_LOCKED) {
             return false;
         }
@@ -568,8 +711,17 @@ class ajax
         return true;
     }
 
+    // =============================================================================
+    // MÉTHODES UTILITAIRES
+    // =============================================================================
+    
     /**
-     * CORRECTION : Getter pour les émojis courantes (renommage)
+     * Récupérer la liste des emojis courantes
+     * 
+     * Cette méthode retourne la liste des emojis courantes utilisées
+     * par défaut dans l'interface utilisateur.
+     * 
+     * @return array Liste des emojis courantes
      */
     public function get_common_emojis()
     {
@@ -577,7 +729,16 @@ class ajax
     }
 
     /**
-     * Déclencher immédiatement une notification par cloche (sans anti-spam)
+     * Déclencher immédiatement une notification par cloche
+     * 
+     * Cette méthode déclenche une notification immédiate (sans délai anti-spam)
+     * pour l'auteur du message quand quelqu'un réagit.
+     * Les notifications par email sont gérées séparément par le cron.
+     * 
+     * @param int $post_id ID du message
+     * @param int $reacter_id ID de l'utilisateur qui a réagi
+     * @param string $emoji Emoji de la réaction
+     * @return void
      */
     private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
     {

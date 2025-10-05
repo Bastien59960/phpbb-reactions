@@ -1,27 +1,68 @@
+# Configuration des routes pour l'extension Reactions
+# 
+# Ce fichier définit toutes les routes HTTP utilisées par l'extension.
+# Les routes permettent d'accéder aux différentes fonctionnalités
+# de l'extension via des URLs propres et structurées.
+#
+# Structure des routes :
+# - /reactions : Page principale de l'extension
+# - /reactions/ajax : Endpoint AJAX pour les interactions
+# - /reactions/add/{post_id} : Ajout de réaction (legacy)
+# - /reactions/remove/{post_id}/{emoji} : Suppression de réaction (legacy)
+# - /reactions/test : Page de test et debug
+
+# =============================================================================
+# ROUTE PRINCIPALE
+# =============================================================================
+
+# Page principale de l'extension
+# Affiche les informations générales et la configuration
 bastien59960_reactions_main:
   path: /reactions
   defaults: { _controller: bastien59960.reactions.main:handle }
   methods: [GET]
 
+# =============================================================================
+# ROUTE AJAX PRINCIPALE
+# =============================================================================
+
+# Endpoint AJAX pour toutes les interactions avec les réactions
+# Gère l'ajout, la suppression, la récupération des réactions
+# et l'affichage des utilisateurs ayant réagi
 bastien59960_reactions_ajax:
   path: /reactions/ajax
   defaults: { _controller: bastien59960.reactions.ajax:handle }
   methods: [POST]
 
+# =============================================================================
+# ROUTES LEGACY (COMPATIBILITÉ)
+# =============================================================================
+
+# Ajout de réaction (route legacy)
+# Maintenue pour la compatibilité avec d'anciennes versions
 bastien59960_reactions_add:
   path: /reactions/add/{post_id}
   defaults: { _controller: bastien59960.reactions.main:add }
   requirements:
-    post_id: \d+
+    post_id: \d+  # Validation : ID de message numérique
   methods: [POST]
 
+# Suppression de réaction (route legacy)
+# Maintenue pour la compatibilité avec d'anciennes versions
 bastien59960_reactions_remove:
   path: /reactions/remove/{post_id}/{emoji}
   defaults: { _controller: bastien59960.reactions.main:remove }
   requirements:
-    post_id: \d+
+    post_id: \d+  # Validation : ID de message numérique
   methods: [POST]
 
+# =============================================================================
+# ROUTE DE TEST ET DEBUG
+# =============================================================================
+
+# Page de test et debug
+# Permet de tester les fonctionnalités de l'extension
+# et de diagnostiquer les problèmes
 bastien59960_reactions_test:
   path: /reactions/test
   defaults: { _controller: bastien59960.reactions.test:handle }

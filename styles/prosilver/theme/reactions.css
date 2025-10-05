@@ -1,12 +1,43 @@
-/* * Extension Reactions pour phpBB 3.3.15
- * Version corrigée et optimisée
+/**
+ * Feuille de style CSS pour l'extension Reactions
+ * 
+ * Ce fichier contient tous les styles CSS nécessaires pour l'affichage
+ * et l'interactivité des réactions aux messages du forum.
+ * 
+ * Fonctionnalités stylées :
+ * - Conteneur principal des réactions
+ * - Boutons de réactions avec emojis
+ * - Bouton "plus" pour ouvrir la palette
+ * - Palette d'emojis avec catégories
+ * - Tooltips avec liste des utilisateurs
+ * - États interactifs (hover, active, loading)
+ * - Mode lecture seule pour utilisateurs non connectés
+ * - Responsive design
+ * 
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
-/* ========== CONTENEUR PRINCIPAL ========== */
+/* ============================================================================= */
+/* CONTENEUR PRINCIPAL */
+/* ============================================================================= */
+
+/**
+ * Conteneur principal des réactions
+ * 
+ * Position relative pour permettre le positionnement absolu
+ * des palettes et tooltips.
+ */
 .post-reactions-container {
     position: relative;
 }
 
+/**
+ * Zone d'affichage des réactions
+ * 
+ * Contient toutes les réactions d'un message avec
+ * une bordure supérieure et un espacement approprié.
+ */
 .post-reactions {
     margin-top: 10px;
     padding: 8px 0;
@@ -17,7 +48,16 @@
     gap: 6px;
 }
 
-/* ========== BOUTON "+" (TOUJOURS À GAUCHE) ========== */
+/* ============================================================================= */
+/* BOUTON "PLUS" POUR OUVRIR LA PALETTE */
+/* ============================================================================= */
+
+/**
+ * Bouton "plus" pour ouvrir la palette d'emojis
+ * 
+ * Toujours positionné à gauche avec un style distinctif
+ * pour indiquer qu'il permet d'ajouter des réactions.
+ */
 .reaction-more {
     display: inline-flex;
     align-items: center;
@@ -37,13 +77,27 @@
     margin-right: 8px;
 }
 
+/**
+ * État de survol du bouton "plus"
+ * 
+ * Change l'apparence au survol pour indiquer l'interactivité.
+ */
 .reaction-more:hover {
     background: #e9ecef;
     color: #495057;
     border-color: #adb5bd;
 }
 
-/* ========== BOUTONS ? ET LISTE (MASQUÉS) ========== */
+/* ============================================================================= */
+/* ÉLÉMENTS MASQUÉS (COMPATIBILITÉ) */
+/* ============================================================================= */
+
+/**
+ * Boutons de compatibilité masqués
+ * 
+ * Ces éléments sont masqués car ils ne sont plus utilisés
+ * dans la version actuelle de l'extension.
+ */
 .reaction-who,
 .list-who {
     display: none !important;

@@ -1,34 +1,66 @@
 {
     "name": "bastien59960/reactions",
     "type": "phpbb-extension",
-    "description": "Extension phpBB 3.3.15 permettant aux utilisateurs de réagir aux posts avec des émojis Unicode",
+    "description": "Extension phpBB 3.3+ permettant aux utilisateurs de réagir aux messages avec des emojis Unicode. Inclut un système de notifications complet avec support des notifications par cloche (immédiates) et par email (avec délai anti-spam).",
     "homepage": "https://github.com/Bastien59960/phpbb-reactions",
-    "version": "1.0.0-dev",
-    "keywords": ["phpbb", "extension", "reactions", "emoji"],
+    "version": "1.0.1",
+    "keywords": [
+        "phpbb",
+        "extension",
+        "reactions",
+        "emoji",
+        "notifications",
+        "ajax",
+        "interactive"
+    ],
     "license": "GPL-2.0-only",
     "authors": [
         {
             "name": "Bastien59960",
-            "role": "Developer"
+            "email": "bastien59960@example.com",
+            "role": "Developer",
+            "homepage": "https://github.com/Bastien59960"
         }
     ],
     "require": {
-        "php": ">=7.3.0",
+        "php": ">=7.4.0",
         "phpbb/phpbb": ">=3.3.0,<4.0.0@dev",
         "composer/installers": "~1.0"
     },
     "require-dev": {
-        "phpbb/epv": "dev-master"
+        "phpbb/epv": "dev-master",
+        "phpunit/phpunit": "^9.0",
+        "squizlabs/php_codesniffer": "^3.0"
     },
     "extra": {
         "display-name": "Post Reactions",
         "soft-require": {
             "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+        },
+        "version-check": {
+            "host": "api.github.com",
+            "user": "Bastien59960",
+            "repository": "phpbb-reactions",
+            "filename": "composer.json"
         }
     },
     "autoload": {
         "psr-4": {
             "bastien59960\\reactions\\": "./"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "bastien59960\\reactions\\tests\\": "./tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs": "phpcs --standard=PSR12 ./",
+        "cs-fix": "phpcbf --standard=PSR12 ./"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
     }
 }

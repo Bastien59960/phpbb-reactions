@@ -1,8 +1,30 @@
+<!--
+    Template pour l'affichage des réactions aux messages
+    
+    Ce template gère l'affichage des réactions pour les messages du forum.
+    Il supporte deux modes :
+    1. Mode interactif pour les utilisateurs connectés (ajout/suppression de réactions)
+    2. Mode lecture seule pour les utilisateurs non connectés
+    
+    Variables utilisées :
+    - S_REACTIONS_ENABLED : Indique si les réactions sont activées
+    - S_IS_BOT : Indique si l'utilisateur est un bot
+    - S_USER_LOGGED_IN : Indique si l'utilisateur est connecté
+    - POST_ID : ID du message
+    - post_reactions : Boucle des réactions existantes
+    - post_reactions.EMOJI : Emoji de la réaction
+    - post_reactions.COUNT : Nombre de réactions pour cet emoji
+    - post_reactions.USERS : Liste des utilisateurs ayant réagi
+    - post_reactions.USER_REACTED : Indique si l'utilisateur actuel a réagi
+-->
+
+<!-- ============================================================================= -->
+<!-- MODE INTERACTIF POUR UTILISATEURS CONNECTÉS -->
+<!-- ============================================================================= -->
 <!-- IF S_REACTIONS_ENABLED and not S_IS_BOT and S_USER_LOGGED_IN -->
-<!-- Bloc pour les utilisateurs connectés avec interactions complètes -->
 <div class="post-reactions-container" data-post-id="{POST_ID}">
     <div class="post-reactions">
-        <!-- Réactions depuis la DB (gérées par le listener PHP) -->
+        <!-- Boucle des réactions existantes depuis la base de données -->
         <!-- BEGIN post_reactions -->
         <span class="reaction<!-- IF post_reactions.USER_REACTED --> active<!-- ENDIF -->"
               data-emoji="{post_reactions.EMOJI}"
@@ -14,15 +36,21 @@
             <span class="count">{post_reactions.COUNT}</span>
         </span>
         <!-- END post_reactions -->
-        <!-- Bouton pour palette - SEULEMENT pour les utilisateurs connectés -->
+        
+        <!-- Bouton pour ouvrir la palette d'emojis -->
         <span class="reaction-more" title="Ajouter une réaction">+</span>
     </div>
 </div>
+
+<!-- ============================================================================= -->
+<!-- MODE LECTURE SEULE POUR UTILISATEURS NON CONNECTÉS -->
+<!-- ============================================================================= -->
 <!-- ELSEIF S_REACTIONS_ENABLED and not S_IS_BOT and not S_USER_LOGGED_IN -->
-<!-- Affichage en lecture seule pour les utilisateurs non connectés -->
 <div class="post-reactions-container post-reactions-readonly" data-post-id="{POST_ID}">
     <div class="post-reactions">
+        <!-- Boucle des réactions existantes (lecture seule) -->
         <!-- BEGIN post_reactions -->
+            <!-- Afficher seulement les réactions avec un compteur > 0 -->
             <!-- IF post_reactions.COUNT > 0 -->
             <span class="reaction reaction-readonly"
                   data-emoji="{post_reactions.EMOJI}"
