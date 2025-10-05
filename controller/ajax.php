@@ -792,12 +792,7 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
 
     /**
      * Déclencher immédiatement une notification par cloche
-     * 
-     * Cette méthode déclenche une notification immédiate (sans délai anti-spam)
-     * pour l'auteur du message quand quelqu'un réagit.
-     * Les notifications par email sont gérées séparément par le cron.
-     * 
-     * @param int $post_id ID du message
+     * * @param int $post_id ID du message
      * @param int $reacter_id ID de l'utilisateur qui a réagi
      * @param string $emoji Emoji de la réaction
      * @return void
@@ -805,71 +800,50 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
     private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
     {
         try {
-            // Récupérer l'auteur du post
+            // Récupérer l'auteur du post pour le notifier
             $sql = 'SELECT poster_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
             $result = $this->db->sql_query($sql);
             $post_data = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
 
             if (!$post_data || !$post_data['poster_id']) {
+                // Si on ne trouve pas l'auteur, on ne fait rien
                 return;
             }
 
             $post_author_id = (int) $post_data['poster_id'];
 
-            // Ne pas notifier l'utilisateur qui a réagi
+            // On ne s'envoie pas de notification à soi-même
             if ($post_author_id === $reacter_id) {
                 return;
             }
 
-            // Récupérer les données des réactions pour ce post
-            $sql = 'SELECT user_id FROM ' . $this->post_reactions_table . ' 
-                    WHERE post_id = ' . (int) $post_id . ' 
-                    ORDER BY reaction_time ASC';
-            $result = $this->db->sql_query($sql);
-            
-            $reacter_ids = [];
-            while ($row = $this->db->sql_fetchrow($result)) {
-                $reacter_ids[] = (int) $row['user_id'];
-            }
-            $this->db->sql_freeresult($result);
-
-            // Compter le nombre total de réactions pour ce post
-            $sql = 'SELECT COUNT(*) as total FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . (int) $post_id;
-            $result = $this->db->sql_query($sql);
-            $reaction_count = (int) $this->db->sql_fetchfield('total');
-            $this->db->sql_freeresult($result);
-
-            // Préparer les données de notification
+            // Préparer les données nécessaires pour la notification
+            // Ces clés doivent correspondre à ce que la classe de notification attend
             $notification_data = [
-                'post_id' => $post_id,
-                'post_author' => $post_author_id,
-                'reacter_ids' => $reacter_ids,
-                'reaction_count' => $reaction_count,
-                'emoji' => $emoji,
+                'post_id'           => $post_id,
+                'post_author'       => $post_author_id,
+                'reacter'           => $reacter_id,
+                'reacter_username'  => $this->user->data['username'], // Le nom de l'utilisateur qui réagit
+                'emoji'             => $emoji,
             ];
 
-            // Déclencher la notification immédiatement (cloche)
-// Déclencher la notification immédiatement (cloche)
-if (method_exists($this, 'trigger_immediate_notification')) {
-    $this->trigger_immediate_notification($post_id, $user_id, $emoji);
-} else {
-    $msg = "Erreur : la méthode 'trigger_immediate_notification' n'existe pas dans la classe "
-        . get_class($this)
-        . ". Impossible d'envoyer la notification pour le post ID $post_id, utilisateur ID $user_id, emoji '$emoji'.";
+            // Vider les notifications existantes du même type pour ce post pour cet auteur
+            // pour éviter d'avoir plusieurs notifications "X a réagi"
+            $this->notification_manager->delete_notifications(
+                'bastien59960.reactions.notification',
+                $post_id,
+                [$post_author_id]
+            );
 
-    // Log PHP
-    error_log("[Reactions RID=$rid] $msg");
-
-    // Log ACP
-    if (function_exists('add_log') && isset($this->user)) {
-        add_log('admin', 'LOG_EXTENSION_REACTIONS_ERROR', $post_id, $user_id, $emoji, get_class($this));
-    }
-}
+            // Envoyer la nouvelle notification
+            $this->notification_manager->add_notification(
+                'bastien59960.reactions.notification',
+                $notification_data
+            );
 
         } catch (\Exception $e) {
-            error_log('[Reactions] Erreur lors de la notification immédiate: ' . $e->getMessage());
+            // En cas d'erreur, on l'enregistre sans faire planter le script
+            error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
         }
     }
-
-}
