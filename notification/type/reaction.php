@@ -12,8 +12,9 @@
  * - Définit les variables pour le rendu et les e-mails (facultatif).
  *
  * Correction :
- * - Ordre des dépendances du constructeur corrigé (user, auth, db, config...).
- * - Ajout de get_url() pour éviter l’erreur fatale 500.
+ * - Ordre des dépendances du constructeur aligné sur base::__construct (db, language, user, auth...).
+ * - Ajout de language et user_notifications_table requis par le parent.
+ * - Appel parent::__construct avec signatures conformes (évite TypeError sur $db).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -34,6 +35,7 @@ use phpbb\template\template;
 use phpbb\controller\helper;
 use phpbb\user_loader;
 use phpbb\request\request_interface;
+use phpbb\language\language;  // AJOUT : Import pour language (requis par base)
 
 class reaction extends base
 {
@@ -61,43 +63,46 @@ class reaction extends base
 	/** @var user_loader */
 	protected $user_loader;
 
+	/** @var language AJOUT : Propriété pour language (gérée par parent) */
+	protected $language;
+
 	protected $phpbb_root_path;
 	protected $php_ext;
 
 	/**
-	 * Constructeur — injection des dépendances phpBB dans le bon ordre.
+	 * Constructeur — injection des dépendances phpBB alignée sur base::__construct.
 	 */
 	public function __construct(
-		user $user,
-		auth $auth,
-		driver_interface $db,
-		config $config,
-		user_loader $user_loader,
-		helper $helper,
-		request_interface $request,
-		template $template,
-		$phpbb_root_path,
-		$php_ext
+		driver_interface $db,                    // 1er : db (requis par parent en premier)
+		language $language,                      // 2e : language (requis par parent)
+		user $user,                              // 3e : user
+		auth $auth,                              // 4e : auth
+		config $config,                          // 5e : config (extra)
+		user_loader $user_loader,                // 6e : user_loader (extra)
+		helper $helper,                          // 7e : helper
+		request_interface $request,              // 8e : request
+		template $template,                      // 9e : template
+		$phpbb_root_path,                        // 10e : root_path
+		$php_ext,                                // 11e : php_ext
+		$user_notifications_table                // AJOUT : 12e : table des notifications users (requis par parent)
 	) {
-		// CORRECTION : On appelle le constructeur parent avec les services DANS LE BON ORDRE
-		// La classe de base de phpBB attend l'utilisateur en premier.
+		// CORRECTION : Appel parent::__construct avec l'ordre EXACT attendu par base
+		// (db, language, user, auth, root_path, php_ext, user_notifications_table)
 		parent::__construct(
+			$db,
+			$language,
 			$user,
 			$auth,
-			$db,
-			$config,
-			$user_loader,
-			$helper,
-			$request,
-			$template,
 			$phpbb_root_path,
-			$php_ext
+			$php_ext,
+			$user_notifications_table
 		);
 
-		// On assigne les propriétés nécessaires pour notre classe (cette partie était déjà bonne)
+		// On assigne les propriétés nécessaires pour notre classe
 		$this->user = $user;
 		$this->auth = $auth;
 		$this->db = $db;
+		$this->language = $language;             // AJOUT : Assignation pour language
 		$this->config = $config;
 		$this->user_loader = $user_loader;
 		$this->helper = $helper;
@@ -106,12 +111,12 @@ class reaction extends base
 		$this->phpbb_root_path = $phpbb_root_path;
 		$this->php_ext = $php_ext;
 
-		// AJOUT : Debug basique (retirez en prod)
+		// Debug basique (retirez en prod)
 		if (defined('DEBUG') && DEBUG) {
 			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db));
 		}
 
-		// AJOUT : Vérification basique pour éviter des crashes futurs (optionnel)
+		// Vérification basique pour éviter des crashes futurs (optionnel)
 		if (!$db instanceof \phpbb\db\driver\driver_interface) {
 			throw new \InvalidArgumentException('DB driver invalide injecté dans Reaction notification.');
 		}

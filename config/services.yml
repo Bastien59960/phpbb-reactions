@@ -87,15 +87,17 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@user'                          # 1er : user (CORRECTION : était @dbal.conn)
-            - '@auth'                          # 2e : auth
-            - '@dbal.conn'                     # 3e : db (CORRECTION : déplacé de la 1re position)
-            - '@config'                        # 4e : config
-            - '@user_loader'
-            - '@controller.helper'
-            - '@request'
-            - '@template'
-            - '%core.root_path%'
-            - '%core.php_ext%'
+            - '@dbal.conn'                     # 1er : db (pour parent)
+            - '@language'                      # 2e : language (requis par parent)
+            - '@user'                          # 3e : user
+            - '@auth'                          # 4e : auth
+            - '@config'                        # 5e : config (extra)
+            - '@user_loader'                   # 6e
+            - '@controller.helper'             # 7e : helper
+            - '@request'                       # 8e
+            - '@template'                      # 9e
+            - '%core.root_path%'               # 10e
+            - '%core.php_ext%'                 # 11e
+            - '%core.user_notifications_table%' # AJOUT : 12e : table (requis ; assure-toi que c'est défini dans parameters.yml comme 'phpbb_user_notifications')
         tags:
           - { name: notification.type }
