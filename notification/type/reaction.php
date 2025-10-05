@@ -13,8 +13,8 @@
  *
  * Correction :
  * - Ordre des dépendances du constructeur aligné sur base::__construct (db, language, user, auth...).
- * - Ajout de language requis par le parent (évite TypeError).
- * - Appel parent::__construct avec 6 args exacts (db en 1er).
+ * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
+ * - Appel parent::__construct avec 7 args exacts (db en 1er).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -66,6 +66,9 @@ class reaction extends base
 	/** @var language AJOUT : Propriété pour language (gérée par parent) */
 	protected $language;
 
+	/** @var string AJOUT : Propriété pour table notifications (gérée par parent) */
+	protected $notifications_table;
+
 	protected $phpbb_root_path;
 	protected $php_ext;
 
@@ -83,17 +86,19 @@ class reaction extends base
 		request_interface $request,              // 8e : request (extra)
 		template $template,                      // 9e : template (extra)
 		$phpbb_root_path,                        // 10e : root_path
-		$php_ext                                 // 11e : php_ext
+		$php_ext,                                // 11e : php_ext
+		$notifications_table                     // AJOUT : 12e : notifications_table (7e pour parent)
 	) {
-		// CORRECTION : Appel parent::__construct avec l'ordre EXACT des 6 args attendus par base
-		// (db, language, user, auth, root_path, php_ext)
+		// CORRECTION : Appel parent::__construct avec l'ordre EXACT des 7 args attendus par base
+		// (db, language, user, auth, root_path, php_ext, notifications_table)
 		parent::__construct(
 			$db,
 			$language,
 			$user,
 			$auth,
 			$phpbb_root_path,
-			$php_ext
+			$php_ext,
+			$notifications_table
 		);
 
 		// On assigne les propriétés nécessaires pour notre classe (cette partie était déjà bonne)
@@ -108,10 +113,11 @@ class reaction extends base
 		$this->template = $template;
 		$this->phpbb_root_path = $phpbb_root_path;
 		$this->php_ext = $php_ext;
+		$this->notifications_table = $notifications_table;  // AJOUT : Assignation pour table
 
 		// AJOUT : Debug basique (retirez en prod)
 		if (defined('DEBUG') && DEBUG) {
-			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db));
+			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db) . ', Table: ' . $notifications_table);
 		}
 
 		// AJOUT : Vérification basique pour éviter des crashes futurs (optionnel)

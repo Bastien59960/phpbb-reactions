@@ -837,10 +837,13 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
             );
 
             // Envoyer la nouvelle notification
-            $this->notification_manager->add_notifications(
-                'bastien59960.reactions.notification',
-                $notification_data
-            );
+$this->notification_manager->add_notifications(
+    'bastien59960.reactions.notification',
+    $notification_data
+);
+
+// AJOUT : Log de succès
+error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji);
 
         } catch (\Exception $e) {
             // En cas d'erreur, on l'enregistre sans faire planter le script

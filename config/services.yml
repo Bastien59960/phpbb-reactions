@@ -98,5 +98,6 @@ services:
             - '@template'                      # 9e : template (extra)
             - '%core.root_path%'               # 10e : root_path
             - '%core.php_ext%'                 # 11e : php_ext
+            - 'phpbb_notifications'            # AJOUT : 12e : notifications_table (7e pour parent, littéral)
         tags:
           - { name: notification.type }
