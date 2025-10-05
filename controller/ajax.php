@@ -837,7 +837,7 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
             );
 
             // Envoyer la nouvelle notification
-            $this->notification_manager->add_notification(
+            $this->notification_manager->add_notifications(
                 'bastien59960.reactions.notification',
                 $notification_data
             );
