@@ -256,7 +256,7 @@ function toggle_visible(id) {
         currentPicker = picker;
 
 
-        console.debug('REACTIONS payload', payload)
+        
         // Essaye de charger la version complète des emojis (catégories)
         fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => {
@@ -708,6 +708,8 @@ function toggle_visible(id) {
         // console.debug('Sending reaction payload:', payload);
 
         // Envoi du fetch (JSON)
+        console.debug('REACTIONS payload', payload)
+
         fetch(REACTIONS_AJAX_URL, {
             method: 'POST',
             headers: {
