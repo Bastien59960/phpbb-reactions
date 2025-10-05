@@ -569,7 +569,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
         $sql = 'DELETE FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . (int) $post_id . '
                   AND user_id = ' . (int) $this->user->data['user_id'] . "
-                  AND reaction_emoji = '" . $this->db->sql_escape($emoji) . "'";
+                  AND reaction_emoji COLLATE utf8mb4_bin = '" . $this->db->sql_escape($emoji) . "'";
         
         error_log("[Reactions RID=$rid] delete SQL: $sql");
         $this->db->sql_query($sql);
@@ -839,7 +839,22 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
             ];
 
             // Déclencher la notification immédiatement (cloche)
-            $this->notification_manager->add_notifications('bastien59960.reactions.notification', $notification_data);
+// Déclencher la notification immédiatement (cloche)
+if (method_exists($this, 'trigger_immediate_notification')) {
+    $this->trigger_immediate_notification($post_id, $user_id, $emoji);
+} else {
+    $msg = "Erreur : la méthode 'trigger_immediate_notification' n'existe pas dans la classe "
+        . get_class($this)
+        . ". Impossible d'envoyer la notification pour le post ID $post_id, utilisateur ID $user_id, emoji '$emoji'.";
+
+    // Log PHP
+    error_log("[Reactions RID=$rid] $msg");
+
+    // Log ACP
+    if (function_exists('add_log') && isset($this->user)) {
+        add_log('admin', 'LOG_EXTENSION_REACTIONS_ERROR', $post_id, $user_id, $emoji, get_class($this));
+    }
+}
 
         } catch (\Exception $e) {
             error_log('[Reactions] Erreur lors de la notification immédiate: ' . $e->getMessage());
