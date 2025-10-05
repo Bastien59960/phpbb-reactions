@@ -14,7 +14,8 @@
  * Correction :
  * - Ordre des dépendances du constructeur aligné sur base::__construct (db, language, user, auth...).
  * - Ajout de language et notifications_table (7e arg requis par parent, évite "too few arguments").
- * - Appel parent::__construct avec 7 args exacts (db en 1er).
+ * - AJOUT : Insertion dummy initiale en DB si type inexistant (fixe UCP "NOTIFICATION_TYPE_NOT_EXIST").
+ * - AJOUT : Implémentation get_insert_sql() et create_insert_array() (requis pour persistance DB et conformité).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -123,6 +124,29 @@ class reaction extends base
 		// AJOUT : Vérification basique pour éviter des crashes futurs (optionnel)
 		if (!$db instanceof \phpbb\db\driver\driver_interface) {
 			throw new \InvalidArgumentException('DB driver invalide injecté dans Reaction notification.');
+		}
+
+		// AJOUT : Insertion dummy initiale si le type n'existe pas en DB (fixe UCP "NOTIFICATION_TYPE_NOT_EXIST")
+		// Crée une entrée prototype pour 'notification.reaction' avec user_id=ANONYMOUS (ne notifie personne)
+		$type_name = 'notification.' . $this->get_type();  // 'notification.reaction'
+		$sql = 'SELECT notification_id FROM ' . $this->notifications_table . ' WHERE notification_type_name = ' . $this->db->sql_escape($type_name) . ' LIMIT 1';
+		$result = $this->db->sql_query($sql);
+		$exists = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		if (!$exists) {
+			// Insère une entrée dummy (standards + read=1 pour ignorer)
+			$dummy_data = array(
+				'notification_type_name'    => $type_name,
+				'notification_time'         => time(),
+				'user_id'                   => ANONYMOUS,  // Pas d'user spécifique
+				'notification_read'         => 1,           // Marquée comme lue (ignore)
+				'notification_is_bookmark'  => 0,
+			);
+			$this->db->sql_query('INSERT INTO ' . $this->notifications_table . ' ' . $this->db->sql_build_array('INSERT', $dummy_data));
+			if (defined('DEBUG') && DEBUG) {
+				error_log('[Reactions Notification] Entrée dummy insérée pour type: ' . $type_name);
+			}
 		}
 	}
 
@@ -282,5 +306,46 @@ class reaction extends base
 	public function get_language_file()
 	{
 		return 'bastien59960/reactions/notification/reaction_notification';
+	}
+
+	/**
+	 * AJOUT : Colonnes custom en DB pour ce type de notification (requis par type_interface).
+	 * Ajoute 'emoji' pour persister l'emoji de la réaction.
+	 */
+	public function get_insert_sql()
+	{
+		return array(
+			'reaction_emoji' => array('VCHAR_UNI', 10),  // Emoji (UTF-8, max 10 chars)
+		);
+	}
+
+	/**
+	 * AJOUT : Construit l'array d'insertion DB pour les notifications (requis par type_interface).
+	 * Remplit les champs standards + custom (e.g., emoji).
+	 */
+	public function create_insert_array(array $notification_data, array $notify_users)
+	{
+		// Champs standards (phpBB les gère, mais on les complète)
+		$insert_array = array(
+			'notification_type_name'    => 'notification.' . $this->get_type(),  // 'notification.reaction'
+			'notification_time'         => time(),
+			'notification_read'         => 0,
+			'notification_is_bookmark'  => 0,
+			'item_id'                   => $this->get_item_id($notification_data),
+			'item_parent_id'            => $this->get_item_parent_id($notification_data),
+		);
+
+		// AJOUT : Champs custom pour ce type
+		$insert_array['reaction_emoji'] = $notification_data['emoji'] ?? '';
+
+		// Pour chaque user notifié, duplique l'array avec user_id
+		$insert_ary = array();
+		foreach ($notify_users as $notify_user) {
+			$user_insert = $insert_array;
+			$user_insert['user_id'] = $notify_user;
+			$insert_ary[] = $user_insert;
+		}
+
+		return $insert_ary;
 	}
 }
