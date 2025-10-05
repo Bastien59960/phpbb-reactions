@@ -847,3 +847,4 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
             error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
         }
     }
+}
