@@ -4,16 +4,16 @@
  * Notification Type: Reaction
  * ============================================================================
  *
- * Fournit la logique de notification pour les réactions (icône de cloche).
+ * Gère la logique des notifications de réactions (icône de cloche).
  *
  * - Implémente toutes les méthodes requises par phpbb\notification\type\type_interface.
  * - Identifie le type de notification (get_type).
- * - Détermine quels utilisateurs doivent être notifiés (find_users_for_notification).
- * - Définit les variables pour le rendu ou les e-mails (facultatif).
+ * - Détermine les utilisateurs à notifier (find_users_for_notification).
+ * - Définit les variables pour le rendu et les e-mails (facultatif).
  *
  * Correction :
- * - Signature conforme à type_interface (notamment find_users_for_notification).
- * - Ajout des méthodes statiques obligatoires.
+ * - Ajout de get_url() pour éviter l’erreur fatale 500.
+ * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
  */
@@ -66,7 +66,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Identifiant unique de ce type de notification.
+	 * Identifiant unique du type de notification.
 	 */
 	public function get_type()
 	{
@@ -74,7 +74,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Indique si ce type de notification est disponible.
+	 * Indique si le type de notification est activé.
 	 */
 	public function is_available()
 	{
@@ -82,7 +82,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Retourne l'ID de l'élément concerné (ici, le post_id).
+	 * Retourne l'ID de l'élément concerné (post_id).
 	 */
 	public static function get_item_id($data)
 	{
@@ -90,7 +90,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Retourne l'ID du parent de l'élément (topic_id).
+	 * Retourne l'ID du parent (topic_id).
 	 */
 	public static function get_item_parent_id($data)
 	{
@@ -98,7 +98,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Retourne l'ID de l'auteur de l'élément.
+	 * Retourne l'ID de l'auteur du post concerné.
 	 */
 	public static function get_item_author_id($data)
 	{
@@ -106,7 +106,22 @@ class reaction extends base
 	}
 
 	/**
-	 * Retourne l'URL associée à la notification (redirige vers le message).
+	 * Retourne l'URL complète vers le post concerné.
+	 * (Méthode requise par type_interface — évite l'erreur 500)
+	 */
+	public function get_url()
+	{
+		$post_id = $this->get_item_id($this->data ?? []);
+		if (!$post_id) {
+			return '';
+		}
+
+		global $phpbb_root_path, $phpEx;
+		return append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id;
+	}
+
+	/**
+	 * Version statique — utilisée lors de la création de la notification.
 	 */
 	public static function get_item_url($data)
 	{
@@ -120,21 +135,17 @@ class reaction extends base
 	}
 
 	/**
-	 * Retourne le titre de la notification (clé de langue).
+	 * Clé de langue du titre de notification.
 	 */
 	public function get_title()
 	{
-		// Exemple de clé à définir dans language/*/reactions.php :
-		// $lang = ['NOTIFICATION_TYPE_REACTION' => '%s a réagi à votre message avec %s'];
+		// Exemple dans language/*/reactions.php :
+		// 'NOTIFICATION_TYPE_REACTION' => '%s a réagi à votre message avec %s'
 		return 'NOTIFICATION_TYPE_REACTION';
 	}
 
 	/**
 	 * Détermine les utilisateurs à notifier.
-	 *
-	 * @param array $type_data Données du message ou de la réaction.
-	 * @param array $options   Options additionnelles.
-	 * @return array           Liste des IDs utilisateurs à notifier.
 	 */
 	public function find_users_for_notification($type_data, $options = [])
 	{
@@ -152,7 +163,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Aucune requête utilisateur additionnelle nécessaire ici.
+	 * Aucune requête utilisateur additionnelle nécessaire.
 	 */
 	public function users_to_query()
 	{
@@ -160,7 +171,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Désactive les e-mails pour ce type de notification.
+	 * Désactive l'envoi d'e-mails pour ce type.
 	 */
 	public function get_email_template()
 	{
@@ -168,7 +179,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Variables disponibles dans un éventuel e-mail (non utilisé ici).
+	 * Variables disponibles dans un e-mail (si jamais activé).
 	 */
 	public function get_email_template_variables()
 	{
@@ -180,7 +191,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Titre traduit de la notification, avec variables injectées.
+	 * Titre traduit de la notification avec variables injectées.
 	 */
 	public function get_title_for_user($user_id, $lang)
 	{
@@ -194,7 +205,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Données à afficher dans la liste des notifications de l’utilisateur.
+	 * Données affichées dans la liste des notifications.
 	 */
 	public function get_render_data($user_id)
 	{
@@ -206,7 +217,7 @@ class reaction extends base
 	}
 
 	/**
-	 * Nom du fichier de langue utilisé par ce type.
+	 * Nom du fichier de langue utilisé.
 	 */
 	public function get_language_file()
 	{
