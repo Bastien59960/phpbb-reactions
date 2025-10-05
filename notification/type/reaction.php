@@ -94,15 +94,17 @@ class reaction extends base
         return true;
     }
 
-    /**
-     * Retourne l'ID de l'item (post_id) pour cette notification
-     *
-     * @return int
-     */
-    public function get_item_id()
-    {
-        return (int) ($data['post_id'] ?? 0);
-    }
+/**
+ * Retourne l'ID de l'item (post_id) pour cette notification
+ *
+ * @param array $data
+ * @return int
+ */
+public static function get_item_id($data)
+{
+    return (int) ($data['post_id'] ?? 0);
+}
+
 
     /**
      * Retourne l'URL relative à la notification (redirige vers le message)
