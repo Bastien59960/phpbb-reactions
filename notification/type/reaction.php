@@ -13,8 +13,8 @@
  *
  * Correction :
  * - Ordre des dépendances du constructeur aligné sur base::__construct (db, language, user, auth...).
- * - Ajout de language et user_notifications_table requis par le parent.
- * - Appel parent::__construct avec signatures conformes (évite TypeError sur $db).
+ * - Ajout de language requis par le parent (évite TypeError).
+ * - Appel parent::__construct avec 6 args exacts (db en 1er).
  * - Signatures conformes à type_interface.
  *
  * © 2025 Bastien59960 — Licence GPL v2.
@@ -77,28 +77,26 @@ class reaction extends base
 		language $language,                      // 2e : language (requis par parent)
 		user $user,                              // 3e : user
 		auth $auth,                              // 4e : auth
-		config $config,                          // 5e : config (extra)
+		config $config,                          // 5e : config (extra pour enfant)
 		user_loader $user_loader,                // 6e : user_loader (extra)
-		helper $helper,                          // 7e : helper
-		request_interface $request,              // 8e : request
-		template $template,                      // 9e : template
+		helper $helper,                          // 7e : helper (extra)
+		request_interface $request,              // 8e : request (extra)
+		template $template,                      // 9e : template (extra)
 		$phpbb_root_path,                        // 10e : root_path
-		$php_ext,                                // 11e : php_ext
-		$user_notifications_table                // AJOUT : 12e : table des notifications users (requis par parent)
+		$php_ext                                 // 11e : php_ext
 	) {
-		// CORRECTION : Appel parent::__construct avec l'ordre EXACT attendu par base
-		// (db, language, user, auth, root_path, php_ext, user_notifications_table)
+		// CORRECTION : Appel parent::__construct avec l'ordre EXACT des 6 args attendus par base
+		// (db, language, user, auth, root_path, php_ext)
 		parent::__construct(
 			$db,
 			$language,
 			$user,
 			$auth,
 			$phpbb_root_path,
-			$php_ext,
-			$user_notifications_table
+			$php_ext
 		);
 
-		// On assigne les propriétés nécessaires pour notre classe
+		// On assigne les propriétés nécessaires pour notre classe (cette partie était déjà bonne)
 		$this->user = $user;
 		$this->auth = $auth;
 		$this->db = $db;
@@ -111,12 +109,12 @@ class reaction extends base
 		$this->phpbb_root_path = $phpbb_root_path;
 		$this->php_ext = $php_ext;
 
-		// Debug basique (retirez en prod)
+		// AJOUT : Debug basique (retirez en prod)
 		if (defined('DEBUG') && DEBUG) {
 			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db));
 		}
 
-		// Vérification basique pour éviter des crashes futurs (optionnel)
+		// AJOUT : Vérification basique pour éviter des crashes futurs (optionnel)
 		if (!$db instanceof \phpbb\db\driver\driver_interface) {
 			throw new \InvalidArgumentException('DB driver invalide injecté dans Reaction notification.');
 		}
@@ -164,7 +162,7 @@ class reaction extends base
 
 	/**
 	 * Retourne l'URL complète vers le post concerné.
-	 * (Méthode requise par type_interface — évite l'erreur 500)
+	 * (Méthode requise par type_interface — évite l’erreur fatale 500)
 	 */
 	public function get_url()
 	{
