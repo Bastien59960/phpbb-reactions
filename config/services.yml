@@ -105,19 +105,21 @@ services:
         tags:
             - { name: cron.task }       # Tag pour la tâche cron
 
-    # =============================================================================
-    # TYPE DE NOTIFICATION
-    # =============================================================================
-    # Définit le format et le comportement des notifications de réactions
-    # - Format des notifications par cloche
-    # - Format des emails
-    # - Gestion des utilisateurs à notifier
-    bastien59960.reactions.notification:
-        class: bastien59960\reactions\notification\type\reaction
-        arguments:
-            - '@user'                   # ✅ Utilisateur phpBB (et non user_loader)
-            - '@dbal.conn'              # Connexion base de données
-            - '%core.root_path%'        # Chemin racine du forum
-            - '%core.php_ext%'          # Extension des fichiers PHP
-        tags:
-            - { name: notification.type } # Tag pour le type de notification
+# =============================================================================
+# TYPE DE NOTIFICATION
+# =============================================================================
+# Définit le format et le comportement des notifications de réactions
+# - Format des notifications par cloche
+# - Format des emails
+# - Gestion des utilisateurs à notifier
+bastien59960.reactions.notification:
+    class: bastien59960\reactions\notification\type\reaction
+    arguments:
+        - '@user'          # Utilisateur phpBB
+        - '@auth'          # Gestionnaire d’autorisations phpBB
+        - '@template'      # Moteur de templates
+        - '@config'        # Configuration du forum
+        - '@request'       # Requête HTTP
+    tags:
+        - { name: notification.type } # Type de notification
+
