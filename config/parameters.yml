@@ -1,4 +1,6 @@
+# =============================================================================
 # Configuration des paramètres pour l'extension Reactions
+# =============================================================================
 # 
 # Ce fichier définit les noms des tables de base de données utilisées
 # par l'extension. Ces paramètres permettent de personnaliser les noms
@@ -6,27 +8,34 @@
 # des préfixes de table personnalisés).
 #
 # Utilisation :
-# - Les noms de tables sont injectés dans les services via ces paramètres
-# - Permet la flexibilité pour différentes configurations de base de données
-# - Facilite la maintenance et les tests
+# - Les noms de tables sont injectés dans les services via ces paramètres.
+# - Le préfixe %core.table_prefix% est automatiquement remplacé
+#   par celui configuré dans phpBB (souvent "phpbb_").
+# - Permet la flexibilité pour différentes configurations de base de données.
+# - Facilite la maintenance et les tests.
+# =============================================================================
 
 parameters:
     # =============================================================================
     # TABLES DE BASE DE DONNÉES
     # =============================================================================
-    
+
     # Table principale des réactions
     # Stocke toutes les réactions aux messages du forum
-    tables.post_reactions: phpbb_post_reactions
-    
+    tables.post_reactions: '%core.table_prefix%post_reactions'
+
+    # Table des préférences utilisateur pour les notifications de réactions
+    # Contient les choix individuels (activer la cloche, activer le cron)
+    tables.reactions_user_prefs: '%core.table_prefix%reactions_user_prefs'
+
     # Table des sujets (référence)
     # Utilisée pour les jointures et les vérifications d'autorisation
-    tables.topics: phpbb_topics
-    
+    tables.topics: '%core.table_prefix%topics'
+
     # Table des forums (référence)
     # Utilisée pour les jointures et les vérifications d'autorisation
-    tables.forums: phpbb_forums
-    
+    tables.forums: '%core.table_prefix%forums'
+
     # Table des messages (référence)
     # Utilisée pour les jointures et les vérifications d'autorisation
-    tables.posts: phpbb_posts
+    tables.posts: '%core.table_prefix%posts'
