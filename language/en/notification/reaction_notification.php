@@ -9,16 +9,27 @@
 
 if (!defined('IN_PHPBB'))
 {
-    exit;
+	exit;
 }
 
-if (empty(lang) || !is_array($lang))
+if (empty($lang) || !is_array($lang))
 {
-    $lang = array();
+	$lang = array();
 }
 
-// Merge the existing language array
+// ============================================================================
+// Reaction notifications
+// ============================================================================
+
 $lang = array_merge($lang, array(
-    'NOTIFICATION_TYPE_REACTION' => 'Someone reacted to your message',
-    'NOTIFICATION_GROUP_REACTIONS' => 'Reaction notifications',
+	// Displayed in the notification dropdown or notifications page
+	// Example: "Alice reacted to your post with ❤️"
+	'NOTIFICATION_TYPE_REACTION'   => '%s reacted to your post with %s',
+
+	// Group title in the UCP notification settings
+	'NOTIFICATION_GROUP_REACTIONS' => 'Reaction notifications',
+
+	// Title and description for the notification type in the UCP
+	'NOTIFICATION_REACTION_TITLE'  => 'Reactions to your posts',
+	'NOTIFICATION_REACTION_DESC'   => 'Receive a notification when someone reacts to one of your posts.',
 ));
