@@ -397,7 +397,7 @@ class notification_task extends \phpbb\cron\task\base
         }
 
         // Vérifier si la table phpbb_reactions_user_prefs existe
-        $check_sql = "SHOW TABLES LIKE 'phpbb_reactions_user_prefs'";
+        $check_sql = "SHOW TABLES LIKE $this->table_prefix . 'reactions_user_prefs'";
         $res = $this->db->sql_query($check_sql);
         $exists = (bool) $this->db->sql_fetchrow($res);
         $this->db->sql_freeresult($res);
