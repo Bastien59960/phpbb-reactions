@@ -1,0 +1,26 @@
+<!-- BEGIN ucp_reactions -->
+<form id="ucp_reactions" method="post" action="{U_ACTION}">
+	<h2>{L_UCP_REACTIONS_TITLE}</h2>
+	<p>{L_UCP_REACTIONS_EXPLAIN}</p>
+
+	<fieldset>
+		<dl>
+			<dt><label for="user_reactions_notify">{L_UCP_REACTIONS_NOTIFY}</label></dt>
+			<dd>
+				<label><input type="checkbox" name="user_reactions_notify" value="1"<!-- IF UCP_REACTIONS_NOTIFY --> checked<!-- ENDIF --> /> {L_YES}</label>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="user_reactions_email">{L_UCP_REACTIONS_EMAIL}</label></dt>
+			<dd>
+				<label><input type="checkbox" name="user_reactions_email" value="1"<!-- IF UCP_REACTIONS_EMAIL --> checked<!-- ENDIF --> /> {L_YES}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input type="submit" name="submit" value="{L_SUBMIT}" class="button1" />
+	</fieldset>
+</form>
+<!-- END ucp_reactions -->
