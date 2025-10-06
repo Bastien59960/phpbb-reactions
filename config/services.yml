@@ -102,3 +102,12 @@ services:
             - 'phpbb_notifications'            # AJOUT : 12e : notifications_table (7e pour parent, littéral)
         tags:
           - { name: notification.type }
+          
+    bastien59960.reactions.controller.ucp_reactions:
+        class: bastien59960\reactions\controller\ucp_reactions
+        arguments:
+            - '@user'
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '%core.table_prefix%'
