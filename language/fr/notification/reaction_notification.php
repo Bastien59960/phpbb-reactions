@@ -9,16 +9,27 @@
 
 if (!defined('IN_PHPBB'))
 {
-    exit;
+	exit;
 }
 
 if (empty($lang) || !is_array($lang))
 {
-    $lang = array();
+	$lang = array();
 }
 
-// Fusionner le tableau de langues existant
+// ============================================================================
+// Notifications de réactions
+// ============================================================================
+
 $lang = array_merge($lang, array(
-    'NOTIFICATION_TYPE_REACTION' => 'Quelqu\'un a réagi à votre message',
-    'NOTIFICATION_GROUP_REACTIONS' => 'Notifications de réactions',
+	// Texte affiché dans la cloche ou dans la page de notifications
+	// Exemple : "Alice a réagi à votre message avec ❤️"
+	'NOTIFICATION_TYPE_REACTION'   => '%s a réagi à votre message avec %s',
+
+	// Titre du groupe dans le panneau de configuration utilisateur (UCP)
+	'NOTIFICATION_GROUP_REACTIONS' => 'Notifications de réactions',
+
+	// Titre et description du type de notification dans l’UCP
+	'NOTIFICATION_REACTION_TITLE'  => 'Réactions à vos messages',
+	'NOTIFICATION_REACTION_DESC'   => 'Recevoir une notification lorsqu’un utilisateur réagit à vos messages.',
 ));
