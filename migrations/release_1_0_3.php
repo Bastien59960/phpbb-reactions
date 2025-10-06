@@ -1,23 +1,19 @@
 <?php
 /**
- * Migration release_1_0_3 : Insertion du type de notification pour les réactions
- * 
- * Cette migration insère une entrée pour le type de notification 'notification.reaction' dans la table phpbb_notification_types.
- * Cela est nécessaire pour corriger l'erreur 'NOTIFICATION_TYPE_NOT_EXIST' observée dans les logs, car phpBB requiert que tous les types de notifications
- * soient enregistrés dans cette table pour pouvoir récupérer leur ID.
- * 
- * Notes importantes :
- * - Le type est inséré avec 'notification_type_enabled' à 1 (activé par défaut).
- * - La vérification 'effectively_installed' checke directement l'existence du type dans la table, plutôt qu'un flag config, pour une détection plus précise.
- * - Pas de modifications de schéma ici (pas d'update_schema), car il s'agit uniquement d'une insertion de données.
- * - Pour le rollback (revert_data), nous supprimons le type, mais attention : cela peut casser des notifications existantes si des données sont déjà présentes.
- *   Il est recommandé de ne pas revert si des notifications de ce type existent.
- * 
- * Vérification de complétude :
- * - La migration est complète et suit les standards phpBB : namespace correct, extension de la classe migration, dépendances, méthodes pour install/check/rollback.
- * - Rien ne manque : La logique d'insertion est idempotente (check avant insert), et le rollback est géré.
- * - Suggestion : Si d'autres données liées (comme des méthodes de notification) doivent être ajoutées, cela pourrait être étendu ici.
- * 
+ * Migration release_1_0_3 : Insertion et normalisation du type de notification 'notification.type.reaction'
+ *
+ * Cette migration :
+ *  - s'assure que la ligne canonique 'notification.type.reaction' existe dans la table <prefix>notification_types
+ *  - si des anciennes entrées 'reaction' (noms différents) existent, migre les notifications correspondantes
+ *    dans <prefix>phpbb_notifications vers l'ID canonique, puis supprime les doublons obsolètes
+ *
+ * Cette approche permet de corriger l'erreur NOTIFICATION_TYPE_NOT_EXIST dans l'UCP sans perdre
+ * les notifications existantes.
+ *
+ * ATTENTION :
+ *  - Faire un dump de la base avant d'exécuter.
+ *  - Le revert supprime la ligne canonique si elle existe (danger si notifications déjà migrées).
+ *
  * @package bastien59960.reactions
  */
 
@@ -25,93 +21,176 @@ namespace bastien59960\reactions\migrations;
 
 class release_1_0_3 extends \phpbb\db\migration\migration
 {
-	/**
-	 * Vérifie si la migration est déjà appliquée en checkant directement l'existence du type dans la table.
-	 * Cela est plus robuste qu'un simple flag config, car il reflète l'état réel de la DB.
-	 */
-	public function effectively_installed()
-	{
-		$sql = 'SELECT notification_type_id
-				FROM ' . $this->table_prefix . "notification_types
-				WHERE notification_type_name = 'bastien59960.reactions.notification'";
-		$result = $this->db->sql_query($sql);
-		$row = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
+    /**
+     * Vérifie si la migration est déjà appliquée.
+     * On vérifie la présence du type canonique (case-insensitive).
+     *
+     * @return bool
+     */
+    public function effectively_installed()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
 
-		return $row !== false;
-	}
+        $sql = 'SELECT notification_type_id
+                FROM ' . $types_table . "
+                WHERE LOWER(notification_type_name) = 'notification.type.reaction'
+                LIMIT 1";
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
 
-	/**
-	 * Dépendances : Suit release_1_0_2 (qui ajoute les colonnes nécessaires aux notifications).
-	 * Assure que les migrations précédentes sont appliquées avant celle-ci.
-	 */
-	public static function depends_on()
-	{
-		return array('bastien59960\reactions\migrations\release_1_0_2');
-	}
+        return ($row !== false);
+    }
 
-	/**
-	 * Insère le type de notification via une méthode custom.
-	 * Utilise 'custom' pour exécuter du code PHP arbitraire lors de la migration.
-	 */
-	public function update_data()
-	{
-		return array(
-			array('custom', array(array($this, 'insert_notification_type'))),
-		);
-	}
+    /**
+     * Dépendances — s'assurer que la migration précédente (ex: ajout colonnes notifications) est appliquée.
+     *
+     * @return array
+     */
+    public static function depends_on()
+    {
+        return array('bastien59960\reactions\migrations\release_1_0_2');
+    }
 
-	/**
-	 * Méthode custom pour insérer le type si il n'existe pas déjà.
-	 * Cela rend l'opération idempotente (peut être exécutée plusieurs fois sans duplicats).
-	 */
-	public function insert_notification_type()
-	{
-		$sql = 'SELECT notification_type_id
-				FROM ' . $this->table_prefix . "notification_types
-				WHERE notification_type_name = 'bastien59960.reactions.notification'";
-		$result = $this->db->sql_query($sql);
-		$row = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
+    /**
+     * update_data : exécution principale (méthode custom).
+     * On encapsule la logique dans une méthode custom insert_and_migrate().
+     *
+     * @return array
+     */
+    public function update_data()
+    {
+        return array(
+            array('custom', array(array($this, 'insert_and_migrate_notification_type'))),
+        );
+    }
 
-		if (!$row)
-		{
-			$sql = 'INSERT INTO ' . $this->table_prefix . "notification_types (notification_type_name, notification_type_enabled)
-					VALUES ('bastien59960.reactions.notification', 1)";
-			$this->db->sql_query($sql);
-		}
-	}
+    /**
+     * Méthode principale : insère le type canonique si absent, migre les anciennes références et supprime doublons.
+     *
+     * Étapes :
+     * 1) s'assurer que la table notification_types existe
+     * 2) créer la ligne 'notification.type.reaction' si absente
+     * 3) récupérer l'ID canonique
+     * 4) récupérer les IDs obsolètes (noms contenant 'reaction' mais != canonical)
+     * 5) si obsolètes : UPDATE phpbb_notifications SET notification_type_id = canonical_id WHERE notification_type_id IN (old_ids)
+     * 6) supprimer les lignes obsolètes de notification_types
+     */
+    public function insert_and_migrate_notification_type()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
+        $notifications_table = $this->table_prefix . 'notifications';
 
-	/**
-	 * Rollback : Supprime le type de notification.
-	 * Attention : Cela peut causer des pertes de données si des notifications de ce type existent déjà.
-	 * Si vous préférez ne pas supprimer, commentez cette méthode ou retournez un array vide.
-	 */
-	public function revert_data()
-	{
-		return array(
-			array('custom', array(array($this, 'remove_notification_type'))),
-		);
-	}
+        // 1) vérifier existence logique de la table (SHOW TABLES LIKE)
+        try {
+            $check_sql = 'SHOW TABLES LIKE \'' . $this->db->sql_escape($types_table) . '\'';
+            $res = $this->db->sql_query($check_sql);
+            $exists = (bool) $this->db->sql_fetchrow($res);
+            $this->db->sql_freeresult($res);
+        } catch (\Exception $e) {
+            // Si la table manque, abort (ne pas tenter d'insérer)
+            if (defined('DEBUG') && DEBUG) {
+                trigger_error('Reactions migration: table ' . $types_table . ' inaccessible: ' . $e->getMessage(), E_USER_WARNING);
+            }
+            return;
+        }
 
-	/**
-	 * Méthode custom pour supprimer le type lors du rollback.
-	 * Vérifie d'abord si il existe avant de supprimer.
-	 */
-	public function remove_notification_type()
-	{
-		$sql = 'SELECT notification_type_id
-				FROM ' . $this->table_prefix . "notification_types
-				WHERE notification_type_name = 'bastien59960.reactions.notification'";
-		$result = $this->db->sql_query($sql);
-		$row = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
+        if (!$exists) {
+            // Table introuvable — sortie sécurisée
+            if (defined('DEBUG') && DEBUG) {
+                trigger_error('Reactions migration: table ' . $types_table . ' introuvable, skip.', E_USER_WARNING);
+            }
+            return;
+        }
 
-		if ($row)
-		{
-			$sql = 'DELETE FROM ' . $this->table_prefix . "notification_types
-					WHERE notification_type_name = 'bastien59960.reactions.notification'";
-			$this->db->sql_query($sql);
-		}
-	}
+        // 2) Insérer la ligne canonique si absente (tolérant casse)
+        $canonical_name = 'notification.type.reaction';
+        $sql = 'SELECT notification_type_id FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "' LIMIT 1";
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$row) {
+            $insert_data = array(
+                'notification_type_name'    => $canonical_name,
+                'notification_type_enabled' => 1,
+            );
+            $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
+        }
+
+        // 3) récupérer l'id canonique
+        $sql = 'SELECT notification_type_id FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "' LIMIT 1";
+        $result = $this->db->sql_query($sql);
+        $canon_row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$canon_row || !isset($canon_row['notification_type_id'])) {
+            // Pas d'id canonique -> abort
+            if (defined('DEBUG') && DEBUG) {
+                trigger_error('Reactions migration: impossible de récupérer notification_type_id canonique', E_USER_WARNING);
+            }
+            return;
+        }
+
+        $canonical_id = (int) $canon_row['notification_type_id'];
+
+        // 4) rechercher anciens types contenant 'reaction' (tolérant casse) mais excluant le canonique
+        $sql = 'SELECT notification_type_id, notification_type_name FROM ' . $types_table . " WHERE LOWER(notification_type_name) LIKE '%reaction%' AND LOWER(notification_type_name) != '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
+        $result = $this->db->sql_query($sql);
+
+        $old_ids = array();
+        while ($r = $this->db->sql_fetchrow($result)) {
+            $old_ids[] = (int) $r['notification_type_id'];
+        }
+        $this->db->sql_freeresult($result);
+
+        // 5) Si on a des anciens ids -> migrer les notifications référencées
+        if (!empty($old_ids)) {
+            // Mettre à jour phpbb_notifications pour pointer vers l'id canonique
+            $where_in = $this->db->sql_in_set('notification_type_id', $old_ids);
+            $update_sql = 'UPDATE ' . $notifications_table . ' SET notification_type_id = ' . $canonical_id . ' WHERE ' . $where_in;
+            $this->db->sql_query($update_sql);
+
+            // 6) supprimer les anciennes lignes de phpbb_notification_types (après verification)
+            $delete_sql = 'DELETE FROM ' . $types_table . ' WHERE ' . $where_in;
+            $this->db->sql_query($delete_sql);
+
+            if (defined('DEBUG') && DEBUG) {
+                trigger_error('Reactions migration: anciens types migrés et supprimés (' . implode(',', $old_ids) . ')', E_USER_NOTICE);
+            }
+        }
+    }
+
+    /**
+     * Revert : suppression du type canonique.
+     * ATTENTION : ceci supprimera la ligne 'notification.type.reaction' si elle existe.
+     * Ne pas exécuter le revert si des notifications ont été migrées (risque d'incohérence).
+     *
+     * @return array
+     */
+    public function revert_data()
+    {
+        return array(
+            array('custom', array(array($this, 'remove_notification_type'))),
+        );
+    }
+
+    /**
+     * Suppression effective du type canonique (utilisé lors d'un revert).
+     */
+    public function remove_notification_type()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
+        $canonical_name = 'notification.type.reaction';
+
+        $sql = 'SELECT notification_type_id FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "' LIMIT 1";
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if ($row) {
+            // Suppression
+            $this->db->sql_query('DELETE FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'");
+        }
+    }
 }
