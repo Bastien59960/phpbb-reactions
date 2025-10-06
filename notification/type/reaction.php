@@ -138,7 +138,7 @@ class reaction extends base
 		}
 
 		// AJOUT : Insertion prototype du type dans phpbb_notification_types si inexistant (fixe NOTIFICATION_TYPE_NOT_EXIST)
-		$type_name = 'notification.' . $this->get_type();  // 'notification.reaction'
+		$type_name = 'notification.type.' . $this->get_type();
 		
 		// Vérifier si la colonne 'notification_type_name' existe dans phpbb_notification_types (table des types)
 		$types_table = 'phpbb_notification_types';
