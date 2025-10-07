@@ -117,5 +117,8 @@ $lang = array_merge($lang, array(
     'REACTIONS_NOTIFICATION_GROUP' => 'Reaction notifications',
 
     'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi %2$s à votre message',
+        'NOTIFICATION_TYPE_BASTIEN59960_REACTIONS_CRON_EMAIL' => 'Résumé par e-mail des réactions',
+'REACTION_DIGEST_EMAIL_NOTIFICATION' => 'Recevoir un résumé périodique des nouvelles réactions par e-mail.',
+    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Reactions to your posts',
 
 ));
