@@ -15,6 +15,20 @@
  *
  * Ce type de notification est enregistré dans phpBB et utilisé par le contrôleur AJAX lors de l'ajout d'une réaction.
  *
+ * IMPORTANT - Architecture des notifications :
+ * 
+ * 📋 NOM DU TYPE : 'notification.type.reaction'
+ *    - Défini dans get_type()
+ *    - Stocké dans phpbb_notification_types
+ *    - Créé par la migration (migrations/release_1_0_0.php)
+ *    - Activé/désactivé par ext.php
+ * 
+ * ⚠️  ERREUR CORRIGÉE : 
+ *    Le constructeur NE DOIT PLUS insérer le type en base de données.
+ *    Cette insertion est gérée UNIQUEMENT par la migration.
+ *    Raison : phpBB instancie TOUS les types à chaque chargement de l'UCP,
+ *    ce qui causait des tentatives d'insertion en double → erreur SQL 1062
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -90,6 +104,15 @@ class reaction extends base
     /**
      * Constructeur de la classe de notification
      * 
+     * CORRECTION CRITIQUE :
+     * Ce constructeur NE FAIT PLUS d'insertion SQL dans phpbb_notification_types.
+     * L'insertion du type est gérée par la migration (migrations/release_1_0_0.php).
+     * 
+     * Pourquoi cette correction ?
+     * - phpBB instancie TOUS les types de notification à chaque chargement de l'UCP
+     * - Si le constructeur insère en base, cela crée des doublons → erreur SQL 1062
+     * - La bonne pratique : migrations pour la structure, constructeur pour l'initialisation
+     * 
      * IMPORTANT : L'ORDRE DES ARGUMENTS DOIT CORRESPONDRE À services.yml
      * 
      * Les 7 premiers arguments sont requis par la classe parente (base) :
@@ -162,52 +185,12 @@ class reaction extends base
 
         // Log de débogage (visible uniquement si DEBUG est activé dans config.php)
         if (defined('DEBUG') && DEBUG) {
-            error_log('[Reactions Notification] Constructeur initialisé - DB: ' . get_class($db));
+            error_log('[Reactions Notification] Constructeur initialisé - Type: ' . $this->get_type());
         }
 
-        // =====================================================================
-        // INSERTION AUTOMATIQUE DU TYPE DE NOTIFICATION EN BASE DE DONNÉES
-        // =====================================================================
-        // Cette section s'assure que le type "notification.type.reaction"
-        // existe dans la table phpbb_notification_types
-        
-        $type_name = $this->get_type(); // Récupère "notification.type.reaction"
-        $types_table = 'phpbb_notification_types';
-
-        // Vérifier si la colonne notification_type_name existe dans la table
-        $col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
-        $col_result = $this->db->sql_query($col_check_sql);
-        $col_exists = $this->db->sql_fetchrow($col_result);
-        $this->db->sql_freeresult($col_result);
-
-        if ($col_exists) {
-            // Vérifier si le type existe déjà
-            $sql = 'SELECT notification_type_id 
-                    FROM ' . $types_table . ' 
-                    WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\' 
-                    LIMIT 1';
-            $result = $this->db->sql_query($sql);
-            $exists = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
-
-            // Si le type n'existe pas, l'insérer
-            if (!$exists) {
-                $proto_data = array(
-                    'notification_type_name'    => $type_name,
-                    'notification_type_enabled' => 1, // Activé par défaut
-                );
-                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $proto_data));
-                
-                if (defined('DEBUG') && DEBUG) {
-                    error_log('[Reactions Notification] Type inséré: ' . $type_name);
-                }
-            }
-        } else {
-            // La colonne n'existe pas : log d'avertissement
-            if (defined('DEBUG') && DEBUG) {
-                error_log('[Reactions Notification] ATTENTION: colonne notification_type_name manquante');
-            }
-        }
+        // ⚠️  CORRECTION : PLUS D'INSERTION SQL ICI
+        // Le type de notification est créé par la migration (migrations/release_1_0_0.php)
+        // et activé/désactivé par ext.php lors de l'activation/désactivation de l'extension
     }
 
     // =========================================================================
@@ -220,6 +203,11 @@ class reaction extends base
      * IMPORTANT : Ce nom DOIT être "notification.type.reaction"
      * C'est le nom stocké en base de données et utilisé par phpBB
      * pour identifier ce type de notification.
+     * 
+     * Ce nom est utilisé dans :
+     * - phpbb_notification_types (colonne notification_type_name)
+     * - ext.php (méthodes enable_notifications/disable_notifications)
+     * - migrations/release_1_0_0.php (création du type)
      * 
      * @return string Le nom canonique du type
      */
@@ -343,8 +331,8 @@ class reaction extends base
     /**
      * Retourne la clé de langue pour le titre de la notification
      * 
-     * CORRECTION IMPORTANTE : Cette clé DOIT correspondre exactement
-     * à celle définie dans notification/notification.type.reaction.php
+     * Cette clé DOIT correspondre exactement à celle définie dans 
+     * language/*/notification/notification.type.reaction.php
      * 
      * Format du message : "%s a réagi à votre message avec %s"
      * - %s = nom de l'utilisateur qui a réagi
@@ -379,8 +367,7 @@ class reaction extends base
     /**
      * Retourne le nom du type affiché dans l'UCP
      * 
-     * CORRECTION : Utilise la clé complète avec le préfixe
-     * Définie dans notification/notification.type.reaction.php
+     * Cette clé est définie dans language/*/notification/notification.type.reaction.php
      * 
      * @return string La clé de langue pour le nom
      */
@@ -392,8 +379,7 @@ class reaction extends base
     /**
      * Retourne la description du type affichée dans l'UCP
      * 
-     * CORRECTION : Utilise la clé complète avec le préfixe
-     * Définie dans notification/notification.type.reaction.php
+     * Cette clé est définie dans language/*/notification/notification.type.reaction.php
      * 
      * @return string La clé de langue pour la description
      */
@@ -560,5 +546,4 @@ class reaction extends base
         
         return $insert_array;
     }
-    
-} // ✅ ACCOLADE FERMANTE AJOUTÉE (correction de l'erreur ligne 209)
+}
