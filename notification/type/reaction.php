@@ -121,7 +121,11 @@ class reaction extends base
 
 		// Vérifie que le type "reaction" existe dans phpbb_notification_types.
 		// S’il n’existe pas, on l’ajoute automatiquement.
-		$type_name = 'notification.type.' . $this->get_type();
+		public function get_type()
+{
+    // Doit correspondre exactement à la valeur enregistrée dans phpbb_notification_types
+    return 'notification.type.reaction';
+}
 		$types_table = 'phpbb_notification_types';
 
 		$col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
