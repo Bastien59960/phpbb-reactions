@@ -1,19 +1,22 @@
 <?php
 /**
- * ============================================================================
  * Type de notification : Reaction
- * ============================================================================
+ * (Fichier corrigé)
  *
- * Gère les notifications lorsqu’un utilisateur réagit à un message avec un emoji.
- * Affiche une alerte dans le centre de notifications de phpBB (icône de cloche).
+ * - Le get_type() retourne maintenant le nom canonique EXACT utilisé en base :
+ *   "notification.type.reaction"
+ * - Le constructeur vérifie et insère le type canonique s'il manque.
+ * - Ajout des méthodes statiques get_item_type_name / get_item_type_description
+ *   pour que l'UCP affiche une clé de langue correcte (évite le fallback).
+ * - get_insert_sql + create_insert_array fournis pour persistance de l'emoji.
  *
- * © 2025 Bastien59960 — Licence GPL v2
+ * Copyright 2025 Bastien59960 — Licence GPL v2
  */
 
 namespace bastien59960\reactions\notification\type;
 
 if (!defined('IN_PHPBB')) {
-	exit;
+    exit;
 }
 
 use phpbb\notification\type\base;
@@ -29,282 +32,292 @@ use phpbb\language\language;
 
 class reaction extends base
 {
-	/** @var driver_interface */
-	protected $db;
+    /** @var driver_interface */
+    protected $db;
 
-	/** @var language */
-	protected $language;
+    /** @var language */
+    protected $language;
 
-	/** @var user */
-	protected $user;
+    /** @var user */
+    protected $user;
 
-	/** @var auth */
-	protected $auth;
+    /** @var auth */
+    protected $auth;
 
-	/** @var config */
-	protected $config;
+    /** @var config */
+    protected $config;
 
-	/** @var helper */
-	protected $helper;
+    /** @var helper */
+    protected $helper;
 
-	/** @var request_interface */
-	protected $request;
+    /** @var request_interface */
+    protected $request;
 
-	/** @var template */
-	protected $template;
+    /** @var template */
+    protected $template;
 
-	/** @var user_loader */
-	protected $user_loader;
+    /** @var user_loader */
+    protected $user_loader;
 
-	/** @var string */
-	protected $phpbb_root_path;
+    /** @var string */
+    protected $phpbb_root_path;
 
-	/** @var string */
-	protected $php_ext;
+    /** @var string */
+    protected $php_ext;
 
-	/** @var string */
-	protected $notifications_table;
+    /** @var string */
+    protected $notifications_table;
 
-	/**
-	 * Constructeur : injection des dépendances phpBB.
-	 *
-	 * L’ordre doit correspondre à celui du parent `phpbb\notification\type\base`.
-	 */
-	public function __construct(
-		driver_interface $db,
-		language $language,
-		user $user,
-		auth $auth,
-		config $config,
-		user_loader $user_loader,
-		helper $helper,
-		request_interface $request,
-		template $template,
-		$phpbb_root_path,
-		$php_ext,
-		$notifications_table
-	) {
-		parent::__construct(
-			$db,
-			$language,
-			$user,
-			$auth,
-			$phpbb_root_path,
-			$php_ext,
-			$notifications_table
-		);
+    /**
+     * Constructeur — arguments compatibles avec services.yml
+     *
+     * Attention : l'ordre est conforme à base::__construct + extras.
+     */
+    public function __construct(
+        driver_interface $db,
+        language $language,
+        user $user,
+        auth $auth,
+        config $config,
+        user_loader $user_loader,
+        helper $helper,
+        request_interface $request,
+        template $template,
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table
+    ) {
+        parent::__construct(
+            $db,
+            $language,
+            $user,
+            $auth,
+            $phpbb_root_path,
+            $php_ext,
+            $notifications_table
+        );
 
-		$this->db = $db;
-		$this->language = $language;
-		$this->user = $user;
-		$this->auth = $auth;
-		$this->config = $config;
-		$this->user_loader = $user_loader;
-		$this->helper = $helper;
-		$this->request = $request;
-		$this->template = $template;
-		$this->phpbb_root_path = $phpbb_root_path;
-		$this->php_ext = $php_ext;
-		$this->notifications_table = $notifications_table;
+        $this->db = $db;
+        $this->language = $language;
+        $this->user = $user;
+        $this->auth = $auth;
+        $this->config = $config;
+        $this->user_loader = $user_loader;
+        $this->helper = $helper;
+        $this->request = $request;
+        $this->template = $template;
+        $this->phpbb_root_path = $phpbb_root_path;
+        $this->php_ext = $php_ext;
+        $this->notifications_table = $notifications_table;
 
-		// DEBUG : journaliser uniquement si DEBUG activé
-		if (defined('DEBUG') && DEBUG) {
-			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db) . ', Table: ' . $notifications_table);
-		}
+        // Débogage si DEBUG activé
+        if (defined('DEBUG') && DEBUG) {
+            error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db) . ', Table: ' . $notifications_table);
+        }
 
-		// --- Vérification/ajout du type en base (si absent) ---
-		// IMPORTANT : le nom retourné par get_type() doit être *identique* à la valeur en base.
-		$type_name = $this->get_type(); // ex: "notification.type.reaction"
-		$types_table = 'phpbb_notification_types';
+        // Nom canonique (déjà complet) — correspond exactement à ce qu'on stocke en base
+        $type_name = $this->get_type(); // ex: 'notification.type.reaction'
+        $types_table = 'phpbb_notification_types';
 
-		// On vérifie que la colonne 'notification_type_name' existe pour éviter les erreurs sur des bases non-standards.
-		$col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
-		$col_result = $this->db->sql_query($col_check_sql);
-		$col_exists = $this->db->sql_fetchrow($col_result);
-		$this->db->sql_freeresult($col_result);
+        // Vérifier si la colonne notification_type_name existe
+        $col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
+        $col_result = $this->db->sql_query($col_check_sql);
+        $col_exists = $this->db->sql_fetchrow($col_result);
+        $this->db->sql_freeresult($col_result);
 
-		if ($col_exists) {
-			$sql = 'SELECT notification_type_id
-					FROM ' . $types_table . '
-					WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\'
-					LIMIT 1';
-			$result = $this->db->sql_query($sql);
-			$exists = $this->db->sql_fetchrow($result);
-			$this->db->sql_freeresult($result);
+        if ($col_exists) {
+            $sql = 'SELECT notification_type_id FROM ' . $types_table . ' WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\' LIMIT 1';
+            $result = $this->db->sql_query($sql);
+            $exists = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
 
-			if (!$exists) {
-				$proto_data = [
-					'notification_type_name'    => $type_name,
-					'notification_type_enabled' => 1,
-				];
-				$this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $proto_data));
+            if (!$exists) {
+                $proto_data = array(
+                    'notification_type_name' => $type_name,
+                    'notification_type_enabled' => 1,
+                );
+                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $proto_data));
+                if (defined('DEBUG') && DEBUG) {
+                    error_log('[Reactions Notification] Prototype type inséré pour: ' . $type_name);
+                }
+            }
+        } else {
+            if (defined('DEBUG') && DEBUG) {
+                error_log('[Reactions Notification] Colonne notification_type_name manquante dans ' . $types_table . ' - skip insertion prototype.');
+            }
+        }
+    }
 
-				if (defined('DEBUG') && DEBUG) {
-					error_log('[Reactions Notification] Prototype ajouté dans ' . $types_table . ' pour : ' . $type_name);
-				}
-			}
-		} elseif (defined('DEBUG') && DEBUG) {
-			error_log('[Reactions Notification] Colonne notification_type_name manquante dans ' . $types_table);
-		}
-	}
+    /**
+     * Retourne le nom canonique EXACT stocké en base.
+     * IMPORTANT : on garde ici le nom avec 'notification.type.reaction' (conforme à la table).
+     */
+    public function get_type()
+    {
+        return 'notification.type.reaction';
+    }
 
-	// =========================================================================
-	// IDENTIFICATION DU TYPE
-	// =========================================================================
+    /**
+     * Doit être disponible (on ne cache pas le type).
+     */
+    public function is_available()
+    {
+        return true;
+    }
 
-	/**
-	 * Identifiant unique du type.
-	 *
-	 * /!\ DOIT CORRESPONDRE EXACTEMENT à phpbb_notification_types.notification_type_name
-	 */
-	public function get_type()
-	{
-		// Valeur cohérente avec ta base (tu as 'notification.type.reaction')
-		return 'notification.type.reaction';
-	}
+    /* ---------- Méthodes d'identification (élément et parent) ---------- */
 
-	public function is_available()
-	{
-		return true;
-	}
+    public static function get_item_id($data)
+    {
+        return (int) ($data['post_id'] ?? 0);
+    }
 
-	// =========================================================================
-	// ELEMENT / PARENT / AUTEUR
-	// =========================================================================
+    public static function get_item_parent_id($data)
+    {
+        return (int) ($data['topic_id'] ?? 0);
+    }
 
-	public static function get_item_id($data)
-	{
-		return (int) ($data['post_id'] ?? 0);
-	}
+    public static function get_item_author_id($data)
+    {
+        return (int) ($data['post_author'] ?? 0);
+    }
 
-	public static function get_item_parent_id($data)
-	{
-		return (int) ($data['topic_id'] ?? 0);
-	}
+    /* ---------- URL / affichage ---------- */
 
-	public static function get_item_author_id($data)
-	{
-		return (int) ($data['post_author'] ?? 0);
-	}
+    public function get_url()
+    {
+        $post_id = $this->get_item_id($this->data ?? []);
+        if (!$post_id) {
+            return '';
+        }
 
-	// =========================================================================
-	// URL / RENDU
-	// =========================================================================
+        return append_sid("{$this->phpbb_root_path}viewtopic.{$this->php_ext}", 'p=' . $post_id) . '#p' . $post_id;
+    }
 
-	public function get_url()
-	{
-		$post_id = $this->get_item_id($this->data ?? []);
-		if (!$post_id) {
-			return '';
-		}
+    public static function get_item_url($data)
+    {
+        global $phpbb_root_path, $phpEx;
+        $post_id = self::get_item_id($data);
+        if (!$post_id) {
+            return '';
+        }
+        return append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id;
+    }
 
-		return append_sid("{$this->phpbb_root_path}viewtopic.{$this->php_ext}", 'p=' . $post_id) . '#p' . $post_id;
-	}
+    /**
+     * Clé de langue pour le titre d'une notification individuelle (ex: "%s a réagi ...")
+     * Doit exister dans language/*/notification/notification.type.reaction.php
+     */
+    public function get_title()
+    {
+        return 'NOTIFICATION_TYPE_REACTION';
+    }
 
-	public static function get_item_url($data)
-	{
-		global $phpbb_root_path, $phpEx;
-		$post_id = self::get_item_id($data);
-		return $post_id ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id : '';
-	}
+    /**
+     * Nom du fichier de langue (relative à l'extension)
+     * Exemple : language/fr/notification/notification.type.reaction.php
+     */
+    public function get_language_file()
+    {
+        return 'notification/notification.type.reaction';
+    }
 
-	public function get_title()
-	{
-		// Clé de langue (language/*/...)
-		return 'NOTIFICATION_TYPE_REACTION';
-	}
+    /* ---------- Méthodes statiques attendues par le manager pour l'UCP ---------- */
 
-	public function get_language_file()
-	{
-		// fichier de langue attendu : language/<lang>/notification/reaction_notification.php
-		return 'notification/reaction_notification';
-	}
+    /**
+     * Nom affiché dans la liste des types (UCP).
+     * Retourne une clé de langue.
+     */
+    public static function get_item_type_name()
+    {
+        return 'NOTIFICATION_REACTION_TITLE';
+    }
 
-	// =========================================================================
-	// DESTINATAIRES
-	// =========================================================================
+    /**
+     * Description affichée dans l'UCP.
+     */
+    public static function get_item_type_description()
+    {
+        return 'NOTIFICATION_REACTION_DESC';
+    }
 
-	public function find_users_for_notification($type_data, $options = [])
-	{
-		$users = [];
+    /* ---------- Détermination des destinataires ---------- */
 
-		$post_author = (int) ($type_data['post_author'] ?? 0);
-		$reacter = (int) ($type_data['reacter'] ?? 0);
+    public function find_users_for_notification($type_data, $options = array())
+    {
+        $users = array();
 
-		// Notifier l'auteur si ce n'est pas lui-même
-		if ($post_author && $post_author !== $reacter) {
-			$users[] = $post_author;
-		}
+        $post_author = (int) ($type_data['post_author'] ?? 0);
+        $reacter = (int) ($type_data['reacter'] ?? 0);
 
-		return $users;
-	}
+        if ($post_author && $post_author !== $reacter) {
+            $users[] = $post_author;
+        }
 
-	public function users_to_query()
-	{
-		return [];
-	}
+        return $users;
+    }
 
-	// =========================================================================
-	// EMAIL (désactivé par défaut — nous utilisons cron groupé)
-	// =========================================================================
+    public function users_to_query()
+    {
+        return [];
+    }
 
-	public function get_email_template()
-	{
-		return false;
-	}
+    /* ---------- Email (ici désactivé / géré par cron si tu veux) ---------- */
 
-	public function get_email_template_variables()
-	{
-		return [
-			'REACTOR_USERNAME' => $this->data['reacter_username'] ?? '',
-			'EMOJI'            => $this->data['emoji'] ?? '',
-			'POST_ID'          => $this->get_item_id($this->data ?? []),
-		];
-	}
+    public function get_email_template()
+    {
+        // false = pas d'email immédiat (on utilise cron groupé si nécessaire)
+        return false;
+    }
 
-	// =========================================================================
-	// RENDU POUR L'UTILISATEUR
-	// =========================================================================
+    public function get_email_template_variables()
+    {
+        return [
+            'REACTOR_USERNAME' => $this->data['reacter_username'] ?? '',
+            'EMOJI'            => $this->data['emoji'] ?? '',
+            'POST_ID'          => $this->get_item_id($this->data ?? []),
+        ];
+    }
 
-	public function get_title_for_user($user_id, $lang)
-	{
-		return [
-			$this->get_title(),
-			[
-				$this->data['reacter_username'] ?? '',
-				$this->data['emoji'] ?? '',
-			],
-		];
-	}
+    /**
+     * Titre traduit pour l'utilisateur (message dans la cloche).
+     */
+    public function get_title_for_user($user_id, $lang)
+    {
+        return [
+            $this->get_title(),
+            [
+                $this->data['reacter_username'] ?? '',
+                $this->data['emoji'] ?? '',
+            ],
+        ];
+    }
 
-	public function get_render_data($user_id)
-	{
-		return [
-			'emoji'             => $this->data['emoji'] ?? '',
-			'reacter_username'  => $this->data['reacter_username'] ?? '',
-			'post_id'           => $this->get_item_id($this->data ?? []),
-		];
-	}
+    public function get_render_data($user_id)
+    {
+        return [
+            'emoji'            => $this->data['emoji'] ?? '',
+            'reacter_username' => $this->data['reacter_username'] ?? '',
+            'post_id'          => $this->get_item_id($this->data ?? []),
+        ];
+    }
 
-	// =========================================================================
-	// PERSISTENCE EN BASE
-	// =========================================================================
+    /* ---------- Persistance en base (colonnes custom) ---------- */
 
-	/**
-	 * Colonnes personnalisées pour phpbb_notifications gérées par le manager.
-	 * Ici on stocke l'emoji (VCHAR_UNI pour Unicode).
-	 */
-	public function get_insert_sql()
-	{
-		return [
-			'reaction_emoji' => ['VCHAR_UNI', 10],
-		];
-	}
+    public function get_insert_sql()
+    {
+        return [
+            'reaction_emoji' => ['VCHAR_UNI', 10],
+        ];
+    }
 
-	public function create_insert_array($type_data, $pre_create_data = [])
-	{
-		$insert_array = parent::create_insert_array($type_data, $pre_create_data);
-		$insert_array['reaction_emoji'] = $type_data['emoji'] ?? '';
-		return $insert_array;
-	}
+    /**
+     * Construit l'array d'insertion (parent fait les champs standards).
+     */
+    public function create_insert_array($type_data, $pre_create_data = array())
+    {
+        $insert_array = parent::create_insert_array($type_data, $pre_create_data);
+        $insert_array['reaction_emoji'] = isset($type_data['emoji']) ? $type_data['emoji'] : '';
+        return $insert_array;
+    }
 }
