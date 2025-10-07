@@ -1,0 +1,10 @@
+Subject: Résumé des réactions récentes
+
+Bonjour {USERNAME},
+
+Voici un résumé des dernières réactions à vos messages sur le forum :
+
+{REACTION_SUMMARY}
+
+À bientôt sur le forum !
+L’équipe {SITENAME}
