@@ -1,7 +1,16 @@
 <?php
 /**
- * Reactions Extension for phpBB 3.3
- * English language file for reaction notifications
+ * File: language/en/notification/notification.type.reaction.php — bastien59960/reactions/language/en/notification/notification.type.reaction.php
+ *
+ * English language file for the "reaction" notification type of the Reactions extension.
+ *
+ * This file contains all the notification-related strings for the "reaction" type in English.
+ *
+ * Key points:
+ *   - Provides all translatable strings for reaction notifications (UCP, bell, etc.)
+ *   - Used by phpBB to display notification messages and preferences
+ *
+ * This file must be kept in sync with the French version for consistency.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

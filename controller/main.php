@@ -1,10 +1,22 @@
 <?php
 /**
-* Post Reactions extension for phpBB.
-*
-* @copyright (c) 2025 Bastien59960
-* @license GNU General Public License, version 2 (GPL-2.0)
-*/
+ * Fichier : controller/main.php — bastien59960/reactions/controller/main.php
+ *
+ * Contrôleur principal (non-AJAX) de l'extension Reactions pour phpBB.
+ *
+ * Ce fichier gère les requêtes classiques liées aux réactions, principalement pour l'affichage ou la gestion côté serveur (hors AJAX).
+ * Il peut servir de base pour des pages dédiées aux réactions ou des traitements administratifs.
+ *
+ * Points clés de la logique métier :
+ *   - Accès aux données de réactions et de messages
+ *   - Intégration avec le template phpBB
+ *   - Sécurité et permissions utilisateur
+ *
+ * Ce contrôleur est rarement utilisé directement, la logique AJAX étant privilégiée pour les interactions utilisateur.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 
 namespace bastien59960\reactions\controller;
 

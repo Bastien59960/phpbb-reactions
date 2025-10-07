@@ -1,27 +1,22 @@
 <?php
 /**
- * Tâche cron pour les notifications de réactions (envois groupés par email).
+ * Fichier : cron/notification_task.php — bastien59960/reactions/cron/notification_task.php
  *
- * Remplacement complet, version commentée en français.
+ * Tâche cron pour l'envoi groupé des notifications de réactions par e-mail (digest).
  *
- * Comportement résumé :
- * - Récupère toutes les réactions non-notifiées plus anciennes que le seuil
- *   (config : bastien59960_reactions_spam_time en secondes, défaut 2700s = 45min).
- * - Groupe les réactions par auteur du post (destinataire final de l'email),
- *   puis par post pour construire un récapitulatif lisible.
- * - Respecte la préférence utilisateur 'disable_cron_email' : si activée,
- *   l'utilisateur *ne reçoit pas d'email* et les réactions sont marquées comme
- *   notifiées pour ne pas le spammer à l'avenir.
- * - Utilise le messenger phpBB pour envoyer l'email (template : reaction_recap).
+ * Ce fichier exécute périodiquement l'envoi des résumés de réactions reçues par les utilisateurs, en respectant la fenêtre anti-spam configurée.
  *
- * Notes :
- * - Ce fichier suppose que la table des réactions est fournie via la variable
- *   $post_reactions_table passée au constructeur (ex : 'phpbb_post_reactions').
- * - Utilise les constantes POSTS_TABLE et USERS_TABLE pour joindre les tables
- *   core et récupérer sujets / emails / langues.
+ * Points clés de la logique métier :
+ *   - Agrégation des réactions sur une période donnée
+ *   - Génération et envoi des e-mails de résumé
+ *   - Respect des préférences utilisateur (opt-in/out)
+ *   - Nettoyage des notifications orphelines si besoin
+ *   - Gestion des erreurs et logs pour le suivi
+ *
+ * Ce fichier est appelé automatiquement par le système de tâches planifiées de phpBB.
  *
  * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License v2
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\cron;
@@ -115,7 +110,7 @@ class notification_task extends \phpbb\cron\task\base
      * Elle :
      *  - récupère les réactions éligibles,
      *  - construit des e-mails groupés par utilisateur (destinataire),
-     *  - envoie via messenger.tpl (language/email/reaction_recap.txt),
+     *  - envoie via messenger.tpl (language/email/reaction_recap).txt),
      *  - marque les réactions comme notifiées si l'envoi a réussi (ou si l'user
      *    a désactivé les emails).
      *

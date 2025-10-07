@@ -1,20 +1,18 @@
 <?php
 /**
- * Listener d'événements pour l'extension Reactions
- * 
- * Ce listener gère l'affichage des réactions sur les pages du forum.
- * Il écoute les événements phpBB pour :
- * - Ajouter les CSS/JS nécessaires aux pages
- * - Charger les réactions existantes pour chaque message
- * - Configurer les données pour les templates
- * - Gérer l'affichage des réactions avec les utilisateurs
- * 
- * Événements écoutés :
- * - core.page_header : Ajoute les assets CSS/JS
- * - core.viewtopic_cache_user_data : Charge les données utilisateur
- * - core.viewtopic_post_row_after : Affiche les réactions pour chaque message
- * - core.viewforum_modify_topicrow : Ajoute les données du forum
- * 
+ * Fichier : event/listener.php — bastien59960/reactions/event/listener.php
+ *
+ * Listener d'événements pour l'extension Reactions.
+ *
+ * Ce fichier permet d'intercepter et de traiter les événements du cycle de vie phpBB (affichage, envoi de message, etc.) pour intégrer la logique des réactions dans le forum.
+ *
+ * Points clés de la logique métier :
+ *   - Ajout des scripts et templates nécessaires à l'affichage des réactions
+ *   - Intégration avec les hooks phpBB pour enrichir l'expérience utilisateur
+ *   - Possibilité d'étendre ou de modifier le comportement natif du forum via les événements
+ *
+ * Ce listener est enregistré dans services.yml et agit en complément des contrôleurs principaux.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

@@ -1,18 +1,18 @@
 <?php
 /**
- * Extension Reactions pour phpBB 3.3+
- * 
- * Cette extension permet aux utilisateurs de réagir aux messages du forum avec des emojis.
- * Elle inclut un système de notifications (cloche + email) avec anti-spam configurable.
- * 
- * Fonctionnalités principales :
- * - Réactions par emojis sur les messages
- * - Notifications immédiates par cloche
- * - Notifications par email avec délai anti-spam (45 min par défaut)
- * - Tooltips affichant les utilisateurs ayant réagi
- * - Limites configurables (max 20 types de réactions par post, 10 réactions par utilisateur)
- * - Support multilingue (FR/EN)
- * 
+ * Fichier : ext.php — bastien59960/reactions/ext.php
+ *
+ * Classe principale de l'extension Reactions pour phpBB.
+ *
+ * Ce fichier gère l'activation, la désactivation et la purge de l'extension, ainsi que l'enregistrement des types de notifications personnalisés auprès du système phpBB.
+ *
+ * Points clés de la logique métier :
+ *   - Vérification de la compatibilité phpBB
+ *   - Enregistrement/désactivation/purge des types de notifications lors des changements d'état de l'extension
+ *   - Gestion de la version de l'extension (pour les migrations)
+ *
+ * Ce fichier est le point d'entrée de l'extension pour phpBB et doit être présent pour que l'extension soit reconnue et gérée correctement.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

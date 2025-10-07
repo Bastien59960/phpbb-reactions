@@ -1,35 +1,22 @@
 <?php
 /**
- * ============================================================================
- * Type de notification : Réaction à un message
- * ============================================================================
- * 
- * Chemin : ext/bastien59960/reactions/notification/type/reaction.php
- * 
- * Ce fichier définit le type de notification envoyé lorsqu'un utilisateur
- * réagit avec un emoji à un message d'un autre utilisateur.
- * 
- * FONCTIONNALITÉS :
- * - Crée des notifications dans la "cloche" de phpBB
- * - Stocke l'emoji utilisé pour la réaction
- * - Gère l'affichage dans l'UCP (Centre de Contrôle Utilisateur)
- * - Détermine qui doit recevoir la notification (l'auteur du message)
- * - Fournit les URLs pour accéder au message réagi
- * 
- * IMPORTANT :
- * - Le nom du type DOIT être "notification.type.reaction" (stocké en BDD)
- * - Les clés de langue DOIVENT correspondre aux fichiers de langue
- * - L'ordre des arguments du constructeur DOIT correspondre à services.yml
- * 
- * CORRECTIONS APPORTÉES :
- * ✅ Ajout de l'accolade fermante manquante (ligne 209 → erreur 500)
- * ✅ Correction des clés de langue (NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION)
- * ✅ Amélioration des commentaires pour la compréhension
- * 
- * @package   bastien59960.reactions
+ * Fichier : notification/type/reaction.php — bastien59960/reactions/notification/type/reaction.php
+ *
+ * Type de notification "Réaction à un message" pour l'extension Reactions.
+ *
+ * Ce fichier définit la classe de notification utilisée pour informer un utilisateur lorsqu'un autre réagit à l'un de ses messages (notification cloche immédiate).
+ *
+ * Points clés de la logique métier :
+ *   - Génération et affichage des notifications dans l'UCP et la cloche
+ *   - Détermination des destinataires (auteur du message, sauf auto-notification)
+ *   - Génération des URLs et titres personnalisés
+ *   - Intégration avec le système de langue et de templates
+ *   - Gestion des données personnalisées (emoji, utilisateur réacteur)
+ *
+ * Ce type de notification est enregistré dans phpBB et utilisé par le contrôleur AJAX lors de l'ajout d'une réaction.
+ *
  * @copyright (c) 2025 Bastien59960
- * @license   GNU General Public License, version 2 (GPL-2.0)
- * ============================================================================
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\notification\type;

@@ -1,121 +1,61 @@
-# Dépannage ACP - Extension Reactions
+# Dépannage ACP — Extension Reactions
 
-## Problème : Les traductions ne s'affichent pas dans l'ACP
+## 🇫🇷 Problèmes courants et solutions
 
-### Symptômes
-- Menu ACP affiche `ACP_REACTIONS_TITLE` au lieu de "Réglages des réactions"
-- Page de configuration affiche `ACP_REACTIONS_SETTINGS` au lieu de "Configuration des réactions"
-- Interface en anglais malgré phpBB configuré en français
+### 1. Les réactions n'apparaissent pas
+- Purgez le cache de phpBB
+- Vérifiez que l'extension est activée dans l'ACP
+- Vérifiez que la base de données est en UTF8MB4
 
-### Solutions
+### 2. Les notifications ne fonctionnent pas
+- Vérifiez les préférences utilisateur (UCP)
+- Vérifiez les logs d'erreur
+- Assurez-vous que la tâche cron est bien exécutée
 
-#### 1. Vérifier les fichiers de langue ACP
-```bash
-# Vérifier que les fichiers existent
-ls -la language/fr/acp/common.php
-ls -la language/en/acp/common.php
-```
+### 3. Problèmes de migration
+- Vérifiez que toutes les migrations sont passées
+- Vérifiez la structure de la table `phpbb_post_reactions`
 
-#### 2. Purger le cache phpBB
-```bash
-# Dans le répertoire de votre forum
-rm -rf cache/*
-```
+### 4. Problèmes d'affichage (CSS/JS)
+- Purgez le cache du navigateur
+- Vérifiez que les fichiers JS/CSS sont bien chargés
 
-#### 3. Vérifier les permissions
-```bash
-# Les fichiers de langue doivent être lisibles
-chmod 644 language/fr/acp/common.php
-chmod 644 language/en/acp/common.php
-```
+### 5. Messages d'erreur fréquents
+- "Limite de types de réactions par message atteinte" : augmentez la limite dans l'ACP
+- "Invalid emoji" : vérifiez le support UTF8MB4
 
-#### 4. Vérifier l'encodage des fichiers
-```bash
-# Les fichiers doivent être en UTF-8 sans BOM
-file language/fr/acp/common.php
-file language/en/acp/common.php
-```
+### Liens utiles
+- [Forum de support](https://bastien.debucquoi.com/forum/)
+- [Documentation complète](DOCUMENTATION.md)
 
-#### 5. Tester les traductions
-```bash
-# Exécuter le script de test
-php test_language.php
-```
+---
 
-### Structure des fichiers de langue
+# ACP Troubleshooting — Reactions Extension
 
-```
-language/
-├── fr/
-│   ├── acp/
-│   │   └── common.php    # Traductions ACP françaises
-│   └── common.php        # Traductions générales françaises
-└── en/
-    ├── acp/
-    │   └── common.php    # Traductions ACP anglaises
-    └── common.php        # Traductions générales anglaises
-```
+## 🇬🇧 Common issues and solutions
 
-### Clés de traduction ACP requises
+### 1. Reactions do not appear
+- Purge the phpBB cache
+- Check that the extension is enabled in the ACP
+- Make sure the database is in UTF8MB4
 
-```php
-// Dans language/*/acp/common.php
-$lang = array_merge($lang, array(
-    'ACP_REACTIONS_TITLE'                   => 'Réglages des réactions',
-    'ACP_REACTIONS_SETTINGS'                => 'Configuration des réactions',
-    'ACP_REACTIONS_SETTINGS_EXPLAIN'        => 'Configurez les paramètres des réactions aux messages.',
-    'REACTIONS_MAX_PER_POST'                => 'Nombre maximal de types de réaction par message',
-    'REACTIONS_MAX_PER_POST_EXPLAIN'        => 'Le nombre maximal de types de réaction uniques qu\'un seul message peut recevoir.',
-    'REACTIONS_MAX_PER_USER'                => 'Nombre maximal de réactions par utilisateur par message',
-    'REACTIONS_MAX_PER_USER_EXPLAIN'        => 'Le nombre maximal de réactions qu\'un seul utilisateur peut ajouter à un seul message.',
-));
-```
+### 2. Notifications do not work
+- Check user preferences (UCP)
+- Check error logs
+- Make sure the cron task is running
 
-### Vérification dans l'ACP
+### 3. Migration issues
+- Check that all migrations have run
+- Check the structure of the `phpbb_post_reactions` table
 
-1. **Aller dans l'ACP** : Administration > Extensions
-2. **Vérifier le menu** : "Post Reactions" doit apparaître
-3. **Cliquer sur "Post Reactions"** : "Paramètres des réactions" doit s'afficher
-4. **Vérifier les champs** : Les labels doivent être en français
+### 4. Display issues (CSS/JS)
+- Purge browser cache
+- Check that JS/CSS files are loaded
 
-### Logs d'erreur
+### 5. Common error messages
+- "Post reaction type limit reached": increase the limit in the ACP
+- "Invalid emoji": check UTF8MB4 support
 
-Vérifier les logs d'erreur PHP :
-```bash
-tail -f /var/log/php/error.log | grep -i reaction
-```
-
-### Test rapide
-
-Pour tester si les traductions se chargent :
-```php
-<?php
-// Dans un fichier de test
-$lang = array();
-include 'language/fr/acp/common.php';
-echo $lang['ACP_REACTIONS_TITLE'];
-?>
-```
-
-### Si le problème persiste
-
-1. **Vérifier la langue par défaut** de votre utilisateur dans l'ACP
-2. **Forcer le français** dans les paramètres utilisateur
-3. **Vérifier les permissions** de l'extension
-4. **Redémarrer** le serveur web si nécessaire
-
-### Commandes utiles
-
-```bash
-# Purger tous les caches
-rm -rf cache/*
-
-# Vérifier les permissions
-find language/ -type f -exec chmod 644 {} \;
-
-# Vérifier l'encodage
-find language/ -name "*.php" -exec file {} \;
-
-# Tester la syntaxe PHP
-find language/ -name "*.php" -exec php -l {} \;
-```
+### Useful links
+- [Support forum](https://bastien.debucquoi.com/forum/)
+- [Full documentation](DOCUMENTATION.md)

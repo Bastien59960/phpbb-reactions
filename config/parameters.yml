@@ -1,19 +1,16 @@
-# =============================================================================
-# Configuration des paramètres pour l'extension Reactions
-# =============================================================================
-# 
-# Ce fichier définit les noms des tables de base de données utilisées
-# par l'extension. Ces paramètres permettent de personnaliser les noms
-# des tables si nécessaire (par exemple, pour des installations avec
-# des préfixes de table personnalisés).
 #
-# Utilisation :
-# - Les noms de tables sont injectés dans les services via ces paramètres.
-# - Le préfixe %core.table_prefix% est automatiquement remplacé
-#   par celui configuré dans phpBB (souvent "phpbb_").
-# - Permet la flexibilité pour différentes configurations de base de données.
-# - Facilite la maintenance et les tests.
-# =============================================================================
+# Fichier : config/parameters.yml — bastien59960/reactions/config/parameters.yml
+#
+# Fichier de paramètres pour l'extension Reactions.
+#
+# Ce fichier définit les paramètres personnalisés utilisés par l'extension, comme les valeurs par défaut ou les constantes de configuration.
+#
+# Points clés :
+#   - Centralisation des paramètres techniques
+#   - Utilisé lors de l'installation ou du développement
+#
+# Ce fichier est chargé automatiquement par phpBB lors de l'initialisation de l'extension.
+#
 
 parameters:
     # =============================================================================

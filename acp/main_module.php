@@ -1,13 +1,18 @@
 <?php
 /**
- * ============================================================================
- * MODULE ACP (Admin Control Panel) pour l'extension Reactions
- * ============================================================================
- * 
- * Ce fichier gère la page de configuration dans le panneau d'administration
- * de phpBB. Il permet aux administrateurs de modifier les paramètres de
- * l'extension via une interface web.
- * 
+ * Fichier : acp/main_module.php — bastien59960/reactions/acp/main_module.php
+ *
+ * Module principal ACP pour l'extension Reactions.
+ *
+ * Ce fichier gère la logique métier et l'affichage des pages de configuration de l'extension dans le panneau d'administration (ACP) de phpBB.
+ *
+ * Points clés :
+ *   - Lecture et sauvegarde des paramètres de l'extension
+ *   - Intégration avec le template ACP
+ *   - Sécurité et validation des entrées administrateur
+ *
+ * Ce module permet à l'administrateur de configurer tous les aspects de l'extension Reactions via l'interface ACP.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

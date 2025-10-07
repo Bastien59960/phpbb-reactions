@@ -1,31 +1,16 @@
-# =============================================================================
-# CONFIGURATION DES SERVICES SYMFONY - EXTENSION REACTIONS
-# =============================================================================
-# 
-# Chemin : ext/bastien59960/reactions/config/services.yml
-# 
-# Ce fichier définit tous les services (classes) utilisés par l'extension.
-# Chaque service est enregistré avec ses dépendances (arguments).
-# 
-# STRUCTURE D'UN SERVICE :
-# nom.du.service:
-#     class: Nom\De\La\Classe
-#     arguments:
-#         - '@autre_service'      → Référence un autre service
-#         - '%parametre%'         → Référence un paramètre (parameters.yml)
-#         - 'chaine_litterale'    → Chaîne de caractères fixe
-#     tags:
-#         - { name: type }        → Enregistre le service avec un type spécial
-# 
-# IMPORTANT POUR LES ARGUMENTS :
-# L'ORDRE des arguments DOIT correspondre EXACTEMENT à l'ordre des
-# paramètres dans le constructeur (__construct) de la classe.
-# 
-# CORRECTIONS APPORTÉES :
-# ✅ Correction de l'argument notifications_table (ajout du préfixe dynamique)
-# ✅ Vérification de la cohérence avec tous les constructeurs
-# 
-# =============================================================================
+#
+# Fichier : config/services.yml — bastien59960/reactions/config/services.yml
+#
+# Fichier de déclaration des services pour l'extension Reactions.
+#
+# Ce fichier définit tous les services (contrôleurs, listeners, types de notifications, etc.) utilisés par l'extension et leur injection de dépendances.
+#
+# Points clés :
+#   - Déclaration des services Symfony pour phpBB
+#   - Mapping des classes et injection des dépendances
+#
+# Ce fichier est essentiel pour l'autowiring et l'intégration de l'extension dans le framework phpBB.
+#
 
 # Importer les paramètres depuis parameters.yml
 # (noms des tables de base de données)

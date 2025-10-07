@@ -1,15 +1,16 @@
-# Configuration des routes pour l'extension Reactions
-# 
-# Ce fichier définit toutes les routes HTTP utilisées par l'extension.
-# Les routes permettent d'accéder aux différentes fonctionnalités
-# de l'extension via des URLs propres et structurées.
 #
-# Structure des routes :
-# - /reactions : Page principale de l'extension
-# - /reactions/ajax : Endpoint AJAX pour les interactions
-# - /reactions/add/{post_id} : Ajout de réaction (legacy)
-# - /reactions/remove/{post_id}/{emoji} : Suppression de réaction (legacy)
-# - /reactions/test : Page de test et debug
+# Fichier : config/routing.yml — bastien59960/reactions/config/routing.yml
+#
+# Fichier de configuration des routes pour l'extension Reactions.
+#
+# Ce fichier définit les routes personnalisées utilisées par les contrôleurs de l'extension pour répondre aux requêtes HTTP.
+#
+# Points clés :
+#   - Déclaration des routes AJAX et classiques
+#   - Mapping des URLs vers les contrôleurs
+#
+# Ce fichier est utilisé par phpBB pour router les requêtes vers les bons points d'entrée de l'extension.
+#
 
 # =============================================================================
 # ROUTE PRINCIPALE

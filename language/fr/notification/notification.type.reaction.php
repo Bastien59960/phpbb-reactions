@@ -1,7 +1,16 @@
 <?php
 /**
- * Reactions Extension for phpBB 3.3
- * Fichier de langue français pour les notifications de réactions
+ * Fichier : language/fr/notification/notification.type.reaction.php — bastien59960/reactions/language/fr/notification/notification.type.reaction.php
+ *
+ * Fichier de langue française pour le type de notification "réaction" de l'extension Reactions.
+ *
+ * Ce fichier contient toutes les chaînes liées aux notifications de type "réaction" en français.
+ *
+ * Points clés :
+ *   - Fournit toutes les chaînes traduisibles pour les notifications de réactions (UCP, cloche, etc.)
+ *   - Utilisé par phpBB pour afficher les messages et préférences de notification
+ *
+ * Ce fichier doit être synchronisé avec la version anglaise pour garantir la cohérence.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

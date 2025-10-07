@@ -1,12 +1,20 @@
 <?php
 /**
-*
-* acp_common [French]
-*
-* @copyright (c) 2025 Bastien59960
-* @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
-*
-*/
+ * Fichier : language/fr/acp/common.php — bastien59960/reactions/language/fr/acp/common.php
+ *
+ * Fichier de langue française pour la partie ACP (panneau d'administration) de l'extension Reactions.
+ *
+ * Ce fichier contient toutes les chaînes utilisées dans l'administration de l'extension en français.
+ *
+ * Points clés :
+ *   - Fournit toutes les chaînes traduisibles pour l'ACP de l'extension
+ *   - Utilisé par phpBB pour afficher les pages de configuration admin de Reactions
+ *
+ * Ce fichier doit être synchronisé avec la version anglaise pour garantir la cohérence.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 
 if (!defined('IN_PHPBB'))
 {

@@ -1,8 +1,20 @@
 <?php
 /**
- * Migration unique pour l'installation propre de l'extension Reactions
+ * Fichier : migrations/release_1_0_0.php — bastien59960/reactions/migrations/release_1_0_0.php
  *
- * Cette migration crée toutes les tables, colonnes, options de configuration et types nécessaires au bon fonctionnement de l'extension.
+ * Migration unique pour l'installation initiale de l'extension Reactions.
+ *
+ * Ce fichier crée toutes les tables, colonnes, options de configuration et types de notifications nécessaires au bon fonctionnement de l'extension.
+ *
+ * Points clés de la logique métier :
+ *   - Création de la table principale des réactions
+ *   - Ajout des colonnes nécessaires dans les tables notifications et users
+ *   - Ajout des options de configuration globales
+ *   - Création du type de notification canonique pour les réactions
+ *   - Nettoyage automatique des notifications orphelines
+ *   - Gestion de la réversion complète lors de la désinstallation
+ *
+ * Ce fichier doit être utilisé pour toute nouvelle installation de l'extension (avant la mise en production).
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

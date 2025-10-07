@@ -1,19 +1,25 @@
 <?php
 /**
- * Contrôleur AJAX pour l'extension Reactions
- * 
- * Ce contrôleur gère toutes les requêtes AJAX liées aux réactions :
- * - Ajouter/supprimer des réactions
- * - Récupérer les réactions d'un message
- * - Récupérer les utilisateurs ayant réagi avec un emoji spécifique
- * - Déclencher les notifications immédiates (cloche)
- * 
- * Actions supportées :
- * - 'add' : Ajouter une réaction
- * - 'remove' : Supprimer une réaction
- * - 'get' : Récupérer toutes les réactions d'un message
- * - 'get_users' : Récupérer les utilisateurs ayant réagi avec un emoji
- * 
+ * Fichier : controller/ajax.php — bastien59960/reactions/controller/ajax.php
+ *
+ * Contrôleur AJAX principal de l'extension Reactions pour phpBB.
+ *
+ * Ce fichier gère toutes les requêtes AJAX liées aux réactions sur les messages du forum :
+ *   - Ajout et suppression de réactions (emojis) sur un message
+ *   - Récupération des réactions d'un message
+ *   - Récupération des utilisateurs ayant réagi avec un emoji
+ *   - Déclenchement immédiat des notifications (cloche)
+ *
+ * Points clés de la logique métier :
+ *   - Validation des entrées (post, emoji, action)
+ *   - Vérification des permissions utilisateur
+ *   - Respect des limites configurables (max réactions par post/utilisateur)
+ *   - Sécurité CSRF et gestion des erreurs
+ *   - Support complet des emojis Unicode (utf8mb4)
+ *   - Gestion robuste des erreurs et logs pour le debug
+ *
+ * Ce contrôleur est le point d'entrée pour toutes les interactions dynamiques côté client (JS) concernant les réactions.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

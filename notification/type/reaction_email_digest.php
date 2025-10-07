@@ -1,7 +1,21 @@
 <?php
 /**
- * Notification type : Reaction email digest
- * (classe minimale - n'utilise que la méthode email)
+ * Fichier : notification/type/reaction_email_digest.php — bastien59960/reactions/notification/type/reaction_email_digest.php
+ *
+ * Type de notification "Résumé e-mail des réactions" pour l'extension Reactions.
+ *
+ * Ce fichier définit la classe de notification utilisée pour envoyer un résumé périodique par e-mail des réactions reçues sur les messages d'un utilisateur (notification par cron).
+ *
+ * Points clés de la logique métier :
+ *   - Ce type n'est pas stocké individuellement dans la table des notifications (pas de cloche)
+ *   - Utilisé uniquement pour l'affichage dans l'UCP et la gestion des préférences
+ *   - Génère les clés de langue pour le titre et la description dans l'UCP
+ *   - Fournit le nom du template d'e-mail utilisé par le cron
+ *
+ * Ce type de notification permet à l'utilisateur d'activer ou non le résumé e-mail dans ses préférences UCP.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\notification\type;
@@ -95,5 +109,10 @@ class reaction_email_digest extends base
     public function users_to_query()
     {
         return array();
+    }
+
+    public function get_url()
+    {
+        return '';
     }
 }

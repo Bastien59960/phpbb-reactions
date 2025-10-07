@@ -1,11 +1,20 @@
 <?php
 /**
-*
-* acp_common [English]
-*
-* @copyright (c) 2025 Bastien59960
-* @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
-*/
+ * File: language/en/acp/common.php — bastien59960/reactions/language/en/acp/common.php
+ *
+ * English language file for the ACP (Admin Control Panel) part of the Reactions extension.
+ *
+ * This file contains all the admin panel strings used by the extension in English.
+ *
+ * Key points:
+ *   - Provides all ACP-related translatable strings for the extension
+ *   - Used by phpBB to display admin configuration pages for Reactions
+ *
+ * This file must be kept in sync with the French version for consistency.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 
 if (!defined('IN_PHPBB'))
 {

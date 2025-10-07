@@ -1,15 +1,17 @@
 <?php
 /**
- * Fichier de langue français pour l'extension Reactions
- * 
- * Ce fichier contient toutes les chaînes de caractères en français
- * utilisées par l'extension Reactions. Il inclut :
- * - Messages d'interface utilisateur
- * - Messages d'erreur et de succès
- * - Textes pour les notifications
- * - Messages d'administration
- * - Tooltips et aides contextuelles
- * 
+ * Fichier : language/fr/common.php — bastien59960/reactions/language/fr/common.php
+ *
+ * Fichier principal de langue française pour l'extension Reactions.
+ *
+ * Ce fichier contient toutes les chaînes d'interface utilisateur, d'erreur, de notification et d'administration utilisées par l'extension en français.
+ *
+ * Points clés :
+ *   - Fournit toutes les chaînes traduisibles pour l'extension (UI, notifications, erreurs, tooltips, etc.)
+ *   - Utilisé par phpBB pour afficher les messages et libellés dans le forum
+ *
+ * Ce fichier doit être synchronisé avec la version anglaise pour garantir la cohérence.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

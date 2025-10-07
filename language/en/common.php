@@ -1,10 +1,20 @@
 <?php
 /**
-* English language file for the Reactions extension
-*
-* @copyright (c) 2025 Bastien59960
-* @license GNU General Public License, version 2 (GPL-2.0)
-*/
+ * File: language/en/common.php — bastien59960/reactions/language/en/common.php
+ *
+ * Main English language file for the Reactions extension.
+ *
+ * This file contains all the user interface, error, notification, and admin strings used by the extension in English.
+ *
+ * Key points:
+ *   - Provides all translatable strings for the extension (UI, notifications, errors, tooltips, etc.)
+ *   - Used by phpBB to display messages and labels in the forum
+ *
+ * This file must be kept in sync with the French version for consistency.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 
 if (!defined('IN_PHPBB'))
 {

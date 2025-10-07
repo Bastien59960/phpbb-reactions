@@ -1,3 +1,18 @@
+#
+# File: language/en/email/reaction.txt — bastien59960/reactions/language/en/email/reaction.txt
+#
+# Email template for reaction notifications (English).
+#
+# This file contains the template used for sending email notifications about new reactions to posts.
+#
+# Key points:
+#   - Used by the notification system to send emails to users
+#   - Must be kept in sync with the French version for consistency
+#
+# @copyright (c) 2025 Bastien59960
+# @license GNU General Public License, version 2 (GPL-2.0)
+#
+
 Subject: {TITLE}
 
 Hello {USERNAME},

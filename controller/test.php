@@ -1,7 +1,18 @@
 <?php
 /**
- * Test controller for reactions extension
- * 
+ * Fichier : controller/test.php — bastien59960/reactions/controller/test.php
+ *
+ * Contrôleur de test pour l'extension Reactions.
+ *
+ * Ce fichier peut être utilisé pour des expérimentations, des tests de développement ou des vérifications de fonctionnalités spécifiques liées aux réactions.
+ * Il n'est pas utilisé en production et ne fait pas partie du flux métier principal de l'extension.
+ *
+ * Points clés :
+ *   - Permet de tester rapidement des fonctions ou des intégrations
+ *   - Sert de base pour des essais ou des débogages ponctuels
+ *
+ * Ce fichier peut être supprimé ou ignoré en production.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
