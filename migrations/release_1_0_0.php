@@ -1,60 +1,38 @@
 <?php
 /**
- * Migration de base pour l'extension Reactions
- * 
- * Cette migration crée la table principale des réactions et définit
- * la structure de base nécessaire au fonctionnement de l'extension.
- * 
- * Tables créées :
- * - phpbb_post_reactions : Stocke toutes les réactions aux messages
- * 
- * Champs de la table :
- * - reaction_id : ID unique de la réaction (clé primaire)
- * - post_id : ID du message réagi
- * - topic_id : ID du sujet (pour optimiser les requêtes)
- * - user_id : ID de l'utilisateur qui a réagi
- * - reaction_emoji : Emoji de la réaction (UTF8MB4)
- * - reaction_time : Timestamp de la réaction
- * - reaction_notified : Flag pour l'anti-spam des notifications
- * 
+ * Migration unique pour l'installation propre de l'extension Reactions
+ *
+ * Cette migration crée toutes les tables, colonnes, options de configuration et types nécessaires au bon fonctionnement de l'extension.
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;
 
-/**
- * Migration de base pour l'extension Reactions
- * 
- * Crée la table principale des réactions avec tous les champs nécessaires
- * pour gérer les réactions, les notifications et l'anti-spam.
- */
 class release_1_0_0 extends \phpbb\db\migration\migration
 {
     // =============================================================================
     // MÉTHODES REQUISES PAR LE SYSTÈME DE MIGRATIONS
     // =============================================================================
-    
+
     /**
      * Vérifier si la migration est déjà installée
-     * 
-     * Cette méthode vérifie si la table des réactions existe déjà.
-     * Elle est utilisée par le système de migrations pour éviter les doublons.
-     * 
-     * @return bool True si la table existe, False sinon
+     *
+     * On vérifie la présence de la table des réactions et des colonnes users.
+     *
+     * @return bool
      */
     public function effectively_installed()
     {
-        return $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions');
+        return (
+            $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions') &&
+            $this->db_tools->sql_column_exists($this->table_prefix . 'users', 'user_reactions_notify')
+        );
     }
 
     /**
-     * Définir les dépendances de cette migration
-     * 
-     * Cette méthode indique quelles migrations doivent être installées
-     * avant cette migration. Ici, on dépend de phpBB 3.3.10.
-     * 
-     * @return array Liste des migrations dépendantes
+     * Dépendances (phpBB 3.3.10 minimum)
      */
     static public function depends_on()
     {
@@ -63,11 +41,10 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 
     /**
      * Définir le schéma de la base de données
-     * 
-     * Cette méthode définit la structure de la table des réactions.
-     * Elle crée la table avec tous les champs et index nécessaires.
-     * 
-     * @return array Structure de la base de données
+     *
+     * Crée la table des réactions, ajoute les colonnes nécessaires à notifications et users.
+     *
+     * @return array
      */
     public function update_schema()
     {
@@ -75,33 +52,38 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             'add_tables' => array(
                 $this->table_prefix . 'post_reactions' => array(
                     'COLUMNS' => array(
-                        'reaction_id'      => array('UINT', null, 'auto_increment'), // ID unique de la réaction
-                        'post_id'          => array('UINT', 0),                      // ID du message réagi
-                        'topic_id'         => array('UINT', 0),                      // ID du sujet (optimisation)
-                        'user_id'          => array('UINT', 0),                      // ID de l'utilisateur qui réagit
-                        'reaction_emoji'   => array('VCHAR:191', ''),                 // Emoji de la réaction
-                        'reaction_time'    => array('UINT:11', 0),                   // Timestamp de la réaction
-                        'reaction_notified'=> array('BOOL', 0),                      // Flag anti-spam notifications
+                        'reaction_id'      => array('UINT', null, 'auto_increment'),
+                        'post_id'          => array('UINT', 0),
+                        'topic_id'         => array('UINT', 0),
+                        'user_id'          => array('UINT', 0),
+                        'reaction_emoji'   => array('VCHAR:191', ''),
+                        'reaction_time'    => array('UINT:11', 0),
+                        'reaction_notified'=> array('BOOL', 0),
                     ),
                     'PRIMARY_KEY' => 'reaction_id',
                     'KEYS' => array(
-                        'post_id'           => array('INDEX', 'post_id'),            // Index pour les requêtes par message
-                        'topic_id'          => array('INDEX', 'topic_id'),           // Index pour les requêtes par sujet
-                        'user_id'           => array('INDEX', 'user_id'),            // Index pour les requêtes par utilisateur
-                        'post_notified_idx' => array('INDEX', array('post_id', 'reaction_notified')), // Index composé pour l'anti-spam
+                        'post_id'           => array('INDEX', 'post_id'),
+                        'topic_id'          => array('INDEX', 'topic_id'),
+                        'user_id'           => array('INDEX', 'user_id'),
+                        'post_notified_idx' => array('INDEX', array('post_id', 'reaction_notified')),
                     ),
+                ),
+            ),
+            'add_columns' => array(
+                $this->table_prefix . 'notifications' => array(
+                    'notification_type_name' => array('VCHAR:255', ''),
+                    'reaction_emoji'         => array('VCHAR_UNI:10', ''),
+                ),
+                $this->table_prefix . 'users' => array(
+                    'user_reactions_notify'     => array('BOOL', 1),
+                    'user_reactions_cron_email' => array('BOOL', 1),
                 ),
             ),
         );
     }
 
     /**
-     * Définir le schéma de réversion
-     * 
-     * Cette méthode définit comment supprimer la table des réactions
-     * lors de la désinstallation de l'extension.
-     * 
-     * @return array Structure de réversion
+     * Schéma de réversion
      */
     public function revert_schema()
     {
@@ -109,38 +91,111 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             'drop_tables' => array(
                 $this->table_prefix . 'post_reactions',
             ),
-        );
-    }
-    
-    /**
-     * Définir les données à mettre à jour
-     * 
-     * Cette méthode définit les opérations de données à effectuer
-     * lors de l'installation de la migration.
-     * 
-     * @return array Liste des opérations de données
-     */
-    public function update_data()
-    {
-        return array(
-            ['custom', [[$this, 'set_utf8mb4_bin']]], // Configurer le charset UTF8MB4 pour les emojis
+            'drop_columns' => array(
+                $this->table_prefix . 'notifications' => array(
+                    'notification_type_name',
+                    'reaction_emoji',
+                ),
+                $this->table_prefix . 'users' => array(
+                    'user_reactions_notify',
+                    'user_reactions_cron_email',
+                ),
+            ),
         );
     }
 
     /**
-     * Configurer le charset UTF8MB4 pour les emojis
-     * 
-     * Cette méthode configure le champ reaction_emoji pour supporter
-     * les emojis avec le charset UTF8MB4 et la collation utf8mb4_bin.
-     * 
-     * @return void
+     * Données à mettre à jour lors de l'installation
+     */
+    public function update_data()
+    {
+        return array(
+            // Options de configuration
+            array('config.add', array('bastien59960_reactions_max_per_post', 20)),
+            array('config.add', array('bastien59960_reactions_max_per_user', 10)),
+            array('config.add', array('bastien59960_reactions_enabled', 1)),
+            array('config.add', array('reactions_ucp_preferences_installed', 1)),
+            array('custom', array(array($this, 'set_utf8mb4_bin'))),
+            array('custom', array(array($this, 'create_notification_type'))),
+            array('custom', array(array($this, 'clean_orphan_notifications'))),
+        );
+    }
+
+    /**
+     * Réversion des données
+     */
+    public function revert_data()
+    {
+        return array(
+            array('config.remove', array('bastien59960_reactions_max_per_post')),
+            array('config.remove', array('bastien59960_reactions_max_per_user')),
+            array('config.remove', array('bastien59960_reactions_enabled')),
+            array('config.remove', array('reactions_ucp_preferences_installed')),
+            array('custom', array(array($this, 'remove_notification_type'))),
+        );
+    }
+
+    /**
+     * Configurer le champ emoji pour supporter utf8mb4_bin
      */
     public function set_utf8mb4_bin()
     {
         $table_name = $this->table_prefix . 'post_reactions';
         $sql = "ALTER TABLE {$table_name}
         MODIFY `reaction_emoji` VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
+        $this->db->sql_query($sql);
+    }
 
+    /**
+     * Crée le type de notification canonique si absent
+     */
+    public function create_notification_type()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
+        $canonical_name = 'notification.type.reaction';
+        $sql = 'SELECT notification_type_id FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "' LIMIT 1";
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+        if (!$row) {
+            $insert_data = array(
+                'notification_type_name'    => $canonical_name,
+                'notification_type_enabled' => 1,
+            );
+            $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
+        }
+    }
+
+    /**
+     * Nettoyage des notifications orphelines
+     */
+    public function clean_orphan_notifications()
+    {
+        $notifications_table = $this->table_prefix . 'notifications';
+        $types_table = $this->table_prefix . 'notification_types';
+        try {
+            $sql = "
+                DELETE FROM {$notifications_table}
+                WHERE notification_type_id NOT IN (
+                    SELECT notification_type_id FROM {$types_table}
+                )
+            ";
+            $this->db->sql_query($sql);
+        } catch (\Throwable $e) {
+            if (defined('DEBUG')) {
+                trigger_error('[Reactions] Échec du nettoyage des notifications orphelines : ' . $e->getMessage(), E_USER_NOTICE);
+            }
+        }
+    }
+
+    /**
+     * Suppression du type de notification canonique (revert)
+     */
+    public function remove_notification_type()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
+        $canonical_name = 'notification.type.reaction';
+        $sql = 'DELETE FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
         $this->db->sql_query($sql);
     }
 }
