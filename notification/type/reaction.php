@@ -29,19 +29,47 @@ use phpbb\language\language;
 
 class reaction extends base
 {
+	/** @var driver_interface */
 	protected $db;
+
+	/** @var language */
 	protected $language;
+
+	/** @var user */
 	protected $user;
+
+	/** @var auth */
 	protected $auth;
+
+	/** @var config */
 	protected $config;
+
+	/** @var helper */
 	protected $helper;
+
+	/** @var request_interface */
 	protected $request;
+
+	/** @var template */
 	protected $template;
+
+	/** @var user_loader */
 	protected $user_loader;
+
+	/** @var string */
 	protected $phpbb_root_path;
+
+	/** @var string */
 	protected $php_ext;
+
+	/** @var string */
 	protected $notifications_table;
 
+	/**
+	 * Constructeur : injection des dépendances phpBB.
+	 *
+	 * L’ordre doit correspondre à celui du parent `phpbb\notification\type\base`.
+	 */
 	public function __construct(
 		driver_interface $db,
 		language $language,
@@ -79,18 +107,21 @@ class reaction extends base
 		$this->php_ext = $php_ext;
 		$this->notifications_table = $notifications_table;
 
+		// DEBUG : journaliser uniquement si DEBUG activé
 		if (defined('DEBUG') && DEBUG) {
 			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db) . ', Table: ' . $notifications_table);
 		}
 
-		// Vérifie que le type "reaction" existe dans phpbb_notification_types.
-		$type_name = 'notification.type.reaction';
+		// --- Vérification/ajout du type en base (si absent) ---
+		// IMPORTANT : le nom retourné par get_type() doit être *identique* à la valeur en base.
+		$type_name = $this->get_type(); // ex: "notification.type.reaction"
 		$types_table = 'phpbb_notification_types';
 
+		// On vérifie que la colonne 'notification_type_name' existe pour éviter les erreurs sur des bases non-standards.
 		$col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
-		$result = $this->db->sql_query($col_check_sql);
-		$col_exists = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
+		$col_result = $this->db->sql_query($col_check_sql);
+		$col_exists = $this->db->sql_fetchrow($col_result);
+		$this->db->sql_freeresult($col_result);
 
 		if ($col_exists) {
 			$sql = 'SELECT notification_type_id
@@ -103,7 +134,8 @@ class reaction extends base
 
 			if (!$exists) {
 				$proto_data = [
-					'notification_type_name' => $type_name,
+					'notification_type_name'    => $type_name,
+					'notification_type_enabled' => 1,
 				];
 				$this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $proto_data));
 
@@ -117,12 +149,18 @@ class reaction extends base
 	}
 
 	// =========================================================================
-	// SECTION : Méthodes d’identification du type
+	// IDENTIFICATION DU TYPE
 	// =========================================================================
 
+	/**
+	 * Identifiant unique du type.
+	 *
+	 * /!\ DOIT CORRESPONDRE EXACTEMENT à phpbb_notification_types.notification_type_name
+	 */
 	public function get_type()
 	{
-		return 'reaction';
+		// Valeur cohérente avec ta base (tu as 'notification.type.reaction')
+		return 'notification.type.reaction';
 	}
 
 	public function is_available()
@@ -131,7 +169,7 @@ class reaction extends base
 	}
 
 	// =========================================================================
-	// SECTION : Gestion des éléments notifiés
+	// ELEMENT / PARENT / AUTEUR
 	// =========================================================================
 
 	public static function get_item_id($data)
@@ -150,7 +188,7 @@ class reaction extends base
 	}
 
 	// =========================================================================
-	// SECTION : Liens et affichage
+	// URL / RENDU
 	// =========================================================================
 
 	public function get_url()
@@ -167,29 +205,33 @@ class reaction extends base
 	{
 		global $phpbb_root_path, $phpEx;
 		$post_id = self::get_item_id($data);
-		return append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id;
+		return $post_id ? append_sid("{$phpbb_root_path}viewtopic.$phpEx", 'p=' . $post_id) . '#p' . $post_id : '';
 	}
 
 	public function get_title()
 	{
+		// Clé de langue (language/*/...)
 		return 'NOTIFICATION_TYPE_REACTION';
 	}
 
 	public function get_language_file()
 	{
+		// fichier de langue attendu : language/<lang>/notification/reaction_notification.php
 		return 'notification/reaction_notification';
 	}
 
 	// =========================================================================
-	// SECTION : Détermination des destinataires
+	// DESTINATAIRES
 	// =========================================================================
 
 	public function find_users_for_notification($type_data, $options = [])
 	{
 		$users = [];
+
 		$post_author = (int) ($type_data['post_author'] ?? 0);
 		$reacter = (int) ($type_data['reacter'] ?? 0);
 
+		// Notifier l'auteur si ce n'est pas lui-même
 		if ($post_author && $post_author !== $reacter) {
 			$users[] = $post_author;
 		}
@@ -203,7 +245,7 @@ class reaction extends base
 	}
 
 	// =========================================================================
-	// SECTION : Email (désactivé ici)
+	// EMAIL (désactivé par défaut — nous utilisons cron groupé)
 	// =========================================================================
 
 	public function get_email_template()
@@ -221,7 +263,7 @@ class reaction extends base
 	}
 
 	// =========================================================================
-	// SECTION : Rendu utilisateur
+	// RENDU POUR L'UTILISATEUR
 	// =========================================================================
 
 	public function get_title_for_user($user_id, $lang)
@@ -245,9 +287,13 @@ class reaction extends base
 	}
 
 	// =========================================================================
-	// SECTION : Enregistrement en base
+	// PERSISTENCE EN BASE
 	// =========================================================================
 
+	/**
+	 * Colonnes personnalisées pour phpbb_notifications gérées par le manager.
+	 * Ici on stocke l'emoji (VCHAR_UNI pour Unicode).
+	 */
 	public function get_insert_sql()
 	{
 		return [
