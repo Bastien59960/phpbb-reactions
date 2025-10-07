@@ -111,3 +111,20 @@ services:
             - '@request'
             - '@template'
             - '%core.table_prefix%'
+
+    # =============================================================================
+    # TYPE DE NOTIFICATION POUR LE RÉSUMÉ EMAIL (ENVOYÉ PAR LE CRON)
+    # =============================================================================
+    bastien59960.reactions.notification.cron_email:
+        class: bastien59960\reactions\notification\type\reaction_email_digest
+        arguments:
+            - '@user'
+            - '@dbal.conn'
+            - '@config'
+            - '@template'
+            - '@language'
+            - '@log'
+            - '@phpbb_root_path'
+            - '@php_ext'
+        tags:
+            - { name: notification.type }
