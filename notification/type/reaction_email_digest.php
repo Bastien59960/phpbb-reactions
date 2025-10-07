@@ -28,6 +28,11 @@ use phpbb\notification\type\base;
 
 class reaction_email_digest extends base
 {
+    public function __construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table)
+    {
+        parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
+    }
+
     public function get_type()
     {
         return 'notification.type.reaction_email_digest';

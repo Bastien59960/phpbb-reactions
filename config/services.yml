@@ -169,13 +169,12 @@ services:
     bastien59960.reactions.notification.cron_email:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         arguments:
-            - '@user'                     # 1. Utilisateur
-            - '@dbal.conn'                # 2. Base de données
-            - '@config'                   # 3. Configuration
-            - '@template'                 # 4. Templates
-            - '@language'                 # 5. Langues
-            - '@log'                      # 6. Log système
-            - '%core.root_path%'          # 7. Chemin racine
-            - '%core.php_ext%'            # 8. Extension PHP
+            - '@dbal.conn'                # 1. Base de données (driver_interface)
+            - '@language'                 # 2. Gestionnaire de langues
+            - '@user'                     # 3. Utilisateur courant
+            - '@auth'                     # 4. Authentification
+            - '%core.root_path%'          # 5. Chemin racine
+            - '%core.php_ext%'            # 6. Extension PHP
+            - '%core.table_prefix%notifications' # 7. Table notifications
         tags:
-            - { name: notification.type } # Enregistre comme type de notification
+            - { name: notification.type }
