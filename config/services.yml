@@ -125,6 +125,6 @@ services:
             - '@language'
             - '@log'
             - '%phpbb_root_path'
-            - '@php_ext'
+            - '%core.php_ext%'
         tags:
             - { name: notification.type }
