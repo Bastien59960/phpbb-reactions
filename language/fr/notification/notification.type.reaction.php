@@ -1,8 +1,8 @@
 <?php
 /**
  * Reactions Extension for phpBB 3.3
- * Fichier de langue français pour les notifications
- * 
+ * Fichier de langue français pour les notifications de réactions
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

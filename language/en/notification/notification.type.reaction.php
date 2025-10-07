@@ -2,7 +2,7 @@
 /**
  * Reactions Extension for phpBB 3.3
  * English language file for reaction notifications
- * 
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

@@ -5,7 +5,6 @@
 *
 * @copyright (c) 2025 Bastien59960
 * @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
-*
 */
 
 if (!defined('IN_PHPBB'))
@@ -18,28 +17,16 @@ if (empty($lang) || !is_array($lang))
     $lang = array();
 }
 
-// DEVELOPERS PLEASE NOTE
-//
-// All language files should use UTF-8 as their encoding and the files must not contain a BOM.
-//
-// Placeholders can now contain order information, e.g. instead of
-// 'Page %s of %s' you can (and should) write 'Page %1$s of %2$s', this allows
-// translators to re-order the output of data while ensuring it remains correct
-//
-// You do not need this where single placeholders are used, e.g. 'Message %d' is fine
-// however where there are multiple placeholders in one string, please use the numbered format.
-//
-
 $lang = array_merge($lang, array(
     // ACP Main Title
-
-    'ACP_REACTIONS_TITLE'                   => 'Post Reactions',
-    'ACP_REACTIONS_SETTINGS' => 'Reactions settings',
-    'ACP_REACTIONS_IMPORT'   => 'Import old reactions',
-    'ACP_REACTIONS_IMPORT_EXPLAIN'   => 'Here you can import old reactions from the old reactions table.',
+    'ACP_REACTIONS_TITLE'                   => 'Reactions settings',
+    'ACP_REACTIONS_SETTINGS'                => 'Reactions configuration',
+    'ACP_REACTIONS_SETTINGS_EXPLAIN'        => 'Here you can manage the settings for the Post Reactions extension.',
+    'ACP_REACTIONS_IMPORT'                  => 'Import old reactions',
+    'ACP_REACTIONS_IMPORT_EXPLAIN'          => 'Here you can import old reactions from the old reactions table.',
 
     // ACP Settings page
-    'ACP_REACTIONS_SETTINGS'                => 'Reactions Settings',
+    'ACP_REACTIONS_SETTINGS'                => 'Reactions configuration',
     'ACP_REACTIONS_SETTINGS_EXPLAIN'        => 'Here you can manage the settings for the Post Reactions extension.',
 
     // Settings fields

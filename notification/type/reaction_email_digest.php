@@ -78,4 +78,22 @@ class reaction_email_digest extends base
     {
         return array();
     }
+
+    /**
+     * Méthodes requises par l'interface type_interface
+     */
+    public static function get_item_id($data)
+    {
+        return 0;
+    }
+
+    public static function get_item_parent_id($data)
+    {
+        return 0;
+    }
+
+    public function users_to_query()
+    {
+        return array();
+    }
 }

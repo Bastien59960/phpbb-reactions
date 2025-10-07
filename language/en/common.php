@@ -1,36 +1,21 @@
 <?php
 /**
- * English language file for the Reactions extension
- * 
- * This file contains all English language strings used by the Reactions extension.
- * It includes:
- * - User interface messages
- * - Error and success messages
- * - Notification texts
- * - Administration messages
- * - Tooltips and contextual help
- * 
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
- */
+* English language file for the Reactions extension
+*
+* @copyright (c) 2025 Bastien59960
+* @license GNU General Public License, version 2 (GPL-2.0)
+*/
 
-// Security check
 if (!defined('IN_PHPBB'))
 {
     exit;
 }
 
-// Initialize language array
 if (empty($lang) || !is_array($lang))
 {
     $lang = array();
 }
 
-// =============================================================================
-// LANGUAGE STRINGS DEFINITION
-// =============================================================================
-
-// Merge the existing language array
 $lang = array_merge($lang, array(
     // =============================================================================
     // ADMINISTRATION MESSAGES (ACP)
@@ -116,9 +101,8 @@ $lang = array_merge($lang, array(
     'REACTIONS_NOTIFICATION_TYPE' => 'Post reactions',
     'REACTIONS_NOTIFICATION_GROUP' => 'Reaction notifications',
 
-    'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi %2$s à votre message',
-        'NOTIFICATION_TYPE_BASTIEN59960_REACTIONS_CRON_EMAIL' => 'Résumé par e-mail des réactions',
-'REACTION_DIGEST_EMAIL_NOTIFICATION' => 'Recevoir un résumé périodique des nouvelles réactions par e-mail.',
+    'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> reacted %2$s to your message',
+    'NOTIFICATION_TYPE_BASTIEN59960_REACTIONS_CRON_EMAIL' => 'Reactions email digest',
+    'REACTION_DIGEST_EMAIL_NOTIFICATION' => 'Receive a periodic summary of new reactions by email.',
     'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Reactions to your posts',
-
 ));
