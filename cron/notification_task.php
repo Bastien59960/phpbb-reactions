@@ -408,19 +408,22 @@ class notification_task extends \phpbb\cron\task\base
             return false;
         }
 
-        // Récupérer la préférence
-        $sql = 'SELECT disable_cron_email
-                FROM phpbb_reactions_user_prefs
-                WHERE user_id = ' . $user_id;
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
+// --- remplacement proposé ---
+$sql = 'SELECT user_reactions_cron_email
+        FROM ' . $this->table_prefix . "users
+        WHERE user_id = " . (int) $user_id;
+$result = $this->db->sql_query($sql);
+$row = $this->db->sql_fetchrow($result);
+$this->db->sql_freeresult($result);
 
-        if (!$row)
-        {
-            return false;
-        }
+// Si la colonne existe mais pas de ligne (improbable), on considère les mails activés
+if (!$row)
+{
+    return false;
+}
 
-        return ((int) $row['disable_cron_email']) === 1;
+// user_reactions_cron_email : 1 = reçoit les e-mails, 0 = désactivé
+return ((int) $row['user_reactions_cron_email']) === 0;
+
     }
 }
