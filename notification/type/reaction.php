@@ -7,11 +7,6 @@
  * Gère les notifications lorsqu’un utilisateur réagit à un message avec un emoji.
  * Affiche une alerte dans le centre de notifications de phpBB (icône de cloche).
  *
- * Ce fichier :
- * - Déclare le type de notification "reaction"
- * - Insère automatiquement ce type dans la table phpbb_notification_types s’il n’existe pas
- * - Définit le comportement d’affichage et d’enregistrement des notifications
- *
  * © 2025 Bastien59960 — Licence GPL v2
  */
 
@@ -34,47 +29,19 @@ use phpbb\language\language;
 
 class reaction extends base
 {
-	/** @var driver_interface */
 	protected $db;
-
-	/** @var language */
 	protected $language;
-
-	/** @var user */
 	protected $user;
-
-	/** @var auth */
 	protected $auth;
-
-	/** @var config */
 	protected $config;
-
-	/** @var helper */
 	protected $helper;
-
-	/** @var request_interface */
 	protected $request;
-
-	/** @var template */
 	protected $template;
-
-	/** @var user_loader */
 	protected $user_loader;
-
-	/** @var string */
 	protected $phpbb_root_path;
-
-	/** @var string */
 	protected $php_ext;
-
-	/** @var string */
 	protected $notifications_table;
 
-	/**
-	 * Constructeur : injection des dépendances phpBB.
-	 *
-	 * L’ordre doit correspondre à celui du parent `phpbb\notification\type\base`.
-	 */
 	public function __construct(
 		driver_interface $db,
 		language $language,
@@ -112,20 +79,12 @@ class reaction extends base
 		$this->php_ext = $php_ext;
 		$this->notifications_table = $notifications_table;
 
-		// ================================================================
-		// SECTION DEBUG (active uniquement si DEBUG activé dans phpBB)
-		// ================================================================
 		if (defined('DEBUG') && DEBUG) {
 			error_log('[Reactions Notification] Constructeur OK - DB driver: ' . get_class($db) . ', Table: ' . $notifications_table);
 		}
 
 		// Vérifie que le type "reaction" existe dans phpbb_notification_types.
-		// S’il n’existe pas, on l’ajoute automatiquement.
-		public function get_type()
-{
-    // Doit correspondre exactement à la valeur enregistrée dans phpbb_notification_types
-    return 'notification.type.reaction';
-}
+		$type_name = 'notification.type.reaction';
 		$types_table = 'phpbb_notification_types';
 
 		$col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
@@ -161,13 +120,11 @@ class reaction extends base
 	// SECTION : Méthodes d’identification du type
 	// =========================================================================
 
-	/** Nom unique du type de notification */
 	public function get_type()
 	{
 		return 'reaction';
 	}
 
-	/** Active ou non ce type de notification */
 	public function is_available()
 	{
 		return true;
@@ -215,8 +172,6 @@ class reaction extends base
 
 	public function get_title()
 	{
-		// Doit correspondre à une clé de langue dans language/*/reactions.php
-		// Exemple : 'NOTIFICATION_TYPE_REACTION' => '%s a réagi à votre message avec %s'
 		return 'NOTIFICATION_TYPE_REACTION';
 	}
 
@@ -235,7 +190,6 @@ class reaction extends base
 		$post_author = (int) ($type_data['post_author'] ?? 0);
 		$reacter = (int) ($type_data['reacter'] ?? 0);
 
-		// Notifie l’auteur du message si ce n’est pas lui qui a réagi
 		if ($post_author && $post_author !== $reacter) {
 			$users[] = $post_author;
 		}
@@ -294,10 +248,6 @@ class reaction extends base
 	// SECTION : Enregistrement en base
 	// =========================================================================
 
-	/**
-	 * Déclare les colonnes personnalisées pour la table des notifications.
-	 * Ici, on stocke l’emoji associé à la réaction.
-	 */
 	public function get_insert_sql()
 	{
 		return [
@@ -305,9 +255,6 @@ class reaction extends base
 		];
 	}
 
-	/**
-	 * Construit les données d’insertion pour chaque notification.
-	 */
 	public function create_insert_array($type_data, $pre_create_data = [])
 	{
 		$insert_array = parent::create_insert_array($type_data, $pre_create_data);
