@@ -124,7 +124,7 @@ services:
             - '@template'
             - '@language'
             - '@log'
-            - '@phpbb_root_path'
+            - '%phpbb_root_path'
             - '@php_ext'
         tags:
             - { name: notification.type }
