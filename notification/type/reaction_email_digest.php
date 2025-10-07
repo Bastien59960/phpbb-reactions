@@ -1,28 +1,26 @@
 <?php
 /**
- * Reactions Extension for phpBB 3.3
- * Notification type: Reaction email digest (summary sent by cron)
- * 
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Notification type : Reaction email digest
+ * (classe minimale - n'utilise que la méthode email)
  */
 
 namespace bastien59960\reactions\notification\type;
+
+if (!defined('IN_PHPBB')) {
+    exit;
+}
 
 use phpbb\notification\type\base;
 
 class reaction_email_digest extends base
 {
-    /**
-     * Get notification type name (used internally)
-     */
     public function get_type()
     {
         return 'notification.type.reaction_email_digest';
     }
 
     /**
-     * Define notification methods (only email, no cloche)
+     * Indique qu'on propose uniquement la méthode email pour ce type.
      */
     public function get_notification_methods()
     {
@@ -30,7 +28,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Return the title shown in UCP
+     * Clé de langue affichée dans l'UCP (titre)
      */
     public static function get_item_type_name()
     {
@@ -38,7 +36,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Description in UCP
+     * Description dans l'UCP
      */
     public static function get_item_type_description()
     {
@@ -46,8 +44,9 @@ class reaction_email_digest extends base
     }
 
     /**
-     * This type does not store individual entries in the notifications table.
-     * The cron will trigger it manually.
+     * Par défaut on ne crée pas d'entrées individuelles dans phpbb_notifications
+     * pour ce type (le cron fait l'agrégation et l'envoi).
+     * On fournit des méthodes vides / compatibles.
      */
     public function find_users_for_notification($data, $options = array())
     {
@@ -64,14 +63,15 @@ class reaction_email_digest extends base
         return '';
     }
 
-    public function get_reference()
+    public function get_language_file()
     {
-        return '';
+        return 'notification/notification.type.reaction_email_digest';
     }
 
     public function get_email_template()
     {
-        return '@bastien59960_reactions/email/reaction_digest.txt';
+        // Le cron utilise les templates language/*/email/reaction.txt
+        return 'reaction';
     }
 
     public function get_email_template_variables()
