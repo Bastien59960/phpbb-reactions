@@ -1,39 +1,31 @@
 <!-- IF S_REACTIONS_ENABLED and not S_IS_BOT and S_USER_LOGGED_IN -->
-<!-- Bloc pour les utilisateurs connectés avec interactions complètes -->
 <div class="post-reactions-container" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
-        <!-- Réactions depuis la DB (gérées par le listener PHP) -->
         <!-- BEGIN postrow.post_reactions -->
-        <!-- CORRIGÉ : Retrait du title pour éviter le double tooltip -->
-        <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->"
-              data-emoji="{postrow.post_reactions.EMOJI}"
+        <span class="reaction<!-- IF postrow.post_reactions.USER_REACTED --> active<!-- ENDIF -->" 
+              data-emoji="{postrow.post_reactions.EMOJI}" 
               data-count="{postrow.post_reactions.COUNT}"
-              <!-- IF postrow.post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
-            {postrow.post_reactions.EMOJI}
-            <span class="count">{postrow.post_reactions.COUNT}</span>
+              data-users='{postrow.post_reactions.USERS}'
+              <!-- IF postrow.post_reactions.COUNT == 0 -->style="display:none;"<!-- ENDIF -->>
+            {postrow.post_reactions.EMOJI} <span class="count">{postrow.post_reactions.COUNT}</span>
         </span>
         <!-- END postrow.post_reactions -->
         
-        <!-- Bouton pour palette avec recherche -->
         <span class="reaction-more" title="Ajouter une réaction">+</span>
-        
-        <!-- SUPPRIMÉ : Bouton "?" qui affichait la liste (remplacé par tooltip au survol) -->
     </div>
 </div>
 
 <!-- ELSEIF S_REACTIONS_ENABLED and not S_IS_BOT and not S_USER_LOGGED_IN -->
-<!-- Affichage en lecture seule pour les utilisateurs non connectés -->
 <div class="post-reactions-container post-reactions-readonly" data-post-id="{postrow.POST_ID}">
     <div class="post-reactions">
         <!-- BEGIN postrow.post_reactions -->
-            <!-- IF postrow.post_reactions.COUNT > 0 -->
-            <span class="reaction reaction-readonly"
-                  data-emoji="{postrow.post_reactions.EMOJI}"
-                  data-count="{postrow.post_reactions.COUNT}">
-                {postrow.post_reactions.EMOJI}
-                <span class="count">{postrow.post_reactions.COUNT}</span>
-            </span>
-            <!-- ENDIF -->
+        <!-- IF postrow.post_reactions.COUNT > 0 -->
+        <span class="reaction reaction-readonly" 
+              data-emoji="{postrow.post_reactions.EMOJI}" 
+              data-count="{postrow.post_reactions.COUNT}">
+            {postrow.post_reactions.EMOJI} <span class="count">{postrow.post_reactions.COUNT}</span>
+        </span>
+        <!-- ENDIF -->
         <!-- END postrow.post_reactions -->
     </div>
 </div>
