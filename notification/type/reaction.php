@@ -317,22 +317,45 @@ class reaction extends base
         return $users;
     }
 
-    /**
+   /**
      * Utilisateurs dont les données doivent être chargées
      * 
-     * Retourne les IDs des utilisateurs dont on a besoin des infos (le réacteur)
+     * Cette méthode est appelée AVANT create_insert_array().
+     * À ce stade, $this->notification_data n'est pas encore défini.
+     * On doit retourner un tableau vide ou les IDs depuis le contexte global.
+     * 
+     * CORRECTION : Retourner un tableau vide car les données utilisateur
+     * seront chargées automatiquement par phpBB via get_avatar/get_title
      */
     public function users_to_query()
     {
-        $reacter = (int) $this->get_data('reacter');
-        error_log('[Reactions Notification] users_to_query() retourne : ' . $reacter);
-        return array($reacter);
+        // Retourner tableau vide : phpBB chargera automatiquement les users nécessaires
+        error_log('[Reactions Notification] users_to_query() appelée - retourne []');
+        return array();
+    }
+
+        /**
+     * Obtenir l'ID de l'avatar à afficher (le réacteur)
+     * 
+     * Cette méthode est appelée APRÈS la création de la notification.
+     * À ce stade, $this->notification_data contient toutes les données.
+     */
+    public function get_avatar()
+    {
+        $reacter_id = isset($this->notification_data['reacter']) 
+            ? (int) $this->notification_data['reacter'] 
+            : 0;
+        
+        error_log('[Reactions Notification] get_avatar() retourne user_id=' . $reacter_id);
+        return $reacter_id;
     }
     
     /**
      * Méthode appelée avant la création de la notification
      * Permet de vérifier que tout est OK
      */
+
+    
     public function pre_create_insert_array($type_data, $notify_users)
     {
         error_log('[Reactions Notification] pre_create_insert_array appelée');
