@@ -97,27 +97,28 @@ class reaction extends base
     /** @var string Nom de la table des notifications */
     protected $notifications_table;
 
-    /**
+   /**
      * Constructeur de la classe de notification
      * 
      * CORRECTION CRITIQUE :
-     * Ce constructeur NE FAIT PLUS d'insertion SQL dans phpbb_notification_types.
-     * L'insertion du type est gérée par la migration (migrations/release_1_0_0.php).
+     * - Appel du constructeur parent avec les arguments de base
+     * - Ajout des arguments spécifiques ensuite
      */
     public function __construct(
         driver_interface $db,
         language $language,
         user $user,
         auth $auth,
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table,
         config $config,
         user_loader $user_loader,
         helper $helper,
         request_interface $request,
-        template $template,
-        $phpbb_root_path,
-        $php_ext,
-        $notifications_table
+        template $template
     ) {
+        // Appel du constructeur parent avec les 7 premiers arguments
         parent::__construct(
             $db,
             $language,
@@ -128,6 +129,7 @@ class reaction extends base
             $notifications_table
         );
 
+        // Assignation des propriétés supplémentaires
         $this->db = $db;
         $this->language = $language;
         $this->user = $user;
