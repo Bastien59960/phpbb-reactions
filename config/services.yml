@@ -86,14 +86,11 @@ services:
         tags:
             - { name: cron.task }
 
-    # =========================================================================
+
+
+
     # TYPE DE NOTIFICATION - RÉACTION (CLOCHE)
-    # =========================================================================
-    # CORRECTION CRITIQUE :
-    # Le nom du service peut être n'importe quoi (bastien59960.reactions.notification)
-    # MAIS le tag DOIT correspondre au nom retourné par get_type()
-    
-    bastien59960.reactions.notification.type.reaction:
+    notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         shared: false
         arguments:
@@ -112,11 +109,8 @@ services:
         tags:
             - { name: notification.type }
 
-    # =========================================================================
     # TYPE DE NOTIFICATION - EMAIL DIGEST (CRON)
-    # =========================================================================
-    
-    bastien59960.reactions.notification.type.reaction_email_digest:
+    notification.type.reaction_email_digest:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         shared: false
         arguments:
@@ -129,6 +123,8 @@ services:
             - '%tables.notifications%'
         tags:
             - { name: notification.type }
+
+
 
     # =========================================================================
     # CONTRÔLEUR UCP
