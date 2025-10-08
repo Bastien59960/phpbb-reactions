@@ -85,6 +85,7 @@ class ajax
     /** @var \phpbb\notification\manager Gestionnaire de notifications */
     protected $notification_manager;
 
+    
     /**
      * Liste des 10 emojis courantes utilisées par défaut
      * 
@@ -94,6 +95,14 @@ class ajax
      * @var array Liste des emojis courantes
      */
     protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
+
+    // ...
+/** @var \phpbb\notification\manager Gestionnaire de notifications */
+protected $notification_manager;
+
+/** @var \bastien59960\reactions\controller\helper Service pour la génération de HTML */
+protected $reactions_helper; // <--- AJOUTER CETTE LIGNE
+// ...
 
     // =============================================================================
     // CONSTRUCTEUR
@@ -132,7 +141,8 @@ class ajax
         $root_path,
         $php_ext,
         \phpbb\config\config $config,
-        \phpbb\notification\manager $notification_manager
+        \phpbb\notification\manager $notification_manager,
+        \bastien59960\reactions\controller\helper $reactions_helper
     ) {
         // Initialisation des propriétés
         $this->db = $db;
@@ -148,6 +158,7 @@ class ajax
         $this->php_ext = $php_ext;
         $this->config = $config;
         $this->notification_manager = $notification_manager;
+        $this->reactions_helper = $reactions_helper;
         
         // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
@@ -541,15 +552,23 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
             // Déclencher immédiatement la notification par cloche
             $this->trigger_immediate_notification($post_id, $user_id, $emoji);
 
+            // ---------------------------------------------------------------------
+            // ✅ CORRECTION MAJEURE 1 : Ajout du HTML mis à jour pour l'affichage immédiat
+            // ---------------------------------------------------------------------
+            // Cette méthode est censée générer le bloc HTML complet des réactions pour ce post
+            $new_reactions_html = $this->reactions_helper->get_reactions_html_for_post($post_id);
+
             // Retourne une réponse JSON valide
             return new JsonResponse([
                 'success'      => true,
+                'action'       => 'add',
                 'post_id'      => $post_id,
                 'emoji'        => $emoji,
                 'user_id'      => $user_id,
                 'count'        => $count,
                 'user_reacted' => true,
                 'reactions'    => $reactions,
+                'html'         => $new_reactions_html, // <--- NOUVELLE CLÉ
                 'rid'          => $rid,
             ]);
 
