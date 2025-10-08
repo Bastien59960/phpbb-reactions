@@ -834,17 +834,16 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
                 'emoji'             => $emoji,
             ];
 
-            // Vider les notifications existantes du même type pour ce post pour cet auteur
-            // pour éviter d'avoir plusieurs notifications "X a réagi"
-            $this->notification_manager->delete_notifications(
-                'notification.type.reaction',
-                $post_id,
-                [$post_author_id]
-            );
+// Vider les notifications existantes
+$this->notification_manager->delete_notifications(
+    'bastien59960.reactions.notification.type.reaction',  // ✅ BON
+    $post_id,
+    [$post_author_id]
+);
 
-            // Envoyer la nouvelle notification
+// Envoyer la nouvelle notification
 $this->notification_manager->add_notifications(
-    'notification.type.reaction',
+    'bastien59960.reactions.notification.type.reaction',  // ✅ BON
     $notification_data
 );
 
