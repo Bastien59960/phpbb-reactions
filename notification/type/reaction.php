@@ -282,6 +282,12 @@ class reaction extends base
      * Cette méthode détermine qui doit recevoir la notification.
      * IMPORTANT : Elle doit retourner un tableau d'user_id
      */
+/**
+     * Détermination des destinataires
+     * 
+     * Cette méthode détermine qui doit recevoir la notification.
+     * IMPORTANT : Elle doit retourner un tableau d'user_id
+     */
     public function find_users_for_notification($type_data, $options = array())
     {
         $users = array();
@@ -289,17 +295,25 @@ class reaction extends base
         $post_author = (int) ($type_data['post_author'] ?? 0);
         $reacter = (int) ($type_data['reacter'] ?? 0);
 
-        // Debug : log les données reçues
-        error_log('[Reactions Notification] find_users_for_notification appelée - post_author=' . $post_author . ', reacter=' . $reacter);
+        // Debug : log les données reçues avec plus de détails
+        error_log('[Reactions Notification] find_users_for_notification appelée');
+        error_log('[Reactions Notification] type_data complet : ' . json_encode($type_data, JSON_UNESCAPED_UNICODE));
+        error_log('[Reactions Notification] post_author=' . $post_author . ', reacter=' . $reacter);
+        error_log('[Reactions Notification] options : ' . json_encode($options));
 
         // On notifie l'auteur du post SAUF s'il réagit à son propre message
         if ($post_author > 0 && $post_author !== $reacter) {
             $users[] = $post_author;
-            error_log('[Reactions Notification] Utilisateur à notifier : ' . $post_author);
+            error_log('[Reactions Notification] ✅ Utilisateur à notifier : ' . $post_author);
         } else {
-            error_log('[Reactions Notification] Aucun utilisateur à notifier (auto-réaction ou auteur invalide)');
+            if ($post_author <= 0) {
+                error_log('[Reactions Notification] ❌ post_author invalide : ' . $post_author);
+            } elseif ($post_author === $reacter) {
+                error_log('[Reactions Notification] ℹ️ Auto-réaction ignorée (user_id=' . $reacter . ')');
+            }
         }
 
+        error_log('[Reactions Notification] Tableau final users : ' . json_encode($users));
         return $users;
     }
 
@@ -310,7 +324,21 @@ class reaction extends base
      */
     public function users_to_query()
     {
-        return array((int) $this->get_data('reacter'));
+        $reacter = (int) $this->get_data('reacter');
+        error_log('[Reactions Notification] users_to_query() retourne : ' . $reacter);
+        return array($reacter);
+    }
+    
+    /**
+     * Méthode appelée avant la création de la notification
+     * Permet de vérifier que tout est OK
+     */
+    public function pre_create_insert_array($type_data, $notify_users)
+    {
+        error_log('[Reactions Notification] pre_create_insert_array appelée');
+        error_log('[Reactions Notification] notify_users : ' . json_encode($notify_users));
+        
+        return parent::pre_create_insert_array($type_data, $notify_users);
     }
 
     // =========================================================================
