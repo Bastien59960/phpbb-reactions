@@ -102,18 +102,11 @@ services:
         calls:
             - [set_user_loader, ['@user_loader']]
         arguments:
-            - '@dbal.conn'
-            - '@language'
-            - '@user'
-            - '@auth'
-            - '@config'
-            - '@user_loader'
-            - '@controller.helper'
-            - '@request'
-            - '@template'
-            - '%core.root_path%'
-            - '%core.php_ext%'
-            - '%tables.notifications%'
+            $config: '@config'
+            $user_loader: '@user_loader'
+            $helper: '@controller.helper'
+            $request: '@request'
+            $template: '@template'
         tags:
             - { name: notification.type }
 
@@ -124,14 +117,6 @@ services:
         parent: notification.type.base
         calls:
             - [set_user_loader, ['@user_loader']]
-        arguments:
-            - '@dbal.conn'
-            - '@language'
-            - '@user'
-            - '@auth'
-            - '%core.root_path%'
-            - '%core.php_ext%'
-            - '%tables.notifications%'
         tags:
             - { name: notification.type }
 
