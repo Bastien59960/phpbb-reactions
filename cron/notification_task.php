@@ -237,7 +237,7 @@ class notification_task extends \phpbb\cron\task\base
             try
             {
                 $messenger = new \messenger(false);
-                $messenger->template('reaction_recap', $author_lang);
+                $messenger->template('reaction_digest', $author_lang);
                 $messenger->subject('Nouvelles réactions sur vos messages');
                 $messenger->to($author_email, $author_name);
                 $messenger->assign_vars(array(
