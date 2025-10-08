@@ -602,15 +602,21 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
         // Récupérer les réactions mises à jour
         $reactions = $this->get_reactions_array($post_id);
         $count = isset($reactions[$emoji]) ? $reactions[$emoji] : 0;
+ // ---------------------------------------------------------------------
+        // ✅ CORRECTION MAJEURE 2 : Ajout du HTML mis à jour pour l'affichage immédiat
+        // ---------------------------------------------------------------------
+        $new_reactions_html = $this->reactions_helper->get_reactions_html_for_post($post_id);
 
         return new JsonResponse([
             'success'      => true,
+            'action'       => 'remove',
             'post_id'      => $post_id,
             'emoji'        => $emoji,
             'user_id'      => (int) $this->user->data['user_id'],
             'count'        => $count,
             'user_reacted' => false,
             'reactions'    => $reactions,
+            'html'         => $new_reactions_html, // <--- NOUVELLE CLÉ
             'rid'          => $rid,
         ]);
     }
