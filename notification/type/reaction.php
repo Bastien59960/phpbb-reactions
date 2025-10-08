@@ -276,10 +276,12 @@ class reaction extends base
         return 'NOTIFICATION_REACTION_DESC';
     }
 
-    // =========================================================================
-    // DÉTERMINATION DES DESTINATAIRES
-    // =========================================================================
-
+  /**
+     * Détermination des destinataires
+     * 
+     * Cette méthode détermine qui doit recevoir la notification.
+     * IMPORTANT : Elle doit retourner un tableau d'user_id
+     */
     public function find_users_for_notification($type_data, $options = array())
     {
         $users = array();
@@ -287,16 +289,28 @@ class reaction extends base
         $post_author = (int) ($type_data['post_author'] ?? 0);
         $reacter = (int) ($type_data['reacter'] ?? 0);
 
-        if ($post_author && $post_author !== $reacter) {
+        // Debug : log les données reçues
+        error_log('[Reactions Notification] find_users_for_notification appelée - post_author=' . $post_author . ', reacter=' . $reacter);
+
+        // On notifie l'auteur du post SAUF s'il réagit à son propre message
+        if ($post_author > 0 && $post_author !== $reacter) {
             $users[] = $post_author;
+            error_log('[Reactions Notification] Utilisateur à notifier : ' . $post_author);
+        } else {
+            error_log('[Reactions Notification] Aucun utilisateur à notifier (auto-réaction ou auteur invalide)');
         }
 
         return $users;
     }
 
+    /**
+     * Utilisateurs dont les données doivent être chargées
+     * 
+     * Retourne les IDs des utilisateurs dont on a besoin des infos (le réacteur)
+     */
     public function users_to_query()
     {
-        return [];
+        return array((int) $this->get_data('reacter'));
     }
 
     // =========================================================================
