@@ -731,24 +731,40 @@ function toggle_visible(id) {
             }
             return response.json();
         })
-        .then(data => {
-            // data attendu: { success: bool, count: int, user_reacted: bool, ... }
-            if (data.success) {
-                // Mise à jour du DOM: compteur et état actif/inactif
-                updateSingleReactionDisplay(postId, cleanEmoji, data.count, data.user_reacted);
-            } else {
-                // Si serveur renvoie success=false on loggue le message
-                console.error('Erreur de réaction :', data.error || data.message);
-                // Si message indique problème d'auth on propose le login
-                if (data.error && data.error.toLowerCase().includes('logged in')) {
-                    showLoginMessage();
-                }
-            }
-        })
-        .catch(error => {
-            // Erreurs réseau ou internes au then()
-            console.error('Erreur AJAX (sendReaction):', error);
-        });
+.then(data => {
+    // data attendu: { success: bool, count: int, user_reacted: bool, html: string, ... }
+
+    if (data.success) {
+        
+        // 1. Localiser le conteneur principal des réactions
+        const reactionsContainer = postContainer.querySelector('.post-reactions-container');
+        
+        // 2. Vérifier si le conteneur et le nouveau HTML sont disponibles
+        if (reactionsContainer && data.html) {
+            
+            // Remplacer l'intégralité du contenu du bloc des réactions par le HTML mis à jour par le serveur.
+            reactionsContainer.innerHTML = data.html;
+            
+            // IMPORTANT : Ré-attacher les écouteurs d'événements (click et tooltip) aux nouveaux éléments DOM.
+            // La fonction initReactions doit accepter un paramètre de contexte (e.g., initReactions(element)).
+            initReactions(reactionsContainer); 
+            
+        } else {
+            // Logique de repli: Si le HTML n'est pas fourni (ce qui ne devrait pas arriver pour 'add'/'remove')
+            // ou si le conteneur n'est pas trouvé, on revient à la mise à jour par compteur.
+            updateSingleReactionDisplay(postId, cleanEmoji, data.count, data.user_reacted);
+        }
+        
+    } else {
+        // Gérer les erreurs spécifiques renvoyées par le serveur (limites, doublons, etc.)
+        console.error('Erreur de réaction :', data.error || data.message);
+        
+        // Afficher un message si l'erreur est liée à l'authentification
+        if (data.error && data.error.toLowerCase().includes('logged in')) {
+            showLoginMessage();
+        }
+    }
+})
     }
 
     /* ---------------------------------------------------------------------- */
