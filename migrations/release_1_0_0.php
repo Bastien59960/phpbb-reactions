@@ -226,11 +226,19 @@ public function create_notification_type()
     /**
      * Suppression du type de notification canonique (revert)
      */
-    public function remove_notification_type()
-    {
-        $types_table = $this->table_prefix . 'notification_types';
-        $canonical_name = 'notification.type.reaction';
-        $sql = 'DELETE FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
+public function remove_notification_type()
+{
+    $types_table = $this->table_prefix . 'notification_types';
+    $names = array(
+        'notification.type.reaction',
+        'notification.type.reaction_email_digest',
+    );
+
+    foreach ($names as $canonical_name) {
+        $sql = 'DELETE FROM ' . $types_table . "
+            WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
         $this->db->sql_query($sql);
     }
+}
+
 }
