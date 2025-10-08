@@ -45,17 +45,7 @@ services:
     # CONTRÔLEURS
     # =========================================================================
     
-    bastien59960.reactions.main:
-        class: bastien59960\reactions\controller\main
-        arguments:
-            - '@dbal.conn'
-            - '@user'
-            - '@request'
-            - '@template'
-            - '@auth'
-            - '@controller.helper'
-            - '%tables.post_reactions%'
-            - '%tables.posts%'
+
 
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
