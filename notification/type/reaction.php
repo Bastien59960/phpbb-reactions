@@ -17,7 +17,7 @@
  *
  * IMPORTANT - Architecture des notifications :
  * 
- * 📋 NOM DU TYPE : 'notification.type.reaction'
+ * 📋 NOM DU TYPE : 'bastien59960.reactions.notification.type.reaction'
  *    - Défini dans get_type()
  *    - Stocké dans phpbb_notification_types
  *    - Créé par la migration (migrations/release_1_0_0.php)
@@ -150,9 +150,13 @@ class reaction extends base
     // MÉTHODES D'IDENTIFICATION DU TYPE DE NOTIFICATION
     // =========================================================================
 
+    /**
+     * Retourne le nom unique du type de notification
+     * Ce nom doit correspondre EXACTEMENT à celui enregistré par la migration.
+     */
     public function get_type()
     {
-        return 'notification.type.reaction';
+        return 'bastien59960.reactions.notification.type.reaction';
     }
 
     public function is_available()
@@ -219,12 +223,14 @@ class reaction extends base
 
     public function get_title()
     {
-        return 'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION';
+        // Utilise une clé de langue cohérente avec phpBB
+        return $this->language->lang('NOTIFICATION_REACTION');
     }
 
     public function get_language_file()
     {
-        return 'notification/notification.type.reaction';
+        // Doit correspondre au fichier language/{lang}/reactions.php
+        return 'reactions';
     }
 
     // =========================================================================
@@ -233,12 +239,12 @@ class reaction extends base
 
     public static function get_item_type_name()
     {
-        return 'NOTIFICATION_NOTIFICATION.TYPE.REACTION_TITLE';
+        return 'NOTIFICATION_REACTION';
     }
 
     public static function get_item_type_description()
     {
-        return 'NOTIFICATION_NOTIFICATION.TYPE.REACTION_DESC';
+        return 'NOTIFICATION_REACTION_DESC';
     }
 
     // =========================================================================
@@ -310,13 +316,10 @@ class reaction extends base
     // PERSISTANCE EN BASE DE DONNÉES
     // =========================================================================
 
-    public function get_insert_sql()
-    {
-        return [
-            'reaction_emoji' => ['VCHAR_UNI', 10],
-        ];
-    }
-
+    /**
+     * Construit le tableau d'insertion pour une notification
+     * Hérité de phpbb\notification\type\base
+     */
     public function create_insert_array($type_data, $pre_create_data = array())
     {
         $insert_array = parent::create_insert_array($type_data, $pre_create_data);
