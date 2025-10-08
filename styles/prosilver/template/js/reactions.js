@@ -280,7 +280,7 @@ function toggle_visible(id) {
         currentPicker = picker;
 
         // Chargement asynchrone de la liste complète d'emojis
-        fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
+        fetch(phpbb_root_path + 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
             .then(res => {
                 if (!res.ok) {
                     throw new Error('categories.json HTTP ' + res.status);
