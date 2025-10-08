@@ -175,6 +175,7 @@ class listener implements EventSubscriberInterface
             'REACTIONS_JS_PATH'   => $js_path,                // Chemin vers le JS
             'U_REACTIONS_AJAX'    => $ajax_url,               // URL AJAX
             'S_SESSION_ID'        => isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '',
+			'REACTIONS_JSON_PATH'  => $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json',
         ]);
 
         // Assigner les variables JavaScript pour l'AJAX
@@ -457,4 +458,5 @@ public function display_reactions($event)
         return (mb_strlen(trim($emoji)) > 0);
     }
 }
+
 
