@@ -9,6 +9,21 @@ imports:
 
 services:
     # =========================================================================
+    # HELPER (NOUVEAU)
+    # =========================================================================
+
+    bastien59960.reactions.helper:
+        class: bastien59960\reactions\controller\helper
+        # Assurez-vous que les arguments ci-dessous correspondent au constructeur 
+        # de votre classe bastien59960\reactions\controller\helper
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@template'
+            - '@language'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+    # =========================================================================
     # LISTENER D'ÉVÉNEMENTS
     # =========================================================================
     
@@ -58,7 +73,7 @@ services:
             - '%core.php_ext%'
             - '@config'
             - '@notification_manager'
-            - '@controller.helper'
+            - '@bastien59960.reactions.helper' # <-- CORRECTION : Remplace '@controller.helper'
 
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
