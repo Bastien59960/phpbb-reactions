@@ -101,10 +101,6 @@ class ajax
 
 
 
-/** @var \bastien59960\reactions\controller\helper Service pour la génération de HTML */
-protected $reactions_helper; // <--- AJOUTER CETTE LIGNE
-// ...
-
     // =============================================================================
     // CONSTRUCTEUR
     // =============================================================================
