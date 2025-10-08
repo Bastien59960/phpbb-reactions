@@ -102,29 +102,38 @@ class ext extends \phpbb\extension\base
 	 * @param mixed $old_state État précédent de l'extension (false = première activation)
 	 * @return string|mixed 'notification' si première activation, sinon résultat parent
 	 */
-	public function enable_step($old_state)
-	{
-		if ($old_state === false)
-		{
-			// Récupérer le gestionnaire de notifications phpBB
-			$notification_manager = $this->container->get('notification_manager');
-			
-			// ✅ CORRECTION : Utiliser les NOMS DE TYPES (get_type())
-			// Ces noms DOIVENT être EXACTEMENT ceux définis dans get_type()
-			
-			// Activer la notification cloche (instantanée)
-			$notification_manager->enable_notifications('notification.type.reaction');
-			
-			// Activer la notification email groupée (cron)
-			$notification_manager->enable_notifications('notification.type.reaction_email_digest');
-			
-			// Retourner 'notification' pour indiquer que cette étape est terminée
-			return 'notification';
-		}
-		
-		// Si ce n'est pas la première activation, laisser le parent gérer
-		return parent::enable_step($old_state);
-	}
+public function enable_step($old_state)
+{
+    if ($old_state === false)
+    {
+        // Récupérer le gestionnaire de notifications phpBB
+        $notification_manager = $this->container->get('notification_manager');
+
+        // ✅ Utiliser uniquement les NOMS DE TYPES (get_type())
+        // Activation du type "cloche" (instantané)
+        try {
+            $notification_manager->enable_notifications('notification.type.reaction');
+        } catch (\phpbb\notification\exception $e) {
+            if (defined('DEBUG')) {
+                trigger_error('[Reactions] enable_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
+            }
+        }
+
+        // Activation du type "email digest"
+        try {
+            $notification_manager->enable_notifications('notification.type.reaction_email_digest');
+        } catch (\phpbb\notification\exception $e) {
+            if (defined('DEBUG')) {
+                trigger_error('[Reactions] enable_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
+            }
+        }
+
+        return 'notification';
+    }
+
+    return parent::enable_step($old_state);
+}
+
 
 	/**
 	 * Étape de désactivation de l'extension
