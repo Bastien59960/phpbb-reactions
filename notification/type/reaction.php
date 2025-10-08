@@ -257,7 +257,7 @@ class reaction extends base
     public function get_language_file()
     {
         // Doit correspondre au fichier language/{lang}/reactions.php
-        return 'reactions';
+        return 'notification/notification.type.reaction';
     }
 
     // =========================================================================
