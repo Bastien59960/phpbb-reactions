@@ -35,13 +35,23 @@ class release_1_0_0 extends \phpbb\db\migration\migration
      *
      * @return bool
      */
-    public function effectively_installed()
-    {
-        return (
-            $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions') &&
-            $this->db_tools->sql_column_exists($this->table_prefix . 'users', 'user_reactions_notify')
-        );
-    }
+public function effectively_installed()
+{
+    $types_table = $this->table_prefix . 'notification_types';
+    $sql = 'SELECT notification_type_id
+            FROM ' . $types_table . "
+            WHERE notification_type_name = 'notification.type.reaction'";
+    $result = $this->db->sql_query($sql);
+    $type_exists = (bool) $this->db->sql_fetchrow($result);
+    $this->db->sql_freeresult($result);
+
+    return (
+        $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions') &&
+        $this->db_tools->sql_column_exists($this->table_prefix . 'users', 'user_reactions_notify') &&
+        $type_exists
+    );
+}
+
 
     /**
      * Dépendances (phpBB 3.3.10 minimum)
