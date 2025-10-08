@@ -59,7 +59,7 @@ class reaction_email_digest extends base
      */
     public function get_email_template()
     {
-        return 'reaction';
+        return 'reaction_digest';  // Correspond au fichier reaction_digest.txt
     }
 
     /**
