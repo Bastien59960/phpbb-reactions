@@ -208,6 +208,7 @@ public function create_notification_type()
         );
         $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
     }
+    trigger_error('[DEBUG] create_notification_type() exécutée');
 }
 
 
