@@ -92,16 +92,13 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION - RÉACTION (CLOCHE)
     # =========================================================================
-    # ⚠️ IMPORTANT : Le nom du service doit correspondre à get_type() de la classe
-    # get_type() retourne : 'notification.type.reaction'
-    # Mais le service doit avoir le namespace complet pour phpBB
+    # Arguments : parent (7) + custom (5) = 12 total
     bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         shared: false
         parent: notification.type.base
-        calls:
-            - [set_user_loader, ['@user_loader']]
         arguments:
+            # Arguments 8-12 (les 7 premiers viennent du parent)
             $config: '@config'
             $user_loader: '@user_loader'
             $helper: '@controller.helper'
