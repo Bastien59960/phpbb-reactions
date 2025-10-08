@@ -81,7 +81,7 @@ services:
             - '%tables.post_reactions%'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%tables.reactions_user_prefs%'
+            - '%core.table_prefix%'
         tags:
             - { name: cron.task }
 
