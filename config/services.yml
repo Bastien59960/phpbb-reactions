@@ -1,8 +1,7 @@
 #
 # Fichier : config/services.yml — bastien59960/reactions/config/services.yml
 #
-# CORRECTION CRITIQUE : Les tags notification.type DOIVENT correspondre
-# exactement au nom retourné par get_type() de chaque classe
+# CORRECTION CRITIQUE : Les noms de services doivent utiliser le namespace complet
 #
 
 imports:
@@ -86,13 +85,18 @@ services:
         tags:
             - { name: cron.task }
 
-
-
+    # =========================================================================
+    # TYPES DE NOTIFICATION - CORRECTION CRITIQUE
+    # =========================================================================
 
     # TYPE DE NOTIFICATION - RÉACTION (CLOCHE)
-    notification.type.reaction:
+    # ⚠️ CHANGEMENT : Utiliser le namespace complet bastien59960.reactions au lieu de notification.type
+    bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         shared: false
+        parent: notification.type.base
+        calls:
+            - [set_user_loader, ['@user_loader']]
         arguments:
             - '@dbal.conn'
             - '@language'
@@ -110,9 +114,12 @@ services:
             - { name: notification.type }
 
     # TYPE DE NOTIFICATION - EMAIL DIGEST (CRON)
-    notification.type.reaction_email_digest:
+    bastien59960.reactions.notification.type.reaction_email_digest:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         shared: false
+        parent: notification.type.base
+        calls:
+            - [set_user_loader, ['@user_loader']]
         arguments:
             - '@dbal.conn'
             - '@language'
@@ -123,8 +130,6 @@ services:
             - '%tables.notifications%'
         tags:
             - { name: notification.type }
-
-
 
     # =========================================================================
     # CONTRÔLEUR UCP
