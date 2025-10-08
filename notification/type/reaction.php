@@ -17,7 +17,7 @@
  *
  * IMPORTANT - Architecture des notifications :
  * 
- * 📋 NOM DU TYPE : 'bastien59960.reactions.notification.type.reaction'
+ * 📋 NOM DU TYPE : 'notification.type.reaction'
  *    - Défini dans get_type()
  *    - Stocké dans phpbb_notification_types
  *    - Créé par la migration (migrations/release_1_0_0.php)
@@ -147,6 +147,32 @@ class reaction extends base
     }
 
     // =========================================================================
+    // PROTECTION: set_notification_manager pour éviter l'exception fatale
+    // =========================================================================
+    /**
+     * phpBB appelle set_notification_manager lors de l'initialisation.
+     * Si la migration n'a pas encore créé la ligne dans phpbb_notification_types,
+     * get_notification_type_id() peut lancer phpbb\notification\exception.
+     *
+     * Ici on appelle proprement parent::set_notification_manager() et on
+     * attrape l'exception NOTIFICATION_TYPE_NOT_EXIST afin d'éviter un fatal error.
+     */
+    public function set_notification_manager(\phpbb\notification\manager $notification_manager)
+    {
+        $this->notification_manager = $notification_manager;
+
+        try {
+            parent::set_notification_manager($notification_manager);
+        } catch (\phpbb\notification\exception $e) {
+            // Si le type n'existe pas encore en base, on logge en DEBUG et on continue.
+            if (defined('DEBUG')) {
+                error_log('[Reactions Notification] set_notification_manager failed: ' . $e->getMessage());
+            }
+            $this->notification_type_id = null;
+        }
+    }
+
+    // =========================================================================
     // MÉTHODES D'IDENTIFICATION DU TYPE DE NOTIFICATION
     // =========================================================================
 
@@ -156,7 +182,8 @@ class reaction extends base
      */
     public function get_type()
     {
-        return 'bastien59960.reactions.notification.type.reaction';
+        // **IMPORTANT** : doit correspondre à la migration et à ext.php
+        return 'notification.type.reaction';
     }
 
     public function is_available()
