@@ -99,9 +99,7 @@ class ajax
      */
     protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
-    // ...
-/** @var \phpbb\notification\manager Gestionnaire de notifications */
-protected $notification_manager;
+
 
 /** @var \bastien59960\reactions\controller\helper Service pour la génération de HTML */
 protected $reactions_helper; // <--- AJOUTER CETTE LIGNE
