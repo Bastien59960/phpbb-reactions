@@ -140,8 +140,7 @@ class helper
         ]);
         
         // 6. Rendu du template
-        // Le nom du template doit être le chemin complet : @[ext_name]/[template_name].html
-        // Nous utilisons 'reactions_ajax_block.html' pour isoler le HTML nécessaire à la mise à jour AJAX.
-        return $this->template->assign_display('reactions_block_for_ajax', 'reactions_ajax_block', false); 
+        // Utilisation du chemin simplifié pour contourner le problème de recherche de template dans le contexte AJAX
+        return $this->template->assign_display('reactions_block_for_ajax', 'reactions_ajax_block', false);
     }
 }
