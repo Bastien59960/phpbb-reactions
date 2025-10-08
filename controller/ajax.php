@@ -837,19 +837,19 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
             // Vider les notifications existantes du même type pour ce post pour cet auteur
             // pour éviter d'avoir plusieurs notifications "X a réagi"
             $this->notification_manager->delete_notifications(
-                'bastien59960.reactions.notification',
+                'notification.type.reaction',
                 $post_id,
                 [$post_author_id]
             );
 
             // Envoyer la nouvelle notification
 $this->notification_manager->add_notifications(
-    'bastien59960.reactions.notification',
+    'notification.type.reaction',
     $notification_data
 );
 
 // AJOUT : Log de succès
-error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji);
+error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id);
 
         } catch (\Exception $e) {
             // En cas d'erreur, on l'enregistre sans faire planter le script
