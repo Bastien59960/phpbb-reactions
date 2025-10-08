@@ -866,13 +866,10 @@ function toggle_visible(id) {
                 );
                 
                 if (postContainer && data.html) {
-                    // Remplacement complet du contenu HTML
-                    // C'est la méthode la plus fiable car le serveur génère le HTML exact
-                    postContainer.innerHTML = data.html;
-                    
-                    // CRITIQUE : Ré-attacher les écouteurs d'événements sur le nouveau DOM
-                    // Sans cela, les nouvelles réactions ne seraient pas cliquables
-                    initReactions(postContainer.closest('.post'));
+    postContainer.innerHTML = data.html;
+    // Passer le parent direct qui contient les réactions
+    initReactions(postContainer);
+}
                     
                     console.log('[Reactions] ✅ Bloc mis à jour avec succès via HTML serveur');
                     
