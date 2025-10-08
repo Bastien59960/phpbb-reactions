@@ -161,22 +161,45 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     /**
      * Crée le type de notification canonique si absent
      */
-    public function create_notification_type()
-    {
-        $types_table = $this->table_prefix . 'notification_types';
-        $canonical_name = 'notification.type.reaction';
-        $sql = 'SELECT notification_type_id FROM ' . $types_table . " WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "' LIMIT 1";
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-        if (!$row) {
-            $insert_data = array(
-                'notification_type_name'    => $canonical_name,
-                'notification_type_enabled' => 1,
-            );
-            $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
-        }
+public function create_notification_type()
+{
+    $types_table = $this->table_prefix . 'notification_types';
+
+    // === TYPE 1 : notification.type.reaction (instantané, cloche) ===
+    $canonical_name = 'notification.type.reaction';
+    $sql = 'SELECT notification_type_id FROM ' . $types_table . "
+        WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
+        LIMIT 1";
+    $result = $this->db->sql_query($sql);
+    $row = $this->db->sql_fetchrow($result);
+    $this->db->sql_freeresult($result);
+
+    if (!$row) {
+        $insert_data = array(
+            'notification_type_name'    => $canonical_name,
+            'notification_type_enabled' => 1,
+        );
+        $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
     }
+
+    // === TYPE 2 : notification.type.reaction_email_digest (résumé e-mail) ===
+    $digest_name = 'notification.type.reaction_email_digest';
+    $sql = 'SELECT notification_type_id FROM ' . $types_table . "
+        WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
+        LIMIT 1";
+    $result = $this->db->sql_query($sql);
+    $row = $this->db->sql_fetchrow($result);
+    $this->db->sql_freeresult($result);
+
+    if (!$row) {
+        $insert_data = array(
+            'notification_type_name'    => $digest_name,
+            'notification_type_enabled' => 1,
+        );
+        $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
+    }
+}
+
 
     /**
      * Nettoyage des notifications orphelines
