@@ -1,0 +1,32 @@
+#
+# Fichier : language/fr/email/reaction_digest.txt — bastien59960/reactions/language/fr/email/reaction_digest.txt
+#
+# Modèle d'e-mail pour le résumé périodique des réactions (français).
+#
+# Ce fichier contient le modèle utilisé par la tâche Cron pour envoyer un e-mail
+# groupé (digest) listant toutes les réactions reçues par l'utilisateur sur ses
+# messages durant la période spécifiée.
+#
+# Variables disponibles :
+#   - {USERNAME} : Nom d'utilisateur du destinataire
+#   - {SINCE_TIME} : Date de début de la période de résumé
+#   - {RECAP_LINES} : Liste formatée des réactions reçues
+#
+# @copyright (c) 2025 Bastien59960
+# @license GNU General Public License, version 2 (GPL-2.0)
+#
+
+Subject: Résumé des réactions reçues sur vos messages
+
+Bonjour {USERNAME},
+
+Vous avez reçu de nouvelles réactions sur vos messages depuis le {SINCE_TIME}.
+
+Voici le récapitulatif des événements :
+----------------------------------------------------------
+{RECAP_LINES}
+----------------------------------------------------------
+
+Vous pouvez gérer la fréquence de ces e-mails ou les désactiver dans votre Panneau de Contrôle Utilisateur (UCP).
+
+{EMAIL_SIG}
