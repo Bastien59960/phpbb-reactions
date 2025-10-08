@@ -85,6 +85,9 @@ class ajax
     /** @var \phpbb\notification\manager Gestionnaire de notifications */
     protected $notification_manager;
 
+       /** @var \bastien59960\reactions\controller\helper Service d'aide pour générer le HTML */
+    protected $reactions_helper; // <--- AJOUTER CETTE LIGNE
+
     
     /**
      * Liste des 10 emojis courantes utilisées par défaut
