@@ -58,6 +58,7 @@ services:
             - '%core.php_ext%'
             - '@config'
             - '@notification_manager'
+            - '@controller.helper'
 
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
