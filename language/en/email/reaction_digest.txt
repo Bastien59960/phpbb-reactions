@@ -1,32 +1,29 @@
 #
-# Fichier : language/fr/email/reaction_digest.txt — bastien59960/reactions/language/fr/email/reaction_digest.txt
+# File: language/en/email/reaction_digest.txt — bastien59960/reactions/language/en/email/reaction_digest.txt
 #
-# Modèle d'e-mail pour le résumé périodique des réactions (français).
+# Email template for the periodic reaction digest (English).
 #
-# Ce fichier contient le modèle utilisé par la tâche Cron pour envoyer un e-mail
-# groupé (digest) listant toutes les réactions reçues par l'utilisateur sur ses
-# messages durant la période spécifiée.
+# This file is used by the Cron task to send a grouped (digest) email listing all reactions received by the user on their posts during the specified period.
 #
-# Variables disponibles :
-#   - {USERNAME} : Nom d'utilisateur du destinataire
-#   - {SINCE_TIME} : Date de début de la période de résumé
-#   - {RECAP_LINES} : Liste formatée des réactions reçues
+# Available variables:
+#   - {USERNAME}: Recipient's username
+#   - {SINCE_TIME}: Start date of the digest period
+#   - {RECAP_LINES}: Formatted list of received reactions
 #
 # @copyright (c) 2025 Bastien59960
 # @license GNU General Public License, version 2 (GPL-2.0)
 #
+Subject: Summary of reactions received on your posts
 
-Subject: Résumé des réactions reçues sur vos messages
+Hello {USERNAME},
 
-Bonjour {USERNAME},
+You have received new reactions on your posts since {SINCE_TIME}.
 
-Vous avez reçu de nouvelles réactions sur vos messages depuis le {SINCE_TIME}.
-
-Voici le récapitulatif des événements :
+Here is a summary of the events:
 ----------------------------------------------------------
 {RECAP_LINES}
 ----------------------------------------------------------
 
-Vous pouvez gérer la fréquence de ces e-mails ou les désactiver dans votre Panneau de Contrôle Utilisateur (UCP).
+You can manage the frequency of these emails or disable them in your User Control Panel (UCP).
 
 {EMAIL_SIG}

@@ -866,18 +866,15 @@ function toggle_visible(id) {
                 );
                 
                 if (postContainer && data.html) {
-    postContainer.innerHTML = data.html;
-    // Passer le parent direct qui contient les réactions
-    initReactions(postContainer);
-}
-                    
+                    postContainer.innerHTML = data.html;
+                    // Passer le parent direct qui contient les réactions
+                    initReactions(postContainer);
                     console.log('[Reactions] ✅ Bloc mis à jour avec succès via HTML serveur');
-                    
                 } else {
                     // =====================================================================
                     // MÉTHODE 2 : MISE À JOUR MANUELLE (FALLBACK)
                     // =====================================================================
-                    
+
                     // Si le HTML n'est pas fourni ou conteneur introuvable
                     console.warn('[Reactions] Utilisation du fallback updateSingleReactionDisplay');
                     updateSingleReactionDisplay(postId, cleanEmoji, data.count, data.user_reacted);
