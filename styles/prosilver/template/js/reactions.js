@@ -133,8 +133,11 @@ function toggle_visible(id) {
      * @param {HTMLElement} [context=document] Contexte DOM (document ou sous-élément)
      */
     function initReactions(context) {
-        // Par défaut, on travaille sur tout le document
         context = context || document;
+        if (!(context instanceof Element || context instanceof Document)) {
+            console.warn('[Reactions] initReactions: paramètre context invalide', context);
+            return;
+        }
 
         // Attache événements sur les réactions affichées
         attachReactionEvents(context);
