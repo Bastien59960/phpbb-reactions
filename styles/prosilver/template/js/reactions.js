@@ -1211,7 +1211,7 @@ function toggle_visible(id) {
      * ÉVÉNEMENT : DOMContentLoaded
      * - Garanti que le DOM est prêt avant d'attacher les écouteurs
      */
-    document.addEventListener('DOMContentLoaded', initReactions);
+    document.addEventListener('DOMContentLoaded', () => initReactions());
 
     /* ====================================================================== */
     /* ===================== FIN DU MODULE PRINCIPAL ======================== */
