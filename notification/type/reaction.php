@@ -151,12 +151,12 @@ class reaction extends \phpbb\notification\type\base
      * Les autres dépendances sont injectées via les méthodes setter définies dans services.yml
      */
     public function __construct(
-        \phpbb\user_loader $user_loader,
         \phpbb\db\driver\driver_interface $db,
-        \phpbb\cache\driver\driver_interface $cache,
         \phpbb\language\language $language,
         \phpbb\user $user,
-        \phpbb\auth\auth $auth
+        \phpbb\auth\auth $auth,
+        \phpbb\user_loader $user_loader,
+        \phpbb\cache\driver\driver_interface $cache
     ) {
         // ✅ Appel du constructeur parent - phpBB gère l'ordre automatiquement
         parent::__construct($user_loader, $db, $cache, $language, $user, $auth, 'phpbb_notifications');

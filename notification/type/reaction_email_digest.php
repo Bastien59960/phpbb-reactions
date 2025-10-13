@@ -109,18 +109,26 @@ class reaction_email_digest extends base
      * des dépendances standard phpBB.
      */
     public function __construct(
-        \phpbb\user_loader $user_loader,
         \phpbb\db\driver\driver_interface $db,
-        \phpbb\cache\driver\driver_interface $cache,
         \phpbb\language\language $language,
         \phpbb\user $user,
-        \phpbb\auth\auth $auth
+        \phpbb\auth\auth $auth,
+        \phpbb\user_loader $user_loader,
+        \phpbb\cache\driver\driver_interface $cache
     ) {
         parent::__construct($user_loader, $db, $cache, $language, $user, $auth, 'phpbb_notifications');
         
         if (defined('DEBUG') && DEBUG) {
             error_log('[Reactions Email Digest] Constructeur initialisé - Type: ' . $this->get_type());
         }
+    }
+    
+    /**
+     * Méthode setter pour l'injection du user_loader via calls
+     */
+    public function set_user_loader(\phpbb\user_loader $user_loader)
+    {
+        $this->user_loader = $user_loader;
     }
 
     /**
