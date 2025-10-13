@@ -64,7 +64,7 @@ class listener implements EventSubscriberInterface
         $posts_table,
         \phpbb\template\template $template,
         \phpbb\language\language $language,
-        \phpbb\controller\helper $helper,
+        \bastien59960\reactions\controller\helper $helper, // ✅ Nouveau type-hint correspondant à votre service
         \phpbb\config\config $config,
         $root_path,      // ✅ NOUVEAU PARAMÈTRE
         $php_ext         // ✅ NOUVEAU PARAMÈTRE
