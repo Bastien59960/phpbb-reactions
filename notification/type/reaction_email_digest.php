@@ -4,36 +4,8 @@
  *
  * Type de notification "Résumé e-mail des réactions" pour l'extension Reactions.
  *
- * Ce fichier définit la classe de notification utilisée pour envoyer un résumé périodique par e-mail des réactions reçues sur les messages d'un utilisateur (notification par cron).
- *
- * Points clés de la logique métier :
- *   - Ce type n'est pas stocké individuellement dans la table des notifications (pas de cloche)
- *   - Utilisé uniquement pour l'affichage dans l'UCP et la gestion des préférences
- *   - Génère les clés de langue pour le titre et la description dans l'UCP
- *   - Fournit le nom du template d'e-mail utilisé par le cron
- *
- * Ce type de notification permet à l'utilisateur d'activer ou non le résumé e-mail dans ses préférences UCP.
- *
- * IMPORTANT - Architecture des notifications :
- * 
- * 📧 NOM DU TYPE : 'notification.type.reaction_email_digest'
- *    - Défini dans get_type()
- *    - Stocké dans phpbb_notification_types
- *    - Créé par la migration (migrations/release_1_0_0.php)
- *    - Activé/désactivé par ext.php
- * 
- * 📋 DIFFÉRENCE AVEC reaction.php :
- *    - reaction.php : Notification cloche instantanée (dans le forum)
- *    - reaction_email_digest.php : Notification email groupée (envoyée par cron)
- * 
- * ⚠️  ERREUR CORRIGÉE :
- *    Le constructeur NE DOIT PLUS insérer le type en base de données.
- *    Cette insertion est gérée UNIQUEMENT par la migration.
- *    Raison : phpBB instancie TOUS les types à chaque chargement de l'UCP,
- *    ce qui causait des tentatives d'insertion en double → erreur SQL 1062
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Ce type est utilisé exclusivement par la tâche cron afin d'envoyer un digest périodique
+ * des réactions reçues. Aucune entrée n'est créée dans la cloche phpBB.
  */
 
 namespace bastien59960\reactions\notification\type;
@@ -47,92 +19,7 @@ use phpbb\notification\type\base;
 class reaction_email_digest extends base
 {
     /**
-     * Spécifie le fichier de langue à charger pour ce type
-     */
-    public function get_language_file()
-    {
-        return 'notification/notification.type.reaction_email_digest';
-    }
-
-    /**
-     * Retourne le nom du template d'email utilisé par le cron
-     */
-    public function get_email_template()
-    {
-        return 'reaction_digest';  // Correspond au fichier reaction_digest.txt
-    }
-
-    /**
-     * Variables du template d'email (gérées par le cron)
-     */
-    public function get_email_template_variables()
-    {
-        return array();
-    }
-
-    /**
-     * ID de l'élément (non utilisé)
-     */
-    public static function get_item_id($data)
-    {
-        return 0;
-    }
-
-    /**
-     * ID du parent (non utilisé)
-     */
-    public static function get_item_parent_id($data)
-    {
-        return 0;
-    }
-
-    /**
-     * Utilisateurs à charger (aucun)
-     */
-    public function users_to_query()
-    {
-        return array();
-    }
-
-    /**
-     * URL de la notification (aucune)
-     */
-    public function get_url()
-    {
-        return '';
-    }
-
-    /**
-     * Constructeur pour notification email digest
-     * 
-     * Ce constructeur utilise le parent notification.type.base pour l'injection automatique
-     * des dépendances standard phpBB.
-     */
-    public function __construct(
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\language\language $language,
-        \phpbb\user $user,
-        \phpbb\auth\auth $auth,
-        \phpbb\user_loader $user_loader,
-        \phpbb\cache\driver\driver_interface $cache
-    ) {
-        parent::__construct($user_loader, $db, $cache, $language, $user, $auth, 'phpbb_notifications');
-        
-        if (defined('DEBUG') && DEBUG) {
-            error_log('[Reactions Email Digest] Constructeur initialisé - Type: ' . $this->get_type());
-        }
-    }
-    
-    /**
-     * Méthode setter pour l'injection du user_loader via calls
-     */
-    public function set_user_loader(\phpbb\user_loader $user_loader)
-    {
-        $this->user_loader = $user_loader;
-    }
-
-    /**
-     * Nom unique du type de notification
+     * Identifiant unique du type de notification.
      */
     public function get_type()
     {
@@ -140,15 +27,15 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Méthodes de notification disponibles
+     * Ce type n'expose que la méthode email.
      */
     public function get_notification_methods()
     {
-        return array('email');
+        return ['email'];
     }
 
     /**
-     * Clé de langue du titre (UCP)
+     * Clé de langue affichée dans l'UCP (titre).
      */
     public static function get_item_type_name()
     {
@@ -156,7 +43,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Clé de langue de la description (UCP)
+     * Clé de langue affichée dans l'UCP (description).
      */
     public static function get_item_type_description()
     {
@@ -164,29 +51,22 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Ce type ne crée pas de notifications individuelles
+     * Aucune notification individuelle n'est créée : tableau vide.
      */
-    public function find_users_for_notification($data, $options = array())
+    public function find_users_for_notification($data, $options = [])
     {
-        return array();
+        return [];
     }
 
-    /**
-     * Ce type ne crée pas d'entrées dans phpbb_notifications
-     */
-    public function create_insert_array($data, $pre_create_data = array())
+    public function create_insert_array($data, $pre_create_data = [])
     {
-        return array();
+        return [];
     }
 
-    /**
-     * Pas de titre (pas d'affichage dans la cloche)
-     */
     public function get_title()
     {
         return '';
     }
-<<<<<<< HEAD
 
     public function get_language_file()
     {
@@ -195,18 +75,14 @@ class reaction_email_digest extends base
 
     public function get_email_template()
     {
-        // Le cron utilise les templates language/*/email/reaction_digest.txt
         return 'reaction_digest';
     }
 
     public function get_email_template_variables()
     {
-        return array();
+        return [];
     }
 
-    /**
-     * Méthodes requises par l'interface type_interface
-     */
     public static function get_item_id($data)
     {
         return 0;
@@ -219,13 +95,11 @@ class reaction_email_digest extends base
 
     public function users_to_query()
     {
-        return array();
+        return [];
     }
 
     public function get_url()
     {
         return '';
     }
-=======
->>>>>>> 61e982ff6ed4e15d84e828d8d31dd816e0ff8e15
 }
