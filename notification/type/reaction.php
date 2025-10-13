@@ -147,10 +147,8 @@ class reaction extends \phpbb\notification\type\base
      * @param \phpbb\language\language $language    [4] Language (du parent)
      * @param \phpbb\user $user                     [5] User actuel (du parent)
      * @param \phpbb\auth\auth $auth                [6] Auth (du parent)
-     * @param \phpbb\config\config $config          [7] NOTRE paramètre custom
-     * @param \phpbb\controller\helper $helper      [8] NOTRE helper
-     * @param \phpbb\request\request $request       [9] NOTRE request
-     * @param \phpbb\template\template $template    [10] NOTRE template
+     * 
+     * Les autres dépendances sont injectées via les méthodes setter définies dans services.yml
      */
     public function __construct(
         \phpbb\user_loader $user_loader,           // [1] Du parent
@@ -158,20 +156,35 @@ class reaction extends \phpbb\notification\type\base
         \phpbb\cache\driver\driver_interface $cache, // [3] Du parent
         \phpbb\language\language $language,        // [4] Du parent
         \phpbb\user $user,                         // [5] Du parent
-        \phpbb\auth\auth $auth,                    // [6] Du parent
-        \phpbb\config\config $config,              // [7] Notre injection
-        $helper,                                   // [8] Notre injection
-        $request,                                  // [9] Notre injection
-        $template                                  // [10] Notre injection
+        \phpbb\auth\auth $auth                    // [6] Du parent
     ) {
-        // ✅ Appel du constructeur parent avec les 6 premiers paramètres
+        // ✅ Appel du constructeur parent avec les 6 paramètres
         parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
         
-        // ✅ Stockage des services spécifiques à notre extension
+        // ✅ Stockage du user_loader du parent
+        $this->user_loader = $user_loader;
+    }
+    
+    /**
+     * Méthodes setter pour l'injection des dépendances via calls
+     */
+    public function set_config(\phpbb\config\config $config)
+    {
         $this->config = $config;
-        $this->user_loader = $user_loader; // Utilise le user_loader du parent
+    }
+    
+    public function set_helper($helper)
+    {
         $this->helper = $helper;
+    }
+    
+    public function set_request(\phpbb\request\request $request)
+    {
         $this->request = $request;
+    }
+    
+    public function set_template(\phpbb\template\template $template)
+    {
         $this->template = $template;
     }
 

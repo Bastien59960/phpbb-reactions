@@ -106,11 +106,11 @@ services:
         class: bastien59960\reactions\notification\type\reaction
         shared: false
         parent: notification.type.base
-        arguments:
-            - '@config'                          # Arg #7
-            - '@bastien59960.reactions.helper'   # Arg #8
-            - '@request'                         # Arg #9
-            - '@template'                        # Arg #10
+        calls:
+            - [set_config, ['@config']]
+            - [set_helper, ['@bastien59960.reactions.helper']]
+            - [set_request, ['@request']]
+            - [set_template, ['@template']]
         tags:
             - { name: notification.type }
 
