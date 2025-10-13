@@ -119,36 +119,58 @@ class reaction extends \phpbb\notification\type\base
      * PARAMÈTRES PERSONNALISÉS (suivants) :
      * Ces paramètres sont définis dans la section "arguments:" de services.yml
      * Ils sont spécifiques à notre extension Reactions
+     * Constructeur de la classe de notification - VERSION CORRIGÉE
      * 
-     * @param \phpbb\user_loader $user_loader Service de chargement utilisateur (du parent)
-     * @param \phpbb\db\driver\driver_interface $db Connexion base de données (du parent)
-     * @param \phpbb\cache\driver\driver_interface $cache Service de cache (du parent)
-     * @param \phpbb\user $user Utilisateur actuel (du parent)
-     * @param \phpbb\auth\auth $auth Gestionnaire d'autorisations (du parent)
-     * @param \phpbb\config\config $config Configuration forum (du parent)
-     * @param \phpbb\user_loader $user_loader_service Service user_loader (notre injection)
-     * @param \phpbb\controller\helper $helper Helper contrôleur (notre injection)
-     * @param \phpbb\request\request $request Gestionnaire requêtes (notre injection)
-     * @param \phpbb\template\template $template Moteur template (notre injection)
+     * ⚠️ PROBLÈME IDENTIFIÉ :
+     * L'ordre des paramètres NE CORRESPONDAIT PAS à ce que phpBB injecte via services.yml
+     * 
+     * RÈGLE D'OR phpBB :
+     * ==================
+     * Quand on utilise "parent: notification.type.base", phpBB injecte automatiquement
+     * les 6 PREMIERS paramètres du parent dans CET ORDRE EXACT :
+     * 
+     * 1. \phpbb\user_loader $user_loader
+     * 2. \phpbb\db\driver\driver_interface $db  
+     * 3. \phpbb\cache\driver\driver_interface $cache
+     * 4. \phpbb\language\language $language        ⬅️ ATTENTION: language en 4e position!
+     * 5. \phpbb\user $user
+     * 6. \phpbb\auth\auth $auth
+     * 
+     * PUIS viennent nos paramètres personnalisés définis dans services.yml
+     * 
+     * ERREUR DANS L'ANCIEN CODE :
+     * On avait mis $config en 6e position, mais phpBB injecte $auth en 6e !
+     * 
+     * @param \phpbb\user_loader $user_loader       [1] Service user_loader (du parent)
+     * @param \phpbb\db\driver\driver_interface $db [2] Connexion DB (du parent)
+     * @param \phpbb\cache\driver\driver_interface $cache [3] Cache (du parent)
+     * @param \phpbb\language\language $language    [4] Language (du parent)
+     * @param \phpbb\user $user                     [5] User actuel (du parent)
+     * @param \phpbb\auth\auth $auth                [6] Auth (du parent)
+     * @param \phpbb\config\config $config          [7] NOTRE paramètre custom
+     * @param \phpbb\user_loader $user_loader_service [8] NOTRE user_loader
+     * @param \phpbb\controller\helper $helper      [9] NOTRE helper
+     * @param \phpbb\request\request $request       [10] NOTRE request
+     * @param \phpbb\template\template $template    [11] NOTRE template
      */
     public function __construct(
-        \phpbb\user_loader $user_loader,
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\cache\driver\driver_interface $cache,
-        \phpbb\user $user,
-        \phpbb\auth\auth $auth,
-        \phpbb\config\config $config,
-        $user_loader_service,
-        $helper,
-        $request,
-        $template
+        \phpbb\user_loader $user_loader,           // [1] Du parent
+        \phpbb\db\driver\driver_interface $db,     // [2] Du parent
+        \phpbb\cache\driver\driver_interface $cache, // [3] Du parent
+        \phpbb\language\language $language,        // [4] Du parent ⬅️ AJOUTÉ ICI
+        \phpbb\user $user,                         // [5] Du parent
+        \phpbb\auth\auth $auth,                    // [6] Du parent
+        \phpbb\config\config $config,              // [7] Notre injection
+        $user_loader_service,                      // [8] Notre injection
+        $helper,                                   // [9] Notre injection
+        $request,                                  // [10] Notre injection
+        $template                                  // [11] Notre injection
     ) {
-        // Appel du constructeur parent (OBLIGATOIRE)
-        // Initialise les propriétés de base : db, cache, user, auth, config
-        parent::__construct($user_loader, $db, $cache, $user, $auth, $config);
+        // ✅ Appel du constructeur parent avec les 6 premiers paramètres
+        // DANS LE BON ORDRE maintenant !
+        parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
         
-        // Stockage des services spécifiques à notre extension
-        // Ces services seront utilisés dans les méthodes get_avatar(), get_url(), etc.
+        // ✅ Stockage des services spécifiques à notre extension
         $this->config = $config;
         $this->user_loader = $user_loader_service;
         $this->helper = $helper;

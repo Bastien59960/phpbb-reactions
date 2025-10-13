@@ -23,6 +23,7 @@ services:
             - '@language'
             - '%tables.post_reactions%'
             - '%tables.posts%'
+    
     # =========================================================================
     # LISTENER D'ÉVÉNEMENTS
     # =========================================================================
@@ -36,7 +37,7 @@ services:
             - '%tables.posts%'
             - '@template'
             - '@language'
-            - '@controller.helper'
+            - '@bastien59960.reactions.helper' # <-- CORRECTION : Remplacement de l'alias par le namespace complet
             - '@config'
             - '%core.root_path%'
             - '%core.php_ext%'
@@ -47,8 +48,6 @@ services:
     # CONTRÔLEURS
     # =========================================================================
     
-
-
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
@@ -65,7 +64,7 @@ services:
             - '%core.php_ext%'
             - '@config'
             - '@notification_manager'
-            - '@bastien59960.reactions.helper' # <-- CORRECTION : Remplace '@controller.helper'
+            - '@bastien59960.reactions.helper' # <-- CORRECTION : C'était déjà fait ici, c'est bon.
 
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
@@ -100,18 +99,18 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION - RÉACTION (CLOCHE)
     # =========================================================================
-    # Arguments : parent (7) + custom (5) = 12 total
+    # Le parent 'notification.type.base' injecte AUTOMATIQUEMENT 6 arguments.
+    # Les arguments ci-dessous commencent donc à la position #7.
     bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         shared: false
         parent: notification.type.base
         arguments:
-            # Arguments 8-12 (les 7 premiers viennent du parent)
-            $config: '@config'
-            $user_loader: '@user_loader'
-            $helper: '@controller.helper'
-            $request: '@request'
-            $template: '@template'
+            $config: '@config'                          # Arg #7
+            $user_loader_service: '@user_loader'        # Arg #8 (Renommé pour éviter la confusion avec le $user_loader du parent)
+            $helper: '@bastien59960.reactions.helper'   # <-- CORRECTION : Utilise le nom complet du service.
+            $request: '@request'                        # Arg #10
+            $template: '@template'                      # Arg #11
         tags:
             - { name: notification.type }
 
