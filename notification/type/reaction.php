@@ -163,7 +163,7 @@ class reaction extends \phpbb\notification\type\base
         \phpbb\template\template $template         // [10] Template
     ) {
         // ✅ Appel du constructeur parent avec les 6 premiers paramètres
-        parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
+        parent::__construct($db, $language, $user, $auth, $user_loader, $cache);
         
         // ✅ Stockage des services spécifiques à notre extension
         $this->config = $config;
