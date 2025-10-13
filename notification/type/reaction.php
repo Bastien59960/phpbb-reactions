@@ -872,6 +872,103 @@ class reaction extends \phpbb\notification\type\base
     }
 
     // =============================================================================
+    // MÉTHODE OBLIGATOIRE : USERS_TO_QUERY
+    // =============================================================================
+    
+    /**
+     * ✅ Retourne les IDs utilisateurs à charger pour cette notification
+     * 
+     * RÔLE CRITIQUE :
+     * Cette méthode est OBLIGATOIRE (définie dans type_interface).
+     * Elle indique à phpBB quels utilisateurs charger depuis la base de données
+     * pour afficher correctement la notification.
+     * 
+     * POURQUOI CETTE MÉTHODE EST NÉCESSAIRE ?
+     * =======================================
+     * Quand phpBB affiche une notification, il a besoin de charger les données
+     * utilisateur (username, avatar, permissions) de tous les utilisateurs
+     * mentionnés dans la notification.
+     * 
+     * DANS NOTRE CAS :
+     * ================
+     * Notre notification mentionne 2 utilisateurs :
+     * 1. Le POSTER (poster_id) : L'auteur du message (destinataire)
+     * 2. Le REACTER (reacter_id) : Celui qui a réagi (affiché dans la notification)
+     * 
+     * phpBB va :
+     * 1. Appeler users_to_query() pour savoir qui charger
+     * 2. Faire un SELECT sur phpbb_users avec ces IDs
+     * 3. Mettre en cache les données utilisateur
+     * 4. Les rendre disponibles via $this->user_loader
+     * 
+     * FORMAT DE RETOUR :
+     * ==================
+     * Array d'IDs utilisateurs à charger
+     * Format : [user_id1, user_id2, ...]
+     * 
+     * EXEMPLE CONCRET :
+     * =================
+     * Bob (user_id=2) écrit un message
+     * Alice (user_id=3) réagit avec 👍
+     * 
+     * Cette méthode retourne : [2, 3]
+     * phpBB charge les données de Bob ET Alice
+     * 
+     * DANS get_title() on pourrait alors faire :
+     * "Alice a réagi 👍 à votre message"
+     * (Alice = reacter, chargé grâce à users_to_query)
+     * 
+     * GESTION DES CAS D'ERREUR :
+     * ==========================
+     * Si poster_id ou reacter_id sont invalides (0 ou absent),
+     * on ne les inclut pas dans le tableau de retour.
+     * 
+     * OPTIMISATION :
+     * ==============
+     * On utilise array_filter() pour retirer automatiquement les valeurs
+     * nulles, false, 0, etc. Ne reste que les IDs valides > 0.
+     * 
+     * @return array Tableau d'IDs utilisateurs à charger
+     *               Format : [user_id1, user_id2, ...]
+     */
+    public function users_to_query()
+    {
+        // Récupération des IDs depuis les données stockées
+        // get_data() retourne la valeur ou null si la clé n'existe pas
+        $poster_id = $this->get_data('poster_id');
+        $reacter_id = $this->get_data('reacter_id');
+        
+        // Construction du tableau avec les 2 utilisateurs
+        // array_filter() retire automatiquement les valeurs "vides" :
+        // - null (si get_data retourne null)
+        // - 0 (si l'ID est invalide)
+        // - false (si jamais stocké comme false)
+        // 
+        // Ne restent que les IDs valides > 0
+        $users = array_filter([
+            $poster_id,   // Auteur du message
+            $reacter_id   // Celui qui a réagi
+        ]);
+        
+        // Retour du tableau nettoyé
+        // Exemple de résultat : [2, 3] ou [2] ou [] selon les données
+        return $users;
+        
+        // NOTE AVANCÉE :
+        // ==============
+        // Si on avait plusieurs reacters dans une notification groupée,
+        // on pourrait faire :
+        // 
+        // $reacter_ids = $this->get_data('reacter_ids'); // Array de plusieurs IDs
+        // return array_filter(array_merge(
+        //     [$poster_id],
+        //     $reacter_ids
+        // ));
+        // 
+        // Cela chargerait l'auteur + tous les utilisateurs qui ont réagi
+    }
+
+    // =============================================================================
     // MÉTHODES HÉRITÉES DU PARENT (NON SURCHARGÉES)
     // =============================================================================
     
