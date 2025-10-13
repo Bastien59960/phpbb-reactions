@@ -151,40 +151,25 @@ class reaction extends \phpbb\notification\type\base
      * Les autres dépendances sont injectées via les méthodes setter définies dans services.yml
      */
     public function __construct(
-        \phpbb\user_loader $user_loader,           // [1] Du parent
-        \phpbb\db\driver\driver_interface $db,     // [2] Du parent
-        \phpbb\cache\driver\driver_interface $cache, // [3] Du parent
-        \phpbb\language\language $language,        // [4] Du parent
-        \phpbb\user $user,                         // [5] Du parent
-        \phpbb\auth\auth $auth                    // [6] Du parent
+        \phpbb\user_loader $user_loader,           // [1] Service user_loader
+        \phpbb\db\driver\driver_interface $db,     // [2] Connexion DB
+        \phpbb\cache\driver\driver_interface $cache, // [3] Cache
+        \phpbb\language\language $language,        // [4] Language
+        \phpbb\user $user,                         // [5] User actuel
+        \phpbb\auth\auth $auth,                    // [6] Auth
+        \phpbb\config\config $config,              // [7] Configuration
+        $helper,                                   // [8] Helper personnalisé
+        \phpbb\request\request $request,           // [9] Request
+        \phpbb\template\template $template         // [10] Template
     ) {
-        // ✅ Appel du constructeur parent avec les 6 paramètres
+        // ✅ Appel du constructeur parent avec les 6 premiers paramètres
         parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
         
-        // ✅ Stockage du user_loader du parent
-        $this->user_loader = $user_loader;
-    }
-    
-    /**
-     * Méthodes setter pour l'injection des dépendances via calls
-     */
-    public function set_config(\phpbb\config\config $config)
-    {
+        // ✅ Stockage des services spécifiques à notre extension
         $this->config = $config;
-    }
-    
-    public function set_helper($helper)
-    {
+        $this->user_loader = $user_loader;
         $this->helper = $helper;
-    }
-    
-    public function set_request(\phpbb\request\request $request)
-    {
         $this->request = $request;
-    }
-    
-    public function set_template(\phpbb\template\template $template)
-    {
         $this->template = $template;
     }
 

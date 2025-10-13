@@ -105,12 +105,17 @@ services:
     bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         shared: false
-        parent: notification.type.base
-        calls:
-            - [set_config, ['@config']]
-            - [set_helper, ['@bastien59960.reactions.helper']]
-            - [set_request, ['@request']]
-            - [set_template, ['@template']]
+        arguments:
+            - '@user_loader'
+            - '@dbal.conn'
+            - '@cache.driver'
+            - '@language'
+            - '@user'
+            - '@auth'
+            - '@config'
+            - '@bastien59960.reactions.helper'
+            - '@request'
+            - '@template'
         tags:
             - { name: notification.type }
 

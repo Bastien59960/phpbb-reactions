@@ -103,20 +103,24 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Constructeur simplifié
+     * Constructeur pour notification email digest
      * 
-     * Ce constructeur NE FAIT PLUS d'insertion SQL dans phpbb_notification_types.
-     * L'insertion du type est gérée par la migration (migrations/release_1_0_0.php).
+     * Ce constructeur utilise le parent notification.type.base pour l'injection automatique
+     * des dépendances standard phpBB.
      */
-    public function __construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table)
-    {
-        parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
+    public function __construct(
+        \phpbb\user_loader $user_loader,
+        \phpbb\db\driver\driver_interface $db,
+        \phpbb\cache\driver\driver_interface $cache,
+        \phpbb\language\language $language,
+        \phpbb\user $user,
+        \phpbb\auth\auth $auth
+    ) {
+        parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
         
         if (defined('DEBUG') && DEBUG) {
             error_log('[Reactions Email Digest] Constructeur initialisé - Type: ' . $this->get_type());
         }
-
-        // ⚠️  Aucune insertion SQL ici (migration gère la création du type)
     }
 
     /**
