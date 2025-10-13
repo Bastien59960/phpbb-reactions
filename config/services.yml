@@ -21,6 +21,7 @@ services:
             - '@user'
             - '@template'
             - '@language'
+            - '@controller.helper' 
             - '%tables.post_reactions%'
             - '%tables.posts%'
     
