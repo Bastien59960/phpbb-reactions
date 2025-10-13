@@ -19,7 +19,8 @@
  *  - Utilisation correcte du controller_helper pour générer des routes
  *  - Préparation pour extension future des fonctionnalités
  *
- * @package bastien59960\reactions
+ * @package bastien59960
+eactions
  * @author  bastien
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  */
@@ -75,9 +76,85 @@ class helper
         $this->table_posts = $table_posts;
     }
 
-    // =====================
-    // Below are the helper methods. Each method will be kept, cleaned and commented.
-    // Please provide or confirm each existing method so I can restructure without removing useful logic.
-    // =====================
-    // Please paste the rest of your helper methods below or let me know to insert them.
+        // =============================================================================
+    // MÉTHODE : Génération du HTML des réactions pour un post
+    // =============================================================================
+    /**
+     * Génère le HTML complet du bloc de réactions pour un message donné
+     *
+     * @param int $post_id ID du message
+     * @return string HTML prêt à injecter côté client (AJAX)
+     */
+    public function get_reactions_html_for_post($post_id)
+    {
+        $post_id = (int) $post_id;
+        $sql = 'SELECT reaction_emoji, COUNT(reaction_emoji) as reaction_count
+                FROM ' . $this->table_post_reactions . '
+                WHERE post_id = ' . $post_id . '
+                GROUP BY reaction_emoji
+                ORDER BY reaction_count DESC';
+        $result = $this->db->sql_query($sql);
+        $reactions_data = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $reactions_data[] = $row;
+        }
+        $this->db->sql_freeresult($result);
+
+        $user_reacted_emojis = [];
+        $user_id = $this->user->data['user_id'];
+        $is_logged_in = ($user_id != ANONYMOUS);
+        if ($is_logged_in) {
+            $sql = 'SELECT reaction_emoji
+                    FROM ' . $this->table_post_reactions . '
+                    WHERE post_id = ' . $post_id . '
+                    AND user_id = ' . $user_id;
+            $result = $this->db->sql_query($sql);
+            while ($row = $this->db->sql_fetchrow($result)) {
+                $user_reacted_emojis[] = $row['reaction_emoji'];
+            }
+            $this->db->sql_freeresult($result);
+        }
+
+        $html = '<div class="post-reactions">';
+        foreach ($reactions_data as $reaction) {
+            $user_reacted = in_array($reaction['reaction_emoji'], $user_reacted_emojis);
+            $active_class = $user_reacted ? ' active' : '';
+            $display_style = ($reaction['reaction_count'] == 0) ? ' style="display:none;"' : '';
+            $html .= sprintf(
+                '<span class="reaction%s" data-emoji="%s" data-count="%d"%s>%s <span class="count">%d</span></span>',
+                $active_class,
+                htmlspecialchars($reaction['reaction_emoji'], ENT_QUOTES, 'UTF-8'),
+                (int) $reaction['reaction_count'],
+                $display_style,
+                $reaction['reaction_emoji'],
+                (int) $reaction['reaction_count']
+            );
+        }
+        if ($is_logged_in) {
+            $html .= '<span class="reaction-more" title="Ajouter une réaction">+</span>';
+        }
+        $html .= '</div>';
+        return $html;
+    }
+
+    // =============================================================================
+    // MÉTHODE : Génération d'URL (proxy vers controller_helper)
+    // =============================================================================
+    /**
+     * Génère une URL via le contrôleur phpBB ou fallback append_sid
+     *
+     * @param string $route
+     * @param array $params
+     * @return string URL générée
+     */
+    public function route($route, array $params = [])
+    {
+        if (isset($this->controller_helper) && is_object($this->controller_helper)) {
+            return $this->controller_helper->route($route, $params);
+        }
+        if (!empty($params) && isset($params['p'])) {
+            return append_sid('viewtopic.php', 'p=' . (int) $params['p'] . '#p' . (int) $params['p']);
+        }
+        return append_sid('index.php', '');
+    }
 }
