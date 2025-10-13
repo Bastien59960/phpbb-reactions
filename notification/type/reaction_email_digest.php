@@ -116,7 +116,7 @@ class reaction_email_digest extends base
         \phpbb\user $user,
         \phpbb\auth\auth $auth
     ) {
-        parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
+        parent::__construct($user_loader, $db, $cache, $language, $user, $auth, 'phpbb_notifications');
         
         if (defined('DEBUG') && DEBUG) {
             error_log('[Reactions Email Digest] Constructeur initialisé - Type: ' . $this->get_type());
