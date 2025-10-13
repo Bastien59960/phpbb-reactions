@@ -82,6 +82,7 @@ class helper
         \phpbb\user $user,
         \phpbb\template\template $template,
         \phpbb\language\language $language,
+        \phpbb\controller\helper $controller_helper,
         $reactions_table,
         $posts_table
     ) {
@@ -89,6 +90,7 @@ class helper
         $this->user            = $user;
         $this->template        = $template;
         $this->language        = $language;
+        $this->controller_helper  = $controller_helper;
         $this->reactions_table = $reactions_table;
         $this->posts_table     = $posts_table;
     }
@@ -224,5 +226,26 @@ class helper
         
         // Retour du HTML complet prêt à être injecté dans la réponse AJAX
         return $html;
+    }
+        /**
+     * Proxy vers le service controller.helper de phpBB pour générer des URL nommées
+     *
+     * @param string $route
+     * @param array  $params
+     * @return string
+     */
+    public function route($route, array $params = array())
+    {
+        if (isset($this->controller_helper) && is_object($this->controller_helper)) {
+            // Délègue au helper natif de phpBB
+            return $this->controller_helper->route($route, $params);
+        }
+
+        // Fallback : si controller_helper absent (sécurité), utilise append_sid
+        if (!empty($params) && isset($params['p'])) {
+            return append_sid('viewtopic.php', 'p=' . (int) $params['p'] . '#p' . (int) $params['p']);
+        }
+
+        return append_sid('index.php', '');
     }
 }
