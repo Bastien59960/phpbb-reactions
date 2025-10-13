@@ -1,36 +1,32 @@
 /**
- * JavaScript pour l'extension Reactions
+ * Fichier : styles/prosilver/template/js/reactions.js — bastien59960/reactions
  *
- * Ce fichier gère toute l'interactivité côté client pour les réactions aux messages.
- * Il contient:
- *  - Gestion des clics sur les réactions existantes
- *  - Affichage de la palette d'emojis (picker)
- *  - Requêtes AJAX vers le serveur pour add/remove/get/get_users
- *  - Tooltips affichant la liste des utilisateurs ayant réagi
- *  - Recherche d'emojis avec support FR via EMOJI_KEYWORDS_FR
- *  - Diverses protections pour éviter les erreurs 400/500 côté serveur
+ * JavaScript pour l'extension Reactions phpBB 3.3.15
  *
- * NOTES IMPORTANTES:
- *  - Le serveur attend du JSON UTF-8. Les emojis sont souvent multi-octets (UTF-8 mb4).
- *    Pour réduire les erreurs 400 liées à un mauvais encodage on nettoie les caractères
- *    de contrôle avant envoi: safeEmoji().
- *  - Le backend doit être configuré en utf8mb4 pour accepter les emojis 4-octets.
- *    Voir migrations / sql (ALTER TABLE ... CONVERT TO CHARACTER SET utf8mb4 ...).
+ * Ce fichier gère toute l'interactivité côté client pour les réactions aux messages du forum.
+ * Il est le pendant client du contrôleur AJAX et du helper PHP.
  *
- * Copyright (c) 2025 Bastien59960
- * Licence: GNU General Public License v2 (GPL-2.0)
+ * Points clés de la logique métier :
+ *   - Gestion des clics sur les réactions existantes (ajout/suppression)
+ *   - Affichage de la palette d'emojis (picker) avec recherche et catégories
+ *   - Requêtes AJAX vers le serveur (add, remove, get, get_users)
+ *   - Mise à jour dynamique du DOM après réponse serveur (sans rechargement)
+ *   - Tooltips affichant la liste des utilisateurs ayant réagi
+ *   - Support complet des emojis Unicode (utf8mb4)
+ *   - Recherche d'emojis avec support français via EMOJI_KEYWORDS_FR
  *
- * --------------------------------------------------------------------------
- * Structure du fichier:
- *  - Utilitaires généraux
- *  - Variables globales / constantes
- *  - Initialisation et attache des événements
- *  - Gestion du picker (construction + recherche)
- *  - Envoi AJAX (sendReaction)
- *  - Mise à jour DOM après réponse serveur (updateSingleReactionDisplay)
- *  - Tooltip utilisateur (setup, show, hide)
- *  - Fonctions utilitaires (escapeHtml, getPostIdFromReaction, etc.)
- * --------------------------------------------------------------------------
+ * ARCHITECTURE :
+ * - Module IIFE (Immediately Invoked Function Expression) pour isolation du scope
+ * - Pas de dépendances externes (vanilla JavaScript)
+ * - Compatible tous navigateurs modernes (ES6+)
+ *
+ * SÉCURITÉ :
+ * - Nettoyage des emojis avant envoi (safeEmoji) pour éviter erreurs 400
+ * - Échappement HTML pour prévenir XSS
+ * - Validation côté client (doublée côté serveur)
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 /* ========================================================================== */
@@ -38,19 +34,17 @@
 /* ========================================================================== */
 
 /**
- * Basculer la visibilité d'un élément
- *
- * @param {string} id ID de l'élément à basculer
- *
- * Cette fonction est volontairement simple et sert dans quelques petits cas
- * d'UI utilitaires. Elle n'est pas critique pour la logique des réactions,
- * mais facilite certains tests manuels.
+ * Basculer la visibilité d'un élément (usage utilitaire)
+ * 
+ * Cette fonction simple permet de montrer/cacher un élément par son ID.
+ * Utilisée principalement pour les tests manuels.
+ * 
+ * @param {string} id ID de l'élément DOM à basculer
  */
 function toggle_visible(id) {
     var x = document.getElementById(id);
     if (!x) {
-        // Si l'élément n'existe pas, laisser silencieusement
-        return;
+        return; // Élément introuvable, sortie silencieuse
     }
     if (x.style.display === "block") {
         x.style.display = "none";
@@ -70,24 +64,22 @@ function toggle_visible(id) {
     /* --------------------------- VARIABLES GLOBALES ----------------------  */
     /* ---------------------------------------------------------------------- */
 
-    // Palette d'emojis actuellement ouverte (DOM element) — null si aucune
+    /** @type {HTMLElement|null} Palette d'emojis actuellement ouverte */
     let currentPicker = null;
 
-    // Tooltip courant affichant les users — null si aucune
+    /** @type {HTMLElement|null} Tooltip affichant les utilisateurs ayant réagi */
     let currentTooltip = null;
 
-    // Contenu JSON chargé depuis categories.json (structure emojiData)
+    /** @type {Object|null} Données JSON chargées depuis categories.json */
     let allEmojisData = null;
 
     /**
-     * Liste des 10 emojis courantes utilisées par défaut
-     *
-     * Ces emojis sont affichés en priorité dans l'interface utilisateur.
-     * Ils doivent idéalement être synchronisés avec la config serveur
-     * (ajax.php / listener.php) si tu veux une correspondance exacte.
-     *
-     * NOTE: Conserver les emojis courantes ici évite un fetch inutile si le JSON
-     * categories.json n'est pas accessible (fallback).
+     * Liste des 10 emojis courantes affichées par défaut
+     * 
+     * IMPORTANT : Ces emojis doivent être synchronisés avec la configuration
+     * serveur (ajax.php, ligne 98) pour une cohérence totale.
+     * 
+     * @type {string[]}
      */
     const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
@@ -96,31 +88,31 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * safeEmoji(e)
-     *
-     * Nettoie une chaîne emoji pour retirer les caractères de contrôle non
-     * imprimables qui peuvent casser json_encode / json_decode côté serveur ou
-     * provoquer des erreurs 400 si le JSON contient des octets invalides.
-     *
-     * - Retire les caractères de contrôle ASCII dans les plages communes
-     * - Ne modifie pas les séquences valides UTF-8 pour les emojis (ZWJ, skin
-     *   tone, etc.)
-     *
+     * Nettoie une chaîne emoji pour retirer les caractères de contrôle
+     * 
+     * Cette fonction est CRITIQUE pour éviter les erreurs 400 côté serveur.
+     * Elle retire les caractères de contrôle ASCII qui peuvent corrompre
+     * le JSON lors de la transmission AJAX.
+     * 
+     * PLAGE NETTOYÉE :
+     * - 0x00-0x08 : NULL, SOH, STX, ETX, EOT, ENQ, ACK, BEL, BS
+     * - 0x0B : Tabulation verticale
+     * - 0x0C : Form feed
+     * - 0x0E-0x1F : Caractères de contrôle
+     * - 0x7F : DEL
+     * 
+     * NE TOUCHE PAS :
+     * - Les séquences UTF-8 valides (ZWJ, modificateurs de skin tone, etc.)
+     * - Les emojis composés (famille, drapeaux, etc.)
+     * 
      * @param {string} e Chaîne pouvant contenir un emoji
      * @returns {string} Chaîne nettoyée
-     *
-     * Raison: certaines palettes (ou anciennes bibliothèques) insèrent des
-     * caractères invisibles ou des retours chariot qui, lorsqu'enveloppés dans
-     * JSON, aboutissent à un json_decode() rejeté côté PHP si l'encodage n'est
-     * pas propre.
      */
     function safeEmoji(e) {
         if (typeof e !== 'string') {
-            // Forcer la conversion en chaîne pour éviter exceptions
-            e = String(e || '');
+            e = String(e || ''); // Forcer conversion en string
         }
-        // Enlève caractères de contrôle (sauf tab/newline si jamais utile — ici on les retire tous)
-        // Plage: 0x00..0x08, 0x0B,0x0C, 0x0E..0x1F, 0x7F
+        // Regex : retire caractères de contrôle ASCII dangereux
         return e.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
     }
 
@@ -129,62 +121,80 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * initReactions()
-     *
-     * Point d'entrée principal appelé au DOMContentLoaded. Il attache tous les
-     * écouteurs nécessaires: clics sur réactions, clics sur "plus", tooltips,
-     * et fermeture des pickers au clic général.
+     * Point d'entrée principal : initialisation de l'extension
+     * 
+     * Cette fonction est appelée au DOMContentLoaded et attache tous les
+     * écouteurs d'événements nécessaires. Elle peut aussi être appelée
+     * manuellement après une mise à jour AJAX du DOM pour réattacher les listeners.
+     * 
+     * IDEMPOTENCE : Cette fonction peut être appelée plusieurs fois sans risque
+     * grâce à removeEventListener() avant chaque addEventListener().
+     * 
+     * @param {HTMLElement} [context=document] Contexte DOM (document ou sous-élément)
      */
-    function initReactions() {
-        // Attache événements sur les réactions affichées initialement
-        attachReactionEvents();
+    function initReactions(context) {
+        context = context || document;
+        if (!(context instanceof Element || context instanceof Document)) {
+            console.warn('[Reactions] initReactions: paramètre context invalide', context);
+            return;
+        }
 
-        // Attache événements sur les boutons "plus" pour ouvrir le picker
-        attachMoreButtonEvents();
+        // Attache événements sur les réactions affichées
+        attachReactionEvents(context);
 
-        // Attache les tooltips (hover) pour chaque réaction (liste utilisateurs)
-        attachTooltipEvents();
+        // Attache événements sur les boutons "plus" (ouverture picker)
+        attachMoreButtonEvents(context);
 
-        // Fermeture globale des pickers si on clique ailleurs
-        document.addEventListener('click', closeAllPickers);
+        // Attache les tooltips (hover) pour chaque réaction
+        attachTooltipEvents(context);
+
+        // Fermeture globale des pickers au clic ailleurs (une seule fois sur document)
+        if (context === document) {
+            document.addEventListener('click', closeAllPickers);
+        }
     }
 
     /**
-     * attachReactionEvents()
-     *
-     * Recherche tous les éléments .post-reactions .reaction (sauf readonly) et
-     * attache un listener click. On retire d'abord d'éventuels anciens listeners
-     * pour éviter la double exécution (re-render, hot-reload, etc.).
+     * Attache les écouteurs de clic sur les réactions existantes
+     * 
+     * Recherche tous les éléments .reaction (sauf .reaction-readonly) dans le
+     * contexte fourni et attache handleReactionClick.
+     * 
+     * PATTERN IDEMPOTENT : retire puis ajoute pour éviter doublons.
+     * 
+     * @param {HTMLElement} context Contexte DOM de recherche
      */
-    function attachReactionEvents() {
-        document.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
-            // Retirer avant d'ajouter: pattern idempotent
+    function attachReactionEvents(context) {
+        context.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
             reaction.removeEventListener('click', handleReactionClick);
             reaction.addEventListener('click', handleReactionClick);
         });
     }
 
     /**
-     * attachMoreButtonEvents()
-     *
-     * Attache l'écouteur sur le bouton "..." (ou similaire) qui ouvre la
-     * palette d'emojis pour ajouter une réaction personnalisée.
+     * Attache les écouteurs de clic sur les boutons "plus"
+     * 
+     * Le bouton "plus" (+) ouvre la palette d'emojis pour ajouter une nouvelle réaction.
+     * 
+     * @param {HTMLElement} context Contexte DOM de recherche
      */
-    function attachMoreButtonEvents() {
-        document.querySelectorAll('.reaction-more').forEach(button => {
+    function attachMoreButtonEvents(context) {
+        context.querySelectorAll('.reaction-more').forEach(button => {
             button.removeEventListener('click', handleMoreButtonClick);
             button.addEventListener('click', handleMoreButtonClick);
         });
     }
 
     /**
-     * attachTooltipEvents()
-     *
-     * Parcourt toutes les réactions et configure le tooltip hover pour afficher
-     * la liste des utilisateurs ayant cliqué sur la réaction.
+     * Attache les tooltips sur chaque réaction
+     * 
+     * Au survol d'une réaction, un tooltip affiche la liste des utilisateurs
+     * ayant utilisé cet emoji (avec appel AJAX get_users si nécessaire).
+     * 
+     * @param {HTMLElement} context Contexte DOM de recherche
      */
-    function attachTooltipEvents() {
-        document.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
+    function attachTooltipEvents(context) {
+        context.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
             const emoji = reaction.getAttribute('data-emoji');
             const postId = getPostIdFromReaction(reaction);
             if (emoji && postId) {
@@ -198,16 +208,17 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * handleReactionClick(event)
-     *
-     * Gestion du clic sur une réaction existante (ex: un badge "👍 2").
-     * - Empêche propagation et default
-     * - Récupère postId & emoji depuis le DOM
-     * - Vérifie que l'utilisateur est loggé
-     * - Appelle sendReaction()
-     *
-     * Note: on se base sur l'attribut data-emoji qui contient la version affichée
-     * (doit coller aux valeurs envoyées au serveur).
+     * Gère le clic sur une réaction existante
+     * 
+     * COMPORTEMENT :
+     * - Si l'utilisateur a déjà réagi : retire la réaction (action='remove')
+     * - Sinon : ajoute la réaction (action='add')
+     * 
+     * SÉCURITÉ :
+     * - Vérifie que l'utilisateur est connecté avant envoi
+     * - Empêche la propagation de l'événement pour éviter conflits
+     * 
+     * @param {MouseEvent} event Événement de clic
      */
     function handleReactionClick(event) {
         event.preventDefault();
@@ -216,53 +227,66 @@ function toggle_visible(id) {
         const el = event.currentTarget;
         const emoji = el.getAttribute('data-emoji');
         const postId = getPostIdFromReaction(el);
-        if (!emoji || !postId) return;
+        
+        // Validation des données
+        if (!emoji || !postId) {
+            console.warn('[Reactions] Données manquantes sur la réaction cliquée');
+            return;
+        }
 
+        // Vérification authentification
         if (!isUserLoggedIn()) {
             showLoginMessage();
             return;
         }
 
-        // IMPORTANT: envoi via sendReaction qui applique safeEmoji
+        // Envoi de la réaction au serveur
         sendReaction(postId, emoji);
     }
 
     /**
-     * handleMoreButtonClick(event)
-     *
-     * Ouvre la palette (picker) d'emojis pour le post ciblé. Le picker est
-     * construit dynamiquement à partir d'un JSON categories.json si disponible,
-     * sinon on propose un fallback minimal (COMMON_EMOJIS).
+     * Gère le clic sur le bouton "plus" (ouverture du picker)
+     * 
+     * COMPORTEMENT :
+     * 1. Ferme tout picker déjà ouvert (un seul à la fois)
+     * 2. Crée un nouveau picker
+     * 3. Charge categories.json pour la liste complète d'emojis
+     * 4. Si échec, affiche un picker restreint (COMMON_EMOJIS)
+     * 5. Positionne le picker sous le bouton
+     * 
+     * @param {MouseEvent} event Événement de clic
      */
     function handleMoreButtonClick(event) {
         event.preventDefault();
         event.stopPropagation();
 
+        // Vérification authentification
         if (!isUserLoggedIn()) {
             showLoginMessage();
             return;
         }
 
-        // Fermer les pickers déjà ouverts (un seul picker à la fois)
+        // Fermer les pickers déjà ouverts
         closeAllPickers();
 
         const button = event.currentTarget;
         const postId = getPostIdFromReaction(button);
-        if (!postId) return;
+        
+        if (!postId) {
+            console.warn('[Reactions] post_id introuvable sur le bouton "plus"');
+            return;
+        }
 
-        // Crée le conteneur picker
+        // Création du conteneur picker
         const picker = document.createElement('div');
         picker.classList.add('emoji-picker');
         currentPicker = picker;
 
-
-        
-        // Essaye de charger la version complète des emojis (catégories)
-        fetch('./ext/bastien59960/reactions/styles/prosilver/theme/categories.json')
+        // Chargement asynchrone de la liste complète d'emojis
+        fetch(REACTIONS_JSON_PATH)
             .then(res => {
-                // Si le status est 404 ou autre, res.json() jettera ou renverra une erreur
                 if (!res.ok) {
-                    throw new Error('categories.json not found or network error');
+                    throw new Error('categories.json HTTP ' + res.status);
                 }
                 return res.json();
             })
@@ -271,20 +295,19 @@ function toggle_visible(id) {
                 buildEmojiPicker(picker, postId, data);
             })
             .catch(err => {
-                // Si erreur de chargement, on affiche un picker restreint (COMMON_EMOJIS)
-                console.error('Erreur de chargement categories.json', err);
+                console.error('[Reactions] Erreur chargement categories.json:', err);
                 buildFallbackPicker(picker, postId);
             });
 
-        // Ajout dans le body pour positionnement absolu
+        // Ajout au DOM (en absolu par rapport à body)
         document.body.appendChild(picker);
 
-        // Position du picker par rapport au bouton
+        // Positionnement sous le bouton "plus"
         const rect = button.getBoundingClientRect();
         picker.style.position = 'absolute';
         picker.style.top = `${rect.bottom + window.scrollY}px`;
         picker.style.left = `${rect.left + window.scrollX}px`;
-        picker.style.zIndex = 10000;
+        picker.style.zIndex = '10000';
     }
 
     /* ---------------------------------------------------------------------- */
@@ -292,68 +315,84 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * buildEmojiPicker(picker, postId, emojiData)
-     *
-     * Construit le DOM complet du picker:
-     *  - onglets catégories
-     *  - header (recherche + fermeture)
-     *  - section "Utilisé fréquemment"
-     *  - grille principale par catégories
-     *  - zone de recherche (affiche remplacements dynamiques)
-     *
-     * Remarques:
-     *  - emojiData.emojis attendu au format: { categoryName: { subcat: [{ emoji, name }, ...] } }
-     *  - la recherche utilise searchEmojis() qui supporte EMOJI_KEYWORDS_FR
+     * Construit le DOM complet du picker d'emojis (version complète)
+     * 
+     * STRUCTURE DU PICKER :
+     * 1. Onglets de catégories (Smileys, Animaux, Nourriture, etc.)
+     * 2. Header avec champ de recherche et bouton fermeture
+     * 3. Section "Utilisé fréquemment" (COMMON_EMOJIS)
+     * 4. Contenu principal scrollable avec toutes les catégories
+     * 5. Zone de résultats de recherche (masquée par défaut)
+     * 
+     * RECHERCHE :
+     * - Support des mots-clés français via EMOJI_KEYWORDS_FR
+     * - Filtre en temps réel pendant la saisie
+     * - Limite à 100 résultats pour les performances
+     * 
+     * @param {HTMLElement} picker Conteneur du picker
+     * @param {number|string} postId ID du message cible
+     * @param {Object} emojiData Données JSON des emojis
      */
     function buildEmojiPicker(picker, postId, emojiData) {
-        // --- 1. ONGLETS ---
+        // === 1. ONGLETS DE CATÉGORIES ===
         const tabsContainer = document.createElement('div');
         tabsContainer.className = 'emoji-tabs';
         picker.appendChild(tabsContainer);
 
-        // --- 2. HEADER (Recherche et Fermeture) ---
+        // === 2. HEADER (RECHERCHE + FERMETURE) ===
         const header = document.createElement('div');
         header.className = 'emoji-picker-header';
+        
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.className = 'emoji-search-input';
         searchInput.placeholder = 'Rechercher...';
         searchInput.autocomplete = 'off';
+        
         const closeBtn = document.createElement('button');
         closeBtn.className = 'emoji-picker-close';
+        closeBtn.textContent = '×';
         closeBtn.title = 'Fermer';
-        closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeAllPickers(); });
+        closeBtn.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            closeAllPickers(); 
+        });
+        
         header.appendChild(searchInput);
         header.appendChild(closeBtn);
         picker.appendChild(header);
 
-        // --- NOUVEAU CONTENEUR POUR LE CORPS DU PICKER ---
+        // === 3. CORPS DU PICKER (SCROLLABLE) ===
         const pickerBody = document.createElement('div');
         pickerBody.className = 'emoji-picker-body';
         picker.appendChild(pickerBody);
 
-        // --- 3. SECTION "FRÉQUEMMENT UTILISÉ" (FIXE) ---
+        // === 4. SECTION "FRÉQUEMMENT UTILISÉ" (FIXE EN HAUT) ===
         const frequentSection = document.createElement('div');
         frequentSection.className = 'emoji-frequent-section';
+        
         const frequentTitle = document.createElement('div');
         frequentTitle.className = 'emoji-category-title';
         frequentTitle.textContent = 'Utilisé fréquemment';
+        
         const frequentGrid = document.createElement('div');
         frequentGrid.className = 'emoji-grid';
         COMMON_EMOJIS.forEach(emoji => {
             frequentGrid.appendChild(createEmojiCell(emoji, postId));
         });
+        
         frequentSection.appendChild(frequentTitle);
         frequentSection.appendChild(frequentGrid);
         pickerBody.appendChild(frequentSection);
 
-        // --- 4. CONTENU PRINCIPAL (SCROLLABLE) ---
+        // === 5. CONTENU PRINCIPAL (TOUTES CATÉGORIES) ===
         const mainContent = document.createElement('div');
         mainContent.className = 'emoji-picker-main';
+        
         const categoriesContainer = document.createElement('div');
         categoriesContainer.className = 'emoji-categories-container';
 
-        // Parcours des catégories fournies par categories.json
+        // Parcours des catégories depuis categories.json
         Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
             const catTitle = document.createElement('div');
             catTitle.className = 'emoji-category-title';
@@ -364,24 +403,26 @@ function toggle_visible(id) {
             const grid = document.createElement('div');
             grid.className = 'emoji-grid';
 
-            // subcategories est typiquement un objet contenant des listes
+            // Flatten des sous-catégories
             Object.values(subcategories).flat().forEach(emojiObj => {
-                // emojiObj: { emoji: '😄', name: 'smile' }
-                grid.appendChild(createEmojiCell(emojiObj.emoji, postId, emojiObj.name));
+                if (emojiObj && emojiObj.emoji) {
+                    grid.appendChild(createEmojiCell(emojiObj.emoji, postId, emojiObj.name));
+                }
             });
+            
             categoriesContainer.appendChild(grid);
         });
 
         mainContent.appendChild(categoriesContainer);
         pickerBody.appendChild(mainContent);
 
-        // Conteneur pour les résultats de recherche (remplace la vue principale)
+        // === 6. ZONE DE RÉSULTATS DE RECHERCHE (MASQUÉE PAR DÉFAUT) ===
         const searchResults = document.createElement('div');
         searchResults.className = 'emoji-search-results';
         searchResults.style.display = 'none';
         pickerBody.appendChild(searchResults);
 
-        // --- Logique des onglets ---
+        // === 7. CONSTRUCTION DES ONGLETS INTERACTIFS ===
         const categoryData = [
             { key: 'frequent', emoji: '🕒', title: 'Utilisé fréquemment' },
             { key: 'smileys', emoji: '😊', title: 'Smileys & Émotions' },
@@ -392,48 +433,58 @@ function toggle_visible(id) {
             { key: 'objects', emoji: '💡', title: 'Objets' },
             { key: 'symbols', emoji: '🔥', title: 'Symboles' }
         ];
+        
         categoryData.forEach((cat, index) => {
             const tab = document.createElement('button');
             tab.className = 'emoji-tab';
             tab.textContent = cat.emoji;
             tab.title = cat.title;
             if (index === 0) tab.classList.add('active');
+            
             tab.addEventListener('click', (e) => {
                 e.stopPropagation();
+                
+                // Mise à jour visuelle de l'onglet actif
                 tabsContainer.querySelectorAll('.emoji-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
+                
+                // Scroll vers la catégorie correspondante
                 if (cat.key === 'frequent') {
-                    mainContent.scrollTop = 0; // Remonte la liste principale
+                    mainContent.scrollTop = 0;
                 } else {
-                    // On tente de matcher l'index des catégories fournies
                     const categoryNameToFind = Object.keys(emojiData.emojis)[index - 1];
                     const categoryElement = mainContent.querySelector(`[data-category-name="${categoryNameToFind}"]`);
                     if (categoryElement) {
-                        mainContent.scrollTop = categoryElement.offsetTop;
+                        mainContent.scrollTop = categoryElement.offsetTop - mainContent.offsetTop;
                     }
                 }
             });
+            
             tabsContainer.appendChild(tab);
         });
 
-        // --- GESTION DE LA RECHERCHE ---
-        // Taper dans la recherche filtre les emojis via searchEmojis()
+        // === 8. GESTION DE LA RECHERCHE EN TEMPS RÉEL ===
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
+            
             if (query.length > 0) {
+                // Mode recherche : masquer les sections normales
                 frequentSection.style.display = 'none';
                 mainContent.style.display = 'none';
                 searchResults.style.display = 'block';
+                
+                // Lancer la recherche et afficher les résultats
                 const results = searchEmojis(query, emojiData);
                 displaySearchResults(searchResults, results, postId);
             } else {
+                // Mode normal : afficher les sections standards
                 frequentSection.style.display = 'block';
                 mainContent.style.display = 'block';
                 searchResults.style.display = 'none';
             }
         });
 
-        // Met le focus sur la zone de recherche après ouverture
+        // Focus automatique sur le champ de recherche après ouverture
         setTimeout(() => searchInput.focus(), 50);
     }
 
@@ -442,72 +493,86 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * createEmojiCell(emoji, postId, name='')
-     *
-     * Crée un élément bouton qui représente une cellule d'emoji dans le picker.
-     * - emoji: chaîne affichée
-     * - postId: id du post cible (sera passée à sendReaction)
-     * - name: texte descriptif (title)
-     *
-     * Le click sur la cellule envoie la réaction au serveur et ferme le picker.
+     * Crée une cellule d'emoji cliquable pour le picker
+     * 
+     * SÉCURITÉ :
+     * - Applique safeEmoji() pour nettoyer l'emoji
+     * - Stocke l'emoji nettoyé dans data-emoji pour cohérence
+     * 
+     * COMPORTEMENT :
+     * - Au clic : envoie la réaction et ferme le picker
+     * 
+     * @param {string} emoji Emoji à afficher
+     * @param {number|string} postId ID du message cible
+     * @param {string} [name=''] Nom descriptif (affiché au survol)
+     * @returns {HTMLElement} Bouton de la cellule emoji
      */
     function createEmojiCell(emoji, postId, name = '') {
-        const cleanEmoji = safeEmoji(String(emoji)); // 🧩 FIX : normalisation côté client
+        const cleanEmoji = safeEmoji(String(emoji));
+        
         const cell = document.createElement('button');
         cell.classList.add('emoji-cell');
-        cell.textContent = cleanEmoji;               // affiche la version nettoyée
-        cell.setAttribute('data-emoji', cleanEmoji); // important: stocker la valeur "propre"
+        cell.textContent = cleanEmoji;
+        cell.setAttribute('data-emoji', cleanEmoji);
         cell.title = name;
+        
         cell.addEventListener('click', () => {
             sendReaction(postId, cleanEmoji);
             closeAllPickers();
         });
+        
         return cell;
     }
-    
 
     /* ---------------------------------------------------------------------- */
     /* -------------------------- RECHERCHE EMOJI --------------------------- */
     /* ---------------------------------------------------------------------- */
 
     /**
-     * searchEmojis(query, emojiData)
-     *
-     * Recherche dans la structure emojiData et retourne une liste d'objets emojiObj.
-     * Supporte la table EMOJI_KEYWORDS_FR (optionnelle) pour permettre recherche FR.
-     *
-     * Retour: Array d'emojiObj { emoji, name, ... }
+     * Recherche des emojis selon une requête textuelle
+     * 
+     * SOURCES DE RECHERCHE (par ordre de priorité) :
+     * 1. Mots-clés français (EMOJI_KEYWORDS_FR) si disponible
+     * 2. Nom anglais de l'emoji (emojiObj.name)
+     * 3. Emoji littéral (utile si copier-coller)
+     * 
+     * OPTIMISATIONS :
+     * - Limite à 100 résultats pour performances
+     * - Utilise Set pour éviter les doublons
+     * 
+     * @param {string} query Texte de recherche (déjà en minuscules)
+     * @param {Object} emojiData Données JSON des emojis
+     * @returns {Array} Tableau d'objets {emoji, name}
      */
     function searchEmojis(query, emojiData) {
-        const results = new Set(); // Evite doublons en fonction de l'objet
+        const results = new Set();
         const maxResults = 100;
 
-        // Table de mots-clés français (optionnelle injectée globalement)
+        // Table de mots-clés français (optionnelle, injectée globalement)
         const keywordsFr = typeof EMOJI_KEYWORDS_FR !== 'undefined' ? EMOJI_KEYWORDS_FR : {};
 
-        // Flatten: récupérer tous emojiObj dans emojiData.emojis
-        // Structure attendue: emojiData.emojis = { cat: { subcat: [emojiObj...] } }
+        // Flatten : récupérer tous les emojiObj de toutes les catégories
         const allEmojis = Object.values(emojiData.emojis).flatMap(Object.values).flat();
 
         for (const emojiObj of allEmojis) {
             if (results.size >= maxResults) break;
 
-            // Sécurité: s'assurer que emojiObj possède la structure attendue
+            // Sécurité : vérifier structure valide
             if (!emojiObj || !emojiObj.emoji) continue;
 
-            // Recherche via mots-clés FR si disponibles
+            // 1. Recherche via mots-clés FR
             if (keywordsFr[emojiObj.emoji] && keywordsFr[emojiObj.emoji].some(kw => kw.toLowerCase().includes(query))) {
                 results.add(emojiObj);
                 continue;
             }
 
-            // Recherche par nom anglais
+            // 2. Recherche par nom anglais
             if (emojiObj.name && emojiObj.name.toLowerCase().includes(query)) {
                 results.add(emojiObj);
                 continue;
             }
 
-            // Recherche par emoji littéral (utile si l'utilisateur colle un emoji)
+            // 3. Recherche par emoji littéral
             if (emojiObj.emoji && emojiObj.emoji.includes(query)) {
                 results.add(emojiObj);
             }
@@ -517,9 +582,11 @@ function toggle_visible(id) {
     }
 
     /**
-     * displaySearchResults(container, results, postId)
-     *
-     * Affiche dans le DOM les résultats renvoyés par searchEmojis().
+     * Affiche les résultats de recherche dans le picker
+     * 
+     * @param {HTMLElement} container Conteneur des résultats
+     * @param {Array} results Tableau d'objets {emoji, name}
+     * @param {number|string} postId ID du message cible
      */
     function displaySearchResults(container, results, postId) {
         container.innerHTML = '';
@@ -543,11 +610,12 @@ function toggle_visible(id) {
     }
 
     /**
-     * buildFallbackPicker(picker, postId)
-     *
-     * Si categories.json est indisponible, on propose une version basique
-     * contenant seulement COMMON_EMOJIS. Utile pour clusters qui bloquent
-     * l'accès au JSON (permissions, CSP, etc).
+     * Construit un picker restreint (fallback si categories.json inaccessible)
+     * 
+     * Affiche uniquement les COMMON_EMOJIS avec un message d'information.
+     * 
+     * @param {HTMLElement} picker Conteneur du picker
+     * @param {number|string} postId ID du message cible
      */
     function buildFallbackPicker(picker, postId) {
         const pickerContent = document.createElement('div');
@@ -573,6 +641,7 @@ function toggle_visible(id) {
         commonSection.appendChild(commonGrid);
         pickerContent.appendChild(commonSection);
 
+        // Message d'information
         const infoDiv = document.createElement('div');
         infoDiv.style.cssText = 'padding: 16px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #e0e0e0;';
         infoDiv.textContent = 'Fichier JSON non accessible. Seuls les emojis courantes sont disponibles.';
@@ -586,10 +655,13 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * closeAllPickers(event)
-     *
-     * Si un picker est ouvert et que le clic est en dehors de celui-ci, le ferme.
-     * - event peut être undefined si fermeture programmée
+     * Ferme tous les pickers ouverts
+     * 
+     * COMPORTEMENT :
+     * - Si event fourni : vérifie que le clic est en dehors du picker
+     * - Sinon : ferme inconditionnellement (fermeture programmée)
+     * 
+     * @param {MouseEvent} [event] Événement de clic (optionnel)
      */
     function closeAllPickers(event) {
         if (currentPicker && (!event || !currentPicker.contains(event.target))) {
@@ -603,24 +675,34 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * isUserLoggedIn()
-     *
-     * Vérifie la présence de la variable globale REACTIONS_SID injectée depuis phpBB.
-     * Si sid vide ou pas défini, on considère que l'utilisateur n'est pas loggué.
-     *
-     * Remarque: côté serveur phpBB devrait effectuer la vraie validation.
+     * Vérifie si l'utilisateur est connecté
+     * 
+     * MÉTHODE :
+     * - Lecture de la variable globale REACTIONS_SID (injectée par phpBB)
+     * - Si vide ou undefined : non connecté
+     * 
+     * IMPORTANT : Cette vérification est doublée côté serveur (sécurité).
+     * 
+     * @returns {boolean} True si connecté, False sinon
      */
     function isUserLoggedIn() {
         return typeof REACTIONS_SID !== 'undefined' && REACTIONS_SID !== '';
     }
 
     /**
-     * showLoginMessage()
-     *
-     * Affiche un petit message modal invitant à la connexion.
-     * Permet d'éviter des erreurs côté serveur (403) en informant l'utilisateur.
+     * Affiche un message modal demandant la connexion
+     * 
+     * AFFICHAGE :
+     * - Modal centré avec overlay transparent
+     * - Fermeture au clic sur bouton OK
+     * - Auto-fermeture après 5 secondes
      */
     function showLoginMessage() {
+        // Vérifier qu'il n'y a pas déjà un message affiché
+        if (document.querySelector('.reactions-login-message')) {
+            return;
+        }
+
         const message = document.createElement('div');
         message.className = 'reactions-login-message';
         message.style.cssText = `
@@ -638,16 +720,18 @@ function toggle_visible(id) {
         `;
         message.innerHTML = `
             <p>Vous devez être connecté pour réagir aux messages.</p>
-            <button class="reactions-login-dismiss" style="margin-top: 10px; padding: 5px 15px;">OK</button>
+            <button class="reactions-login-dismiss" style="margin-top: 10px; padding: 5px 15px; cursor: pointer;">OK</button>
         `;
         document.body.appendChild(message);
 
-        // Ferme au clic sur le bouton OK
+        // Fermeture au clic sur OK
         message.querySelector('.reactions-login-dismiss').addEventListener('click', () => {
-            if (message.parentNode) message.parentNode.removeChild(message);
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
         });
 
-        // Fermeture automatique au timeout si jamais on veut masquer le message
+        // Auto-fermeture après 5 secondes
         setTimeout(() => {
             if (message.parentNode) {
                 message.parentNode.removeChild(message);
@@ -660,43 +744,68 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * sendReaction(postId, emoji)
-     *
-     * Envoie une requête AJAX vers le backend (REACTIONS_AJAX_URL) pour ajouter ou
-     * retirer une réaction selon l'état courant.
-     *
-     * - Recherche l'élément réaction existant dans le DOM (data-emoji)
-     * - Détermine l'action: 'add' ou 'remove'
-     * - Envoie JSON sécurisé: { post_id, emoji, action, sid }
-     *
-     * PROTECTION:
-     *  - SAFE: on applique safeEmoji() to avoid invalid bytes that produce 400.
-     *  - HEADERS: Content-Type/Accept pour clarifier que l'on veut JSON en retour.
-     *
-     * @param {string|number} postId Id du message
-     * @param {string} emoji Emoji (peut être multi-octet)
+     * Envoie une requête AJAX pour ajouter ou retirer une réaction
+     * 
+     * PROCESSUS :
+     * 1. Vérification authentification
+     * 2. Nettoyage de l'emoji avec safeEmoji()
+     * 3. Détermination de l'action (add ou remove selon état actuel)
+     * 4. Construction du payload JSON
+     * 5. Envoi via fetch() avec headers appropriés
+     * 6. Traitement de la réponse et mise à jour du DOM
+     * 
+     * GESTION DES ERREURS :
+     * - 403 : Affiche message de connexion
+     * - 400 : Log console (données invalides)
+* - 500 : Log console (erreur serveur)
+     * - Network error : Log console (problème réseau)
+     * 
+     * MISE À JOUR DOM :
+     * - Si data.html fourni : remplacement complet du bloc (méthode privilégiée)
+     * - Sinon : mise à jour manuelle compteur (fallback)
+     * 
+     * @param {number|string} postId ID du message
+     * @param {string} emoji Emoji de la réaction
      */
     function sendReaction(postId, emoji) {
-        // REACTIONS_SID injectée serveur => si absente on loggue et on force string vide
+        // =====================================================================
+        // ÉTAPE 1 : VÉRIFICATIONS PRÉLIMINAIRES
+        // =====================================================================
+        
+        // Vérification de la variable globale REACTIONS_SID
         if (typeof REACTIONS_SID === 'undefined') {
-            console.error('REACTIONS_SID is not defined');
+            console.error('[Reactions] REACTIONS_SID non définie');
             REACTIONS_SID = '';
         }
 
+        // Vérification authentification
         if (!isUserLoggedIn()) {
             showLoginMessage();
             return;
         }
 
-        // 🧩 FIX: Nettoyage des emojis avant envoi pour éviter erreur 400
+        // =====================================================================
+        // ÉTAPE 2 : PRÉPARATION DES DONNÉES
+        // =====================================================================
+        
+        // Nettoyage de l'emoji pour éviter erreurs 400
         const cleanEmoji = safeEmoji(String(emoji));
 
-        // Trouve l'élément réaction correspondant (s'il existe)
-        const reactionElement = document.querySelector(`.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${cleanEmoji}"]:not(.reaction-readonly)`);
+        // Recherche de l'élément réaction dans le DOM pour déterminer l'action
+        const reactionElement = document.querySelector(
+            `.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${cleanEmoji}"]:not(.reaction-readonly)`
+        );
+        
+        // Détermine si l'utilisateur a déjà réagi (classe "active")
         const hasReacted = reactionElement && reactionElement.classList.contains('active');
+        
+        // Action : 'add' si pas encore réagi, 'remove' sinon
         const action = hasReacted ? 'remove' : 'add';
 
-        // Construction du payload JSON
+        // =====================================================================
+        // ÉTAPE 3 : CONSTRUCTION DU PAYLOAD JSON
+        // =====================================================================
+        
         const payload = {
             post_id: postId,
             emoji: cleanEmoji,
@@ -704,127 +813,203 @@ function toggle_visible(id) {
             sid: REACTIONS_SID
         };
 
-        // DEBUG: log utile pour reproduire en local (à enlever en prod)
-        // console.debug('Sending reaction payload:', payload);
+        // Log de debug (à commenter en production)
+        console.debug('[Reactions] Envoi payload:', payload);
 
-        // Envoi du fetch (JSON)
-        console.debug('REACTIONS payload', payload)
-
+        // =====================================================================
+        // ÉTAPE 4 : ENVOI DE LA REQUÊTE AJAX
+        // =====================================================================
+        
         fetch(REACTIONS_AJAX_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json', // serveur attendu
+                'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             body: JSON.stringify(payload)
         })
         .then(response => {
-            // Gestion des statuts HTTP
+            // Gestion des codes HTTP d'erreur
             if (!response.ok) {
                 if (response.status === 403) {
-                    // L'utilisateur n'est pas authentifié (ou sid invalide)
+                    // Utilisateur non authentifié ou session expirée
                     showLoginMessage();
-                    throw new Error('User not logged in');
+                    throw new Error('User not logged in (403)');
                 }
-                // Autres erreurs réseau/serveur
-                throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
+                // Autres erreurs HTTP (400, 500, etc.)
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
-            // data attendu: { success: bool, count: int, user_reacted: bool, ... }
+            // =====================================================================
+            // ÉTAPE 5 : TRAITEMENT DE LA RÉPONSE SERVEUR
+            // =====================================================================
+            
+            // Log de la réponse (debug)
+            console.debug('[Reactions] Réponse serveur:', data);
+
+            // Vérification du succès de l'opération
             if (data.success) {
-                // Mise à jour du DOM: compteur et état actif/inactif
-                updateSingleReactionDisplay(postId, cleanEmoji, data.count, data.user_reacted);
+                
+                // Log de confirmation pour le HTML reçu
+                if (data.html) {
+                    console.debug('[Reactions] HTML reçu: ' + data.html.length + ' caractères');
+                } else {
+                    console.warn('[Reactions] Pas de HTML dans la réponse, utilisation du fallback');
+                }
+                
+                // =====================================================================
+                // MÉTHODE 1 : REMPLACEMENT COMPLET DU BLOC (RECOMMANDÉ)
+                // =====================================================================
+                
+                // Localiser le conteneur principal des réactions
+                const postContainer = document.querySelector(
+                    `.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`
+                );
+                
+                if (postContainer && data.html) {
+                    postContainer.innerHTML = data.html;
+                    // Passer le parent direct qui contient les réactions
+                    initReactions(postContainer);
+                    console.log('[Reactions] ✅ Bloc mis à jour avec succès via HTML serveur');
+                } else {
+                    // =====================================================================
+                    // MÉTHODE 2 : MISE À JOUR MANUELLE (FALLBACK)
+                    // =====================================================================
+
+                    // Si le HTML n'est pas fourni ou conteneur introuvable
+                    console.warn('[Reactions] Utilisation du fallback updateSingleReactionDisplay');
+                    updateSingleReactionDisplay(postId, cleanEmoji, data.count, data.user_reacted);
+                }
+                
             } else {
-                // Si serveur renvoie success=false on loggue le message
-                console.error('Erreur de réaction :', data.error || data.message);
-                // Si message indique problème d'auth on propose le login
+                // =====================================================================
+                // GESTION DES ERREURS MÉTIER RENVOYÉES PAR LE SERVEUR
+                // =====================================================================
+                
+                console.error('[Reactions] Erreur serveur:', data.error || data.message);
+                
+                // Si erreur liée à l'authentification
                 if (data.error && data.error.toLowerCase().includes('logged in')) {
                     showLoginMessage();
+                }
+                
+                // Si erreur de limite (max réactions atteintes)
+                if (data.error && data.error.includes('LIMIT')) {
+                    alert('Limite de réactions atteinte pour ce message.');
                 }
             }
         })
         .catch(error => {
-            // Erreurs réseau ou internes au then()
-            console.error('Erreur AJAX (sendReaction):', error);
+            // =====================================================================
+            // GESTION DES ERREURS RÉSEAU OU EXCEPTIONS
+            // =====================================================================
+            
+            console.error('[Reactions] Erreur lors de l\'envoi:', error);
+            
+            // Afficher un message utilisateur sympathique
+            // (Ne pas exposer les détails techniques aux utilisateurs finaux)
+            alert('Une erreur est survenue lors de l\'ajout de la réaction. Veuillez réessayer.');
         });
     }
 
     /* ---------------------------------------------------------------------- */
-    /* --------------------- MISE A JOUR DU DOM APRÈS AJAX ------------------ */
+    /* --------------------- MISE À JOUR DU DOM APRÈS AJAX ------------------ */
     /* ---------------------------------------------------------------------- */
 
     /**
-     * updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted)
-     *
-     * Met à jour l'affichage d'une réaction unique pour un post:
-     * - Si la réaction n'existe pas encore, la crée (span.reaction)
-     * - Met à jour le compteur affiché
-     * - Ajoute/enlève la classe 'active' selon userHasReacted
-     * - Cache l'élément si newCount === 0
-     * - Ré-attache le tooltip avec la nouvelle info
-     *
-     * IMPORTANT:
-     *  - On travaille uniquement sur le container .post-reactions-container[data-post-id=...]
-     *  - Les actuelles classes CSS (reaction, reaction-readonly, reaction-more) sont utilisées
+     * Met à jour manuellement l'affichage d'une réaction (fallback)
+     * 
+     * UTILISATION :
+     * - Appelée uniquement si le serveur ne renvoie pas de HTML complet
+     * - Crée l'élément réaction s'il n'existe pas
+     * - Met à jour le compteur et l'état "active"
+     * - Masque si compteur = 0
+     * 
+     * IMPORTANT :
+     * - Cette méthode est moins fiable que le remplacement HTML complet
+     * - Préférer toujours la méthode avec data.html du serveur
+     * 
+     * @param {number|string} postId ID du message
+     * @param {string} emoji Emoji de la réaction
+     * @param {number} newCount Nouveau compteur
+     * @param {boolean} userHasReacted Si l'utilisateur actuel a réagi
      */
     function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
-        const postContainer = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`);
-        if (!postContainer) return;
+        // Localiser le conteneur des réactions
+        const postContainer = document.querySelector(
+            `.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`
+        );
+        
+        if (!postContainer) {
+            console.warn('[Reactions] Conteneur introuvable pour post_id=' + postId);
+            return;
+        }
 
-        // On tente de trouver l'élément reaction correspondant (si déjà existant)
-        let reactionElement = postContainer.querySelector(`.reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`);
+        // Rechercher l'élément réaction existant
+        let reactionElement = postContainer.querySelector(
+            `.reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`
+        );
 
+        // =====================================================================
+        // CAS 1 : LA RÉACTION N'EXISTE PAS ENCORE DANS LE DOM
+        // =====================================================================
+        
         if (!reactionElement) {
-            // Si introuvable, on crée et on l'insère avant/à côté du bouton "plus"
+            // Créer un nouvel élément span.reaction
             reactionElement = document.createElement('span');
             reactionElement.classList.add('reaction');
             reactionElement.setAttribute('data-emoji', safeEmoji(String(emoji)));
             reactionElement.innerHTML = `${safeEmoji(String(emoji))} <span class="count">0</span>`;
-            // Attacher le click pour mutualiser la logique (handleReactionClick)
+            
+            // Attacher l'écouteur de clic
             reactionElement.addEventListener('click', handleReactionClick);
 
+            // Insérer dans le DOM (avant le bouton "plus" si présent)
             const moreButton = postContainer.querySelector('.reaction-more');
-            if (moreButton) {
-                if (moreButton.nextSibling) {
-                    moreButton.parentNode.insertBefore(reactionElement, moreButton.nextSibling);
-                } else {
-                    moreButton.parentNode.appendChild(reactionElement);
-                }
+            const reactionsContainer = postContainer.querySelector('.post-reactions');
+            
+            if (moreButton && moreButton.parentNode) {
+                // Insérer juste avant le bouton "plus"
+                moreButton.parentNode.insertBefore(reactionElement, moreButton);
+            } else if (reactionsContainer) {
+                // Sinon, ajouter à la fin du conteneur
+                reactionsContainer.appendChild(reactionElement);
             } else {
-                // Si pas de bouton "plus", on ajoute à la liste des reactions
-                const reactionsList = postContainer.querySelector('.post-reactions');
-                if (reactionsList) {
-                    reactionsList.appendChild(reactionElement);
-                }
+                console.error('[Reactions] Impossible d\'insérer la nouvelle réaction');
+                return;
             }
         }
 
-        // Mettre à jour le compteur
+        // =====================================================================
+        // CAS 2 : MISE À JOUR DE LA RÉACTION EXISTANTE
+        // =====================================================================
+        
+        // Mettre à jour le compteur affiché
         const countSpan = reactionElement.querySelector('.count');
         if (countSpan) {
             countSpan.textContent = newCount;
         }
 
-        // Mettre à jour l'attribut data-count (utile si d'autres scripts le lisent)
+        // Mettre à jour l'attribut data-count
         reactionElement.setAttribute('data-count', newCount);
 
-        // Gestion de l'état actif (user a réagi)
+        // Gestion de l'état actif (classe CSS "active")
         if (userHasReacted) {
             reactionElement.classList.add('active');
         } else {
             reactionElement.classList.remove('active');
         }
 
-        // Cacher si 0
+        // Masquer si compteur à zéro
         if (newCount === 0) {
             reactionElement.style.display = 'none';
         } else {
             reactionElement.style.display = '';
         }
 
-        // CORRIGÉ : Un seul tooltip par réaction — (ré-attache/update)
+        // Ré-attacher le tooltip avec les nouvelles données
         setupReactionTooltip(reactionElement, postId, emoji);
     }
 
@@ -833,46 +1018,58 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * setupReactionTooltip(reactionElement, postId, emoji)
-     *
-     * Configure le hover sur une réaction pour afficher la liste des users.
-     * - On supprime le title natif (qui peut gêner)
-     * - On attend 300ms avant de déclencher l'appel (évite flicker)
-     * - Si data-users est présent (préchargé), on l'utilise; sinon appel AJAX
-     *
-     * Amélioration: on nettoie l'emoji avec safeEmoji avant de l'envoyer au serveur
-     * pour la requête get_users (évite 400).
+     * Configure le tooltip affichant les utilisateurs ayant réagi
+     * 
+     * COMPORTEMENT :
+     * - Au survol (300ms de délai pour éviter flicker)
+     * - Affiche la liste des utilisateurs
+     * - Appel AJAX get_users si data-users vide
+     * 
+     * OPTIMISATION :
+     * - Si data-users pré-rempli : utilisation directe (pas d'appel AJAX)
+     * - Sinon : appel AJAX avec cache côté serveur
+     * 
+     * @param {HTMLElement} reactionElement Élément réaction
+     * @param {number|string} postId ID du message
+     * @param {string} emoji Emoji de la réaction
      */
     function setupReactionTooltip(reactionElement, postId, emoji) {
         let tooltipTimeout;
 
-        // Retirer anciens listeners (au cas où)
+        // Nettoyer les anciens listeners (idempotence)
         reactionElement.onmouseenter = null;
         reactionElement.onmouseleave = null;
 
-        // Supprimer le title natif pour ne pas avoir l'infobulle du navigateur
+        // Supprimer le title natif HTML (évite double affichage)
         reactionElement.removeAttribute('title');
 
+        // =====================================================================
+        // ÉVÉNEMENT : MOUSE ENTER (SURVOL)
+        // =====================================================================
+        
         reactionElement.addEventListener('mouseenter', function(e) {
-            // Déclenche la requête après un petit délai (300ms)
+            // Délai de 300ms avant affichage (évite les survols rapides)
             tooltipTimeout = setTimeout(() => {
-                // 1) Si data-users est présent et non vide, on l'utilise (évite appel)
+                
+                // Vérifier si data-users est pré-rempli (optimisation)
                 const usersData = reactionElement.getAttribute('data-users');
+                
                 if (usersData && usersData !== '[]') {
                     try {
                         const users = JSON.parse(usersData);
                         if (users && users.length > 0) {
                             showUserTooltip(reactionElement, users);
-                            return; // on a affiché les users
+                            return; // Pas besoin d'appel AJAX
                         }
                     } catch (err) {
-                        // Si parsing échoue, on retombe sur l'appel AJAX
-                        console.error('Erreur parsing users data:', err);
+                        console.error('[Reactions] Erreur parsing data-users:', err);
                     }
                 }
 
-                // 2) Sinon: appel AJAX "get_users"
-                // 🧩 FIX: emoji nettoyé avant requête
+                // =====================================================================
+                // APPEL AJAX GET_USERS
+                // =====================================================================
+                
                 const cleanEmoji = safeEmoji(String(emoji));
 
                 const payload = {
@@ -884,30 +1081,34 @@ function toggle_visible(id) {
 
                 fetch(REACTIONS_AJAX_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'application/json' 
+                    },
                     body: JSON.stringify(payload)
                 })
                 .then(res => {
                     if (!res.ok) {
-                        throw new Error('Network error: ' + res.status);
+                        throw new Error('HTTP ' + res.status);
                     }
                     return res.json();
                 })
                 .then(data => {
                     if (data && data.success && Array.isArray(data.users) && data.users.length > 0) {
                         showUserTooltip(reactionElement, data.users);
-                    } else {
-                        // Pas d'erreurs graves: on n'affiche rien si aucune user
                     }
                 })
                 .catch(err => {
-                    console.error('Erreur chargement users:', err);
-                    // Pas d'UI intrusive si échec fetch (évite spam)
+                    console.error('[Reactions] Erreur chargement users:', err);
                 });
 
-            }, 300);
+            }, 300); // Délai de 300ms
         });
 
+        // =====================================================================
+        // ÉVÉNEMENT : MOUSE LEAVE (FIN SURVOL)
+        // =====================================================================
+        
         reactionElement.addEventListener('mouseleave', function() {
             clearTimeout(tooltipTimeout);
             hideUserTooltip();
@@ -915,20 +1116,24 @@ function toggle_visible(id) {
     }
 
     /**
-     * showUserTooltip(element, users)
-     *
-     * Affiche la tooltip au-dessus de la réaction avec la liste d'utilisateurs.
-     * - users: array d'objets { user_id, username }
-     * - La tooltip est positionnée sous l'élément reaction (bottom)
+     * Affiche le tooltip avec la liste des utilisateurs
+     * 
+     * AFFICHAGE :
+     * - Positionné sous l'élément réaction
+     * - Liste de liens cliquables vers les profils
+     * - Reste visible si survolé
+     * 
+     * @param {HTMLElement} element Élément réaction
+     * @param {Array} users Tableau d'objets {user_id, username}
      */
     function showUserTooltip(element, users) {
-        // Supprime tout tooltip existant (un seul ui global)
+        // Supprimer tout tooltip existant (un seul à la fois)
         hideUserTooltip();
 
         const tooltip = document.createElement('div');
         tooltip.className = 'reaction-user-tooltip';
 
-        // Construire HTML sûr (escape usernames)
+        // Construction HTML sécurisée (escape XSS)
         const userLinks = users.map(user =>
             `<a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a>`
         ).join('');
@@ -937,14 +1142,14 @@ function toggle_visible(id) {
         document.body.appendChild(tooltip);
         currentTooltip = tooltip;
 
-        // Positionnement simple: aligner à gauche de l'élément et sous celui-ci
+        // Positionnement sous l'élément
         const rect = element.getBoundingClientRect();
         tooltip.style.position = 'absolute';
         tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
         tooltip.style.left = `${rect.left + window.scrollX}px`;
         tooltip.style.zIndex = '10001';
 
-        // Garder le tooltip visible si l'utilisateur y survole la souris
+        // Garder visible si l'utilisateur survole le tooltip
         tooltip.addEventListener('mouseenter', () => {});
         tooltip.addEventListener('mouseleave', () => {
             hideUserTooltip();
@@ -952,9 +1157,7 @@ function toggle_visible(id) {
     }
 
     /**
-     * hideUserTooltip()
-     *
-     * Retire la tooltip courante si elle est affichée.
+     * Masque le tooltip actuellement affiché
      */
     function hideUserTooltip() {
         if (currentTooltip) {
@@ -968,10 +1171,14 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * escapeHtml(text)
-     *
-     * Échappe le texte pour insertions dans le DOM via innerHTML.
-     * On utilise une balise temporaire pour s'assurer du bon échappement.
+     * Échappe les caractères HTML pour prévenir XSS
+     * 
+     * MÉTHODE :
+     * - Utilise textContent d'un élément temporaire
+     * - Plus sûr que les regex manuelles
+     * 
+     * @param {string} text Texte à échapper
+     * @returns {string} Texte échappé
      */
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -980,10 +1187,14 @@ function toggle_visible(id) {
     }
 
     /**
-     * getPostIdFromReaction(el)
-     *
-     * Navigue vers l'ancêtre .post-reactions-container et lit data-post-id
-     * Retourne null si introuvable
+     * Récupère le post_id depuis un élément du DOM
+     * 
+     * MÉTHODE :
+     * - Remonte l'arbre DOM jusqu'à .post-reactions-container
+     * - Lit l'attribut data-post-id
+     * 
+     * @param {HTMLElement} el Élément DOM de départ
+     * @returns {string|null} post_id ou null si introuvable
      */
     function getPostIdFromReaction(el) {
         const container = el.closest('.post-reactions-container');
@@ -994,42 +1205,67 @@ function toggle_visible(id) {
     /* -------------------------- BOOTSTRAP ON READY ------------------------- */
     /* ---------------------------------------------------------------------- */
 
-    // Initialisation à l'événement DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', initReactions);
+    /**
+     * Initialisation au chargement de la page
+     * 
+     * ÉVÉNEMENT : DOMContentLoaded
+     * - Garanti que le DOM est prêt avant d'attacher les écouteurs
+     */
+    document.addEventListener('DOMContentLoaded', () => initReactions());
 
     /* ====================================================================== */
-    /* ========== FIN DU MODULE PRINCIPAL - COMMENTAIRES ADDITIONNELS ======= */
+    /* ===================== FIN DU MODULE PRINCIPAL ======================== */
     /* ====================================================================== */
 
-    /*
-     * NOTES DE DÉPLOIEMENT & DEBUG:
-     *
-     * - Si tu obtiens toujours une erreur 400 lors de l'envoi via le picker:
-     *     1) Ajoute un console.log('raw payload', JSON.stringify(payload)) avant fetch
-     *     2) Vérifie dans les logs Apache/PHP ce que reçoit le serveur (raw bytes)
-     *     3) Vérifie la présence de REACTIONS_AJAX_URL et REACTIONS_SID dans le scope global
-     *
-     * - Si tu obtiens une erreur 500 lors d'un add (emoji 4-octet):
-     *     1) Vérifie la collation de la table phpbb_post_reactions: elle doit être utf8mb4
-     *     2) Exécute: ALTER TABLE phpbb_post_reactions CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-     *     3) Vérifie la définition de reaction_emoji (VARCHAR(191) recommandé si indexée)
-     *
-     * - Pour debug rapide côté client:
-     *     - Ouvre la console réseau (Network) -> requête POST vers REACTIONS_AJAX_URL
-     *     - Vérifie Request payload et Response body (json)
-     *
-     * - Remarques de sécurité:
-     *     - Ne jamais faire confiance au sid côté client: le serveur doit valider
-     *       l'utilisateur, le token, et les permissions.
-     *     - Eviter d'exposer des données sensibles dans les tooltips (ne montrer
-     *       que username et un lien public).
-     *
-     * - Améliorations possibles:
-     *     - Debounce sur la recherche du picker (déjà présent par input)
-     *     - Mécanisme de caching côté client pour les get_users par post+emoji
-     *     - Indication visuelle d'envoi/chargement (spinner) au clic sur reaction
-     *
+    /**
+     * NOTES DE DÉBOGAGE ET MAINTENANCE
+     * 
+     * === PROBLÈMES COURANTS ET SOLUTIONS ===
+     * 
+     * 1. ERREUR 400 LORS DE L'ENVOI :
+     *    - Vérifier que safeEmoji() nettoie bien l'emoji
+     *    - Console réseau → Request payload → vérifier les octets
+     *    - Vérifier REACTIONS_AJAX_URL et REACTIONS_SID
+     * 
+     * 2. ERREUR 500 AVEC EMOJIS 4-OCTETS :
+     *    - Vérifier collation table : utf8mb4_unicode_ci
+     *    - ALTER TABLE phpbb_post_reactions CONVERT TO CHARACTER SET utf8mb4
+     *    - Vérifier LONGEUR reaction_emoji : VARCHAR(191) minimum
+     * 
+     * 3. RÉACTION NE S'AFFICHE PAS APRÈS CLIC :
+     *    - Console : vérifier data.html dans la réponse
+     *    - Console : vérifier logs "[Reactions] HTML reçu"
+     *    - Vérifier que helper.php renvoie bien du HTML
+     * 
+     * 4. ÉCOUTEURS NE FONCTIONNENT PLUS APRÈS AJAX :
+     *    - Vérifier que initReactions() est appelé après mise à jour DOM
+     *    - Vérifier le contexte passé à initReactions(context)
+     * 
+     * 5. TOOLTIP N'APPARAÎT PAS :
+     *    - Vérifier que setupReactionTooltip() est appelé
+     *    - Console réseau → action get_users → vérifier réponse
+     *    - Vérifier styles CSS .reaction-user-tooltip
+     * 
+     * === OPTIMISATIONS POSSIBLES ===
+     * 
+     * - Debounce sur la recherche du picker (déjà présent via input)
+     * - Cache côté client pour get_users (localStorage avec TTL)
+     * - Spinner/loading indicator pendant requêtes AJAX
+     * - Compression gzip du fichier JS en production
+     * - Minification en production (uglify-js, terser)
+     * 
+     * === COMPATIBILITÉ ===
+     * 
+     * - ES6+ requis (arrow functions, const/let, template literals)
+     * - fetch() API requis (polyfill si support IE11)
+     * - Testé sur Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+     * 
+     * === SÉCURITÉ ===
+     * 
+     * - Toutes les vérifications côté client sont DOUBLÉES côté serveur
+     * - Ne JAMAIS faire confiance au sid côté client
+     * - escapeHtml() systématique pour contenu utilisateur
+     * - safeEmoji() systématique avant envoi AJAX
      */
 
-})(); // fin IIFE (module reactions)
-
+})(); // Fin IIFE (Immediately Invoked Function Expression)

@@ -14,6 +14,24 @@
  *
  * Ce type de notification permet à l'utilisateur d'activer ou non le résumé e-mail dans ses préférences UCP.
  *
+ * IMPORTANT - Architecture des notifications :
+ * 
+ * 📧 NOM DU TYPE : 'notification.type.reaction_email_digest'
+ *    - Défini dans get_type()
+ *    - Stocké dans phpbb_notification_types
+ *    - Créé par la migration (migrations/release_1_0_0.php)
+ *    - Activé/désactivé par ext.php
+ * 
+ * 📋 DIFFÉRENCE AVEC reaction.php :
+ *    - reaction.php : Notification cloche instantanée (dans le forum)
+ *    - reaction_email_digest.php : Notification email groupée (envoyée par cron)
+ * 
+ * ⚠️  ERREUR CORRIGÉE :
+ *    Le constructeur NE DOIT PLUS insérer le type en base de données.
+ *    Cette insertion est gérée UNIQUEMENT par la migration.
+ *    Raison : phpBB instancie TOUS les types à chaque chargement de l'UCP,
+ *    ce qui causait des tentatives d'insertion en double → erreur SQL 1062
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -28,43 +46,101 @@ use phpbb\notification\type\base;
 
 class reaction_email_digest extends base
 {
-    public function __construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table)
+    /**
+     * Spécifie le fichier de langue à charger pour ce type
+     */
+    public function get_language_file()
     {
-        parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
-        // Insertion automatique du type de notification si absent
-        $type_name = $this->get_type();
-        $types_table = 'phpbb_notification_types';
-        // Vérifier si la colonne notification_type_name existe
-        $col_check_sql = 'SHOW COLUMNS FROM ' . $types_table . " LIKE 'notification_type_name'";
-        $col_result = $db->sql_query($col_check_sql);
-        $col_exists = $db->sql_fetchrow($col_result);
-        $db->sql_freeresult($col_result);
-        if ($col_exists) {
-            // Vérifier si le type existe déjà
-            $sql = 'SELECT notification_type_id FROM ' . $types_table . ' WHERE notification_type_name = \'" . $db->sql_escape($type_name) . "\' LIMIT 1';
-            $result = $db->sql_query($sql);
-            $exists = $db->sql_fetchrow($result);
-            $db->sql_freeresult($result);
-            if (!$exists) {
-                $proto_data = array(
-                    'notification_type_name'    => $type_name,
-                    'notification_type_enabled' => 1,
-                );
-                $db->sql_query('INSERT INTO ' . $types_table . ' ' . $db->sql_build_array('INSERT', $proto_data));
-                if (defined('DEBUG') && DEBUG) {
-                    error_log('[Reactions Notification] Type inséré: ' . $type_name);
-                }
-            }
-        }
+        return 'notification/notification.type.reaction_email_digest';
     }
 
+    /**
+     * Retourne le nom du template d'email utilisé par le cron
+     */
+    public function get_email_template()
+    {
+        return 'reaction_digest';  // Correspond au fichier reaction_digest.txt
+    }
+
+    /**
+     * Variables du template d'email (gérées par le cron)
+     */
+    public function get_email_template_variables()
+    {
+        return array();
+    }
+
+    /**
+     * ID de l'élément (non utilisé)
+     */
+    public static function get_item_id($data)
+    {
+        return 0;
+    }
+
+    /**
+     * ID du parent (non utilisé)
+     */
+    public static function get_item_parent_id($data)
+    {
+        return 0;
+    }
+
+    /**
+     * Utilisateurs à charger (aucun)
+     */
+    public function users_to_query()
+    {
+        return array();
+    }
+
+    /**
+     * URL de la notification (aucune)
+     */
+    public function get_url()
+    {
+        return '';
+    }
+
+    /**
+     * Constructeur pour notification email digest
+     * 
+     * Ce constructeur utilise le parent notification.type.base pour l'injection automatique
+     * des dépendances standard phpBB.
+     */
+    public function __construct(
+        \phpbb\db\driver\driver_interface $db,
+        \phpbb\language\language $language,
+        \phpbb\user $user,
+        \phpbb\auth\auth $auth,
+        \phpbb\user_loader $user_loader,
+        \phpbb\cache\driver\driver_interface $cache
+    ) {
+        parent::__construct($user_loader, $db, $cache, $language, $user, $auth, 'phpbb_notifications');
+        
+        if (defined('DEBUG') && DEBUG) {
+            error_log('[Reactions Email Digest] Constructeur initialisé - Type: ' . $this->get_type());
+        }
+    }
+    
+    /**
+     * Méthode setter pour l'injection du user_loader via calls
+     */
+    public function set_user_loader(\phpbb\user_loader $user_loader)
+    {
+        $this->user_loader = $user_loader;
+    }
+
+    /**
+     * Nom unique du type de notification
+     */
     public function get_type()
     {
         return 'notification.type.reaction_email_digest';
     }
 
     /**
-     * Indique qu'on propose uniquement la méthode email pour ce type.
+     * Méthodes de notification disponibles
      */
     public function get_notification_methods()
     {
@@ -72,7 +148,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Clé de langue affichée dans l'UCP (titre)
+     * Clé de langue du titre (UCP)
      */
     public static function get_item_type_name()
     {
@@ -80,7 +156,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Description dans l'UCP
+     * Clé de langue de la description (UCP)
      */
     public static function get_item_type_description()
     {
@@ -88,24 +164,29 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Par défaut on ne crée pas d'entrées individuelles dans phpbb_notifications
-     * pour ce type (le cron fait l'agrégation et l'envoi).
-     * On fournit des méthodes vides / compatibles.
+     * Ce type ne crée pas de notifications individuelles
      */
     public function find_users_for_notification($data, $options = array())
     {
         return array();
     }
 
+    /**
+     * Ce type ne crée pas d'entrées dans phpbb_notifications
+     */
     public function create_insert_array($data, $pre_create_data = array())
     {
         return array();
     }
 
+    /**
+     * Pas de titre (pas d'affichage dans la cloche)
+     */
     public function get_title()
     {
         return '';
     }
+<<<<<<< HEAD
 
     public function get_language_file()
     {
@@ -145,4 +226,6 @@ class reaction_email_digest extends base
     {
         return '';
     }
+=======
+>>>>>>> 61e982ff6ed4e15d84e828d8d31dd816e0ff8e15
 }

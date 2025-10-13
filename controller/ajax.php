@@ -1,6 +1,6 @@
 <?php
 /**
- * Fichier : controller/ajax.php — bastien59960/reactions/controller/ajax.php
+ * Fichier : controller/ajax.php – bastien59960/reactions/controller/ajax.php
  *
  * Contrôleur AJAX principal de l'extension Reactions pour phpBB.
  *
@@ -85,6 +85,9 @@ class ajax
     /** @var \phpbb\notification\manager Gestionnaire de notifications */
     protected $notification_manager;
 
+    /** @var \bastien59960\reactions\controller\helper Service d'aide pour générer le HTML */
+    protected $reactions_helper;
+
     /**
      * Liste des 10 emojis courantes utilisées par défaut
      * 
@@ -93,7 +96,7 @@ class ajax
      * 
      * @var array Liste des emojis courantes
      */
-    protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
+    protected $common_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '💌', '🥳'];
 
     // =============================================================================
     // CONSTRUCTEUR
@@ -118,6 +121,7 @@ class ajax
      * @param string $php_ext Extension des fichiers PHP
      * @param \phpbb\config\config $config Configuration du forum
      * @param \phpbb\notification\manager $notification_manager Gestionnaire de notifications
+     * @param \bastien59960\reactions\controller\helper $reactions_helper Helper pour le HTML
      */
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
@@ -132,7 +136,8 @@ class ajax
         $root_path,
         $php_ext,
         \phpbb\config\config $config,
-        \phpbb\notification\manager $notification_manager
+        \phpbb\notification\manager $notification_manager,
+        \bastien59960\reactions\controller\helper $reactions_helper
     ) {
         // Initialisation des propriétés
         $this->db = $db;
@@ -148,6 +153,7 @@ class ajax
         $this->php_ext = $php_ext;
         $this->config = $config;
         $this->notification_manager = $notification_manager;
+        $this->reactions_helper = $reactions_helper;
         
         // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
@@ -176,6 +182,25 @@ class ajax
      */
     public function handle()
     {
+        // =========================================================================
+        // CORRECTION CRITIQUE : Nettoyer TOUTE sortie parasite AVANT le JSON
+        // =========================================================================
+        
+        // 1. Supprimer tous les buffers de sortie existants
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // 2. Démarrer un nouveau buffer propre
+        ob_start();
+        
+        // 3. Forcer les headers JSON immédiatement
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('X-Content-Type-Options: nosniff');
+            header('Cache-Control: no-cache, must-revalidate');
+        }
+        
         // Génération d'un identifiant unique pour le debug et le chronométrage
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
@@ -194,66 +219,60 @@ class ajax
             // 2. PARSING DE LA REQUÊTE JSON
             // =====================================================================
             
-            // Lire les données JSON de la requête
-// === robust JSON input handling + verbose logging ===
-$raw = file_get_contents('php://input');
-error_log("[Reactions RID=$rid] raw payload (".strlen($raw)." bytes): " . $raw);
+            $raw = file_get_contents('php://input');
+            error_log("[Reactions RID=$rid] raw payload (".strlen($raw)." bytes): " . $raw);
 
-// try normal decode first
-try {
-    $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-} catch (\Throwable $jsonEx) {
-    error_log("[Reactions RID=$rid] json_decode first attempt failed: " . $jsonEx->getMessage());
+            // Tentative de décodage JSON avec gestion d'erreur robuste
+            try {
+                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\Throwable $jsonEx) {
+                error_log("[Reactions RID=$rid] json_decode first attempt failed: " . $jsonEx->getMessage());
 
-    // Try to fix invalid UTF-8 bytes by substituting invalid sequences
-    // PHP constant JSON_INVALID_UTF8_SUBSTITUTE exists in many versions, try that first
-    try {
-        if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
-            $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
-        } else {
-            // Fallback: try to force UTF-8 by re-encoding (may mangle data but avoids crash)
-            $fixed = mb_convert_encoding($raw, 'UTF-8', 'UTF-8');
-            $data = json_decode($fixed, true, 512, JSON_THROW_ON_ERROR);
-        }
-    } catch (\Throwable $jsonEx2) {
-        error_log("[Reactions RID=$rid] json_decode second attempt failed: " . $jsonEx2->getMessage());
+                // Tentative de correction UTF-8
+                try {
+                    if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+                        $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                    } else {
+                        $fixed = mb_convert_encoding($raw, 'UTF-8', 'UTF-8');
+                        $data = json_decode($fixed, true, 512, JSON_THROW_ON_ERROR);
+                    }
+                } catch (\Throwable $jsonEx2) {
+                    error_log("[Reactions RID=$rid] json_decode second attempt failed: " . $jsonEx2->getMessage());
 
-        // Last resort: maybe client sent form-encoded body
-        parse_str($raw, $parsed);
-        if (!empty($parsed)) {
-            $data = $parsed;
-            error_log("[Reactions RID=$rid] parsed form-encoded payload as fallback.");
-        } else {
-            // Return the original structured JSON error (and include last json error msg)
-            return new JsonResponse([
-                'success' => false,
-                'stage'   => 'json_decode',
-                'error'   => $jsonEx2->getMessage(),
-                'raw_len' => strlen($raw),
-                'rid'     => $rid,
-            ], 400);
-        }
-    }
-}
-
+                    // Dernier recours : form-encoded
+                    parse_str($raw, $parsed);
+                    if (!empty($parsed)) {
+                        $data = $parsed;
+                        error_log("[Reactions RID=$rid] parsed form-encoded payload as fallback.");
+                    } else {
+                        // Nettoyer le buffer et retourner l'erreur JSON
+                        ob_end_clean();
+                        return new JsonResponse([
+                            'success' => false,
+                            'stage'   => 'json_decode',
+                            'error'   => $jsonEx2->getMessage(),
+                            'raw_len' => strlen($raw),
+                            'rid'     => $rid,
+                        ], 400);
+                    }
+                }
+            }
 
             // =====================================================================
             // 3. EXTRACTION ET VALIDATION DES PARAMÈTRES
             // =====================================================================
             
-            // Extraire les paramètres de la requête
-            $sid     = $data['sid'] ?? '';           // Jeton de session CSRF
-            $post_id = (int) ($data['post_id'] ?? 0); // ID du message
-            $emoji   = $data['emoji'] ?? '';         // Emoji de la réaction
-            $action  = $data['action'] ?? '';        // Action à effectuer
+            $sid     = $data['sid'] ?? '';
+            $post_id = (int) ($data['post_id'] ?? 0);
+            $emoji   = $data['emoji'] ?? '';
+            $action  = $data['action'] ?? '';
 
-            // Vérifier le jeton CSRF pour la sécurité
             if ($sid !== $this->user->data['session_id']) {
                 throw new HttpException(403, 'Jeton CSRF invalide.');
             }
 
-            // Vérifier que l'action est valide
             if (!in_array($action, ['add', 'remove', 'get', 'get_users'], true)) {
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'error'   => 'Invalid action',
@@ -265,8 +284,8 @@ try {
             // 4. VALIDATION DES DONNÉES
             // =====================================================================
             
-            // Vérifier que le message existe et est valide
             if (!$post_id || !$this->is_valid_post($post_id)) {
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_INVALID_POST'),
@@ -274,8 +293,8 @@ try {
                 ], 400);
             }
 
-            // Vérifier l'emoji (sauf pour l'action 'get' qui n'en a pas besoin)
             if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'validation',
@@ -288,8 +307,8 @@ try {
             // 5. VÉRIFICATION DES AUTORISATIONS
             // =====================================================================
             
-            // Vérifier que l'utilisateur peut réagir à ce message
             if (!$this->can_react_to_post($post_id)) {
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED'),
@@ -304,36 +323,30 @@ try {
             $user_id = (int)$this->user->data['user_id'];
 
             if ($action === 'add') {
-                // Récupérer les limites configurées
                 $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
                 $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
                 
-                // Compter les types de réactions actuels sur ce message
                 $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
                 $result = $this->db->sql_query($sql);
                 $current_types = (int) $this->db->sql_fetchfield('count');
                 $this->db->sql_freeresult($result);
                 
-                // Compter les réactions de l'utilisateur sur ce message
                 $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
                 $result = $this->db->sql_query($sql);
                 $user_reactions = (int) $this->db->sql_fetchfield('count');
                 $this->db->sql_freeresult($result);
                 
-                // Vérifier les limites
                 if ($current_types >= $max_per_post) {
+                    ob_end_clean();
                     return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
                 }
                 if ($user_reactions >= $max_per_user) {
+                    ob_end_clean();
                     return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
                 }
-                // === DEBUG LOG: configuration & compteurs ===
-error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
-error_log("[Reactions RID=$rid] SQL current_types_sql: " . $sql);
-error_log("[Reactions RID=$rid] current_types (fetched) = " . json_encode($current_types));
-error_log("[Reactions RID=$rid] SQL for user_reactions: SELECT COUNT(*) as count FROM " . $this->post_reactions_table . " WHERE post_id = " . $post_id . " AND user_id = " . $user_id);
-error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user_reactions));
 
+                error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
+                error_log("[Reactions RID=$rid] current_types = {$current_types}, user_reactions = {$user_reactions}");
             }
 
             // =====================================================================
@@ -358,6 +371,7 @@ error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user
                     break;
                     
                 default:
+                    ob_end_clean();
                     return new JsonResponse([
                         'success' => false,
                         'error' => 'Invalid action',
@@ -369,7 +383,6 @@ error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user
             // 8. FINALISATION DE LA RÉPONSE
             // =====================================================================
             
-            // Ajouter l'ID de requête dans la réponse pour le debug
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
                 $payload = json_decode($resp->getContent(), true);
                 if (is_array($payload)) {
@@ -378,11 +391,14 @@ error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user
                 }
             }
 
+            // CRITIQUE : Nettoyer le buffer avant d'envoyer la réponse
+            ob_end_clean();
+            
             return $resp;
 
         } catch (\phpbb\exception\http_exception $httpEx) {
-            // Erreurs HTTP contrôlées (403, 400, etc.)
             error_log("[Reactions RID=$rid] HttpException: " . $httpEx->getMessage());
+            ob_end_clean();
             return new JsonResponse([
                 'success' => false,
                 'error'   => $httpEx->getMessage(),
@@ -390,8 +406,8 @@ error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user
             ], $httpEx->get_status_code());
 
         } catch (\Throwable $e) {
-            // Erreurs fatales non contrôlées
             error_log("[Reactions RID=$rid] Exception attrapée: " . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            ob_end_clean();
             return new JsonResponse([
                 'success' => false,
                 'error'   => 'Erreur serveur',
@@ -399,7 +415,6 @@ error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user
             ], 500);
 
         } finally {
-            // Chronométrage de la requête pour le debug
             $elapsed = round((microtime(true) - $t0) * 1000);
             error_log("[Reactions RID=$rid] handle() terminé en {$elapsed}ms");
         }
@@ -422,17 +437,13 @@ error_log("[Reactions RID=$rid] user_reactions (fetched) = " . json_encode($user
      */
     private function add_reaction($post_id, $emoji)
     {
-        // Normalize emoji server-side (safe)
-$emoji = (string) $emoji; // forcer string
-// retirer contrôles ASCII
-$emoji = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $emoji);
+        // Normalisation de l'emoji côté serveur
+        $emoji = (string) $emoji;
+        $emoji = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $emoji);
 
-// Si l'extension intl est disponible, normaliser en NFC pour éviter différences de forme
-if (extension_loaded('intl') && class_exists('\Normalizer')) {
-    $emoji = \Normalizer::normalize($emoji, \Normalizer::FORM_C);
-}
-
-// NOTE: pour la comparaison/duplicate check, on forcera la collation binaire dans la requête
+        if (extension_loaded('intl') && class_exists('\Normalizer')) {
+            $emoji = \Normalizer::normalize($emoji, \Normalizer::FORM_C);
+        }
 
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
@@ -451,6 +462,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
             error_log("[Reactions RID=$rid] topic lookup fetched=" . json_encode($row));
 
             if (!$row || !isset($row['topic_id'])) {
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'topic_lookup',
@@ -473,6 +485,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
             error_log("[Reactions RID=$rid] duplicate found=" . json_encode((bool)$already));
 
             if ($already) {
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'duplicate',
@@ -480,11 +493,6 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
                     'rid'     => $rid,
                 ], 400);
             }
-
-            // =========================================================================
-            // CORRECTION : Suppression de la vérification de longueur redondante et trop stricte.
-            // La validation est déjà faite correctement par is_valid_emoji() dans handle().
-            // =========================================================================
 
             // Build insert
             $sql_ary = [
@@ -496,7 +504,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
             ];
             error_log("[Reactions RID=$rid] sql_ary=" . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
 
-            // Vérification du charset de la connexion avant l'INSERT
+            // Vérification du charset de la connexion
             $res = $this->db->sql_query("SHOW VARIABLES LIKE 'character_set_connection'");
             $row = $this->db->sql_fetchrow($res);
             $this->db->sql_freeresult($res);
@@ -509,6 +517,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
                 error_log("[Reactions RID=$rid] insert SQL: $insertSql");
             } catch (\Throwable $buildEx) {
                 error_log("[Reactions RID=$rid] sql_build_array error: " . $buildEx->getMessage());
+                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'sql_build',
@@ -522,6 +531,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
             } catch (\Throwable $dbEx) {
                 $err = $this->db->sql_error();
                 error_log("[Reactions RID=$rid] sql_query error: " . $dbEx->getMessage() . " db=" . json_encode($err));
+                ob_end_clean();
                 return new JsonResponse([
                     'success'  => false,
                     'stage'    => 'sql_insert',
@@ -541,20 +551,26 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
             // Déclencher immédiatement la notification par cloche
             $this->trigger_immediate_notification($post_id, $user_id, $emoji);
 
+            // Génération du HTML mis à jour
+            $new_reactions_html = $this->reactions_helper->get_reactions_html_for_post($post_id);
+
             // Retourne une réponse JSON valide
             return new JsonResponse([
                 'success'      => true,
+                'action'       => 'add',
                 'post_id'      => $post_id,
                 'emoji'        => $emoji,
                 'user_id'      => $user_id,
                 'count'        => $count,
                 'user_reacted' => true,
                 'reactions'    => $reactions,
+                'html'         => $new_reactions_html,
                 'rid'          => $rid,
             ]);
 
         } catch (\Throwable $e) {
             error_log("[Reactions RID=$rid] add_reaction fatal: " . $e->getMessage());
+            ob_end_clean();
             return new JsonResponse([
                 'success' => false,
                 'stage'   => 'fatal',
@@ -565,7 +581,7 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
     }
 
     /**
-     * Remove a reaction - Version corrigée
+     * Supprimer une réaction d'un message
      */
     private function remove_reaction($post_id, $emoji)
     {
@@ -584,20 +600,25 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
         $reactions = $this->get_reactions_array($post_id);
         $count = isset($reactions[$emoji]) ? $reactions[$emoji] : 0;
 
+        // Génération du HTML mis à jour
+        $new_reactions_html = $this->reactions_helper->get_reactions_html_for_post($post_id);
+
         return new JsonResponse([
             'success'      => true,
+            'action'       => 'remove',
             'post_id'      => $post_id,
             'emoji'        => $emoji,
             'user_id'      => (int) $this->user->data['user_id'],
             'count'        => $count,
             'user_reacted' => false,
             'reactions'    => $reactions,
+            'html'         => $new_reactions_html,
             'rid'          => $rid,
         ]);
     }
 
     /**
-     * Get all reactions for a post
+     * Récupérer toutes les réactions pour un message
      */
     private function get_reactions($post_id)
     {
@@ -611,8 +632,8 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
     }
 
     /**
-    * Get users who reacted with a specific emoji
-    */
+     * Récupérer les utilisateurs ayant réagi avec un emoji spécifique
+     */
     private function get_users_for_emoji($post_id, $emoji)
     {
         $sql = 'SELECT DISTINCT u.user_id, u.username, u.username_clean
@@ -668,12 +689,6 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
     
     /**
      * Vérifier si un message existe et est valide
-     * 
-     * Cette méthode vérifie qu'un message existe dans la base de données.
-     * Elle est utilisée pour valider les requêtes avant de traiter les réactions.
-     * 
-     * @param int $post_id ID du message à vérifier
-     * @return bool True si le message existe, False sinon
      */
     private function is_valid_post($post_id)
     {
@@ -687,13 +702,6 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
 
     /**
      * Valider un emoji
-     * 
-     * Cette méthode valide qu'un emoji est valide et sécurisé.
-     * Elle supporte les emojis courantes, les emojis composés avec ZWJ
-     * et effectue des vérifications de sécurité.
-     * 
-     * @param string $emoji Emoji à valider
-     * @return bool True si l'emoji est valide, False sinon
      */
     private function is_valid_emoji($emoji)
     {
@@ -708,18 +716,16 @@ if (extension_loaded('intl') && class_exists('\Normalizer')) {
         }
         
         // Limite de longueur pour les emojis composés (ZWJ)
-        // Les emojis avec ZWJ peuvent faire jusqu'à 40-50 octets
-// Les emojis peuvent être composés : autoriser jusqu'à 191 octets (sécurité côté app)
-if (strlen($emoji) > 191 * 4) { // 4 octets max / point Unicode en UTF-8
-    return false;
-}
+        // Les emojis peuvent être composés : autoriser jusqu'à 191 octets (sécurité côté app)
+        if (strlen($emoji) > 191 * 4) { // 4 octets max / point Unicode en UTF-8
+            return false;
+        }
 
-// Vérifier la longueur Unicode (par point de code) : tolérer plus de points de code si nécessaire
-$mb_length = mb_strlen($emoji, 'UTF-8');
-if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une séquence emoji
-    return false;
-}
-
+        // Vérifier la longueur Unicode (par point de code) : tolérer plus de points de code si nécessaire
+        $mb_length = mb_strlen($emoji, 'UTF-8');
+        if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une séquence emoji
+            return false;
+        }
         
         // Vérifier qu'il n'y a pas de caractères de contrôle dangereux
         if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $emoji)) {
@@ -760,8 +766,7 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
             return false;
         }
 
-        // NOUVEAU : Vérifier si l'utilisateur a le droit de répondre dans ce forum.
-        // C'est une bonne pratique pour contrôler qui peut réagir.
+        // Vérifier si l'utilisateur a le droit de répondre dans ce forum
         if (!$this->auth->acl_get('f_reply', $post_data['forum_id'])) {
             return false;
         }
@@ -796,64 +801,60 @@ if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une 
         return $this->common_emojis;
     }
 
-    /**
-     * Déclencher immédiatement une notification par cloche
-     * * @param int $post_id ID du message
-     * @param int $reacter_id ID de l'utilisateur qui a réagi
-     * @param string $emoji Emoji de la réaction
-     * @return void
-     */
-    private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
-    {
-        try {
-            // Récupérer l'auteur du post pour le notifier
-            $sql = 'SELECT poster_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
-            $result = $this->db->sql_query($sql);
-            $post_data = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
+   /**
+ * Déclencher immédiatement une notification par cloche
+ * 
+ * @param int $post_id ID du message
+ * @param int $reacter_id ID de l'utilisateur qui a réagi
+ * @param string $emoji Emoji de la réaction
+ * @return void
+ */
+private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
+{
+    try {
+        // Récupérer l'auteur du post pour le notifier
+        $sql = 'SELECT poster_id, topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $post_data = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
 
-            if (!$post_data || !$post_data['poster_id']) {
-                // Si on ne trouve pas l'auteur, on ne fait rien
-                return;
-            }
-
-            $post_author_id = (int) $post_data['poster_id'];
-
-            // On ne s'envoie pas de notification à soi-même
-            if ($post_author_id === $reacter_id) {
-                return;
-            }
-
-            // Préparer les données nécessaires pour la notification
-            // Ces clés doivent correspondre à ce que la classe de notification attend
-            $notification_data = [
-                'post_id'           => $post_id,
-                'post_author'       => $post_author_id,
-                'reacter'           => $reacter_id,
-                'reacter_username'  => $this->user->data['username'], // Le nom de l'utilisateur qui réagit
-                'emoji'             => $emoji,
-            ];
-
-            // Vider les notifications existantes du même type pour ce post pour cet auteur
-            // pour éviter d'avoir plusieurs notifications "X a réagi"
-            $this->notification_manager->delete_notifications(
-                'bastien59960.reactions.notification',
-                $post_id,
-                [$post_author_id]
-            );
-
-            // Envoyer la nouvelle notification
-$this->notification_manager->add_notifications(
-    'bastien59960.reactions.notification',
-    $notification_data
-);
-
-// AJOUT : Log de succès
-error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji);
-
-        } catch (\Exception $e) {
-            // En cas d'erreur, on l'enregistre sans faire planter le script
-            error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
+        if (!$post_data || !$post_data['poster_id']) {
+            error_log('[Reactions AJAX] Post introuvable pour notification, post_id=' . $post_id);
+            return;
         }
+
+        $post_author_id = (int) $post_data['poster_id'];
+        $topic_id = (int) $post_data['topic_id'];
+
+        // On ne s'envoie pas de notification à soi-même
+        if ($post_author_id === $reacter_id) {
+            return;
+        }
+
+        // ✅ CORRECTION CRITIQUE : Format correct pour phpBB notifications
+        // Le tableau doit avoir des clés numériques pour chaque destinataire
+        $notification_data = [
+            'post_id'    => $post_id,
+            'topic_id'   => $topic_id,
+            'poster_id'  => $post_author_id,
+            'reacter_id' => $reacter_id,
+            'emoji'      => $emoji,
+        ];
+
+        // ✅ Le second paramètre doit être un TABLEAU d'IDs utilisateurs
+        // Pas un tableau associatif avec les données
+        $this->notification_manager->add_notifications(
+            'bastien59960.reactions.notification.type.reaction',
+            $notification_data,
+            [$post_author_id]  // ✅ CORRECTION : Array d'user IDs en 3e paramètre
+        );
+
+        error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id);
+
+    } catch (\Exception $e) {
+        // En cas d'erreur, on l'enregistre sans faire planter le script
+        error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
+        error_log('[Reactions] Stack trace: ' . $e->getTraceAsString());
     }
+}
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Subject: New reactions on your posts
 
 Hello {USERNAME},
@@ -9,3 +10,34 @@ You can adjust your reaction notification preferences from your user control pan
 
 --
 {SITENAME}
+=======
+#
+# File: language/en/email/reaction_digest.txt — bastien59960/reactions/language/en/email/reaction_digest.txt
+#
+# Email template for the periodic reaction digest (English).
+#
+# This file is used by the Cron task to send a grouped (digest) email listing all reactions received by the user on their posts during the specified period.
+#
+# Available variables:
+#   - {USERNAME}: Recipient's username
+#   - {SINCE_TIME}: Start date of the digest period
+#   - {RECAP_LINES}: Formatted list of received reactions
+#
+# @copyright (c) 2025 Bastien59960
+# @license GNU General Public License, version 2 (GPL-2.0)
+#
+Subject: Summary of reactions received on your posts
+
+Hello {USERNAME},
+
+You have received new reactions on your posts since {SINCE_TIME}.
+
+Here is a summary of the events:
+----------------------------------------------------------
+{RECAP_LINES}
+----------------------------------------------------------
+
+You can manage the frequency of these emails or disable them in your User Control Panel (UCP).
+
+{EMAIL_SIG}
+>>>>>>> 61e982ff6ed4e15d84e828d8d31dd816e0ff8e15

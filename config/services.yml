@@ -1,129 +1,110 @@
 #
 # Fichier : config/services.yml — bastien59960/reactions/config/services.yml
 #
-# Fichier de déclaration des services pour l'extension Reactions.
-#
-# Ce fichier définit tous les services (contrôleurs, listeners, types de notifications, etc.) utilisés par l'extension et leur injection de dépendances.
-#
-# Points clés :
-#   - Déclaration des services Symfony pour phpBB
-#   - Mapping des classes et injection des dépendances
-#
-# Ce fichier est essentiel pour l'autowiring et l'intégration de l'extension dans le framework phpBB.
+# CORRECTION CRITIQUE : Les noms de services doivent utiliser le namespace complet
 #
 
-# Importer les paramètres depuis parameters.yml
-# (noms des tables de base de données)
 imports:
     - { resource: 'parameters.yml' }
 
 services:
     # =========================================================================
+    # HELPER (NOUVEAU)
+    # =========================================================================
+
+    bastien59960.reactions.helper:
+        class: bastien59960\reactions\controller\helper
+        # Assurez-vous que les arguments ci-dessous correspondent au constructeur 
+        # de votre classe bastien59960\reactions\controller\helper
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@template'
+            - '@language'
+            - '@controller.helper' 
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+    
+    # =========================================================================
     # LISTENER D'ÉVÉNEMENTS
     # =========================================================================
-    # Écoute les événements phpBB et injecte le code de l'extension
     
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
         arguments:
-            - '@dbal.conn'                # 1. Connexion à la base de données
-            - '@user'                     # 2. Utilisateur courant
-            - '%tables.post_reactions%'   # 3. Table des réactions
-            - '%tables.posts%'            # 4. Table des messages
-            - '@template'                 # 5. Moteur de templates
-            - '@language'                 # 6. Gestionnaire de langues
-            - '@controller.helper'        # 7. Helper pour générer les URLs
-            - '@config'                   # 8. Configuration du forum
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '@template'
+            - '@language'
+            - '@bastien59960.reactions.helper' # <-- CORRECTION : Remplacement de l'alias par le namespace complet
+            - '@config'
+            - '%core.root_path%'
+            - '%core.php_ext%'
         tags:
-            - { name: event.listener }    # Enregistre comme listener d'événements
+            - { name: event.listener }
 
     # =========================================================================
-    # CONTRÔLEUR PRINCIPAL
+    # CONTRÔLEURS
     # =========================================================================
-    # Gère l'affichage et les opérations principales
-    
-    bastien59960.reactions.main:
-        class: bastien59960\reactions\controller\main
-        arguments:
-            - '@dbal.conn'                # 1. Base de données
-            - '@user'                     # 2. Utilisateur courant
-            - '@request'                  # 3. Requêtes HTTP
-            - '@template'                 # 4. Templates
-            - '@auth'                     # 5. Autorisations
-            - '@controller.helper'        # 6. Helper de contrôleur
-            - '%tables.post_reactions%'   # 7. Table des réactions
-            - '%tables.posts%'            # 8. Table des messages
-
-    # =========================================================================
-    # CONTRÔLEUR AJAX
-    # =========================================================================
-    # Gère les requêtes AJAX (ajout/suppression de réactions en temps réel)
     
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
-            - '@dbal.conn'                # 1. Base de données
-            - '@user'                     # 2. Utilisateur courant
-            - '@request'                  # 3. Requêtes HTTP
-            - '@auth'                     # 4. Autorisations
-            - '@language'                 # 5. Langues
-            - '%tables.post_reactions%'   # 6. Table des réactions
-            - '%tables.posts%'            # 7. Table des messages
-            - '%tables.topics%'           # 8. Table des sujets
-            - '%tables.forums%'           # 9. Table des forums
-            - '%core.root_path%'          # 10. Chemin racine phpBB
-            - '%core.php_ext%'            # 11. Extension PHP (.php)
-            - '@config'                   # 12. Configuration
-            - '@notification_manager'     # 13. Gestionnaire de notifications
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@auth'
+            - '@language'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.forums%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '@config'
+            - '@notification_manager'
+            - '@bastien59960.reactions.helper' # <-- CORRECTION : C'était déjà fait ici, c'est bon.
 
-    # =========================================================================
-    # CONTRÔLEUR DE TEST
-    # =========================================================================
-    # Contrôleur pour les tests et le débogage
-    
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
         arguments:
-            - '@dbal.conn'                # 1. Base de données
-            - '@user'                     # 2. Utilisateur courant
-            - '%tables.post_reactions%'   # 3. Table des réactions
-            - '%tables.posts%'            # 4. Table des messages
+            - '@dbal.conn'
+            - '@user'
+            - '%tables.post_reactions%'
+            - '%tables.posts%'
 
     # =========================================================================
-    # TÂCHE CRON - ENVOI GROUPÉ DES NOTIFICATIONS
+    # TÂCHE CRON
     # =========================================================================
-    # Exécutée périodiquement pour envoyer les emails de notifications
-    # de manière groupée (anti-spam)
     
     bastien59960.reactions.notificationtask:
         class: bastien59960\reactions\cron\notification_task
         arguments:
-            - '@dbal.conn'                    # 1. Base de données
-            - '@config'                       # 2. Configuration
-            - '@notification_manager'         # 3. Gestionnaire de notifications
-            - '@user_loader'                  # 4. Chargeur d'utilisateurs
-            - '%tables.post_reactions%'       # 5. Table des réactions
-            - '%core.root_path%'              # 6. Chemin racine
-            - '%core.php_ext%'                # 7. Extension PHP
-            - '%tables.reactions_user_prefs%' # 8. Table des préférences utilisateur
+            - '@dbal.conn'
+            - '@config'
+            - '@notification_manager'
+            - '@user_loader'
+            - '%tables.post_reactions%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '%core.table_prefix%'
         tags:
-            - { name: cron.task }             # Enregistre comme tâche cron
+            - { name: cron.task }
 
     # =========================================================================
-    # TYPE DE NOTIFICATION - RÉACTIONS (NOTIFICATIONS INSTANTANÉES)
+    # TYPES DE NOTIFICATION - CORRECTION CRITIQUE
     # =========================================================================
-    # Définit le type de notification "notification.type.reaction"
-    # Utilisé pour les notifications dans la "cloche" phpBB
-    # 
-    # ⚠️ ORDRE DES ARGUMENTS CRITIQUE ⚠️
-    # Les 7 premiers arguments DOIVENT correspondre à la classe parente
-    # phpbb\notification\type\base dans cet ordre exact :
-    # 1. db, 2. language, 3. user, 4. auth, 5. root_path, 6. php_ext, 7. table
-    # 
-    # Les suivants sont spécifiques à notre extension
-    
-    bastien59960.reactions.notification:
+
+    # =========================================================================
+    # TYPE DE NOTIFICATION - RÉACTION (CLOCHE)
+    # =========================================================================
+    # Le parent 'notification.type.base' injecte AUTOMATIQUEMENT 6 arguments.
+    # Les arguments ci-dessous commencent donc à la position #7.
+    bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
+<<<<<<< HEAD
         arguments:
             # --- Arguments requis par la classe parente base ---
             - '@dbal.conn'                           # 1. db (driver_interface)
@@ -139,41 +120,37 @@ services:
             - '@controller.helper'                   # 10. helper
             - '@request'                             # 11. request
             - '@template'                            # 12. template
+=======
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_config, ['@config']]
+            - [set_helper, ['@bastien59960.reactions.helper']]
+            - [set_request, ['@request']]
+            - [set_template, ['@template']]
+>>>>>>> 61e982ff6ed4e15d84e828d8d31dd816e0ff8e15
         tags:
-            - { name: notification.type }            # Enregistre comme type de notification
-          
+            - { name: notification.type }
+
+    # TYPE DE NOTIFICATION - EMAIL DIGEST (CRON)
+    bastien59960.reactions.notification.type.reaction_email_digest:
+        class: bastien59960\reactions\notification\type\reaction_email_digest
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_user_loader, ['@user_loader']]
+        tags:
+            - { name: notification.type }
+
     # =========================================================================
-    # CONTRÔLEUR UCP - PRÉFÉRENCES UTILISATEUR
+    # CONTRÔLEUR UCP
     # =========================================================================
-    # Gère la page de configuration dans le Centre de Contrôle Utilisateur
-    # Permet à chaque utilisateur de choisir :
-    # - S'il veut recevoir les notifications dans la cloche
-    # - S'il veut recevoir les emails groupés (cron)
     
     bastien59960.reactions.controller.ucp_reactions:
         class: bastien59960\reactions\controller\ucp_reactions
         arguments:
-            - '@user'                     # 1. Utilisateur courant
-            - '@dbal.conn'                # 2. Base de données
-            - '@request'                  # 3. Requêtes HTTP
-            - '@template'                 # 4. Templates
-            - '%core.table_prefix%'       # 5. Préfixe des tables
-
-    # =========================================================================
-    # TYPE DE NOTIFICATION - EMAIL GROUPÉ (CRON)
-    # =========================================================================
-    # Type de notification spécial pour les emails envoyés par le cron
-    # Permet d'envoyer un résumé périodique des réactions reçues
-    
-    bastien59960.reactions.notification.cron_email:
-        class: bastien59960\reactions\notification\type\reaction_email_digest
-        arguments:
-            - '@dbal.conn'                # 1. Base de données (driver_interface)
-            - '@language'                 # 2. Gestionnaire de langues
-            - '@user'                     # 3. Utilisateur courant
-            - '@auth'                     # 4. Authentification
-            - '%core.root_path%'          # 5. Chemin racine
-            - '%core.php_ext%'            # 6. Extension PHP
-            - '%core.table_prefix%notifications' # 7. Table notifications
-        tags:
-            - { name: notification.type }
+            - '@user'
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '%core.table_prefix%'
