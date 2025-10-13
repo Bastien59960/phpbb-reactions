@@ -1,11 +1,19 @@
 <?php
 /**
- * Bootstrap pour les tests de l'extension Reactions
- * 
+ * Fichier : tests/bootstrap.php — bastien59960/reactions/tests/bootstrap.php
+ *
+ * Bootstrap pour les tests de l'extension Reactions.
+ *
  * Ce fichier initialise l'environnement de test pour l'extension Reactions.
  * Il configure les autoloaders, les variables d'environnement, et les
  * services nécessaires pour l'exécution des tests.
- * 
+ *
+ * Points clés de la logique métier :
+ *   - Configuration de l'environnement de test phpBB
+ *   - Initialisation des services et dépendances
+ *   - Configuration des autoloaders pour les tests
+ *   - Gestion des variables d'environnement de test
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

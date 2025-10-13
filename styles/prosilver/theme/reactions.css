@@ -1,10 +1,12 @@
 /**
- * Feuille de style CSS pour l'extension Reactions
- * 
+ * Fichier : styles/prosilver/theme/reactions.css — bastien59960/reactions
+ *
+ * Feuille de style CSS pour l'extension Reactions.
+ *
  * Ce fichier contient tous les styles CSS nécessaires pour l'affichage
  * et l'interactivité des réactions aux messages du forum.
- * 
- * Fonctionnalités stylées :
+ *
+ * Points clés de la logique métier :
  * - Conteneur principal des réactions
  * - Boutons de réactions avec emojis
  * - Bouton "plus" pour ouvrir la palette

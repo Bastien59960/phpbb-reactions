@@ -1,3 +1,20 @@
+<!--
+    Template : styles/prosilver/template/event/overall_header_head_append.html — bastien59960/reactions
+    
+    Template d'injection des ressources CSS et JavaScript pour l'extension Reactions.
+    
+    Ce template est injecté dans le <head> de toutes les pages du forum pour charger :
+    - Les styles CSS des réactions
+    - Les scripts JavaScript nécessaires
+    - Les variables JavaScript globales
+    - Les keywords français pour la recherche d'emojis
+    
+    Points clés :
+    - Chargement conditionnel (seulement si les réactions sont activées)
+    - Injection des variables JavaScript globales
+    - Support des keywords français pour la recherche d'emojis
+    - Debug conditionnel pour le développement
+-->
 <!-- DEBUG: {DEBUG_REACTIONS} -->
 <!-- IF S_REACTIONS_ENABLED -->
 <link href="{REACTIONS_CSS_PATH}" rel="stylesheet" type="text/css" media="screen" />

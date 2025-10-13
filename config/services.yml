@@ -107,11 +107,10 @@ services:
         shared: false
         parent: notification.type.base
         arguments:
-            $config: '@config'                          # Arg #7
-            $user_loader_service: '@user_loader'        # Arg #8 (Renommé pour éviter la confusion avec le $user_loader du parent)
-            $helper: '@bastien59960.reactions.helper'   # <-- CORRECTION : Utilise le nom complet du service.
-            $request: '@request'                        # Arg #10
-            $template: '@template'                      # Arg #11
+            - '@config'                          # Arg #7
+            - '@bastien59960.reactions.helper'   # Arg #8
+            - '@request'                         # Arg #9
+            - '@template'                        # Arg #10
         tags:
             - { name: notification.type }
 

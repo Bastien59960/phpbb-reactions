@@ -148,31 +148,28 @@ class reaction extends \phpbb\notification\type\base
      * @param \phpbb\user $user                     [5] User actuel (du parent)
      * @param \phpbb\auth\auth $auth                [6] Auth (du parent)
      * @param \phpbb\config\config $config          [7] NOTRE paramètre custom
-     * @param \phpbb\user_loader $user_loader_service [8] NOTRE user_loader
-     * @param \phpbb\controller\helper $helper      [9] NOTRE helper
-     * @param \phpbb\request\request $request       [10] NOTRE request
-     * @param \phpbb\template\template $template    [11] NOTRE template
+     * @param \phpbb\controller\helper $helper      [8] NOTRE helper
+     * @param \phpbb\request\request $request       [9] NOTRE request
+     * @param \phpbb\template\template $template    [10] NOTRE template
      */
     public function __construct(
         \phpbb\user_loader $user_loader,           // [1] Du parent
         \phpbb\db\driver\driver_interface $db,     // [2] Du parent
         \phpbb\cache\driver\driver_interface $cache, // [3] Du parent
-        \phpbb\language\language $language,        // [4] Du parent ⬅️ AJOUTÉ ICI
+        \phpbb\language\language $language,        // [4] Du parent
         \phpbb\user $user,                         // [5] Du parent
         \phpbb\auth\auth $auth,                    // [6] Du parent
         \phpbb\config\config $config,              // [7] Notre injection
-        $user_loader_service,                      // [8] Notre injection
-        $helper,                                   // [9] Notre injection
-        $request,                                  // [10] Notre injection
-        $template                                  // [11] Notre injection
+        $helper,                                   // [8] Notre injection
+        $request,                                  // [9] Notre injection
+        $template                                  // [10] Notre injection
     ) {
         // ✅ Appel du constructeur parent avec les 6 premiers paramètres
-        // DANS LE BON ORDRE maintenant !
         parent::__construct($user_loader, $db, $cache, $language, $user, $auth);
         
         // ✅ Stockage des services spécifiques à notre extension
         $this->config = $config;
-        $this->user_loader = $user_loader_service;
+        $this->user_loader = $user_loader; // Utilise le user_loader du parent
         $this->helper = $helper;
         $this->request = $request;
         $this->template = $template;
