@@ -126,14 +126,14 @@ class reaction extends base
         language $language,
         user $user,
         auth $auth,
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table,
         config $config,
         user_loader $user_loader,
         helper $helper,
         request_interface $request,
-        template $template,
-        $phpbb_root_path,
-        $php_ext,
-        $notifications_table
+        template $template
     ) {
         // Appeler le constructeur de la classe parente avec ses 7 arguments requis
         parent::__construct(
@@ -151,14 +151,14 @@ class reaction extends base
         $this->language = $language;
         $this->user = $user;
         $this->auth = $auth;
+        $this->phpbb_root_path = $phpbb_root_path;
+        $this->php_ext = $php_ext;
+        $this->notifications_table = $notifications_table;
         $this->config = $config;
         $this->user_loader = $user_loader;
         $this->helper = $helper;
         $this->request = $request;
         $this->template = $template;
-        $this->phpbb_root_path = $phpbb_root_path;
-        $this->php_ext = $php_ext;
-        $this->notifications_table = $notifications_table;
 
         // Log de débogage (visible uniquement si DEBUG est activé dans config.php)
         if (defined('DEBUG') && DEBUG) {

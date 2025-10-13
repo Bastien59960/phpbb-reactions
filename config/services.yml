@@ -130,16 +130,15 @@ services:
             - '@language'                            # 2. language
             - '@user'                                # 3. user
             - '@auth'                                # 4. auth
+            - '%core.root_path%'                     # 5. phpbb_root_path
+            - '%core.php_ext%'                       # 6. php_ext
+            - '%core.table_prefix%notifications'     # 7. notifications_table (CORRIGÉ: ajout du préfixe)
             # --- Arguments supplémentaires de notre extension ---
-            - '@config'                              # 5. config
-            - '@user_loader'                         # 6. user_loader
-            - '@controller.helper'                   # 7. helper
-            - '@request'                             # 8. request
-            - '@template'                            # 9. template
-            # --- Arguments requis par la classe parente (suite) ---
-            - '%core.root_path%'                     # 10. phpbb_root_path
-            - '%core.php_ext%'                       # 11. php_ext
-            - '%core.table_prefix%notifications'     # 12. notifications_table (CORRIGÉ: ajout du préfixe)
+            - '@config'                              # 8. config
+            - '@user_loader'                         # 9. user_loader
+            - '@controller.helper'                   # 10. helper
+            - '@request'                             # 11. request
+            - '@template'                            # 12. template
         tags:
             - { name: notification.type }            # Enregistre comme type de notification
           

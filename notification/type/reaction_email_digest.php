@@ -114,8 +114,8 @@ class reaction_email_digest extends base
 
     public function get_email_template()
     {
-        // Le cron utilise les templates language/*/email/reaction.txt
-        return 'reaction';
+        // Le cron utilise les templates language/*/email/reaction_digest.txt
+        return 'reaction_digest';
     }
 
     public function get_email_template_variables()
