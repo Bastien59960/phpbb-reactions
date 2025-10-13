@@ -801,62 +801,60 @@ class ajax
         return $this->common_emojis;
     }
 
-    /**
-     * Déclencher immédiatement une notification par cloche
-     * 
-     * @param int $post_id ID du message
-     * @param int $reacter_id ID de l'utilisateur qui a réagi
-     * @param string $emoji Emoji de la réaction
-     * @return void
-     */
-    private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
-    {
-        try {
-            // Récupérer l'auteur du post pour le notifier
-            $sql = 'SELECT poster_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
-            $result = $this->db->sql_query($sql);
-            $post_data = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
+   /**
+ * Déclencher immédiatement une notification par cloche
+ * 
+ * @param int $post_id ID du message
+ * @param int $reacter_id ID de l'utilisateur qui a réagi
+ * @param string $emoji Emoji de la réaction
+ * @return void
+ */
+private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
+{
+    try {
+        // Récupérer l'auteur du post pour le notifier
+        $sql = 'SELECT poster_id, topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+        $result = $this->db->sql_query($sql);
+        $post_data = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
 
-            if (!$post_data || !$post_data['poster_id']) {
-                // Si on ne trouve pas l'auteur, on ne fait rien
-                return;
-            }
-
-            $post_author_id = (int) $post_data['poster_id'];
-
-            // On ne s'envoie pas de notification à soi-même
-            if ($post_author_id === $reacter_id) {
-                return;
-            }
-
-            // Préparer les données nécessaires pour la notification
-            $notification_data = [
-                'post_id'           => $post_id,
-                'post_author'       => $post_author_id,
-                'reacter'           => $reacter_id,
-                'reacter_username'  => $this->user->data['username'],
-                'emoji'             => $emoji,
-            ];
-
-            // Vider les notifications existantes
-            $this->notification_manager->delete_notifications(
-                'bastien59960.reactions.notification.type.reaction',
-                $post_id,
-                [$post_author_id]
-            );
-
-            // Envoyer la nouvelle notification
-            $this->notification_manager->add_notifications(
-                'bastien59960.reactions.notification.type.reaction',
-                $notification_data
-            );
-
-            error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id);
-
-        } catch (\Exception $e) {
-            // En cas d'erreur, on l'enregistre sans faire planter le script
-            error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
+        if (!$post_data || !$post_data['poster_id']) {
+            error_log('[Reactions AJAX] Post introuvable pour notification, post_id=' . $post_id);
+            return;
         }
+
+        $post_author_id = (int) $post_data['poster_id'];
+        $topic_id = (int) $post_data['topic_id'];
+
+        // On ne s'envoie pas de notification à soi-même
+        if ($post_author_id === $reacter_id) {
+            return;
+        }
+
+        // ✅ CORRECTION CRITIQUE : Format correct pour phpBB notifications
+        // Le tableau doit avoir des clés numériques pour chaque destinataire
+        $notification_data = [
+            'post_id'    => $post_id,
+            'topic_id'   => $topic_id,
+            'poster_id'  => $post_author_id,
+            'reacter_id' => $reacter_id,
+            'emoji'      => $emoji,
+        ];
+
+        // ✅ Le second paramètre doit être un TABLEAU d'IDs utilisateurs
+        // Pas un tableau associatif avec les données
+        $this->notification_manager->add_notifications(
+            'bastien59960.reactions.notification.type.reaction',
+            $notification_data,
+            [$post_author_id]  // ✅ CORRECTION : Array d'user IDs en 3e paramètre
+        );
+
+        error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id);
+
+    } catch (\Exception $e) {
+        // En cas d'erreur, on l'enregistre sans faire planter le script
+        error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
+        error_log('[Reactions] Stack trace: ' . $e->getTraceAsString());
     }
+}
 }
