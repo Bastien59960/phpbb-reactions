@@ -151,25 +151,40 @@ class reaction extends \phpbb\notification\type\base
      * Les autres dépendances sont injectées via les méthodes setter définies dans services.yml
      */
     public function __construct(
-        \phpbb\user_loader $user_loader,           // [1] Service user_loader
-        \phpbb\db\driver\driver_interface $db,     // [2] Connexion DB
-        \phpbb\cache\driver\driver_interface $cache, // [3] Cache
-        \phpbb\language\language $language,        // [4] Language
-        \phpbb\user $user,                         // [5] User actuel
-        \phpbb\auth\auth $auth,                    // [6] Auth
-        \phpbb\config\config $config,              // [7] Configuration
-        $helper,                                   // [8] Helper personnalisé
-        \phpbb\request\request $request,           // [9] Request
-        \phpbb\template\template $template         // [10] Template
+        \phpbb\user_loader $user_loader,
+        \phpbb\db\driver\driver_interface $db,
+        \phpbb\cache\driver\driver_interface $cache,
+        \phpbb\language\language $language,
+        \phpbb\user $user,
+        \phpbb\auth\auth $auth
     ) {
-        // ✅ Appel du constructeur parent avec les 7 paramètres requis
+        // ✅ Appel du constructeur parent - phpBB gère l'ordre automatiquement
         parent::__construct($user_loader, $db, $cache, $language, $user, $auth, 'phpbb_notifications');
         
-        // ✅ Stockage des services spécifiques à notre extension
-        $this->config = $config;
+        // ✅ Stockage du user_loader du parent
         $this->user_loader = $user_loader;
+    }
+    
+    /**
+     * Méthodes setter pour l'injection des dépendances via calls
+     */
+    public function set_config(\phpbb\config\config $config)
+    {
+        $this->config = $config;
+    }
+    
+    public function set_helper($helper)
+    {
         $this->helper = $helper;
+    }
+    
+    public function set_request(\phpbb\request\request $request)
+    {
         $this->request = $request;
+    }
+    
+    public function set_template(\phpbb\template\template $template)
+    {
         $this->template = $template;
     }
 
