@@ -48,7 +48,7 @@ class main_info
                     'cat'   => ['ACP_REACTIONS_TITLE']
                 ],
                 'import' => [  // NOUVEAU
-                    'title' => 'Importer anciennes réactions',
+                    'title' => 'ACP_REACTIONS_IMPORT',
                     'auth'  => 'ext_bastien59960/reactions && acl_a_board',
                     'cat'   => ['ACP_REACTIONS_TITLE']
                 ],
