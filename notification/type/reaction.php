@@ -1,19 +1,21 @@
 ﻿<?php
 /**
- * Fichier : notification/type/reaction.php ÔÇö bastien59960/reactions/notification/type/reaction.php
+ * Fichier : reaction.php
+ * Chemin : bastien59960/reactions/notification/type/reaction.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/notification/type/reaction.php
  *
- * Type de notification "R├®action ├á un message" pour l'extension Reactions.
+ * Rôle :
+ * Définit le type de notification "Réaction à un message". Cette classe est
+ * responsable de la création des notifications instantanées (dans la cloche)
+ * lorsqu'un utilisateur réagit au message d'un autre.
  *
- * Ce fichier d├®finit la classe de notification utilis├®e pour informer un utilisateur lorsqu'un autre r├®agit ├á l'un de ses messages (notification cloche imm├®diate).
+ * Informations reçues :
+ * - Via le `notification_manager` : un tableau de données contenant `post_id`,
+ *   `topic_id`, `post_author`, `reacter`, `reacter_username`, et `emoji`.
  *
- * Points cl├®s de la logique m├®tier :
- *   - G├®n├®ration et affichage des notifications dans l'UCP et la cloche
- *   - D├®termination des destinataires (auteur du message, sauf auto-notification)
- *   - G├®n├®ration des URLs et titres personnalis├®s
- *   - Int├®gration avec le syst├¿me de langue et de templates
- *   - Gestion des donn├®es personnalis├®es (emoji, utilisateur r├®acteur)
- *
- * Ce type de notification est enregistr├® dans phpBB et utilis├® par le contr├┤leur AJAX lors de l'ajout d'une r├®action.
+ * Elle implémente les méthodes requises par phpBB pour trouver les destinataires,
+ * générer le texte et le lien de la notification, et la stocker en base de données.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -21,37 +23,37 @@
 
 namespace bastien59960\reactions\notification\type;
 
-// V├®rification de s├®curit├® : emp├¬che l'acc├¿s direct au fichier
+// Import des classes phpBB nécessaires
+use phpbb\notification\type\base;
+use phpbb\user;
+use phpbb\auth\auth;
+use phpbb\db\driver\driver_interface;
+use phpbb\config\config;
+use phpbb\template\template;
+use phpbb\controller\helper;
+use phpbb\user_loader;
+use phpbb\request\request_interface;
+use phpbb\language\language;
+
+// Vérification de sécurité : empêche l'accès direct au fichier
 if (!defined('IN_PHPBB')) {
     exit;
 }
 
-// Import des classes phpBB n├®cessaires
-use phpbb\notification\type\base;           // Classe parente pour tous les types de notification
-use phpbb\user;                              // Gestion de l'utilisateur courant
-use phpbb\auth\auth;                         // Gestion des autorisations
-use phpbb\db\driver\driver_interface;        // Interface de base de donn├®es
-use phpbb\config\config;                     // Configuration du forum
-use phpbb\template\template;                 // Moteur de templates
-use phpbb\controller\helper;                 // Helper pour g├®n├®rer les URLs
-use phpbb\user_loader;                       // Chargeur d'informations utilisateur
-use phpbb\request\request_interface;         // Gestion des requ├¬tes HTTP
-use phpbb\language\language;                 // Gestion des langues
-
 /**
- * Classe de notification pour les r├®actions aux messages
+ * Classe de notification pour les réactions aux messages
  * 
- * Cette classe h├®rite de la classe de base des notifications phpBB
- * et impl├®mente toutes les m├®thodes n├®cessaires pour g├®rer les
- * notifications de r├®actions.
+ * Cette classe hérite de la classe de base des notifications phpBB
+ * et implémente toutes les méthodes nécessaires pour gérer les
+ * notifications de réactions.
  */
 class reaction extends base
 {
     // =========================================================================
-    // PROPRI├ëT├ëS DE LA CLASSE
+    // PROPRIÉTÉS DE LA CLASSE
     // =========================================================================
     
-    /** @var driver_interface Base de donn├®es */
+    /** @var driver_interface Base de données */
     protected $db;
 
     /** @var language Gestionnaire de langues */
@@ -63,16 +65,16 @@ class reaction extends base
     /** @var auth Gestionnaire d'autorisations */
     protected $auth;
 
-    /** @var config Configuration du forum */
+    /** @var config|null Configuration du forum */
     protected $config;
 
-    /** @var helper Helper de contr├┤leur pour les URLs */
+    /** @var helper|null Helper de contrôleur pour les URLs */
     protected $helper;
 
-    /** @var request_interface Gestionnaire de requ├¬tes */
+    /** @var request_interface|null Gestionnaire de requêtes */
     protected $request;
 
-    /** @var template Moteur de templates */
+    /** @var template|null Moteur de templates */
     protected $template;
 
     /** @var user_loader Chargeur d'utilisateurs */
@@ -90,41 +92,41 @@ class reaction extends base
     /**
      * Constructeur de la classe de notification
      * 
-     * IMPORTANT : L'ORDRE DES ARGUMENTS DOIT CORRESPONDRE ├Ç services.yml
+     * IMPORTANT : L'ORDRE DES ARGUMENTS DOIT CORRESPONDRE À services.yml
      * 
      * Les 7 premiers arguments sont requis par la classe parente (base) :
-     * 1. db                  ÔåÆ Base de donn├®es
-     * 2. language            ÔåÆ Gestionnaire de langues
-     * 3. user                ÔåÆ Utilisateur courant
-     * 4. auth                ÔåÆ Autorisations
-     * 5. phpbb_root_path     ÔåÆ Chemin racine phpBB
-     * 6. php_ext             ÔåÆ Extension PHP
-     * 7. notifications_table ÔåÆ Table des notifications
+     * 1. db                  → Base de données
+     * 2. language            → Gestionnaire de langues
+     * 3. user                → Utilisateur courant
+     * 4. auth                → Autorisations
+     * 5. phpbb_root_path     → Chemin racine phpBB
+     * 6. php_ext             → Extension PHP
+     * 7. notifications_table → Table des notifications
      * 
-     * Les 5 suivants sont sp├®cifiques ├á cette extension :
-     * 8. config              ÔåÆ Configuration du forum
-     * 9. user_loader         ÔåÆ Chargeur d'utilisateurs
-     * 10. helper             ÔåÆ Helper de contr├┤leur
-     * 11. request            ÔåÆ Gestionnaire de requ├¬tes
-     * 12. template           ÔåÆ Moteur de templates
+     * Les 5 suivants sont spécifiques à cette extension :
+     * 8. config              → Configuration du forum
+     * 9. user_loader         → Chargeur d'utilisateurs
+     * 10. helper             → Helper de contrôleur
+     * 11. request            → Gestionnaire de requêtes
+     * 12. template           → Moteur de templates
      * 
-     * @param driver_interface  $db                  Base de donn├®es
+     * @param driver_interface  $db                  Base de données
      * @param language          $language            Gestionnaire de langues
-     * @param user              $user                Utilisateur courant
+     * @param user|null         $user                Utilisateur courant
      * @param auth              $auth                Autorisations
-     * @param config            $config              Configuration
-     * @param user_loader       $user_loader         Chargeur d'utilisateurs
-     * @param helper            $helper              Helper de contr├┤leur
-     * @param request_interface $request             Requ├¬tes HTTP
-     * @param template          $template            Templates
      * @param string            $phpbb_root_path     Chemin racine
      * @param string            $php_ext             Extension PHP
      * @param string            $notifications_table Table notifications
+     * @param config|null       $config              Configuration
+     * @param user_loader       $user_loader         Chargeur d'utilisateurs
+     * @param helper|null       $helper              Helper de contrôleur
+     * @param request_interface|null $request        Requêtes HTTP
+     * @param template|null     $template            Templates
      */
     public function __construct(
         driver_interface $db,
         language $language,
-        user $user,
+        ?user $user,
         auth $auth,
         $phpbb_root_path,
         $php_ext,
@@ -132,8 +134,8 @@ class reaction extends base
         config $config,
         user_loader $user_loader,
         helper $helper,
-        request_interface $request,
-        template $template
+        ?request_interface $request,
+        ?template $template
     ) {
         // Appeler le constructeur de la classe parente avec ses 7 arguments requis
         parent::__construct(
@@ -146,7 +148,7 @@ class reaction extends base
             $notifications_table
         );
 
-        // Stocker toutes les d├®pendances dans les propri├®t├®s de la classe
+        // Stocker toutes les dépendances dans les propriétés de la classe
         $this->db = $db;
         $this->language = $language;
         $this->user = $user;
@@ -160,18 +162,18 @@ class reaction extends base
         $this->request = $request;
         $this->template = $template;
 
-        // Log de d├®bogage (visible uniquement si DEBUG est activ├® dans config.php)
+        // Log de débogage (visible uniquement si DEBUG est activé dans config.php)
         if (defined('DEBUG') && DEBUG) {
-            error_log('[Reactions Notification] Constructeur initialis├® - DB: ' . get_class($db));
+            error_log('[Reactions Notification] Constructeur initialisé - DB: ' . get_class($db));
         }
 
         // =====================================================================
-        // INSERTION AUTOMATIQUE DU TYPE DE NOTIFICATION EN BASE DE DONN├ëES
+        // INSERTION AUTOMATIQUE DU TYPE DE NOTIFICATION EN BASE DE DONNÉES
         // =====================================================================
         // Cette section s'assure que le type "notification.type.reaction"
         // existe dans la table phpbb_notification_types
         
-        $type_name = $this->get_type(); // R├®cup├¿re "notification.type.reaction"
+        $type_name = self::get_type(); // Récupère "notification.type.reaction"
         $types_table = 'phpbb_notification_types';
 
         // V├®rifier si la colonne notification_type_name existe dans la table
@@ -181,7 +183,7 @@ class reaction extends base
         $this->db->sql_freeresult($col_result);
 
         if ($col_exists) {
-            // V├®rifier si le type existe d├®j├á
+            // Vérifier si le type existe déjà
             $sql = 'SELECT notification_type_id 
                     FROM ' . $types_table . ' 
                     WHERE notification_type_name = \'' . $this->db->sql_escape($type_name) . '\' 
@@ -190,16 +192,16 @@ class reaction extends base
             $exists = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
 
-            // Si le type n'existe pas, l'ins├®rer
+            // Si le type n'existe pas, l'insérer
             if (!$exists) {
                 $proto_data = array(
                     'notification_type_name'    => $type_name,
-                    'notification_type_enabled' => 1, // Activ├® par d├®faut
+                    'notification_type_enabled' => 1, // Activé par défaut
                 );
                 $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $proto_data));
                 
                 if (defined('DEBUG') && DEBUG) {
-                    error_log('[Reactions Notification] Type ins├®r├®: ' . $type_name);
+                    error_log('[Reactions Notification] Type inséré: ' . $type_name);
                 }
             }
         } else {
@@ -211,31 +213,31 @@ class reaction extends base
     }
 
     // =========================================================================
-    // M├ëTHODES D'IDENTIFICATION DU TYPE DE NOTIFICATION
+    // MÉTHODES D'IDENTIFICATION DU TYPE DE NOTIFICATION
     // =========================================================================
 
     /**
      * Retourne le nom unique du type de notification
      * 
-     * IMPORTANT : Ce nom DOIT ├¬tre "notification.type.reaction"
-     * C'est le nom stock├® en base de donn├®es et utilis├® par phpBB
+     * IMPORTANT : Ce nom DOIT être "notification.type.reaction"
+     * C'est le nom stocké en base de données et utilisé par phpBB
      * pour identifier ce type de notification.
      * 
      * @return string Le nom canonique du type
      */
-    public function get_type()
+    public static function get_type()
     {
         return 'notification.type.reaction';
     }
 
     /**
-     * Indique si ce type de notification est disponible
+     * Indique si ce type de notification est disponible (méthode statique)
      * 
-     * Cette m├®thode permet de d├®sactiver temporairement un type
+     * Cette méthode permet de désactiver temporairement un type
      * de notification sans le supprimer. Dans notre cas, les
-     * r├®actions sont toujours disponibles.
+     * réactions sont toujours disponibles.
      * 
-     * @return bool True = disponible, False = d├®sactiv├®
+     * @return bool True = disponible, False = désactivé
      */
     public function is_available()
     {
@@ -243,8 +245,8 @@ class reaction extends base
     }
 
     // =========================================================================
-    // M├ëTHODES D'IDENTIFICATION DES ├ëL├ëMENTS (STATIQUES)
-    // =========================================================================
+    // MÉTHODES D'IDENTIFICATION DES ÉLÉMENTS (STATIQUES)
+    // ========================================================================= 
     // Ces m├®thodes sont statiques car elles sont appel├®es AVANT
     // la cr├®ation d'une instance de la classe
 
@@ -252,9 +254,9 @@ class reaction extends base
      * Extrait l'ID du message depuis les donn├®es de notification
      * 
      * @param array $data Donn├®es de la notification (contient post_id)
-     * @return int L'ID du message r├®agi
+     * @return int L'ID du message réagi
      */
-    public static function get_item_id($data)
+    public static function get_item_id($data) 
     {
         return (int) ($data['post_id'] ?? 0);
     }
@@ -265,7 +267,7 @@ class reaction extends base
      * @param array $data Donn├®es de la notification (contient topic_id)
      * @return int L'ID du sujet contenant le message
      */
-    public static function get_item_parent_id($data)
+    public static function get_item_parent_id($data) 
     {
         return (int) ($data['topic_id'] ?? 0);
     }
@@ -274,19 +276,19 @@ class reaction extends base
      * Extrait l'ID de l'auteur du message depuis les donn├®es
      * 
      * Cet utilisateur sera le destinataire de la notification
-     * (celui qui a ├®crit le message r├®agi)
+     * (celui qui a écrit le message réagi)
      * 
      * @param array $data Donn├®es de la notification (contient post_author)
      * @return int L'ID de l'auteur du message
      */
-    public static function get_item_author_id($data)
+    public static function get_item_author_id($data) 
     {
         return (int) ($data['post_author'] ?? ($data['poster_id'] ?? 0));
     }
 
     // =========================================================================
-    // M├ëTHODES DE G├ëN├ëRATION D'URL
-    // =========================================================================
+    // MÉTHODES DE GÉNÉRATION D'URL
+    // ========================================================================= 
 
     /**
      * G├®n├¿re l'URL vers le message r├®agi (m├®thode d'instance)
@@ -300,7 +302,7 @@ class reaction extends base
      */
     public function get_url()
     {
-        $post_id = $this->get_item_id($this->data ?? []);
+        $post_id = self::get_item_id($this->notification_data);
         
         if (!$post_id) {
             return ''; // Pas d'ID = pas d'URL
@@ -320,14 +322,14 @@ class reaction extends base
      * @param array $data Donn├®es de la notification
      * @return string L'URL compl├¿te vers le message
      */
-    public static function get_item_url($data)
+    public static function get_item_url($data) 
     {
         global $phpbb_root_path, $phpEx;
         
         $post_id = self::get_item_id($data);
         
         if (!$post_id) {
-            return '';
+            return ''; 
         }
         
         return append_sid(
@@ -415,7 +417,7 @@ class reaction extends base
      * 
      * @param array $type_data Donn├®es de la r├®action
      * @param array $options   Options suppl├®mentaires (non utilis├® ici)
-     * @return array Liste des IDs utilisateur ├á notifier
+     * @return array Liste des IDs utilisateur à notifier
      */
     public function find_users_for_notification($type_data, $options = array())
     {
@@ -424,7 +426,7 @@ class reaction extends base
         $post_author = (int) ($type_data['post_author'] ?? ($type_data['poster_id'] ?? 0));
         $reacter = (int) ($type_data['reacter'] ?? ($type_data['reacter_id'] ?? 0));
 
-        // Notifier l'auteur UNIQUEMENT s'il n'est pas le r├®acteur
+        // Notifier l'auteur UNIQUEMENT s'il n'est pas le réacteur
         if ($post_author && $post_author !== $reacter) {
             $users[] = $post_author;
         }
@@ -436,7 +438,7 @@ class reaction extends base
      * Retourne les utilisateurs dont il faut charger les donn├®es
      * 
      * Dans notre cas, on n'a pas besoin de charger de donn├®es
-     * utilisateur suppl├®mentaires (le nom est d├®j├á dans $type_data)
+     * utilisateur supplémentaires (le nom est déjà dans $type_data)
      * 
      * @return array Liste vide (pas de chargement n├®cessaire)
      */
@@ -446,17 +448,17 @@ class reaction extends base
     }
 
     // =========================================================================
-    // GESTION DES EMAILS
-    // =========================================================================
-    // Les emails sont d├®sactiv├®s ici car ils sont g├®r├®s par le CRON
+    // GESTION DES E-MAILS
+    // ========================================================================= 
+    // Les e-mails sont désactivés ici car ils sont gérés par le CRON
 
     /**
-     * D├®sactive l'envoi imm├®diat d'emails
+     * Désactive l'envoi immédiat d'e-mails
      * 
-     * Les emails sont g├®r├®s par la t├óche CRON notification_task
-     * qui regroupe les r├®actions sur une p├®riode (anti-spam)
+     * Les e-mails sont gérés par la tâche CRON notification_task
+     * qui regroupe les réactions sur une période (anti-spam)
      * 
-     * @return bool|string False = pas d'email imm├®diat
+     * @return bool|string False = pas d'e-mail immédiat
      */
     public function get_email_template()
     {
@@ -464,7 +466,7 @@ class reaction extends base
     }
 
     /**
-     * Variables du template d'email (non utilis├® car emails d├®sactiv├®s)
+     * Variables du template d'e-mail (non utilisé car e-mails désactivés)
      * 
      * @return array Variables pour le template d'email
      */
@@ -472,33 +474,33 @@ class reaction extends base
     {
         return [
             'REACTOR_USERNAME' => $this->data['reacter_username'] ?? '',
-            'EMOJI'            => $this->data['emoji'] ?? '',
-            'POST_ID'          => $this->get_item_id($this->data ?? []),
+            'EMOJI'            => $this->notification_data['emoji'] ?? '',
+            'POST_ID'          => self::get_item_id($this->notification_data),
         ];
     }
 
     // =========================================================================
-    // AFFICHAGE PERSONNALIS├ë DE LA NOTIFICATION
+    // AFFICHAGE PERSONNALISÉ DE LA NOTIFICATION
     // =========================================================================
 
     /**
-     * G├®n├¿re le titre de la notification pour un utilisateur sp├®cifique
+     * Génère le titre de la notification pour un utilisateur spécifique
      * 
      * Retourne un tableau contenant :
-     * - [0] : La cl├® de langue
-     * - [1] : Les param├¿tres ├á ins├®rer dans la traduction
+     * - [0] : La clé de langue
+     * - [1] : Les paramètres à insérer dans la traduction
      * 
-     * @param int    $user_id ID de l'utilisateur destinataire
-     * @param object $lang    Objet de langue (non utilis├®, on utilise get_title())
-     * @return array [cl├®_langue, [param├¿tres]]
+     * @param int    $user_id ID de l'utilisateur destinataire (non utilisé ici)
+     * @param object $lang    Objet de langue (non utilisé, on utilise get_title())
+     * @return array [clé_langue, [paramètres]]
      */
     public function get_title_for_user($user_id, $lang)
     {
         return [
-            $this->get_title(), // Cl├® : NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION
+            $this->get_title(), // Clé : NOTIFICATION_TYPE_REACTION
             [
-                $this->data['reacter_username'] ?? '', // Param 1 : Nom du r├®acteur
-                $this->data['emoji'] ?? '',             // Param 2 : Emoji
+                $this->notification_data['reacter_username'] ?? '', // Param 1 : Nom du réacteur
+                $this->notification_data['emoji'] ?? '',             // Param 2 : Emoji
             ],
         ];
     }
@@ -506,7 +508,7 @@ class reaction extends base
     /**
      * Donn├®es de rendu pour l'affichage personnalis├®
      * 
-     * Ces donn├®es peuvent ├¬tre utilis├®es dans un template personnalis├®
+     * Ces données peuvent être utilisées dans un template personnalisé
      * si on veut un affichage plus riche qu'un simple texte
      * 
      * @param int $user_id ID de l'utilisateur destinataire
@@ -515,50 +517,50 @@ class reaction extends base
     public function get_render_data($user_id)
     {
         return [
-            'emoji'            => $this->data['emoji'] ?? '',
-            'reacter_username' => $this->data['reacter_username'] ?? '',
-            'post_id'          => $this->get_item_id($this->data ?? []),
+            'emoji'            => $this->notification_data['emoji'] ?? '',
+            'reacter_username' => $this->notification_data['reacter_username'] ?? '',
+            'post_id'          => self::get_item_id($this->notification_data),
         ];
     }
 
     // =========================================================================
-    // PERSISTANCE EN BASE DE DONN├ëES
+    // PERSISTANCE EN BASE DE DONNÉES
     // =========================================================================
 
     /**
-     * D├®finit les colonnes suppl├®mentaires pour cette notification
+     * Définit les colonnes supplémentaires pour cette notification
      * 
-     * phpBB va AUTOMATIQUEMENT cr├®er une colonne "reaction_emoji"
+     * phpBB va AUTOMATIQUEMENT créer une colonne "reaction_emoji"
      * dans la table phpbb_notifications si elle n'existe pas
      * 
-     * @return array D├®finition des colonnes personnalis├®es
+     * @return array Définition des colonnes personnalisées
      */
-    public function get_insert_sql()
+    public function get_insert_sql() 
     {
         return [
-            'reaction_emoji' => ['VCHAR_UNI', 10], // VARCHAR UNICODE, 10 caract├¿res max
+            'reaction_emoji' => ['VCHAR_UNI', 191], // VARCHAR UNICODE, 191 pour supporter les emojis composés
         ];
     }
 
     /**
-     * Pr├®pare les donn├®es ├á ins├®rer en base pour cette notification
+     * Prépare les données à insérer en base pour cette notification
      * 
-     * Fusionne les donn├®es standards (cr├®├®es par parent::create_insert_array)
-     * avec nos donn├®es personnalis├®es (l'emoji)
+     * Fusionne les données standards (créées par parent::create_insert_array)
+     * avec nos données personnalisées (l'emoji)
      * 
      * @param array $type_data      Donn├®es de la r├®action
-     * @param array $pre_create_data Donn├®es pr├®-calcul├®es (optionnel)
-     * @return array Tableau complet ├á ins├®rer en BDD
+     * @param array $pre_create_data Données pré-calculées (optionnel)
+     * @return array Tableau complet à insérer en BDD
      */
     public function create_insert_array($type_data, $pre_create_data = array())
     {
         // Cr├®er le tableau de base avec les champs standards
         $insert_array = parent::create_insert_array($type_data, $pre_create_data);
         
-        // Ajouter notre champ personnalis├® : l'emoji
-        $insert_array['reaction_emoji'] = isset($type_data['emoji']) ? $type_data['emoji'] : '';
+        // Ajouter notre champ personnalisé : l'emoji
+        $insert_array['reaction_emoji'] = $type_data['emoji'] ?? '';
         
         return $insert_array;
     }
     
-} // Ô£à ACCOLADE FERMANTE AJOUT├ëE (correction de l'erreur ligne 209)
+}

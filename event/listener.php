@@ -127,9 +127,13 @@ class listener implements EventSubscriberInterface
             'REACTIONS_JSON_PATH' => $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json',
         ]);
 
+        $debug_mode = (defined('DEBUG') && DEBUG) ? 'true' : 'false';
+
         $this->template->assign_var(
             'REACTIONS_AJAX_URL_JS',
-            'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '"; window.REACTIONS_SID = "' . addslashes(isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '') . '";'
+            'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";' .
+            'window.REACTIONS_SID = "' . addslashes(isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '') . '";' .
+            'window.REACTIONS_DEBUG_MODE = ' . $debug_mode . ';'
         );
     }
 

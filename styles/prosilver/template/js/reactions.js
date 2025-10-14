@@ -1,6 +1,8 @@
 /**
  * Fichier : styles/prosilver/template/js/reactions.js — bastien59960/reactions
- *
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
+ * 
  * JavaScript pour l'extension Reactions phpBB 3.3.15
  *
  * Ce fichier gère toute l'interactivité côté client pour les réactions aux messages du forum.
@@ -224,12 +226,12 @@ function toggle_visible(id) {
         event.preventDefault();
         event.stopPropagation();
 
-        const el = event.currentTarget;
-        const emoji = el.getAttribute('data-emoji');
-        const postId = getPostIdFromReaction(el);
+        const reactionElement = event.currentTarget;
+        const emoji = reactionElement.getAttribute('data-emoji');
+        const postId = getPostIdFromReaction(reactionElement);
         
         // Validation des données
-        if (!emoji || !postId) {
+        if (!emoji || !postId) { // Sécurité : ne rien faire si les données sont invalides
             console.warn('[Reactions] Données manquantes sur la réaction cliquée');
             return;
         }
@@ -545,40 +547,49 @@ function toggle_visible(id) {
      * @returns {Array} Tableau d'objets {emoji, name}
      */
     function searchEmojis(query, emojiData) {
-        const results = new Set();
+        const results = [];
+        const addedEmojis = new Set(); // Pour éviter les doublons
         const maxResults = 100;
 
         // Table de mots-clés français (optionnelle, injectée globalement)
-        const keywordsFr = typeof EMOJI_KEYWORDS_FR !== 'undefined' ? EMOJI_KEYWORDS_FR : {};
+        const keywordsFr = (typeof EMOJI_KEYWORDS_FR !== 'undefined' && EMOJI_KEYWORDS_FR) ? EMOJI_KEYWORDS_FR : {};
 
         // Flatten : récupérer tous les emojiObj de toutes les catégories
         const allEmojis = Object.values(emojiData.emojis).flatMap(Object.values).flat();
 
         for (const emojiObj of allEmojis) {
-            if (results.size >= maxResults) break;
+            if (results.length >= maxResults) break;
 
             // Sécurité : vérifier structure valide
             if (!emojiObj || !emojiObj.emoji) continue;
 
+            const emojiStr = emojiObj.emoji;
+
+            // Fonction pour ajouter un résultat unique
+            const addResult = (obj) => {
+                if (!addedEmojis.has(obj.emoji)) {
+                    results.push(obj);
+                    addedEmojis.add(obj.emoji);
+                }
+            };
+
             // 1. Recherche via mots-clés FR
-            if (keywordsFr[emojiObj.emoji] && keywordsFr[emojiObj.emoji].some(kw => kw.toLowerCase().includes(query))) {
-                results.add(emojiObj);
-                continue;
+            if (keywordsFr[emojiStr] && keywordsFr[emojiStr].some(kw => kw.toLowerCase().includes(query))) {
+                addResult(emojiObj);
             }
 
             // 2. Recherche par nom anglais
-            if (emojiObj.name && emojiObj.name.toLowerCase().includes(query)) {
-                results.add(emojiObj);
-                continue;
+            if (emojiObj.name && emojiObj.name.toLowerCase().includes(query) && results.length < maxResults) {
+                addResult(emojiObj);
             }
 
             // 3. Recherche par emoji littéral
-            if (emojiObj.emoji && emojiObj.emoji.includes(query)) {
-                results.add(emojiObj);
+            if (emojiStr && emojiStr.includes(query) && results.length < maxResults) {
+                addResult(emojiObj);
             }
         }
 
-        return Array.from(results);
+        return results;
     }
 
     /**
@@ -813,9 +824,10 @@ function toggle_visible(id) {
             sid: REACTIONS_SID
         };
 
-        // Log de debug (à commenter en production)
-        console.debug('[Reactions] Envoi payload:', payload);
-
+        // Log de debug (uniquement si le mode debug de phpBB est activé)
+        if (window.REACTIONS_DEBUG_MODE) {
+            console.debug('[Reactions] Envoi payload:', payload);
+        }
         // =====================================================================
         // ÉTAPE 4 : ENVOI DE LA REQUÊTE AJAX
         // =====================================================================
@@ -845,34 +857,33 @@ function toggle_visible(id) {
             // =====================================================================
             // ÉTAPE 5 : TRAITEMENT DE LA RÉPONSE SERVEUR
             // =====================================================================
-            
-            // Log de la réponse (debug)
-            console.debug('[Reactions] Réponse serveur:', data);
+            if (window.REACTIONS_DEBUG_MODE) {
+                console.debug('[Reactions] Réponse serveur:', data);
+            }
 
-            // Vérification du succès de l'opération
             if (data.success) {
-                
-                // Log de confirmation pour le HTML reçu
-                if (data.html) {
-                    console.debug('[Reactions] HTML reçu: ' + data.html.length + ' caractères');
-                } else {
-                    console.warn('[Reactions] Pas de HTML dans la réponse, utilisation du fallback');
+                if (window.REACTIONS_DEBUG_MODE) {
+                    if (data.html) {
+                        console.debug('[Reactions] HTML reçu: ' + data.html.length + ' caractères');
+                    } else {
+                        console.warn('[Reactions] Pas de HTML dans la réponse, utilisation du fallback');
+                    }
                 }
-                
                 // =====================================================================
                 // MÉTHODE 1 : REMPLACEMENT COMPLET DU BLOC (RECOMMANDÉ)
                 // =====================================================================
                 
-                // Localiser le conteneur principal des réactions
                 const postContainer = document.querySelector(
                     `.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`
                 );
                 
-                if (postContainer && data.html) {
+                if (postContainer && data.html !== undefined) {
                     postContainer.innerHTML = data.html;
                     // Passer le parent direct qui contient les réactions
                     initReactions(postContainer);
-                    console.log('[Reactions] ✅ Bloc mis à jour avec succès via HTML serveur');
+                    if (window.REACTIONS_DEBUG_MODE) {
+                        console.log('[Reactions] ✅ Bloc mis à jour avec succès via HTML serveur');
+                    }
                 } else {
                     // =====================================================================
                     // MÉTHODE 2 : MISE À JOUR MANUELLE (FALLBACK)
@@ -880,7 +891,7 @@ function toggle_visible(id) {
 
                     // Si le HTML n'est pas fourni ou conteneur introuvable
                     console.warn('[Reactions] Utilisation du fallback updateSingleReactionDisplay');
-                    updateSingleReactionDisplay(postId, cleanEmoji, data.count, data.user_reacted);
+                    updateSingleReactionDisplay(postId, cleanEmoji, data.count || 0, data.user_reacted || false);
                 }
                 
             } else {
@@ -888,7 +899,7 @@ function toggle_visible(id) {
                 // GESTION DES ERREURS MÉTIER RENVOYÉES PAR LE SERVEUR
                 // =====================================================================
                 
-                console.error('[Reactions] Erreur serveur:', data.error || data.message);
+                console.error('[Reactions] Erreur métier du serveur:', data.error || data.message || 'Erreur inconnue.');
                 
                 // Si erreur liée à l'authentification
                 if (data.error && data.error.toLowerCase().includes('logged in')) {
@@ -943,7 +954,7 @@ function toggle_visible(id) {
         );
         
         if (!postContainer) {
-            console.warn('[Reactions] Conteneur introuvable pour post_id=' + postId);
+            console.error('[Reactions Fallback] Conteneur introuvable pour post_id=' + postId);
             return;
         }
 
@@ -970,12 +981,12 @@ function toggle_visible(id) {
             const moreButton = postContainer.querySelector('.reaction-more');
             const reactionsContainer = postContainer.querySelector('.post-reactions');
             
-            if (moreButton && moreButton.parentNode) {
-                // Insérer juste avant le bouton "plus"
-                moreButton.parentNode.insertBefore(reactionElement, moreButton);
-            } else if (reactionsContainer) {
-                // Sinon, ajouter à la fin du conteneur
-                reactionsContainer.appendChild(reactionElement);
+            if (reactionsContainer) {
+                if (moreButton) {
+                    reactionsContainer.insertBefore(reactionElement, moreButton);
+                } else {
+                    reactionsContainer.appendChild(reactionElement);
+                }
             } else {
                 console.error('[Reactions] Impossible d\'insérer la nouvelle réaction');
                 return;
@@ -1094,7 +1105,7 @@ function toggle_visible(id) {
                     return res.json();
                 })
                 .then(data => {
-                    if (data && data.success && Array.isArray(data.users) && data.users.length > 0) {
+                    if (data?.success && Array.isArray(data.users) && data.users.length > 0) {
                         showUserTooltip(reactionElement, data.users);
                     }
                 })
@@ -1196,8 +1207,8 @@ function toggle_visible(id) {
      * @param {HTMLElement} el Élément DOM de départ
      * @returns {string|null} post_id ou null si introuvable
      */
-    function getPostIdFromReaction(el) {
-        const container = el.closest('.post-reactions-container');
+    function getPostIdFromReaction(element) {
+        const container = element.closest('.post-reactions-container');
         return container ? container.getAttribute('data-post-id') : null;
     }
 
