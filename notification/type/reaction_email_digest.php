@@ -58,6 +58,16 @@ class reaction_email_digest extends base
     }
 
     /**
+     * Utilisateurs à pré-charger.
+     * Requis par l'interface, mais non utilisé ici.
+     * @return array
+     */
+    public function users_to_query()
+    {
+        return [];
+    }
+
+    /**
      * Aucune notification individuelle n'est créée : tableau vide.
      */
     public function find_users_for_notification($data, $options = array())
