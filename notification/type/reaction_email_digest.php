@@ -109,24 +109,4 @@ class reaction_email_digest extends base
             'RECAP_LINES' => implode("\n", $recap_lines_arr),
         ];
     }
-
-    public static function get_item_id($data)
-    {
-        return 0;
-    }
-
-    public static function get_item_parent_id($data)
-    {
-        return 0;
-    }
-
-    public function users_to_query()
-    {
-        return [];
-    }
-
-    public function get_url()
-    {
-        return '';
-    }
 }
