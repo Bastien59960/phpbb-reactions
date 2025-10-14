@@ -1,16 +1,16 @@
 <?php
 /**
- * Fichier : language/fr/common.php — bastien59960/reactions/language/fr/common.php
+ * Fichier : common.php
+ * Chemin : bastien59960/reactions/language/fr/common.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/language/fr/common.php
  *
- * Fichier principal de langue française pour l'extension Reactions.
+ * Rôle :
+ * Ce fichier contient les chaînes de langue françaises générales pour l'interface
+ * utilisateur (UI), les messages d'erreur, les tooltips, et les options de
+ * configuration dans le panneau d'administration (ACP).
  *
- * Ce fichier contient toutes les chaînes d'interface utilisateur, d'erreur, de notification et d'administration utilisées par l'extension en français.
- *
- * Points clés :
- *   - Fournit toutes les chaînes traduisibles pour l'extension (UI, notifications, erreurs, tooltips, etc.)
- *   - Utilisé par phpBB pour afficher les messages et libellés dans le forum
- *
- * Ce fichier doit être synchronisé avec la version anglaise pour garantir la cohérence.
+ * Il est chargé sur la plupart des pages où l'extension est active.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -39,10 +39,14 @@ $lang = array_merge($lang, array(
     // =============================================================================
     'ACP_REACTIONS_TITLE'       => 'Réglages des réactions',
     'ACP_REACTIONS_SETTINGS'    => 'Configuration des réactions',
+    'ACP_REACTIONS_SETTINGS_EXPLAIN' => 'Ici, vous pouvez gérer les paramètres pour l\'extension de réactions aux messages.',
     'ACP_REACTIONS_ENABLED'     => 'Activer les réactions',
     'ACP_REACTIONS_MAX_PER_POST' => 'Nombre maximum de types de réactions par post',
+    'ACP_REACTIONS_MAX_PER_POST_EXPLAIN' => 'Le nombre maximal de types de réaction uniques qu\'un seul message peut recevoir.',
     'ACP_REACTIONS_MAX_PER_USER' => 'Nombre maximum de réactions par utilisateur et par post',
-    'ACP_REACTIONS_EXPLAIN'     => 'Configurez les paramètres des réactions aux messages.',
+    'ACP_REACTIONS_MAX_PER_USER_EXPLAIN' => 'Le nombre maximal de réactions qu\'un seul utilisateur peut ajouter à un seul message.',
+    'REACTIONS_SPAM_TIME'       => 'Fenêtre anti-spam des notifications',
+    'REACTIONS_SPAM_TIME_EXPLAIN' => 'Le temps en minutes à attendre avant d\'envoyer une notification groupée par e-mail. Mettre à 0 pour désactiver les notifications par e-mail.',
     
     // =============================================================================
     // MESSAGES D'INTERFACE UTILISATEUR
@@ -109,18 +113,13 @@ $lang = array_merge($lang, array(
     'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
 
     // =============================================================================
-    // NOTIFICATIONS
+    // PRÉFÉRENCES UTILISATEUR (UCP)
     // =============================================================================
-    'REACTIONS_NOTIFICATION_TITLE'      => '%1$s a réagi à votre message',
-    'REACTIONS_NOTIFICATION_TITLE_PLURAL' => '%1$s et %2$d autres personnes ont réagi à votre message',
-    'REACTIONS_NOTIFICATION_AND_OTHERS' => '%1$s et %2$d autre(s)',
-    'REACTIONS_NOTIFICATION_EMAIL_SUBJECT' => 'Nouvelles réactions à votre message "%2$s"',
-    'REACTIONS_NOTIFICATION_TYPE' => 'Réactions aux messages',
-    'REACTIONS_NOTIFICATION_GROUP' => 'Notifications de réactions',
-
-    'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi %2$s à votre message',
-    'NOTIFICATION_TYPE_BASTIEN59960_REACTIONS_CRON_EMAIL' => 'Résumé par e-mail des réactions',
-'REACTION_DIGEST_EMAIL_NOTIFICATION' => 'Recevoir un résumé périodique des nouvelles réactions par e-mail.',
-    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Reactions to your posts',
+    'UCP_REACTIONS_TITLE'               => 'Préférences des réactions',
+    'UCP_REACTIONS_SAVED'               => 'Vos préférences de notification de réactions ont été enregistrées.',
+    'UCP_REACTIONS_NOTIFY'              => 'M\'avertir des nouvelles réactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'      => 'Recevoir une notification instantanée dans la cloche du forum.',
+    'UCP_REACTIONS_EMAIL'               => 'M\'avertir des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_EMAIL_EXPLAIN'       => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
 
 ));

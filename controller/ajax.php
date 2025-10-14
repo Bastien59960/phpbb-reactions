@@ -1,10 +1,6 @@
 <?php
 /**
  * Fichier : controller/ajax.php – bastien59960/reactions/controller/ajax.php
- * Fichier : ajax.php
- * Chemin : bastien59960/reactions/controller/ajax.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/ajax.php
  *
  * Contrôleur AJAX principal de l'extension Reactions pour phpBB.
  *
@@ -13,10 +9,6 @@
  *   - Récupération des réactions d'un message
  *   - Récupération des utilisateurs ayant réagi avec un emoji
  *   - Déclenchement immédiat des notifications (cloche)
- * Rôle :
- * Ce fichier est le point d'entrée pour toutes les interactions dynamiques initiées
- * par le JavaScript côté client (`reactions.js`). Il gère les requêtes pour ajouter,
- * supprimer ou consulter les réactions et leurs auteurs.
  *
  * Points clés de la logique métier :
  *   - Validation des entrées (post, emoji, action)
@@ -25,14 +17,8 @@
  *   - Sécurité CSRF et gestion des erreurs
  *   - Support complet des emojis Unicode (utf8mb4)
  *   - Gestion robuste des erreurs et logs pour le debug
- * Informations reçues (Payload JSON) :
- * - `post_id` : ID du message concerné.
- * - `emoji` : L'emoji de la réaction (Unicode).
- * - `action` : L'action à effectuer ('add', 'remove', 'get_users').
- * - `sid` : Le jeton de session pour la protection CSRF.
  *
  * Ce contrôleur est le point d'entrée pour toutes les interactions dynamiques côté client (JS) concernant les réactions.
- * Il retourne systématiquement une réponse au format JSON.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -847,7 +833,6 @@ class ajax
 
             // Respecter la préférence de notification instantanée de l'auteur
             $author_sql = 'SELECT user_reactions_notify, username FROM ' . USERS_TABLE . ' WHERE user_id = ' . $post_author_id;
-            $author_sql = 'SELECT user_reactions_notify, username FROM ' . USERS_TABLE . ' WHERE user_id = ' . (int) $post_author_id;
             $author_result = $this->db->sql_query($author_sql);
             $author_row = $this->db->sql_fetchrow($author_result);
             $this->db->sql_freeresult($author_result);

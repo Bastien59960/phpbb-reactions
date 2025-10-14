@@ -1,22 +1,11 @@
 <?php
 /**
  * Fichier : ucp/reactions_module.php — bastien59960/reactions/ucp/reactions_module.php
- * Fichier : reactions_module.php
- * Chemin : bastien59960/reactions/ucp/reactions_module.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/ucp/reactions_module.php
  *
  * Module UCP (User Control Panel) pour la configuration des notifications de réactions.
- * Rôle :
- * Ce fichier déclare le module "Préférences des réactions" dans le Panneau de
- * Contrôle Utilisateur (UCP). Il sert de point d'entrée pour que phpBB affiche
- * le lien dans le menu de l'UCP.
  *
  * Ce fichier permet d'intégrer la gestion des préférences de notifications de réactions dans le panneau de contrôle utilisateur de phpBB.
  * Il délègue la logique métier au contrôleur UCP dédié.
- * Il ne contient pas de logique métier complexe ; il se contente de charger et
- * d'exécuter le contrôleur dédié (`controller/ucp_reactions.php`) qui, lui,
- * gère l'affichage et la sauvegarde des préférences.
  *
  * Points clés de la logique métier :
  *   - Chargement du contrôleur UCP des réactions

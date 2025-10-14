@@ -1,23 +1,10 @@
 <?php
 /**
  * Fichier : migrations/release_1_0_0.php — bastien59960/reactions/migrations/release_1_0_0.php
- * Fichier : release_1_0_0.php
- * Chemin : bastien59960/reactions/migrations/release_1_0_0.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/migrations/release_1_0_0.php
  *
  * Migration unique pour l'installation initiale de l'extension Reactions.
- * Rôle :
- * Ce fichier de migration est exécuté par phpBB lors de la première activation
- * de l'extension. Il est responsable de la mise en place de la structure
- * initiale de la base de données.
  *
  * Ce fichier crée toutes les tables, colonnes, options de configuration et types de notifications nécessaires au bon fonctionnement de l'extension.
- * Actions effectuées :
- * - Crée la table `phpbb_post_reactions`.
- * - Ajoute les colonnes nécessaires aux tables `phpbb_users` et `phpbb_notifications`.
- * - Ajoute les paramètres de configuration par défaut dans la table `phpbb_config`.
- * - Enregistre les nouveaux types de notifications.
  *
  * Points clés de la logique métier :
  *   - Création de la table principale des réactions

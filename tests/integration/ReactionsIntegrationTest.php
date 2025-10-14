@@ -1,18 +1,10 @@
 <?php
 /**
  * Tests d'intégration pour l'extension Reactions
- * Fichier : ReactionsIntegrationTest.php
- * Chemin : bastien59960/reactions/tests/integration/ReactionsIntegrationTest.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/tests/integration/ReactionsIntegrationTest.php
  * 
  * Ce fichier contient les tests d'intégration qui vérifient
  * le fonctionnement complet de l'extension Reactions dans
  * un environnement proche de la production.
- * Rôle :
- * Ce fichier contient les tests d'intégration pour l'extension. Ces tests
- * vérifient que les différents composants de l'extension (contrôleur, listener,
- * notifications, etc.) fonctionnent correctement ensemble dans un environnement simulé.
  * 
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

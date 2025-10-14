@@ -1,21 +1,10 @@
 ﻿<?php
 /**
  * Fichier : notification/type/reaction.php ÔÇö bastien59960/reactions/notification/type/reaction.php
- * Fichier : reaction.php
- * Chemin : bastien59960/reactions/notification/type/reaction.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/notification/type/reaction.php
  *
  * Type de notification "R├®action ├á un message" pour l'extension Reactions.
- * Rôle :
- * Définit le type de notification "Réaction à un message". Cette classe est
- * responsable de la création des notifications instantanées (dans la cloche)
- * lorsqu'un utilisateur réagit au message d'un autre.
  *
  * Ce fichier d├®finit la classe de notification utilis├®e pour informer un utilisateur lorsqu'un autre r├®agit ├á l'un de ses messages (notification cloche imm├®diate).
- * Informations reçues :
- * - Via le `notification_manager` : un tableau de données contenant `post_id`,
- *   `topic_id`, `post_author`, `reacter`, `reacter_username`, et `emoji`.
  *
  * Points cl├®s de la logique m├®tier :
  *   - G├®n├®ration et affichage des notifications dans l'UCP et la cloche
@@ -23,8 +12,6 @@
  *   - G├®n├®ration des URLs et titres personnalis├®s
  *   - Int├®gration avec le syst├¿me de langue et de templates
  *   - Gestion des donn├®es personnalis├®es (emoji, utilisateur r├®acteur)
- * Elle implémente les méthodes requises par phpBB pour trouver les destinataires,
- * générer le texte et le lien de la notification, et la stocker en base de données.
  *
  * Ce type de notification est enregistr├® dans phpBB et utilis├® par le contr├┤leur AJAX lors de l'ajout d'une r├®action.
  *
