@@ -80,8 +80,9 @@ class reaction extends base
      * Les 5 suivants sont spécifiques à cette extension :
      * 8. config              → Configuration du forum
      * 9. user_loader         → Chargeur d'utilisateurs
-     * 10. helper             → Helper de contrôleur
-     * 11. template           → Moteur de templates
+     * 10. reactions_helper   → Helper de contrôleur personnalisé
+     * 11. request            → Gestionnaire de requêtes (injecté mais non utilisé)
+     * 12. template           → Moteur de templates
      * 
      * @param driver_interface  $db                  Base de données
      * @param language          $language            Gestionnaire de langues
@@ -89,7 +90,6 @@ class reaction extends base
      * @param auth              $auth                Autorisations
      * @param string            $notifications_table Table notifications
      * @param config|null       $config              Configuration 
-     * @param helper|null       $helper              Helper de contrôleur
      * @param request_interface|null $request        Requêtes HTTP
      * @param template|null     $template            Templates
      */
@@ -104,8 +104,8 @@ class reaction extends base
         ?config $config,
         user_loader $user_loader,
         ?reactions_helper $reactions_helper,
-        ?template $template,
-        ?request_interface $request = null // Optionnel et non utilisé, pour la compatibilité
+        ?request_interface $request,
+        ?template $template
     ) {
         // Appeler le constructeur de la classe parente
         parent::__construct(
