@@ -1,19 +1,28 @@
 <?php
 /**
  * Fichier : controller/ucp_reactions.php — bastien59960/reactions/controller/ucp_reactions.php
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : ucp_reactions.php
+ * Chemin : bastien59960/reactions/controller/ucp_reactions.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/ucp_reactions.php
  *
  * Contrôleur UCP (User Control Panel) pour la gestion des préférences de notifications de réactions.
+ * Rôle :
+ * Ce contrôleur gère la logique de la page de préférences des réactions dans le
+ * panneau de contrôle de l'utilisateur (UCP). Il permet à chaque utilisateur de
+ * choisir s'il souhaite recevoir des notifications (cloche et/ou e-mail).
  *
  * Ce fichier permet à l'utilisateur de configurer ses préférences concernant :
  *   - Les notifications internes (cloche)
  *   - Le résumé périodique par e-mail (digest)
+ * Informations reçues :
+ * - Via le formulaire POST : les nouvelles valeurs pour `user_reactions_notify` et `user_reactions_email`.
  *
  * Points clés de la logique métier :
  *   - Lecture et mise à jour des préférences utilisateur dans la table users
  *   - Intégration avec le template UCP et le système de langue
  *   - Sécurité et validation des entrées utilisateur
+ * Il est appelé par le module `ucp/reactions_module.php`.
  *
  * Ce contrôleur est appelé par le module UCP pour afficher et enregistrer les préférences de l'utilisateur concernant les réactions.
  *

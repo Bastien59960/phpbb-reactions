@@ -1,11 +1,17 @@
 <?php
 /**
  * Tests unitaires pour le contrôleur AJAX de l'extension Reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : AjaxTest.php
+ * Chemin : bastien59960/reactions/tests/unit/controller/AjaxTest.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/tests/unit/controller/AjaxTest.php
  * 
  * Ce fichier contient les tests unitaires pour le contrôleur AJAX
  * qui gère les requêtes AJAX liées aux réactions aux messages.
+ * Rôle :
+ * Ce fichier contient les tests unitaires pour le contrôleur AJAX. Il teste les
+ * méthodes du contrôleur de manière isolée (en utilisant des "mocks") pour valider
+ * la logique de validation, d'autorisation et de traitement des erreurs.
  * 
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

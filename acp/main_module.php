@@ -1,10 +1,21 @@
 <?php
 /**
  * Fichier : acp/main_module.php — bastien59960/reactions/acp/main_module.php
+ * Fichier : main_module.php
+ * Chemin : bastien59960/reactions/acp/main_module.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/acp/main_module.php
  *
  * Module principal ACP pour l'extension Reactions.
+ * Rôle :
+ * Ce fichier définit le module du Panneau d'Administration (ACP) pour l'extension.
+ * Il gère l'affichage et le traitement du formulaire de configuration, permettant
+ * aux administrateurs de régler les paramètres globaux de l'extension (limites,
+ * délai anti-spam, etc.) et de lancer l'import depuis une ancienne version.
  *
  * Ce fichier gère la logique métier et l'affichage des pages de configuration de l'extension dans le panneau d'administration (ACP) de phpBB.
+ * Informations reçues :
+ * - Via le formulaire POST : les nouvelles valeurs pour les paramètres de configuration.
  *
  * Points clés :
  *   - Lecture et sauvegarde des paramètres de l'extension

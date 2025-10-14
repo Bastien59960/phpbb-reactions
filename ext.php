@@ -1,18 +1,28 @@
 <?php
 /**
  * Fichier : ext.php — bastien59960/reactions/ext.php
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : ext.php
+ * Chemin : bastien59960/reactions/ext.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/ext.php
  *
  * Classe principale de l'extension Reactions pour phpBB.
  *
  * Ce fichier gère l'activation, la désactivation et la purge de l'extension, 
  * ainsi que l'enregistrement des types de notifications personnalisés auprès du système phpBB.
+ * Rôle :
+ * Ce fichier est le point d'entrée de l'extension pour phpBB. Il gère le cycle
+ * de vie de l'extension :
+ * - `is_enableable()` : Vérifie si l'extension peut être activée.
+ * - `enable_step()` : Actions à l'activation (ex: enregistrer les notifications).
+ * - `disable_step()` : Actions à la désactivation.
+ * - `purge_step()` : Actions à la suppression définitive (purge des données).
  *
  * Points clés de la logique métier :
  *   - Vérification de la compatibilité phpBB
  *   - Enregistrement/désactivation/purge des types de notifications lors des changements d'état de l'extension
  *   - Gestion de la version de l'extension (pour les migrations)
+ * Il est crucial pour que phpBB reconnaisse et gère correctement l'extension.
  *
  * IMPORTANT - Distinction entre NOM DE SERVICE et NOM DE TYPE :
  * 

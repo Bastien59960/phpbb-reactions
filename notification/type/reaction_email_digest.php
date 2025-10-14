@@ -1,11 +1,25 @@
 <?php
 /**
  * Fichier : notification/type/reaction_email_digest.php — bastien59960/reactions/notification/type/reaction_email_digest.php
+ * Fichier : reaction_email_digest.php
+ * Chemin : bastien59960/reactions/notification/type/reaction_email_digest.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/notification/type/reaction_email_digest.php
  *
  * Type de notification "Résumé e-mail des réactions" pour l'extension Reactions.
+ * Rôle :
+ * Définit le type de notification "Résumé e-mail des réactions". Cette classe est
+ * utilisée exclusivement par la tâche CRON (`cron/notification_task.php`) pour
+ * envoyer un e-mail récapitulatif (digest) des réactions reçues.
  *
  * Ce type est utilisé exclusivement par la tâche cron afin d'envoyer un digest périodique
  * des réactions reçues. Aucune entrée n'est créée dans la cloche phpBB.
+ * Contrairement à `reaction.php`, ce type ne crée pas de notification visible
+ * dans la cloche. Il sert uniquement de "véhicule" pour envoyer un e-mail
+ * formaté avec un template spécifique (`reaction_digest.txt`).
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\notification\type;
