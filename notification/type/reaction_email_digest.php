@@ -121,7 +121,7 @@ class reaction_email_digest extends base
 
     public function get_language_file()
     {
-        return 'bastien59960/reactions:notification/notification.type.reaction_email_digest';
+        return 'bastien59960/reactions';
     }
 
     public function get_email_template()
