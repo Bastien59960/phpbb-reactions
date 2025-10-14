@@ -914,12 +914,18 @@ class ajax
                 'emoji'            => $emoji,
             ];
 
-            $this->notification_manager->add_notifications(
+            $notification_ids = $this->notification_manager->add_notifications(
                 'notification.type.reaction',
                 $notification_data
             );
 
-            error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id);
+            if (!empty($notification_ids)) {
+                $log_suffix = is_array($notification_ids) ? implode(',', $notification_ids) : $notification_ids;
+            } else {
+                $log_suffix = 'none';
+            }
+
+            error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id . ', ids=' . $log_suffix);
         } catch (\Exception $e) {
             error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
             error_log('[Reactions] Stack trace: ' . $e->getTraceAsString());

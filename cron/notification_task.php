@@ -406,7 +406,7 @@ class notification_task extends \phpbb\cron\task\base
 
             foreach ($post_data['reactions'] as $reaction)
             {
-                $text_lines[] = sprintf('• %s %s (%s)', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted']);
+                $text_lines[] = sprintf('• %s %s (%s) — %s : %s', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted'], $reaction['profile_url_absolute']);
                 $html_items[] = sprintf(
                     '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">%s</span></li>',
                     htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8'),
@@ -421,7 +421,7 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
-            $sections_text[] = $subject_plain . "\n" . implode("\n", $text_lines) . "\n  " . $view_message_label . ' : ' . $post_url_rel;
+            $sections_text[] = $subject_plain . "\n" . implode("\n", $text_lines) . "\n  " . $view_message_label . ' : ' . $post_url_abs;
 
             $sections_html[] = sprintf(
                 '<div class="digest-topic"><h3><a href="%s">%s</a></h3><ul>%s</ul><div class="digest-link"><a href="%s">%s</a></div></div>',
