@@ -125,6 +125,19 @@ class reaction extends base
         $this->reactions_helper = $reactions_helper;
         $this->template = $template;
 
+        try
+        {
+            $this->language->add_lang_ext('bastien59960/reactions', 'reactions');
+            $this->language->add_lang_ext('bastien59960/reactions', 'notification/notification.type.reaction');
+        }
+        catch (\Throwable $e)
+        {
+            if (defined('DEBUG'))
+            {
+                error_log('[Reactions Notification] Unable to load language packs (reaction): ' . $e->getMessage());
+            }
+        }
+
         // Log de débogage (visible uniquement si DEBUG est activé dans config.php)
         if (defined('DEBUG') && DEBUG) {
             error_log('[Reactions Notification] Constructeur de `reaction` initialisé.');

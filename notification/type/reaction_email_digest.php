@@ -60,6 +60,19 @@ class reaction_email_digest extends base
     ) {
         // Appeler le constructeur de la classe parente avec toutes les dépendances requises.
         parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
+
+        try
+        {
+            $this->language->add_lang_ext('bastien59960/reactions', 'reactions');
+            $this->language->add_lang_ext('bastien59960/reactions', 'notification/notification.type.reaction_email_digest');
+        }
+        catch (\Throwable $e)
+        {
+            if (defined('DEBUG'))
+            {
+                error_log('[Reactions Notification] Unable to load language packs (reaction_email_digest): ' . $e->getMessage());
+            }
+        }
     }
 
     /**
