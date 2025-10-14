@@ -35,7 +35,7 @@ class reaction_email_digest extends base
     /**
      * Identifiant unique du type de notification.
      */
-    public static function get_type()
+    public function get_type()
     {
         return 'notification.type.reaction_email_digest';
     }
@@ -43,7 +43,7 @@ class reaction_email_digest extends base
     /**
      * Clé de langue affichée dans l'UCP (titre).
      */
-    public static function get_item_type_name()
+    public function get_item_type_name()
     {
         return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST';
     }
@@ -51,7 +51,7 @@ class reaction_email_digest extends base
     /**
      * Clé de langue affichée dans l'UCP (description).
      */
-    public static function get_item_type_description()
+    public function get_item_type_description()
     {
         return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN';
     }
@@ -114,7 +114,7 @@ class reaction_email_digest extends base
      * Cette notification n'est pas liée à un item spécifique.
      * Requis par la classe de base.
      */
-    public static function get_item_id($data)
+    public function get_item_id($data)
     {
         return 0;
     }
@@ -123,7 +123,7 @@ class reaction_email_digest extends base
      * Cette notification n'a pas de parent.
      * Requis par la classe de base.
      */
-    public static function get_item_parent_id($data)
+    public function get_item_parent_id($data)
     {
         return 0;
     }
@@ -141,7 +141,7 @@ class reaction_email_digest extends base
      * Cette notification n'a pas d'URL cliquable (version statique).
      * Requis par la classe de base.
      */
-    public static function get_item_url($data)
+    public function get_item_url($data)
     {
         return '';
     }
@@ -150,7 +150,7 @@ class reaction_email_digest extends base
      * L'auteur est le destinataire, mais ce n'est pas un "item".
      * Requis par la classe de base.
      */
-    public static function get_item_author_id($data)
+    public function get_item_author_id($data)
     {
         return 0;
     }
