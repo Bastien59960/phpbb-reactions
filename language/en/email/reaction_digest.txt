@@ -1,21 +1,12 @@
-#
-# File: language/en/email/reaction_digest.txt — bastien59960/reactions
-# Email template for the periodic reaction digest (English).
-#
-# Variables:
-#   {USERNAME}      Recipient name
-#   {DIGEST_SINCE}  Start date/time of the digest window
-#   {DIGEST_TEXT}   Formatted list of reactions grouped by topic
-#
 Subject: Reactions on your posts — summary
 
 Hello {USERNAME},
 
-Between {DIGEST_SINCE} and now you received new reactions grouped by topic:
+Between {DIGEST_SINCE} and {DIGEST_UNTIL} you received new reactions grouped by topic:
 
 {DIGEST_TEXT}
 
 Tip: Adjust or disable these emails from your User Control Panel → Reaction Preferences.
 
 --
-{EMAIL_SIG}
+{DIGEST_SIGNATURE}

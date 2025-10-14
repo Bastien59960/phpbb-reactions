@@ -27,7 +27,7 @@
 <body>
     <div class="digest-card">
         <h1>Bonjour {USERNAME},</h1>
-        <p>Entre <strong>{DIGEST_SINCE}</strong> et maintenant, vous avez reçu de nouvelles réactions regroupées par sujet :</p>
+        <p>Entre <strong>{DIGEST_SINCE}</strong> et <strong>{DIGEST_UNTIL}</strong>, vous avez reçu de nouvelles réactions regroupées par sujet :</p>
 
         {DIGEST_HTML}
 
@@ -35,7 +35,7 @@
             Astuce : modifiez ou désactivez ces notifications depuis votre <strong>Panneau de Contrôle Utilisateur → Préférences des réactions</strong>.
         </div>
 
-        <p class="signature">{EMAIL_SIG}</p>
+        <p class="signature">{DIGEST_SIGNATURE}</p>
     </div>
 </body>
 </html>

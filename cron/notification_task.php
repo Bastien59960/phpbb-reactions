@@ -103,6 +103,11 @@ class notification_task extends \phpbb\cron\task\base
 
         $spam_delay = $spam_minutes * 60;
 
+        if (!function_exists('generate_board_url'))
+        {
+            include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
+        }
+
         // Seuil chronologique
         $threshold_timestamp = time() - $spam_delay;
         $run_start = microtime(true);
@@ -177,12 +182,17 @@ class notification_task extends \phpbb\cron\task\base
                 ];
             }
 
+            $post_url = generate_board_url() . '/viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
+            $profile_url = generate_board_url() . '/memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
+
             $by_author[$author_id]['posts'][$post_id]['reactions'][] = [
                 'reaction_id'  => $reaction_id,
                 'reacter_id'   => $reacter_id,
                 'reacter_name' => $reacter_name,
                 'emoji'        => $emoji,
                 'time'         => $r_time,
+                'post_url'     => $post_url,
+                'profile_url'  => $profile_url,
             ];
 
             $by_author[$author_id]['mark_ids'][] = $reaction_id;
@@ -364,6 +374,9 @@ class notification_task extends \phpbb\cron\task\base
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
 
+        $profile_label = ($author_lang === 'fr') ? 'Profil' : 'Profile';
+        $view_message_label = ($author_lang === 'fr') ? 'Voir le message' : 'View message';
+
         // Construire le contenu textuel & HTML du récapitulatif
         $grouped_by_subject = [];
         foreach ($data['posts'] as $post_id => $post_data)
@@ -375,6 +388,8 @@ class notification_task extends \phpbb\cron\task\base
                     'time'    => date('d/m/Y H:i', (int) $reaction['time']),
                     'reactor' => $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']),
                     'emoji'   => $reaction['emoji'] ?: '?',
+                    'post_url'=> $reaction['post_url'],
+                    'profile_url' => $reaction['profile_url'],
                 ];
             }
         }
@@ -396,18 +411,23 @@ class notification_task extends \phpbb\cron\task\base
             $html_items = [];
             foreach ($entries as $entry)
             {
-                $text_lines[] = sprintf('  • [%s] %s — %s', $entry['time'], $entry['reactor'], $entry['emoji']);
+                $text_lines[] = sprintf('• %s %s — %s (%s : %s)', $entry['emoji'], $entry['reactor'], $entry['time'], $profile_label, $entry['profile_url']);
                 $html_items[] = sprintf(
-                    '<li><span class="digest-time">%s</span><span class="digest-user">%s</span><span class="digest-emoji">%s</span></li>',
-                    htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'),
+                    '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">%s</span></li>',
+                    htmlspecialchars($entry['emoji'], ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($entry['profile_url'], ENT_QUOTES, 'UTF-8'),
                     htmlspecialchars($entry['reactor'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($entry['emoji'], ENT_QUOTES, 'UTF-8')
+                    htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8')
                 );
             }
 
+            $post_url = $entries[0]['post_url'];
+            $text_lines[] = '  ' . $view_message_label . ' : ' . $post_url;
+
             $sections_text[] = $subject . "\n" . implode("\n", $text_lines);
             $sections_html[] = sprintf(
-                '<div class="digest-topic"><h3>%s</h3><ul>%s</ul></div>',
+                '<div class="digest-topic"><h3><a href="%s">%s</a></h3><ul>%s</ul></div>',
+                htmlspecialchars($post_url, ENT_QUOTES, 'UTF-8'),
                 htmlspecialchars($subject, ENT_QUOTES, 'UTF-8'),
                 implode('', $html_items)
             );
@@ -426,8 +446,10 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->assign_vars([
                 'USERNAME'    => $author_name,
                 'DIGEST_SINCE'=> $since_time,
+                'DIGEST_UNTIL'=> date('d/m/Y H:i'),
                 'DIGEST_TEXT' => $recap_text,
                 'DIGEST_HTML' => $recap_html,
+                'DIGEST_SIGNATURE' => $this->language->lang('REACTIONS_DIGEST_SIGNATURE', $this->config['sitename'] ?? 'Forum'),
             ]);
             $messenger->send(NOTIFY_EMAIL);
 

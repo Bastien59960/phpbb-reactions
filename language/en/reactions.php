@@ -33,4 +33,7 @@ $lang = array_merge($lang ?? [], [
     // --- UCP option labels for notification centre ---
     'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Reactions to my posts',
     'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'Reaction e-mail summaries',
+
+    // --- Digest helpers ---
+    'REACTIONS_DIGEST_SIGNATURE' => 'Thanks, the %s team',
 ]);

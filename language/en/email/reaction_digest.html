@@ -27,7 +27,7 @@
 <body>
     <div class="digest-card">
         <h1>Hello {USERNAME},</h1>
-        <p>Between <strong>{DIGEST_SINCE}</strong> and now you received new reactions grouped by topic:</p>
+        <p>Between <strong>{DIGEST_SINCE}</strong> and <strong>{DIGEST_UNTIL}</strong> you received new reactions grouped by topic:</p>
 
         {DIGEST_HTML}
 
@@ -35,7 +35,7 @@
             Tip: Adjust or disable these emails from your <strong>User Control Panel → Reaction Preferences</strong>.
         </div>
 
-        <p class="signature">{EMAIL_SIG}</p>
+        <p class="signature">{DIGEST_SIGNATURE}</p>
     </div>
 </body>
 </html>

@@ -896,7 +896,11 @@ class ajax
             $author_row = $this->db->sql_fetchrow($author_result);
             $this->db->sql_freeresult($author_result);
 
-            if (!$author_row || !(int) ($author_row['user_reactions_notify'] ?? 0)) {
+            $notify_pref = ($author_row !== false && array_key_exists('user_reactions_notify', $author_row))
+                ? (int) $author_row['user_reactions_notify']
+                : 1;
+
+            if (!$author_row || $notify_pref !== 1) {
                 return;
             }
 

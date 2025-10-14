@@ -1,21 +1,12 @@
-#
-# Fichier : language/fr/email/reaction_digest.txt — bastien59960/reactions
-# Modèle d'e-mail pour le résumé périodique des réactions (français).
-#
-# Variables disponibles :
-#   {USERNAME}      Nom du destinataire
-#   {DIGEST_SINCE}  Date/heure de début de la période
-#   {DIGEST_TEXT}   Liste formatée des réactions regroupées par sujet
-#
 Subject: Résumé des réactions reçues sur vos messages
 
 Bonjour {USERNAME},
 
-Entre {DIGEST_SINCE} et maintenant, vous avez reçu de nouvelles réactions regroupées par sujet :
+Entre {DIGEST_SINCE} et {DIGEST_UNTIL}, vous avez reçu de nouvelles réactions regroupées par sujet :
 
 {DIGEST_TEXT}
 
 Astuce : modifiez ou désactivez ces notifications depuis votre Panneau de Contrôle Utilisateur → Préférences des réactions.
 
 --
-{EMAIL_SIG}
+{DIGEST_SIGNATURE}
