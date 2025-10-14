@@ -1,6 +1,8 @@
 <?php
 /**
  * Fichier : controller/test.php — bastien59960/reactions/controller/test.php
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Contrôleur de test pour l'extension Reactions.
  *
