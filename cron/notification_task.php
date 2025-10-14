@@ -113,6 +113,9 @@ class notification_task extends \phpbb\cron\task\base
             include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
         }
 
+        $this->language->add_lang('common');
+        $this->language->add_lang('reactions', 'bastien59960/reactions');
+
         // Seuil chronologique
         $threshold_timestamp = time() - $spam_delay;
         $run_start = microtime(true);
@@ -178,26 +181,33 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
+            $subject_plain = ($post_subject !== '') ? html_entity_decode($post_subject, ENT_QUOTES, 'UTF-8') : $this->language->lang('NO_SUBJECT');
+            $post_url_absolute = generate_board_url() . '/viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
+            $post_url_relative = 'viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
+            $profile_url_absolute = generate_board_url() . '/memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
+            $profile_url_relative = 'memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
+
             if (!isset($by_author[$author_id]['posts'][$post_id]))
             {
                 $by_author[$author_id]['posts'][$post_id] = [
-                    'topic_id'     => $topic_id,
-                    'post_subject' => $post_subject,
-                    'reactions' => [],
+                    'topic_id'          => $topic_id,
+                    'post_subject'      => $post_subject,
+                    'subject_plain'     => $subject_plain,
+                    'post_url_absolute' => $post_url_absolute,
+                    'post_url_relative' => $post_url_relative,
+                    'reactions'         => [],
                 ];
             }
 
-            $post_url = generate_board_url() . '/viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
-            $profile_url = generate_board_url() . '/memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
-
             $by_author[$author_id]['posts'][$post_id]['reactions'][] = [
-                'reaction_id'  => $reaction_id,
-                'reacter_id'   => $reacter_id,
-                'reacter_name' => $reacter_name,
-                'emoji'        => $emoji,
-                'time'         => $r_time,
-                'post_url'     => $post_url,
-                'profile_url'  => $profile_url,
+                'reaction_id'          => $reaction_id,
+                'reacter_id'           => $reacter_id,
+                'reacter_name'         => $reacter_name,
+                'emoji'                => $emoji ?: '?',
+                'time'                 => $r_time,
+                'time_formatted'       => date('d/m/Y H:i', $r_time),
+                'profile_url_absolute' => $profile_url_absolute,
+                'profile_url_relative' => $profile_url_relative,
             ];
 
             $by_author[$author_id]['mark_ids'][] = $reaction_id;
@@ -379,63 +389,56 @@ class notification_task extends \phpbb\cron\task\base
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
 
-        $profile_label = ($author_lang === 'fr') ? 'Profil' : 'Profile';
-        $view_message_label = ($author_lang === 'fr') ? 'Voir le message' : 'View message';
+        $view_message_label = $this->language->lang('REACTIONS_DIGEST_VIEW_POST');
 
-        // Construire le contenu textuel & HTML du récapitulatif
-        $grouped_by_subject = [];
+        $sections_text = [];
+        $sections_html = [];
+
         foreach ($data['posts'] as $post_id => $post_data)
         {
-            $post_subject = $post_data['post_subject'] ?: '[sans sujet]';
+            $subject_plain = $post_data['subject_plain'] ?: '[sans sujet]';
+            $subject_html = htmlspecialchars($subject_plain, ENT_QUOTES, 'UTF-8');
+            $post_url_abs = $post_data['post_url_absolute'];
+            $post_url_rel = $post_data['post_url_relative'];
+
+            $text_lines = [];
+            $html_items = [];
+
             foreach ($post_data['reactions'] as $reaction)
             {
-                $grouped_by_subject[$post_subject][] = [
-                    'time'    => date('d/m/Y H:i', (int) $reaction['time']),
-                    'reactor' => $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']),
-                    'emoji'   => $reaction['emoji'] ?: '?',
-                    'post_url'=> $reaction['post_url'],
-                    'profile_url' => $reaction['profile_url'],
-                ];
+                $text_lines[] = sprintf('• %s %s (%s)', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted']);
+                $html_items[] = sprintf(
+                    '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">%s</span></li>',
+                    htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($reaction['profile_url_absolute'], ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($reaction['reacter_name'], ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($reaction['time_formatted'], ENT_QUOTES, 'UTF-8')
+                );
             }
+
+            if (empty($text_lines))
+            {
+                continue;
+            }
+
+            $sections_text[] = $subject_plain . "\n" . implode("\n", $text_lines) . "\n  " . $view_message_label . ' : ' . $post_url_rel;
+
+            $sections_html[] = sprintf(
+                '<div class="digest-topic"><h3><a href="%s">%s</a></h3><ul>%s</ul><div class="digest-link"><a href="%s">%s</a></div></div>',
+                htmlspecialchars($post_url_abs, ENT_QUOTES, 'UTF-8'),
+                $subject_html,
+                implode('', $html_items),
+                htmlspecialchars($post_url_abs, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($view_message_label, ENT_QUOTES, 'UTF-8')
+            );
         }
 
-        if (empty($grouped_by_subject))
+        if (empty($sections_text))
         {
             error_log('[Reactions Cron] Aucun contenu à envoyer pour user_id ' . $author_id . ' (récapitulatif vide).');
             return [
                 'status' => 'skipped_empty',
             ];
-        }
-
-        $sections_text = [];
-        $sections_html = [];
-
-        foreach ($grouped_by_subject as $subject => $entries)
-        {
-            $text_lines = [];
-            $html_items = [];
-            foreach ($entries as $entry)
-            {
-                $text_lines[] = sprintf('• %s %s — %s (%s : %s)', $entry['emoji'], $entry['reactor'], $entry['time'], $profile_label, $entry['profile_url']);
-                $html_items[] = sprintf(
-                    '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">%s</span></li>',
-                    htmlspecialchars($entry['emoji'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($entry['profile_url'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($entry['reactor'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8')
-                );
-            }
-
-            $post_url = $entries[0]['post_url'];
-            $text_lines[] = '  ' . $view_message_label . ' : ' . $post_url;
-
-            $sections_text[] = $subject . "\n" . implode("\n", $text_lines);
-            $sections_html[] = sprintf(
-                '<div class="digest-topic"><h3><a href="%s">%s</a></h3><ul>%s</ul></div>',
-                htmlspecialchars($post_url, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($subject, ENT_QUOTES, 'UTF-8'),
-                implode('', $html_items)
-            );
         }
 
         $recap_text = implode("\n\n", $sections_text);
