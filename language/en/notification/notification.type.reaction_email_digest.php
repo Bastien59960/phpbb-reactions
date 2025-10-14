@@ -37,13 +37,9 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
-    // ----------------------------------------------------------------------------
-	// 🧭 Title displayed in notification preferences (UCP)
-	// ----------------------------------------------------------------------------
+    // --- Notification group (UCP) ---
+    'NOTIFICATION_GROUP_REACTIONS' => 'Reactions',
+    // --- E-mail summary (UCP) ---
     'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Reactions e-mail summary',
-
-    // ----------------------------------------------------------------------------
-	// ⚙️ Description displayed under the title in the UCP
-	// ----------------------------------------------------------------------------
     'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Periodically receive an e-mail summary of reactions to your posts.',
 ]);

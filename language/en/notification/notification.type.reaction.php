@@ -34,11 +34,11 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
+    // --- Notification group (UCP) ---
+    'NOTIFICATION_GROUP_REACTIONS' => 'Reactions',
+
+    // --- Instant notification (bell & UCP) ---
+    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> reacted to your post with %2$s',
     'NOTIFICATION_TYPE_REACTION_TITLE' => 'Someone reacted to one of your posts',
     'NOTIFICATION_TYPE_REACTION_DESC'  => 'Receive a notification when a user reacts to one of your posts.',
-
-    // ----------------------------------------------------------------------------
-	// 🔔 Main notification text (displayed in the bell and emails)
-	// ----------------------------------------------------------------------------
-	'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> reacted to your post with %2$s',
 ]);

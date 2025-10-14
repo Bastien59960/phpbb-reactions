@@ -51,13 +51,9 @@ if (empty($lang) || !is_array($lang))
 // ============================================================================
 
 $lang = array_merge($lang, array(
-	// ----------------------------------------------------------------------------
-	// 🧭 Titre affiché dans les préférences de notification (UCP)
-	// ----------------------------------------------------------------------------
+	// --- Groupe de notifications (UCP) ---
+	'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
+	// --- Résumé par e-mail (UCP) ---
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
-
-	// ----------------------------------------------------------------------------
-	// ⚙️ Description affichée sous le titre dans l’UCP
-	// ----------------------------------------------------------------------------
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.',
 ));

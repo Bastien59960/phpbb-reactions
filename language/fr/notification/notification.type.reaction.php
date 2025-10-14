@@ -37,30 +37,11 @@ if (empty($lang) || !is_array($lang))
 	$lang = array();
 }
 
-// ============================================================================
-// 🧩 Chaînes de langue pour les notifications de réactions
-// ============================================================================
-//
-// Ces chaînes sont utilisées par phpBB pour afficher :
-//   - Les messages dans la cloche des notifications
-//   - Les notifications par email (si activées)
-//   - Les options dans le panneau de configuration utilisateur (UCP)
-// ============================================================================
-
 $lang = array_merge($lang, array(
-
-	// ----------------------------------------------------------------------------
-	// 🔔 Texte principal de la notification (affiché dans la cloche et les emails)
-	// ----------------------------------------------------------------------------
-	'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
-
-	// ----------------------------------------------------------------------------
-	// 🧭 Groupe dans les préférences de notification (UCP)
-	// ----------------------------------------------------------------------------
+	// --- Groupe de notifications (UCP) ---
 	'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
-));
-
-$lang = array_merge($lang, array(
+	// --- Notification instantanée (cloche & UCP) ---
+	'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
 	'NOTIFICATION_TYPE_REACTION_TITLE'	=> 'Quelqu’un a réagi à l’un de vos messages',
 	'NOTIFICATION_TYPE_REACTION_DESC'	=> 'Recevoir une notification lorsqu’un utilisateur réagit à l’un de vos messages.',
 ));
