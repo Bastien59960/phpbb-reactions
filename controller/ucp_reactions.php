@@ -1,20 +1,19 @@
 <?php
 /**
- * Fichier : ucp_reactions.php
- * Chemin : bastien59960/reactions/controller/ucp_reactions.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/ucp_reactions.php
+ * Fichier : controller/ucp_reactions.php — bastien59960/reactions
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce contrôleur gère la logique de la page de préférences des réactions dans le
- * panneau de contrôle de l'utilisateur (UCP). Il permet à chaque utilisateur de
- * choisir s'il souhaite recevoir des notifications (cloche et/ou e-mail).
+ * Ce contrôleur gère la logique métier de la page de préférences des réactions
+ * dans le Panneau de Contrôle Utilisateur (UCP). Il est responsable de :
+ *   - Afficher le formulaire avec les préférences actuelles de l'utilisateur.
+ *   - Traiter la soumission du formulaire et mettre à jour la base de données.
  *
  * Informations reçues :
  * - Via le formulaire POST : les nouvelles valeurs pour `user_reactions_notify` et `user_reactions_email`.
  *
  * Il est appelé par le module `ucp/reactions_module.php`.
- *
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -27,14 +26,33 @@ use phpbb\request\request;
 use phpbb\db\driver\driver_interface;
 use phpbb\template\template;
 
+/**
+ * Contrôleur pour la page de préférences des réactions dans l'UCP.
+ */
 class ucp_reactions
 {
+	/** @var \phpbb\user Instance de l'utilisateur courant. */
 	protected $user;
+	/** @var \phpbb\db\driver\driver_interface Instance de la base de données. */
 	protected $db;
+	/** @var \phpbb\request\request Instance de la requête HTTP. */
 	protected $request;
+	/** @var \phpbb\template\template Instance du moteur de templates. */
 	protected $template;
+	/** @var string Préfixe des tables de la base de données. */
 	protected $table_prefix;
+	/** @var string URL de base pour l'action du formulaire. */
+	public $u_action;
 
+	/**
+	 * Constructeur du contrôleur.
+	 *
+	 * @param user             $user         Service utilisateur de phpBB.
+	 * @param driver_interface $db           Service de base de données de phpBB.
+	 * @param request          $request      Service de requête de phpBB.
+	 * @param template         $template     Service de template de phpBB.
+	 * @param string           $table_prefix Préfixe des tables.
+	 */
 	public function __construct(user $user, driver_interface $db, request $request, template $template, $table_prefix)
 	{
 		$this->user = $user;
@@ -44,31 +62,42 @@ class ucp_reactions
 		$this->table_prefix = $table_prefix;
 	}
 
+	/**
+	 * Méthode principale qui gère l'affichage et le traitement de la page.
+	 *
+	 * @param string $id   Identifiant du module.
+	 * @param string $mode Mode du module.
+	 */
 	public function handle($id, $mode)
 	{
 		$user_id = (int) $this->user->data['user_id'];
 
-		// Les préférences sont déjà dans l'objet user, pas besoin de requête SQL
+		// Récupérer les préférences actuelles de l'utilisateur.
+		// L'objet $this->user->data contient déjà ces informations, pas besoin de requête SQL.
 		$current_notify = (bool) ($this->user->data['user_reactions_notify'] ?? 1);
 		$current_email = (bool) ($this->user->data['user_reactions_email'] ?? 1);
 
+		// Vérifier si le formulaire a été soumis.
 		$submit = $this->request->is_set_post('submit');
 
 		if ($submit)
 		{
+			// Récupérer les nouvelles valeurs depuis le formulaire.
 			$new_notify = $this->request->variable('user_reactions_notify', 0);
 			$new_email = $this->request->variable('user_reactions_email', 0);
 
+			// Mettre à jour la base de données.
 			$sql = 'UPDATE ' . $this->table_prefix . 'users
 					SET user_reactions_notify = ' . (int) $new_notify . ',
 					    user_reactions_email = ' . (int) $new_email . '
 					WHERE user_id = ' . $user_id;
 			$this->db->sql_query($sql);
 
+			// Afficher un message de succès et un lien de retour.
 			trigger_error($this->user->lang('UCP_REACTIONS_SAVED') . adm_back_link($this->u_action));
 		}
 
-		// Assignation au template
+		// Assigner les variables au template pour l'affichage.
 		$this->template->assign_vars(array(
 			'U_ACTION'				=> $this->u_action,
 			'UCP_REACTIONS_NOTIFY'	=> $current_notify,
@@ -77,6 +106,7 @@ class ucp_reactions
 			'S_EMAIL_CHECKED'       => ($current_email) ? ' checked="checked"' : '',
 		));
 
+		// Définir le titre de la page et le fichier de template à utiliser.
 		page_header($this->user->lang('UCP_REACTIONS_TITLE'));
 		$this->template->set_filenames(array('body' => '@bastien59960_reactions/ucp_reactions.html'));
 		page_footer();

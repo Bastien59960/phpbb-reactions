@@ -1,24 +1,21 @@
 <?php
 /**
- * Fichier : ajax.php
- * Chemin : bastien59960/reactions/controller/ajax.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/ajax.php
- *
- * Contrôleur AJAX principal de l'extension Reactions pour phpBB.
+ * Fichier : controller/ajax.php — bastien59960/reactions
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce fichier est le point d'entrée pour toutes les interactions dynamiques initiées
- * par le JavaScript côté client (`reactions.js`). Il gère les requêtes pour ajouter,
- * supprimer ou consulter les réactions et leurs auteurs.
+ * Ce fichier est le **cœur de l'interactivité** de l'extension. Il reçoit et traite
+ * toutes les requêtes AJAX envoyées par le client (`reactions.js`) pour :
+ *   - Ajouter ou supprimer une réaction.
+ *   - Obtenir la liste des utilisateurs ayant réagi.
+ * Il renvoie systématiquement une réponse au format JSON.
  *
  * Informations reçues (Payload JSON) :
  * - `post_id` : ID du message concerné.
  * - `emoji` : L'emoji de la réaction (Unicode).
  * - `action` : L'action à effectuer ('add', 'remove', 'get_users').
  * - `sid` : Le jeton de session pour la protection CSRF.
- *
- * Il retourne systématiquement une réponse au format JSON.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -178,7 +175,7 @@ class ajax
      * - 'get' : Récupérer toutes les réactions d'un message
      * - 'get_users' : Récupérer les utilisateurs ayant réagi avec un emoji
      * 
-     * @return JsonResponse Réponse JSON avec le résultat de l'opération
+     * @return \Symfony\Component\HttpFoundation\JsonResponse Réponse JSON.
      */
     public function handle()
     {
@@ -211,7 +208,7 @@ class ajax
             // =====================================================================
             
             // Vérifier que l'utilisateur est connecté
-            if ($this->user->data['user_id'] == ANONYMOUS) {
+            if ($this->user->data['user_id'] == ANONYMOUS) { // ANONYMOUS est une constante de phpBB
                 throw new HttpException(403, 'User not logged in.');
             }
 
@@ -219,6 +216,7 @@ class ajax
             // 2. PARSING DE LA REQUÊTE JSON
             // =====================================================================
             
+            // Récupérer le corps brut de la requête POST.
             $raw = file_get_contents('php://input');
             error_log("[Reactions RID=$rid] raw payload (".strlen($raw)." bytes): " . $raw);
 
@@ -267,10 +265,12 @@ class ajax
             $emoji   = $data['emoji'] ?? '';
             $action  = $data['action'] ?? '';
 
+            // Vérification du jeton de session pour la protection CSRF.
             if ($sid !== $this->user->data['session_id']) {
                 throw new HttpException(403, 'Jeton CSRF invalide.');
             }
 
+            // Valider que l'action demandée est l'une des actions autorisées.
             if (!in_array($action, ['add', 'remove', 'get', 'get_users'], true)) {
                 ob_end_clean();
                 return new JsonResponse([
@@ -284,6 +284,7 @@ class ajax
             // 4. VALIDATION DES DONNÉES
             // =====================================================================
             
+            // Vérifier que le post_id est valide et que le message existe.
             if (!$post_id || !$this->is_valid_post($post_id)) {
                 ob_end_clean();
                 return new JsonResponse([
@@ -293,6 +294,7 @@ class ajax
                 ], 400);
             }
 
+            // Vérifier que l'emoji est valide (sauf pour l'action 'get').
             if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
                 ob_end_clean();
                 return new JsonResponse([
@@ -307,6 +309,7 @@ class ajax
             // 5. VÉRIFICATION DES AUTORISATIONS
             // =====================================================================
             
+            // Vérifier si l'utilisateur a le droit de réagir à ce message (forum non verrouillé, etc.).
             if (!$this->can_react_to_post($post_id)) {
                 ob_end_clean();
                 return new JsonResponse([
@@ -323,15 +326,18 @@ class ajax
             $user_id = (int)$this->user->data['user_id'];
 
             if ($action === 'add') {
+                // Lire les limites depuis la configuration de l'ACP.
                 $max_per_post = (int) ($this->config['bastien59960_reactions_max_per_post'] ?? 20);
                 $max_per_user = (int) ($this->config['bastien59960_reactions_max_per_user'] ?? 10);
                 
+                // Compter le nombre de types de réactions uniques sur le message.
                 $sql = 'SELECT COUNT(DISTINCT reaction_emoji) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id;
                 $result = $this->db->sql_query($sql);
                 $current_types = (int) $this->db->sql_fetchfield('count');
                 $this->db->sql_freeresult($result);
                 
-                $sql = 'SELECT COUNT(*) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
+                // Compter le nombre de réactions que l'utilisateur a déjà mises sur ce message.
+                $sql = 'SELECT COUNT(reaction_id) as count FROM ' . $this->post_reactions_table . ' WHERE post_id = ' . $post_id . ' AND user_id = ' . $user_id;
                 $result = $this->db->sql_query($sql);
                 $user_reactions = (int) $this->db->sql_fetchfield('count');
                 $this->db->sql_freeresult($result);
@@ -353,6 +359,7 @@ class ajax
             // 7. EXÉCUTION DE L'ACTION
             // =====================================================================
             
+            // Appeler la méthode correspondante en fonction de l'action demandée.
             switch ($action) {
                 case 'add':
                     $resp = $this->add_reaction($post_id, $emoji);
@@ -383,6 +390,7 @@ class ajax
             // 8. FINALISATION DE LA RÉPONSE
             // =====================================================================
             
+            // Ajouter l'identifiant de requête (RID) à la réponse pour le débogage.
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
                 $payload = json_decode($resp->getContent(), true);
                 if (is_array($payload)) {
@@ -397,6 +405,7 @@ class ajax
             return $resp;
 
         } catch (\phpbb\exception\http_exception $httpEx) {
+            // Gérer les exceptions HTTP (ex: 403 Forbidden).
             error_log("[Reactions RID=$rid] HttpException: " . $httpEx->getMessage());
             ob_end_clean();
             return new JsonResponse([
@@ -406,6 +415,7 @@ class ajax
             ], $httpEx->get_status_code());
 
         } catch (\Throwable $e) {
+            // Gérer toutes les autres erreurs serveur (500).
             error_log("[Reactions RID=$rid] Exception attrapée: " . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             ob_end_clean();
             return new JsonResponse([
@@ -415,6 +425,7 @@ class ajax
             ], 500);
 
         } finally {
+            // Enregistrer le temps d'exécution de la requête.
             $elapsed = round((microtime(true) - $t0) * 1000);
             error_log("[Reactions RID=$rid] handle() terminé en {$elapsed}ms");
         }

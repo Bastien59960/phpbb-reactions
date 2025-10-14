@@ -1,16 +1,13 @@
 <?php
 /**
- * Fichier : common.php
- * Chemin : bastien59960/reactions/language/fr/common.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/language/fr/common.php
+ * Fichier : language/fr/common.php — bastien59960/reactions
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Ce fichier contient les chaînes de langue françaises générales pour l'interface
  * utilisateur (UI), les messages d'erreur, les tooltips, et les options de
- * configuration dans le panneau d'administration (ACP).
- *
- * Il est chargé sur la plupart des pages où l'extension est active.
+ * l'extension. Il est chargé sur la plupart des pages où l'extension est active.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -97,14 +94,4 @@ $lang = array_merge($lang, array(
     'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
     'REACTION_LIMIT_POST'       => 'Limite de types de réactions par message atteinte',
     'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
-
-    // =============================================================================
-    // PRÉFÉRENCES UTILISATEUR (UCP)
-    // =============================================================================
-    'UCP_REACTIONS_TITLE'               => 'Préférences des réactions',
-    'UCP_REACTIONS_SAVED'               => 'Vos préférences de notification de réactions ont été enregistrées.',
-    'UCP_REACTIONS_NOTIFY'              => 'M\'avertir des nouvelles réactions (notification)',
-    'UCP_REACTIONS_NOTIFY_EXPLAIN'      => 'Recevoir une notification instantanée dans la cloche du forum.',
-    'UCP_REACTIONS_EMAIL'               => 'M\'avertir des nouvelles réactions (e-mail)',
-    'UCP_REACTIONS_EMAIL_EXPLAIN'       => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
 ));
