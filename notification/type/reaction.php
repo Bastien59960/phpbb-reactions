@@ -369,7 +369,7 @@ class reaction extends base
      */
     public function get_language_file()
     {
-        return 'bastien59960/reactions:notification/reaction';
+        return 'bastien59960/reactions';
     }
 
     // =========================================================================

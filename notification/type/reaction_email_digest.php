@@ -35,7 +35,7 @@ class reaction_email_digest extends base
     /**
      * Identifiant unique du type de notification.
      */
-    public function get_type()
+    public static function get_type()
     {
         return 'notification.type.reaction_email_digest';
     }
@@ -71,7 +71,7 @@ class reaction_email_digest extends base
 
     public function get_language_file()
     {
-        return 'bastien59960/reactions:notification/reaction';
+        return 'bastien59960/reactions';
     }
 
     public function get_email_template()
@@ -108,5 +108,23 @@ class reaction_email_digest extends base
             'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la dernière fois', // Note: SINCE_TIME n'est plus dans le template
             'RECAP_LINES' => implode("\n", $recap_lines_arr),
         ];
+    }
+
+    /**
+     * Cette notification n'est pas liée à un item spécifique.
+     * Requis par la classe de base.
+     */
+    public static function get_item_id($data)
+    {
+        return 0;
+    }
+
+    /**
+     * Cette notification n'a pas de parent.
+     * Requis par la classe de base.
+     */
+    public static function get_item_parent_id($data)
+    {
+        return 0;
     }
 }

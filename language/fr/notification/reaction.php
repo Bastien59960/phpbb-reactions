@@ -26,13 +26,7 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
 	// Groupe de notifications dans l'UCP
-	'NOTIFICATION_GROUP_REACTIONS' => 'Notifications de réactions',
-
+	'NOTIFICATION_GROUP_REACTIONS'       => 'Notifications de réactions',
 	// Type de notification : Réaction instantanée (cloche)
 	'NOTIFICATION_TYPE_REACTION'         => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
-	'NOTIFICATION_TYPE_REACTION_EXPLAIN' => 'Recevoir une notification lorsqu’un utilisateur réagit à l’un de vos messages.',
-
-	// Type de notification : Résumé par e-mail (cron)
-	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST'         => 'Résumé par e-mail des réactions',
-	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
 ));

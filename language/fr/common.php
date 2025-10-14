@@ -94,4 +94,17 @@ $lang = array_merge($lang, array(
     'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
     'REACTION_LIMIT_POST'       => 'Limite de types de réactions par message atteinte',
     'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
+
+    // UCP
+    'UCP_REACTIONS_TITLE'               => 'Préférences des réactions',
+    'UCP_REACTIONS_SAVED'               => 'Vos préférences de notification de réactions ont été enregistrées.',
+    'UCP_REACTIONS_NOTIFY'              => 'M\'avertir des nouvelles réactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'      => 'Recevoir une notification instantanée dans la cloche du forum.',
+    'UCP_REACTIONS_EMAIL'               => 'M\'avertir des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_EMAIL_EXPLAIN'       => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
+
+    // Descriptions des types de notifications (utilisées dans l'UCP)
+    'NOTIFICATION_TYPE_REACTION_EXPLAIN'         => 'Recevoir une notification lorsqu’un utilisateur réagit à l’un de vos messages.',
+    'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST'         => 'Résumé par e-mail des réactions',
+    'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
 ));

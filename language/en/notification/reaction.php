@@ -27,12 +27,6 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, array(
 	// Notification group in UCP
 	'NOTIFICATION_GROUP_REACTIONS' => 'Reaction notifications',
-
 	// Notification Type: Instant reaction (bell)
 	'NOTIFICATION_TYPE_REACTION'         => '<strong>%1$s</strong> reacted to your post with %2$s',
-	'NOTIFICATION_TYPE_REACTION_EXPLAIN' => 'Receive a notification when a user reacts to one of your posts.',
-
-	// Notification Type: Email Digest (cron)
-	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST'         => 'Reactions email summary',
-	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN' => 'Receive a periodic email summary of new reactions on your posts.',
 ));
