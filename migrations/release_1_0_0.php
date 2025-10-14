@@ -95,8 +95,6 @@ public function effectively_installed()
             ),
             'add_columns' => array(
                 $this->table_prefix . 'notifications' => array(
-                    'notification_type_name' => array('VCHAR:255', ''),
-                    'reaction_emoji'         => array('VCHAR_UNI:10', ''),
                 ),
                 $this->table_prefix . 'users' => array(
                     'user_reactions_notify'     => array('BOOL', 1), // Préférence UCP : Activer/désactiver les notifs cloche
@@ -120,8 +118,6 @@ public function effectively_installed()
             ),
             'drop_columns' => array(
                 $this->table_prefix . 'notifications' => array(
-                    'notification_type_name',
-                    'reaction_emoji',
                 ),
                 $this->table_prefix . 'users' => array(
                     'user_reactions_notify',
@@ -408,12 +404,18 @@ public function remove_notification_type()
             $user_id = (int) $row['reaction_user_id'];
 
             // Créer une clé unique pour cette réaction (post-utilisateur-emoji) pour la déduplication.
-            $key = $post_id . '-' . $user_id . '-' . $emoji;
+            $key = $post_id . '-' . $user_id;
 
             // Si cette clé a déjà été ajoutée dans ce lot, on l'ignore pour éviter les doublons.
-            if (isset($existing_keys[$key]))
+            if (isset($existing_keys[$key]) && in_array($emoji, $existing_keys[$key]))
             {
                 continue;
+            }
+
+            // Initialiser le tableau pour cet utilisateur/post si ce n'est pas déjà fait
+            if (!isset($existing_keys[$key]))
+            {
+                $existing_keys[$key] = [];
             }
 
             // Ajouter la réaction convertie au tableau pour l'insertion.
@@ -427,7 +429,7 @@ public function remove_notification_type()
             ];
 
             // Marquer cette clé comme traitée.
-            $existing_keys[$key] = true;
+            $existing_keys[$key][] = $emoji;
         }
 
         if ($io) $io->progress_finish();
