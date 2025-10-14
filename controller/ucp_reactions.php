@@ -48,16 +48,9 @@ class ucp_reactions
 	{
 		$user_id = (int) $this->user->data['user_id'];
 
-		// Valeurs actuelles depuis la table users
-		$sql = 'SELECT user_reactions_notify, user_reactions_email
-				FROM ' . $this->table_prefix . 'users
-				WHERE user_id = ' . $user_id;
-		$result = $this->db->sql_query($sql);
-		$row = $this->db->sql_fetchrow($result);
-		$this->db->sql_freeresult($result);
-
-		$current_notify = (bool) $row['user_reactions_notify'];
-		$current_email = (bool) $row['user_reactions_email'];
+		// Les préférences sont déjà dans l'objet user, pas besoin de requête SQL
+		$current_notify = (bool) ($this->user->data['user_reactions_notify'] ?? 1);
+		$current_email = (bool) ($this->user->data['user_reactions_email'] ?? 1);
 
 		$submit = $this->request->is_set_post('submit');
 
@@ -79,7 +72,9 @@ class ucp_reactions
 		$this->template->assign_vars(array(
 			'U_ACTION'				=> $this->u_action,
 			'UCP_REACTIONS_NOTIFY'	=> $current_notify,
-			'UCP_REACTIONS_EMAIL'	=> $current_email,
+			'UCP_REACTIONS_EMAIL'	=> $current_email, // Pour le résumé par e-mail
+			'S_NOTIFY_CHECKED'      => ($current_notify) ? ' checked="checked"' : '',
+			'S_EMAIL_CHECKED'       => ($current_email) ? ' checked="checked"' : '',
 		));
 
 		$this->user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');

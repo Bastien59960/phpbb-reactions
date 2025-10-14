@@ -37,7 +37,7 @@ class reaction_email_digest extends base
      */
     public function get_type()
     {
-        return 'bastien59960.reactions.notification.cron_email';
+        return 'notification.type.reaction_email_digest';
     }
 
     /**
@@ -82,6 +82,7 @@ class reaction_email_digest extends base
     public function get_email_template_variables()
     {
         $author_data = $this->notification_data['author_data'] ?? [];
+
         $recap_lines_arr = [];
 
         if (!empty($author_data['posts']))
@@ -104,7 +105,7 @@ class reaction_email_digest extends base
 
         return [
             'USERNAME'    => $author_data['author_name'] ?? 'Utilisateur',
-            'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la dernière fois',
+            'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la dernière fois', // Note: SINCE_TIME n'est plus dans le template
             'RECAP_LINES' => implode("\n", $recap_lines_arr),
         ];
     }

@@ -32,6 +32,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var \phpbb\user_loader */
     protected $user_loader;
 
+    /** @var \phpbb\template\template */
+    protected $template;
+
     /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
 
@@ -52,6 +55,7 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager,
         \phpbb\user_loader $user_loader,
+        \phpbb\template\template $template,
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
@@ -61,6 +65,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->config = $config;
         $this->notification_manager = $notification_manager;
         $this->user_loader = $user_loader;
+        $this->template = $template;
         $this->post_reactions_table = $post_reactions_table;
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
@@ -125,6 +130,7 @@ class notification_task extends \phpbb\cron\task\base
             $author_name   = $row['author_name'] ?? '';
             $author_email  = $row['author_email'] ?? '';
             $author_lang   = $row['author_lang'] ?? '';
+            $topic_id      = (int) ($row['topic_id'] ?? 0);
             $post_subject  = $row['post_subject'] ?? '';
             $reacter_id    = (int) ($row['reacter_id'] ?? 0);
             $reacter_name  = $row['reacter_name'] ?? '';
@@ -153,6 +159,7 @@ class notification_task extends \phpbb\cron\task\base
             if (!isset($by_author[$author_id]['posts'][$post_id]))
             {
                 $by_author[$author_id]['posts'][$post_id] = [
+                    'topic_id'     => $topic_id,
                     'post_subject' => $post_subject,
                     'reactions' => [],
                 ];
@@ -236,7 +243,10 @@ class notification_task extends \phpbb\cron\task\base
             // Envoi via messenger
             try
             {
-                $messenger = new \messenger(false);
+                // CORRECTION : On injecte le service template pour que le messenger trouve les fichiers de l'extension
+                $messenger = new \messenger(true); // true pour désactiver les notifs internes, on ne veut que l'email
+                $messenger->set_template($this->template);
+
                 $messenger->template('reaction_digest', $author_lang);
                 $messenger->subject('Nouvelles réactions sur vos messages');
                 $messenger->to($author_email, $author_name);
