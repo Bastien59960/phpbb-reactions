@@ -94,6 +94,7 @@ class listener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
+            'core.user_setup'                => 'load_language_files',
             'core.page_header'               => 'add_assets_to_page',
             'core.viewtopic_cache_user_data' => 'load_language_and_data',
             'core.viewtopic_post_row_after'  => 'display_reactions',
@@ -188,6 +189,32 @@ class listener implements EventSubscriberInterface
     }
 
     public function add_forum_data($event) {}
+
+    public function load_language_files($event)
+    {
+        $language_sets = [
+            'common',
+            'reactions',
+            'notification/reaction',
+            'notification/notification.type.reaction',
+            'notification/notification.type.reaction_email_digest',
+            'ucp_reactions',
+        ];
+
+        foreach ($language_sets as $lang_set) {
+            $event['lang_set_ext'][] = [
+                'ext_name' => 'bastien59960/reactions',
+                'lang_set' => $lang_set,
+            ];
+        }
+
+        if (!empty($event['is_admin']) && $event['is_admin']) {
+            $event['lang_set_ext'][] = [
+                'ext_name' => 'bastien59960/reactions',
+                'lang_set' => 'acp/common',
+            ];
+        }
+    }
 
     private function get_user_reactions($post_id, $user_id)
     {
