@@ -281,7 +281,7 @@ class reaction extends base
      */
     public static function get_item_author_id($data)
     {
-        return (int) ($data['post_author'] ?? 0);
+        return (int) ($data['post_author'] ?? ($data['poster_id'] ?? 0));
     }
 
     // =========================================================================
@@ -421,8 +421,8 @@ class reaction extends base
     {
         $users = array();
 
-        $post_author = (int) ($type_data['post_author'] ?? 0);
-        $reacter = (int) ($type_data['reacter'] ?? 0);
+        $post_author = (int) ($type_data['post_author'] ?? ($type_data['poster_id'] ?? 0));
+        $reacter = (int) ($type_data['reacter'] ?? ($type_data['reacter_id'] ?? 0));
 
         // Notifier l'auteur UNIQUEMENT s'il n'est pas le r├®acteur
         if ($post_author && $post_author !== $reacter) {

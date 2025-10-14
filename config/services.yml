@@ -136,6 +136,14 @@ services:
         tags:
             - { name: notification.type }
 
+    notification.type.reaction:
+        alias: bastien59960.reactions.notification
+        public: true
+
+    notification.type.reaction_email_digest:
+        alias: bastien59960.reactions.notification.cron_email
+        public: true
+
     # =========================================================================
     # CONTRÔLEUR UCP (PREFERENCES UTILISATEURS)
     # =========================================================================
