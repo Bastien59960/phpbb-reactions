@@ -1,6 +1,8 @@
 <?php
 /**
  * Tests unitaires pour le contrôleur AJAX de l'extension Reactions
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  * 
  * Ce fichier contient les tests unitaires pour le contrôleur AJAX
  * qui gère les requêtes AJAX liées aux réactions aux messages.

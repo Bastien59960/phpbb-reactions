@@ -1,6 +1,8 @@
 <?php
 /**
  * Fichier : ext.php — bastien59960/reactions/ext.php
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Classe principale de l'extension Reactions pour phpBB.
  *

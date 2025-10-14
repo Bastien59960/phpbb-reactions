@@ -1,6 +1,8 @@
 <?php
 /**
  * Fichier : ucp/reactions_module.php — bastien59960/reactions/ucp/reactions_module.php
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Module UCP (User Control Panel) pour la configuration des notifications de réactions.
  *

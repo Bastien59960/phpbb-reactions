@@ -1,6 +1,9 @@
 /**
  * Fichier : styles/prosilver/template/js/reactions.js — bastien59960/reactions
  *
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
+ * 
  * JavaScript pour l'extension Reactions phpBB 3.3.15
  *
  * Ce fichier gère toute l'interactivité côté client pour les réactions aux messages du forum.

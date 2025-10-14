@@ -1,6 +1,8 @@
 <?php
 /**
  * Fichier : controller/ucp_reactions.php — bastien59960/reactions/controller/ucp_reactions.php
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * Contrôleur UCP (User Control Panel) pour la gestion des préférences de notifications de réactions.
  *

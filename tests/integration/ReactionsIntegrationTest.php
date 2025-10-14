@@ -1,6 +1,8 @@
 <?php
 /**
  * Tests d'intégration pour l'extension Reactions
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  * 
  * Ce fichier contient les tests d'intégration qui vérifient
  * le fonctionnement complet de l'extension Reactions dans
