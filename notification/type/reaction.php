@@ -305,7 +305,7 @@ class reaction extends base
      */
     public static function get_item_type_name()
     {
-        return 'NOTIFICATION_TYPE_REACTION';
+        return 'NOTIFICATION_TYPE_REACTION_TITLE';
     }
 
     /**

@@ -62,3 +62,5 @@ $lang = array_merge($lang, array(
 	// ----------------------------------------------------------------------------
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
 ));
+
+$lang = array_merge($lang, array('NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.'));

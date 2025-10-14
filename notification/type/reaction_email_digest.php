@@ -54,7 +54,7 @@ class reaction_email_digest extends base
     public static function get_item_type_description()
     {
         // Note: La clé de langue a été corrigée pour correspondre aux fichiers de langue.
-        return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_DESC';
+        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC';
     }
 
     /**
