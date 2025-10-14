@@ -43,17 +43,18 @@ class reaction_email_digest extends base
     /**
      * Clé de langue affichée dans l'UCP (titre).
      */
-    public function get_item_type_name()
+    public static function get_item_type_name()
     {
-        return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST';
+        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE';
     }
 
     /**
      * Clé de langue affichée dans l'UCP (description).
      */
-    public function get_item_type_description()
+    public static function get_item_type_description()
     {
-        return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN';
+        // Note: La clé de langue a été corrigée pour correspondre aux fichiers de langue.
+        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC';
     }
 
     /**
@@ -114,7 +115,7 @@ class reaction_email_digest extends base
      * Cette notification n'est pas liée à un item spécifique.
      * Requis par la classe de base.
      */
-    public function get_item_id($data)
+    public static function get_item_id($data)
     {
         return 0;
     }
@@ -123,7 +124,7 @@ class reaction_email_digest extends base
      * Cette notification n'a pas de parent.
      * Requis par la classe de base.
      */
-    public function get_item_parent_id($data)
+    public static function get_item_parent_id($data)
     {
         return 0;
     }
@@ -141,7 +142,7 @@ class reaction_email_digest extends base
      * Cette notification n'a pas d'URL cliquable (version statique).
      * Requis par la classe de base.
      */
-    public function get_item_url($data)
+    public static function get_item_url($data)
     {
         return '';
     }
@@ -150,7 +151,7 @@ class reaction_email_digest extends base
      * L'auteur est le destinataire, mais ce n'est pas un "item".
      * Requis par la classe de base.
      */
-    public function get_item_author_id($data)
+    public static function get_item_author_id($data)
     {
         return 0;
     }
