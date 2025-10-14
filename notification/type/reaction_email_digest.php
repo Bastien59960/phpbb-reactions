@@ -1,11 +1,25 @@
 <?php
 /**
  * Fichier : notification/type/reaction_email_digest.php — bastien59960/reactions/notification/type/reaction_email_digest.php
+ * Fichier : reaction_email_digest.php
+ * Chemin : bastien59960/reactions/notification/type/reaction_email_digest.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/notification/type/reaction_email_digest.php
  *
  * Type de notification "Résumé e-mail des réactions" pour l'extension Reactions.
+ * Rôle :
+ * Définit le type de notification "Résumé e-mail des réactions". Cette classe est
+ * utilisée exclusivement par la tâche CRON (`cron/notification_task.php`) pour
+ * envoyer un e-mail récapitulatif (digest) des réactions reçues.
  *
  * Ce type est utilisé exclusivement par la tâche cron afin d'envoyer un digest périodique
  * des réactions reçues. Aucune entrée n'est créée dans la cloche phpBB.
+ * Contrairement à `reaction.php`, ce type ne crée pas de notification visible
+ * dans la cloche. Il sert uniquement de "véhicule" pour envoyer un e-mail
+ * formaté avec un template spécifique (`reaction_digest.txt`).
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\notification\type;
@@ -23,15 +37,7 @@ class reaction_email_digest extends base
      */
     public function get_type()
     {
-        return 'notification.type.reaction_email_digest';
-    }
-
-    /**
-     * Ce type n'expose que la méthode email.
-     */
-    public function get_notification_methods()
-    {
-        return ['email'];
+        return 'bastien59960.reactions.notification.cron_email';
     }
 
     /**
@@ -39,7 +45,7 @@ class reaction_email_digest extends base
      */
     public static function get_item_type_name()
     {
-        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE';
+        return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST';
     }
 
     /**
@@ -47,30 +53,25 @@ class reaction_email_digest extends base
      */
     public static function get_item_type_description()
     {
-        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC';
+        return 'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN';
     }
 
     /**
      * Aucune notification individuelle n'est créée : tableau vide.
      */
-    public function find_users_for_notification($data, $options = [])
-    {
-        return [];
-    }
-
-    public function create_insert_array($data, $pre_create_data = [])
+    public function find_users_for_notification($data, $options = array())
     {
         return [];
     }
 
     public function get_title()
     {
-        return '';
+        return 'Résumé des réactions';
     }
 
     public function get_language_file()
     {
-        return 'notification/notification.type.reaction_email_digest';
+        return 'bastien59960/reactions:notification/reaction';
     }
 
     public function get_email_template()
@@ -80,7 +81,32 @@ class reaction_email_digest extends base
 
     public function get_email_template_variables()
     {
-        return [];
+        $author_data = $this->notification_data['author_data'] ?? [];
+        $recap_lines_arr = [];
+
+        if (!empty($author_data['posts']))
+        {
+            foreach ($author_data['posts'] as $post_id => $post_data)
+            {
+                $post_subject = $post_data['post_subject'] ?: '[sans sujet]';
+                foreach ($post_data['reactions'] as $reaction)
+                {
+                    $when = date('d/m/Y H:i', (int) $reaction['time']);
+                    $reactor = $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']);
+                    $emoji = $reaction['emoji'] ?: '?';
+                    $recap_lines_arr[] = sprintf(
+                        '- Le %s, %s a réagi avec %s à votre message : "%s"',
+                        $when, $reactor, $emoji, $post_subject
+                    );
+                }
+            }
+        }
+
+        return [
+            'USERNAME'    => $author_data['author_name'] ?? 'Utilisateur',
+            'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la dernière fois',
+            'RECAP_LINES' => implode("\n", $recap_lines_arr),
+        ];
     }
 
     public static function get_item_id($data)
