@@ -29,9 +29,39 @@ if (!defined('IN_PHPBB')) {
 }
 
 use phpbb\notification\type\base;
+use phpbb\db\driver\driver_interface;
+use phpbb\language\language;
+use phpbb\user;
+use phpbb\auth\auth;
 
 class reaction_email_digest extends base
 {
+    /**
+     * Constructeur de la classe.
+     *
+     * IMPORTANT : L'ordre des arguments doit correspondre à celui de la classe parente.
+     *
+     * @param driver_interface $db                  Base de données
+     * @param language         $language            Gestionnaire de langues
+     * @param user             $user                Utilisateur courant
+     * @param auth             $auth                Autorisations
+     * @param string           $phpbb_root_path     Chemin racine phpBB
+     * @param string           $php_ext             Extension PHP
+     * @param string           $notifications_table Table des notifications
+     */
+    public function __construct(
+        driver_interface $db,
+        language $language,
+        user $user,
+        auth $auth,
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table
+    ) {
+        // Appeler le constructeur de la classe parente avec toutes les dépendances requises.
+        parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
+    }
+
     /**
      * Identifiant unique du type de notification.
      */
@@ -73,11 +103,6 @@ class reaction_email_digest extends base
     public function find_users_for_notification($data, $options = array())
     {
         return [];
-    }
-
-    public function get_title()
-    {
-        return 'Résumé des réactions';
     }
 
     public function get_language_file()

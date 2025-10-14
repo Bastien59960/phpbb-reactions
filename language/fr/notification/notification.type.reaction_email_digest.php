@@ -51,16 +51,13 @@ if (empty($lang) || !is_array($lang))
 // ============================================================================
 
 $lang = array_merge($lang, array(
-
-	// ----------------------------------------------------------------------------
-	// ✉️ Texte général du type de notification
-	// ----------------------------------------------------------------------------
-	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST' => 'Résumé périodique par e-mail des réactions',
-
 	// ----------------------------------------------------------------------------
 	// 🧭 Titre affiché dans les préférences de notification (UCP)
 	// ----------------------------------------------------------------------------
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
-));
 
-$lang = array_merge($lang, array('NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.'));
+	// ----------------------------------------------------------------------------
+	// ⚙️ Description affichée sous le titre dans l’UCP
+	// ----------------------------------------------------------------------------
+	'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.',
+));
