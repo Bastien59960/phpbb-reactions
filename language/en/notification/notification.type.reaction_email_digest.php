@@ -39,6 +39,7 @@ if (!defined('IN_PHPBB')) {
 $lang = array_merge($lang ?? [], [
     // --- Notification group (UCP) ---
     'NOTIFICATION_GROUP_REACTIONS' => 'Reactions',
+    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'Reaction e-mail summaries',
     // --- E-mail summary (UCP) ---
     'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Reactions e-mail summary',
     'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Periodically receive an e-mail summary of reactions to your posts.',

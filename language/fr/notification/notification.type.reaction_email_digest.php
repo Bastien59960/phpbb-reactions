@@ -53,6 +53,7 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, array(
 	// --- Groupe de notifications (UCP) ---
 	'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
+	'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'Résumés e-mail des réactions',
 	// --- Résumé par e-mail (UCP) ---
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.',

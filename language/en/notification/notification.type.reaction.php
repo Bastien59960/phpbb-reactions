@@ -36,6 +36,7 @@ if (!defined('IN_PHPBB')) {
 $lang = array_merge($lang ?? [], [
     // --- Notification group (UCP) ---
     'NOTIFICATION_GROUP_REACTIONS' => 'Reactions',
+    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Reactions to my posts',
 
     // --- Instant notification (bell & UCP) ---
     'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> reacted to your post with %2$s',

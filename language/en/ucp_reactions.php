@@ -18,6 +18,7 @@ if (!defined('IN_PHPBB')) {
 
 $lang = array_merge($lang ?? [], [
     'UCP_REACTIONS_TITLE'           => 'Reactions Preferences',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choose how you want to be notified when other members react to your posts.',
     'UCP_REACTIONS_NOTIFY'          => 'Notify me about new reactions (board notification)',
     'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Receive an instant notification in the forum bell.',
     'UCP_REACTIONS_EMAIL'           => 'Notify me about new reactions (e-mail)',
