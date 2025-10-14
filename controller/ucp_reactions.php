@@ -70,6 +70,9 @@ class ucp_reactions
 	 */
 	public function handle($id, $mode)
 	{
+		// Charger le fichier de langue spécifique à ce module UCP
+		$this->user->add_lang('ucp_reactions', 'bastien59960/reactions');
+
 		$user_id = (int) $this->user->data['user_id'];
 
 		// Récupérer les préférences actuelles de l'utilisateur.

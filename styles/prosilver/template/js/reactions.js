@@ -900,11 +900,7 @@ function toggle_visible(id) {
                 // =====================================================================
                 
                 console.error('[Reactions] Erreur métier du serveur:', data.error || data.message || 'Erreur inconnue.');
-                
-                // Si erreur liée à l'authentification
-                if (data.error && data.error.toLowerCase().includes('logged in')) {
-                    showLoginMessage();
-                }
+                alert(data.error || 'Une erreur est survenue.');
                 
                 // Si erreur de limite (max réactions atteintes)
                 if (data.error && data.error.includes('LIMIT')) {

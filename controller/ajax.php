@@ -343,12 +343,10 @@ class ajax
                 $this->db->sql_freeresult($result);
                 
                 if ($current_types >= $max_per_post) {
-                    ob_end_clean();
-                    return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_POST', 'rid' => $rid], 400);
+                    throw new HttpException(400, sprintf($this->language->lang('REACTIONS_LIMIT_POST'), $max_per_post));
                 }
                 if ($user_reactions >= $max_per_user) {
-                    ob_end_clean();
-                    return new JsonResponse(['success' => false, 'error' => 'REACTIONS_LIMIT_USER', 'rid' => $rid], 400);
+                    throw new HttpException(400, sprintf($this->language->lang('REACTIONS_LIMIT_USER'), $max_per_user));
                 }
 
                 error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");

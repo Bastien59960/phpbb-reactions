@@ -52,18 +52,10 @@ $lang = array_merge($lang, array(
 	// ----------------------------------------------------------------------------
 	// 🔔 Texte principal de la notification (affiché dans la cloche et les emails)
 	// ----------------------------------------------------------------------------
-	// Exemple d’affichage : "Alice a réagi à votre message avec 👍"
-	'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => '%s a réagi à votre message avec %s',
+	'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
 
 	// ----------------------------------------------------------------------------
 	// 🧭 Groupe dans les préférences de notification (UCP)
 	// ----------------------------------------------------------------------------
-	'NOTIFICATION_GROUP_REACTIONS' => 'Notifications de réactions',
-
-	// ----------------------------------------------------------------------------
-	// ⚙️ Titre et description du type de notification dans l’UCP
-	// ----------------------------------------------------------------------------
-	'NOTIFICATION_NOTIFICATION.TYPE.REACTION_TITLE' => 'Réactions à vos messages',
-	'NOTIFICATION_NOTIFICATION.TYPE.REACTION_DESC'  => 'Recevoir une notification lorsqu’un utilisateur réagit à vos messages.',
-
+	'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
 ));

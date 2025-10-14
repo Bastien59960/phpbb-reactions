@@ -55,17 +55,10 @@ $lang = array_merge($lang, array(
 	// ----------------------------------------------------------------------------
 	// ✉️ Texte général du type de notification
 	// ----------------------------------------------------------------------------
-	// Exemple : "Résumé e-mail des réactions" (affiché dans les préférences UCP)
-	'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'Résumé e-mail des réactions',
+	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST' => 'Résumé périodique par e-mail des réactions',
 
 	// ----------------------------------------------------------------------------
 	// 🧭 Titre affiché dans les préférences de notification (UCP)
 	// ----------------------------------------------------------------------------
 	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
-
-	// ----------------------------------------------------------------------------
-	// ⚙️ Description affichée sous le titre dans l’UCP
-	// ----------------------------------------------------------------------------
-	'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.',
-
 ));

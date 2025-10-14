@@ -317,7 +317,7 @@ class reaction extends base
      */
     public static function get_item_type_description()
     {
-        return 'NOTIFICATION_TYPE_REACTION_EXPLAIN';
+        return 'NOTIFICATION_TYPE_REACTION_DESC';
     }
 
     // =========================================================================
