@@ -35,6 +35,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var \phpbb\template\template */
     protected $template;
 
+    /** @var \phpbb\language\language */
+    protected $language;
+
     /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
 
@@ -55,6 +58,7 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager,
         \phpbb\user_loader $user_loader,
+        \phpbb\language\language $language,
         \phpbb\template\template $template,
         $post_reactions_table,
         $phpbb_root_path,
@@ -65,6 +69,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->config = $config;
         $this->notification_manager = $notification_manager;
         $this->user_loader = $user_loader;
+        $this->language = $language;
         $this->template = $template;
         $this->post_reactions_table = $post_reactions_table;
         $this->phpbb_root_path = $phpbb_root_path;

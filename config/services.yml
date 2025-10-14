@@ -92,6 +92,7 @@ services:
             - '@config'
             - '@notification_manager'
             - '@user_loader'
+            - '@language'
             - '@template'
             - '%tables.post_reactions%'
             - '%core.root_path%'
