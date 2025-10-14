@@ -260,10 +260,11 @@ class ajax
             // 3. EXTRACTION ET VALIDATION DES PARAMÈTRES
             // =====================================================================
             
-            $sid     = $data['sid'] ?? '';
-            $post_id = (int) ($data['post_id'] ?? 0);
-            $emoji   = $data['emoji'] ?? '';
-            $action  = $data['action'] ?? '';
+            $sid      = $data['sid'] ?? '';
+            $post_id  = (int) ($data['post_id'] ?? 0);
+            $emoji    = $data['emoji'] ?? '';
+            $action   = $data['action'] ?? '';
+            $post_ids = [];
 
             // Vérification du jeton de session pour la protection CSRF.
             if ($sid !== $this->user->data['session_id']) {
@@ -271,7 +272,7 @@ class ajax
             }
 
             // Valider que l'action demandée est l'une des actions autorisées.
-            if (!in_array($action, ['add', 'remove', 'get', 'get_users'], true)) {
+            if (!in_array($action, ['add', 'remove', 'get', 'get_users', 'sync'], true)) {
                 ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
@@ -284,8 +285,36 @@ class ajax
             // 4. VALIDATION DES DONNÉES
             // =====================================================================
             
+            if ($action === 'sync') {
+                $post_ids_raw = $data['post_ids'] ?? [];
+                if (!is_array($post_ids_raw)) {
+                    ob_end_clean();
+                    return new JsonResponse([
+                        'success' => false,
+                        'error'   => 'Invalid payload: post_ids must be an array',
+                        'rid'     => $rid,
+                    ], 400);
+                }
+
+                $post_ids = array_values(array_unique(array_filter(
+                    array_map('intval', $post_ids_raw),
+                    static function ($id) {
+                        return $id > 0;
+                    }
+                )));
+
+                if (empty($post_ids)) {
+                    ob_end_clean();
+                    return new JsonResponse([
+                        'success' => false,
+                        'error'   => 'No valid post_ids provided',
+                        'rid'     => $rid,
+                    ], 400);
+                }
+            }
+
             // Vérifier que le post_id est valide et que le message existe.
-            if (!$post_id || !$this->is_valid_post($post_id)) {
+            if ($action !== 'sync' && (!$post_id || !$this->is_valid_post($post_id))) {
                 ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
@@ -294,8 +323,8 @@ class ajax
                 ], 400);
             }
 
-            // Vérifier que l'emoji est valide (sauf pour l'action 'get').
-            if ($action !== 'get' && (!$emoji || !$this->is_valid_emoji($emoji))) {
+            // Vérifier que l'emoji est valide (sauf pour les actions qui n'en ont pas besoin).
+            if (!in_array($action, ['get', 'sync'], true) && (!$emoji || !$this->is_valid_emoji($emoji))) {
                 ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
@@ -373,6 +402,10 @@ class ajax
             
                 case 'get_users':
                     $resp = $this->get_users_for_emoji($post_id, $emoji);
+                    break;
+
+                case 'sync':
+                    $resp = $this->sync_reactions($post_ids);
                     break;
                     
                 default:
@@ -690,6 +723,23 @@ class ajax
         $this->db->sql_freeresult($result);
 
         return $reactions;
+    }
+
+    private function sync_reactions(array $post_ids)
+    {
+        $payload = [];
+
+        foreach ($post_ids as $pid) {
+            $payload[$pid] = [
+                'reactions' => $this->get_reactions_array($pid),
+                'html'      => $this->reactions_helper->get_reactions_html_for_post($pid),
+            ];
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'posts'   => $payload,
+        ]);
     }
 
     // =============================================================================

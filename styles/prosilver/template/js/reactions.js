@@ -75,6 +75,15 @@ function toggle_visible(id) {
     /** @type {Object|null} Données JSON chargées depuis categories.json */
     let allEmojisData = null;
 
+    /** Intervalle (ms) entre deux synchronisations automatiques */
+    const LIVE_SYNC_INTERVAL = 10000;
+
+    /** Identifiant de l'intervalle de synchronisation */
+    let liveSyncTimer = null;
+
+    /** Flag pour éviter les requêtes concurrentes */
+    let liveSyncInFlight = false;
+
     /**
      * Liste des 10 emojis courantes affichées par défaut
      * 
@@ -1218,7 +1227,118 @@ function toggle_visible(id) {
      * ÉVÉNEMENT : DOMContentLoaded
      * - Garanti que le DOM est prêt avant d'attacher les écouteurs
      */
-    document.addEventListener('DOMContentLoaded', () => initReactions());
+    document.addEventListener('DOMContentLoaded', () => {
+        initReactions();
+        startLiveSync();
+    });
+
+    /* ---------------------------------------------------------------------- */
+    /* --------------------- SYNCHRONISATION TEMPS RÉEL ---------------------- */
+    /* ---------------------------------------------------------------------- */
+
+    /**
+     * Démarre la synchronisation automatique.
+     */
+    function startLiveSync() {
+        if (typeof REACTIONS_AJAX_URL === 'undefined' || typeof REACTIONS_SID === 'undefined' || !REACTIONS_SID) {
+            return;
+        }
+
+        if (liveSyncTimer !== null) {
+            window.clearInterval(liveSyncTimer);
+            liveSyncTimer = null;
+        }
+
+        performLiveSync();
+        liveSyncTimer = window.setInterval(performLiveSync, LIVE_SYNC_INTERVAL);
+    }
+
+    /**
+     * Récupère les identifiants des messages présents sur la page.
+     * @returns {number[]}
+     */
+    function collectLiveSyncPostIds() {
+        const ids = [];
+        document.querySelectorAll('.post-reactions-container[data-post-id]').forEach((container) => {
+            const value = parseInt(container.getAttribute('data-post-id'), 10);
+            if (!Number.isNaN(value) && value > 0) {
+                ids.push(value);
+            }
+        });
+        return Array.from(new Set(ids));
+    }
+
+    /**
+     * Interroge l'API pour récupérer les réactions actualisées.
+     */
+    function performLiveSync() {
+        if (liveSyncInFlight) {
+            return;
+        }
+
+        const postIds = collectLiveSyncPostIds();
+        if (!postIds.length) {
+            if (liveSyncTimer !== null) {
+                window.clearInterval(liveSyncTimer);
+                liveSyncTimer = null;
+            }
+            return;
+        }
+
+        liveSyncInFlight = true;
+
+        fetch(REACTIONS_AJAX_URL, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'sync',
+                sid: REACTIONS_SID,
+                post_ids: postIds,
+            }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (!data || !data.success || !data.posts) {
+                    return;
+                }
+
+                Object.keys(data.posts).forEach((postId) => {
+                    applyLiveSyncPayload(postId, data.posts[postId]);
+                });
+            })
+            .catch((error) => {
+                console.warn('[Reactions] Live sync failed', error);
+            })
+            .finally(() => {
+                liveSyncInFlight = false;
+            });
+    }
+
+    /**
+     * Met à jour le DOM avec les informations renvoyées par l'API.
+     * @param {string|number} postId
+     * @param {{html?: string}} payload
+     */
+    function applyLiveSyncPayload(postId, payload) {
+        if (!payload || typeof payload.html !== 'string') {
+            return;
+        }
+
+        const container = document.querySelector(`.post-reactions-container[data-post-id="${postId}"]`);
+        if (!container) {
+            return;
+        }
+
+        if (container.innerHTML === payload.html) {
+            return;
+        }
+
+        container.innerHTML = payload.html;
+        initReactions(container);
+    }
 
     /* ====================================================================== */
     /* ===================== FIN DU MODULE PRINCIPAL ======================== */
