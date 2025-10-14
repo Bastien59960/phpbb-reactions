@@ -114,7 +114,8 @@ class reaction extends base
             $user,
             $auth,
             $phpbb_root_path,
-            $php_ext
+            $php_ext,
+            $notifications_table
         );
 
         // Stocker les dépendances spécifiques à cette classe
