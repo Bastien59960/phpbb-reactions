@@ -30,14 +30,6 @@ $lang = array_merge($lang, array(
     // =============================================================================
     // ADMINISTRATION MESSAGES (ACP)
     // =============================================================================
-    'ACP_REACTIONS_TITLE'       => 'Reactions settings',
-    'ACP_REACTIONS_SETTINGS'    => 'Reactions configuration',
-    'ACP_REACTIONS_ENABLED'     => 'Enable reactions',
-    'ACP_REACTIONS_MAX_PER_POST' => 'Maximum number of reaction types per post',
-    'ACP_REACTIONS_MAX_PER_USER' => 'Maximum number of reactions per user per post',
-    'ACP_REACTIONS_EXPLAIN'     => 'Configure the settings for post reactions.',
-    
-    // =============================================================================
     // USER INTERFACE MESSAGES
     // =============================================================================
     'REACTION_ADD'              => 'Add a reaction',
@@ -100,4 +92,14 @@ $lang = array_merge($lang, array(
     'REACTIONS_LIMIT_REACHED'   => 'Reaction limit reached',
     'REACTION_LIMIT_POST'       => 'Post reaction type limit reached',
     'REACTION_LIMIT_USER'       => 'User reaction limit reached',
+
+    // =============================================================================
+    // USER PREFERENCES (UCP)
+    // =============================================================================
+    'UCP_REACTIONS_TITLE'               => 'Reactions preferences',
+    'UCP_REACTIONS_SAVED'               => 'Your reaction notification preferences have been saved.',
+    'UCP_REACTIONS_NOTIFY'              => 'Notify me about new reactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'      => 'Receive an instant notification in the forum bell.',
+    'UCP_REACTIONS_EMAIL'               => 'Notify me about new reactions (e-mail)',
+    'UCP_REACTIONS_EMAIL_EXPLAIN'       => 'Receive a periodic email summary of new reactions.',
 ));

@@ -35,20 +35,6 @@ if (empty($lang) || !is_array($lang))
 // Fusionner le tableau de langues existant
 $lang = array_merge($lang, array(
     // =============================================================================
-    // MESSAGES D'ADMINISTRATION (ACP)
-    // =============================================================================
-    'ACP_REACTIONS_TITLE'       => 'Réglages des réactions',
-    'ACP_REACTIONS_SETTINGS'    => 'Configuration des réactions',
-    'ACP_REACTIONS_SETTINGS_EXPLAIN' => 'Ici, vous pouvez gérer les paramètres pour l\'extension de réactions aux messages.',
-    'ACP_REACTIONS_ENABLED'     => 'Activer les réactions',
-    'ACP_REACTIONS_MAX_PER_POST' => 'Nombre maximum de types de réactions par post',
-    'ACP_REACTIONS_MAX_PER_POST_EXPLAIN' => 'Le nombre maximal de types de réaction uniques qu\'un seul message peut recevoir.',
-    'ACP_REACTIONS_MAX_PER_USER' => 'Nombre maximum de réactions par utilisateur et par post',
-    'ACP_REACTIONS_MAX_PER_USER_EXPLAIN' => 'Le nombre maximal de réactions qu\'un seul utilisateur peut ajouter à un seul message.',
-    'REACTIONS_SPAM_TIME'       => 'Fenêtre anti-spam des notifications',
-    'REACTIONS_SPAM_TIME_EXPLAIN' => 'Le temps en minutes à attendre avant d\'envoyer une notification groupée par e-mail. Mettre à 0 pour désactiver les notifications par e-mail.',
-    
-    // =============================================================================
     // MESSAGES D'INTERFACE UTILISATEUR
     // =============================================================================
     'REACTION_ADD'              => 'Ajouter une réaction',
@@ -111,4 +97,14 @@ $lang = array_merge($lang, array(
     'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
     'REACTION_LIMIT_POST'       => 'Limite de types de réactions par message atteinte',
     'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
+
+    // =============================================================================
+    // PRÉFÉRENCES UTILISATEUR (UCP)
+    // =============================================================================
+    'UCP_REACTIONS_TITLE'               => 'Préférences des réactions',
+    'UCP_REACTIONS_SAVED'               => 'Vos préférences de notification de réactions ont été enregistrées.',
+    'UCP_REACTIONS_NOTIFY'              => 'M\'avertir des nouvelles réactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'      => 'Recevoir une notification instantanée dans la cloche du forum.',
+    'UCP_REACTIONS_EMAIL'               => 'M\'avertir des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_EMAIL_EXPLAIN'       => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
 ));

@@ -28,8 +28,6 @@ class reactions_module
 	{
 		global $template, $user, $request, $config, $phpbb_container;
 
-		$user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
-
 		$controller = $phpbb_container->get('bastien59960.reactions.controller.ucp_reactions');
 		$controller->handle($id, $mode);
 	}

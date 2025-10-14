@@ -77,7 +77,6 @@ class ucp_reactions
 			'S_EMAIL_CHECKED'       => ($current_email) ? ' checked="checked"' : '',
 		));
 
-		$this->user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
 		page_header($this->user->lang('UCP_REACTIONS_TITLE'));
 		$this->template->set_filenames(array('body' => '@bastien59960_reactions/ucp_reactions.html'));
 		page_footer();

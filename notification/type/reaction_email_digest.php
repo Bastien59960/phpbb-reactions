@@ -104,7 +104,7 @@ class reaction_email_digest extends base
         }
 
         return [
-            'USERNAME'    => $author_data['author_name'] ?? 'Utilisateur',
+            'USERNAME'    => $this->notification_data['author_name'] ?? ($author_data['author_name'] ?? 'Utilisateur'),
             'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la dernière fois', // Note: SINCE_TIME n'est plus dans le template
             'RECAP_LINES' => implode("\n", $recap_lines_arr),
         ];

@@ -26,7 +26,9 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
     'UCP_REACTIONS_TITLE' => 'Préférences des réactions',
-    'UCP_REACTIONS_NOTIFY' => 'Activer les notifications internes (cloche)',
-    'UCP_REACTIONS_CRON_EMAIL' => 'Activer le résumé périodique par e-mail',
+    'UCP_REACTIONS_NOTIFY' => 'M\'avertir des nouvelles réactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN' => 'Recevoir une notification instantanée dans la cloche du forum.',
+    'UCP_REACTIONS_EMAIL' => 'M\'avertir des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_EMAIL_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
     'UCP_REACTIONS_SAVED' => 'Vos préférences de réactions ont été enregistrées.',
 ));
