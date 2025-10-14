@@ -356,21 +356,20 @@ class reaction extends base
      */
     public function get_title()
     {
-        return 'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION';
+        return 'NOTIFICATION_TYPE_REACTION';
     }
 
     /**
      * Sp├®cifie le fichier de langue ├á charger pour ce type
      * 
-     * phpBB chargera automatiquement :
-     * - language/fr/notification/notification.type.reaction.php (fran├ºais)
-     * - language/en/notification/notification.type.reaction.php (anglais)
+     * phpBB chargera automatiquement le fichier `language/{iso}/notification/reaction.php`
+     * de cette extension.
      * 
-     * @return string Le chemin relatif du fichier de langue
+     * @return string Le chemin au format `vendor/ext:path/filename`
      */
     public function get_language_file()
     {
-        return 'notification/notification.type.reaction';
+        return 'bastien59960/reactions:notification/reaction';
     }
 
     // =========================================================================
@@ -381,27 +380,25 @@ class reaction extends base
     /**
      * Retourne le nom du type affich├® dans l'UCP
      * 
-     * CORRECTION : Utilise la cl├® compl├¿te avec le pr├®fixe
-     * D├®finie dans notification/notification.type.reaction.php
+     * Doit correspondre à une clé dans le fichier de langue de la notification.
      * 
      * @return string La cl├® de langue pour le nom
      */
     public static function get_item_type_name()
     {
-        return 'NOTIFICATION_NOTIFICATION.TYPE.REACTION_TITLE';
+        return 'NOTIFICATION_TYPE_REACTION';
     }
 
     /**
      * Retourne la description du type affich├®e dans l'UCP
      * 
-     * CORRECTION : Utilise la cl├® compl├¿te avec le pr├®fixe
-     * D├®finie dans notification/notification.type.reaction.php
+     * Doit correspondre à une clé dans le fichier de langue de la notification.
      * 
      * @return string La cl├® de langue pour la description
      */
     public static function get_item_type_description()
     {
-        return 'NOTIFICATION_NOTIFICATION.TYPE.REACTION_DESC';
+        return 'NOTIFICATION_TYPE_REACTION_EXPLAIN';
     }
 
     // =========================================================================

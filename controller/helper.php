@@ -1,23 +1,22 @@
 <?php
 /**
- * Fichier : helper.php — bastien59960/reactions/controller/helper.php
+ * Fichier : helper.php
+ * Chemin : bastien59960/reactions/controller/helper.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/helper.php
  *
- * Classe Helper principale de l'extension Reactions pour phpBB.
+ * Rôle :
+ * Cette classe fournit des méthodes utilitaires centralisées pour l'extension.
+ * Son rôle principal est de générer le bloc HTML des réactions pour un message
+ * donné. Ce HTML est ensuite renvoyé par le contrôleur AJAX pour mettre à jour
+ * l'affichage sans recharger la page.
  *
- * Cette classe centralise des méthodes utilitaires utilisées par différents
- * composants de l'extension (contrôleurs, listeners, templates, etc.).
- * Elle sert d'abstraction pour faciliter les appels récurrents à la base
- * de données, aux templates, aux routes ou à la traduction.
+ * Informations reçues :
+ * - `get_reactions_html_for_post($post_id)` : Reçoit l'ID d'un message.
  *
- * Structure du fichier :
- *  - Déclaration du namespace et imports
- *  - Définition des propriétés et injection des dépendances
- *  - Méthodes utilitaires (chaque méthode est documentée individuellement)
+ * Elle est injectée comme service dans d'autres composants (notamment le
+ * contrôleur AJAX) pour éviter la duplication de code.
  *
- * Bonnes pratiques respectées :
- *  - Aucune logique métier dupliquée ailleurs
- *  - Utilisation correcte du controller_helper pour générer des routes
- *  - Préparation pour extension future des fonctionnalités
  *
  * @package bastien59960
 eactions

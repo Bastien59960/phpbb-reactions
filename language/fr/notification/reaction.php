@@ -35,5 +35,4 @@ $lang = array_merge($lang, array(
 	// Type de notification : Résumé par e-mail (cron)
 	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST'         => 'Résumé par e-mail des réactions',
 	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
-
 ));

@@ -1,16 +1,15 @@
 <?php
 /**
- * File: language/en/acp/common.php — bastien59960/reactions/language/en/acp/common.php
+ * Fichier : common.php
+ * Chemin : bastien59960/reactions/language/en/acp/common.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/language/en/acp/common.php
  *
- * English language file for the ACP (Admin Control Panel) part of the Reactions extension.
+ * Rôle :
+ * Ce fichier contient les chaînes de langue anglaises pour la partie administrative
+ * (ACP) de l'extension. Il est utilisé pour afficher les titres, labels et
+ * explications dans le panneau de configuration de l'extension.
  *
- * This file contains all the admin panel strings used by the extension in English.
- *
- * Key points:
- *   - Provides all ACP-related translatable strings for the extension
- *   - Used by phpBB to display admin configuration pages for Reactions
- *
- * This file must be kept in sync with the French version for consistency.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

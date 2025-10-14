@@ -1,17 +1,19 @@
 <?php
 /**
- * Fichier : controller/test.php — bastien59960/reactions/controller/test.php
+ * Fichier : test.php
+ * Chemin : bastien59960/reactions/controller/test.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/test.php
  *
- * Contrôleur de test pour l'extension Reactions.
+ * Rôle :
+ * Ce contrôleur fournit un point de terminaison de diagnostic pour l'extension.
+ * Il effectue une série de vérifications (connexion BDD, existence des tables,
+ * support UTF8MB4) et retourne les résultats au format JSON.
  *
- * Ce fichier peut être utilisé pour des expérimentations, des tests de développement ou des vérifications de fonctionnalités spécifiques liées aux réactions.
- * Il n'est pas utilisé en production et ne fait pas partie du flux métier principal de l'extension.
+ * Il est destiné uniquement au développement et au débogage, et ne reçoit
+ * aucune information en entrée. Il ne doit pas être exposé en production.
  *
- * Points clés :
- *   - Permet de tester rapidement des fonctions ou des intégrations
- *   - Sert de base pour des essais ou des débogages ponctuels
- *
- * Ce fichier peut être supprimé ou ignoré en production.
+ * URL d'accès : /app.php/reactions/test
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

@@ -1,16 +1,14 @@
 <?php
 /**
- * File: language/en/ucp_reactions.php — bastien59960/reactions/language/en/ucp_reactions.php
+ * Fichier : ucp_reactions.php
+ * Chemin : bastien59960/reactions/language/en/ucp_reactions.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/language/en/ucp_reactions.php
  *
- * English language file for the UCP (User Control Panel) preferences of the Reactions extension.
+ * Rôle :
+ * Ce fichier contient les chaînes de langue anglaises pour la page de préférences
+ * des réactions dans le panneau de contrôle de l'utilisateur (UCP).
  *
- * This file contains all the strings used in the user preferences panel for reactions (notifications, email digest, etc.) in English.
- *
- * Key points:
- *   - Provides all translatable strings for user preferences related to reactions
- *   - Used by phpBB to display the UCP preferences page for the extension
- *
- * This file must be kept in sync with the French version for consistency.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

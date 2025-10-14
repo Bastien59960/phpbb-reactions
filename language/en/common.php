@@ -1,16 +1,16 @@
 <?php
 /**
- * File: language/en/common.php — bastien59960/reactions/language/en/common.php
+ * Fichier : common.php
+ * Chemin : bastien59960/reactions/language/en/common.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions/blob/main/language/en/common.php
  *
- * Main English language file for the Reactions extension.
+ * Rôle :
+ * Ce fichier contient les chaînes de langue anglaises générales pour l'interface
+ * utilisateur (UI), les messages d'erreur, les tooltips, et les options de
+ * configuration dans le panneau d'administration (ACP).
  *
- * This file contains all the user interface, error, notification, and admin strings used by the extension in English.
- *
- * Key points:
- *   - Provides all translatable strings for the extension (UI, notifications, errors, tooltips, etc.)
- *   - Used by phpBB to display messages and labels in the forum
- *
- * This file must be kept in sync with the French version for consistency.
+ * Il est chargé sur la plupart des pages où l'extension est active.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -100,19 +100,4 @@ $lang = array_merge($lang, array(
     'REACTIONS_LIMIT_REACHED'   => 'Reaction limit reached',
     'REACTION_LIMIT_POST'       => 'Post reaction type limit reached',
     'REACTION_LIMIT_USER'       => 'User reaction limit reached',
-
-    // =============================================================================
-    // NOTIFICATIONS
-    // =============================================================================
-    'REACTIONS_NOTIFICATION_TITLE'      => '%1$s reacted to your message',
-    'REACTIONS_NOTIFICATION_TITLE_PLURAL' => '%1$s and %2$d others reacted to your message',
-    'REACTIONS_NOTIFICATION_AND_OTHERS' => '%1$s and %2$d other(s)',
-    'REACTIONS_NOTIFICATION_EMAIL_SUBJECT' => 'New reactions to your message "%2$s"',
-    'REACTIONS_NOTIFICATION_TYPE' => 'Post reactions',
-    'REACTIONS_NOTIFICATION_GROUP' => 'Reaction notifications',
-
-    'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> reacted %2$s to your message',
-    'NOTIFICATION_TYPE_BASTIEN59960_REACTIONS_CRON_EMAIL' => 'Reactions email digest',
-    'REACTION_DIGEST_EMAIL_NOTIFICATION' => 'Receive a periodic summary of new reactions by email.',
-    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Reactions to your posts',
 ));
