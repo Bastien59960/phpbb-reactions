@@ -127,4 +127,31 @@ class reaction_email_digest extends base
     {
         return 0;
     }
+
+    /**
+     * Cette notification n'a pas d'URL cliquable.
+     * Requis par la classe de base.
+     */
+    public function get_url()
+    {
+        return '';
+    }
+
+    /**
+     * Cette notification n'a pas d'URL cliquable (version statique).
+     * Requis par la classe de base.
+     */
+    public static function get_item_url($data)
+    {
+        return '';
+    }
+
+    /**
+     * L'auteur est le destinataire, mais ce n'est pas un "item".
+     * Requis par la classe de base.
+     */
+    public static function get_item_author_id($data)
+    {
+        return 0;
+    }
 }
