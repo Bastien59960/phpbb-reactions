@@ -27,6 +27,16 @@
 var REACTIONS_AJAX_URL = '{U_REACTIONS_AJAX}';
 var REACTIONS_SID = '{S_SESSION_ID}';
 var REACTIONS_JSON_PATH = '{REACTIONS_JSON_PATH}';
+var REACTIONS_OPTIONS = {
+    postEmojiSize: parseInt('{REACTIONS_POST_EMOJI_SIZE}', 10) || 24,
+    pickerWidth: parseInt('{REACTIONS_PICKER_WIDTH}', 10) || 320,
+    pickerHeight: parseInt('{REACTIONS_PICKER_HEIGHT}', 10) || 280,
+    pickerEmojiSize: parseInt('{REACTIONS_PICKER_EMOJI_SIZE}', 10) || 24,
+    showCategories: parseInt('{REACTIONS_PICKER_SHOW_CATEGORIES}', 10) === 1,
+    showSearch: parseInt('{REACTIONS_PICKER_SHOW_SEARCH}', 10) === 1,
+    useJson: parseInt('{REACTIONS_PICKER_USE_JSON}', 10) === 1,
+    syncInterval: parseInt('{REACTIONS_SYNC_INTERVAL}', 10) || 5000
+};
 </script>
 
 <!-- Script principal des réactions (DOIT être chargé APRÈS emoji-keywords-fr.js) -->

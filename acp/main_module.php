@@ -158,6 +158,17 @@ class main_module
             // Nombre max de réactions par utilisateur par post
             $max_per_user = $request->variable('max_per_user', 10);
 
+            // Options d'interface supplémentaires
+            $post_emoji_size = max(8, min(128, $request->variable('post_emoji_size', (int) ($config['bastien59960_reactions_post_emoji_size'] ?? 24))));
+            $picker_width = max(200, min(900, $request->variable('picker_width', (int) ($config['bastien59960_reactions_picker_width'] ?? 320))));
+            $picker_height = max(200, min(900, $request->variable('picker_height', (int) ($config['bastien59960_reactions_picker_height'] ?? 280))));
+            $picker_emoji_size = max(12, min(96, $request->variable('picker_emoji_size', (int) ($config['bastien59960_reactions_picker_emoji_size'] ?? 24))));
+            $sync_interval = max(1000, min(60000, $request->variable('sync_interval', (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000))));
+
+            $picker_show_categories = $request->variable('picker_show_categories', 0);
+            $picker_show_search = $request->variable('picker_show_search', 0);
+            $picker_use_json = $request->variable('picker_use_json', 0);
+
             // ----------------------------------------------------------------
             // 5.3 : VALIDER LES VALEURS
             // ----------------------------------------------------------------
@@ -200,6 +211,14 @@ class main_module
             $config->set('bastien59960_reactions_spam_time', $spam_time);
             $config->set('bastien59960_reactions_max_per_post', $max_per_post);
             $config->set('bastien59960_reactions_max_per_user', $max_per_user);
+            $config->set('bastien59960_reactions_post_emoji_size', $post_emoji_size);
+            $config->set('bastien59960_reactions_picker_width', $picker_width);
+            $config->set('bastien59960_reactions_picker_height', $picker_height);
+            $config->set('bastien59960_reactions_picker_emoji_size', $picker_emoji_size);
+            $config->set('bastien59960_reactions_picker_show_categories', $picker_show_categories ? 1 : 0);
+            $config->set('bastien59960_reactions_picker_show_search', $picker_show_search ? 1 : 0);
+            $config->set('bastien59960_reactions_picker_use_json', $picker_use_json ? 1 : 0);
+            $config->set('bastien59960_reactions_sync_interval', $sync_interval);
 
             // ----------------------------------------------------------------
             // 5.5 : AFFICHER UN MESSAGE DE SUCCÈS
@@ -218,14 +237,18 @@ class main_module
         // assign_vars() envoie des variables au template HTML
         // Dans le template, on pourra utiliser {U_ACTION}, {REACTIONS_SPAM_TIME}, etc.
         $template->assign_vars([
-            // URL où le formulaire doit être soumis
             'U_ACTION' => $this->u_action,
-            
-            // Valeurs actuelles des paramètres (lues depuis la DB)
-            // (int) force la conversion en nombre entier pour éviter les problèmes
-            'REACTIONS_SPAM_TIME'    => (int) $config['bastien59960_reactions_spam_time'],
-            'REACTIONS_MAX_PER_POST' => (int) $config['bastien59960_reactions_max_per_post'],
-            'REACTIONS_MAX_PER_USER' => (int) $config['bastien59960_reactions_max_per_user'],
+            'REACTIONS_SPAM_TIME'            => (int) ($config['bastien59960_reactions_spam_time'] ?? 45),
+            'REACTIONS_MAX_PER_POST'         => (int) ($config['bastien59960_reactions_max_per_post'] ?? 20),
+            'REACTIONS_MAX_PER_USER'         => (int) ($config['bastien59960_reactions_max_per_user'] ?? 10),
+            'REACTIONS_POST_EMOJI_SIZE'      => (int) ($config['bastien59960_reactions_post_emoji_size'] ?? 24),
+            'REACTIONS_PICKER_WIDTH'         => (int) ($config['bastien59960_reactions_picker_width'] ?? 320),
+            'REACTIONS_PICKER_HEIGHT'        => (int) ($config['bastien59960_reactions_picker_height'] ?? 280),
+            'REACTIONS_PICKER_EMOJI_SIZE'    => (int) ($config['bastien59960_reactions_picker_emoji_size'] ?? 24),
+            'REACTIONS_PICKER_SHOW_CATEGORIES' => (int) ($config['bastien59960_reactions_picker_show_categories'] ?? 1),
+            'REACTIONS_PICKER_SHOW_SEARCH'     => (int) ($config['bastien59960_reactions_picker_show_search'] ?? 1),
+            'REACTIONS_PICKER_USE_JSON'        => (int) ($config['bastien59960_reactions_picker_use_json'] ?? 1),
+            'REACTIONS_SYNC_INTERVAL'          => (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000),
         ]);
         
         // ====================================================================

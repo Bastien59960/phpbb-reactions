@@ -21,6 +21,42 @@
             <dd><input type="number" id="max_per_user" name="max_per_user" value="{REACTIONS_MAX_PER_USER}" min="1" max="50" /></dd>
         </dl>
     </fieldset>
+
+    <fieldset>
+        <legend>{L_REACTIONS_DISPLAY_SETTINGS}</legend>
+        <dl>
+            <dt><label for="post_emoji_size">{L_REACTIONS_POST_EMOJI_SIZE}{L_COLON}</label><br><span>{L_REACTIONS_POST_EMOJI_SIZE_EXPLAIN}</span></dt>
+            <dd><input type="number" id="post_emoji_size" name="post_emoji_size" value="{REACTIONS_POST_EMOJI_SIZE}" min="8" max="128" /> px</dd>
+        </dl>
+        <dl>
+            <dt><label for="picker_emoji_size">{L_REACTIONS_PICKER_EMOJI_SIZE}{L_COLON}</label><br><span>{L_REACTIONS_PICKER_EMOJI_SIZE_EXPLAIN}</span></dt>
+            <dd><input type="number" id="picker_emoji_size" name="picker_emoji_size" value="{REACTIONS_PICKER_EMOJI_SIZE}" min="12" max="96" /> px</dd>
+        </dl>
+        <dl>
+            <dt><label for="picker_width">{L_REACTIONS_PICKER_WIDTH}{L_COLON}</label><br><span>{L_REACTIONS_PICKER_WIDTH_EXPLAIN}</span></dt>
+            <dd><input type="number" id="picker_width" name="picker_width" value="{REACTIONS_PICKER_WIDTH}" min="200" max="900" /> px</dd>
+        </dl>
+        <dl>
+            <dt><label for="picker_height">{L_REACTIONS_PICKER_HEIGHT}{L_COLON}</label><br><span>{L_REACTIONS_PICKER_HEIGHT_EXPLAIN}</span></dt>
+            <dd><input type="number" id="picker_height" name="picker_height" value="{REACTIONS_PICKER_HEIGHT}" min="200" max="900" /> px</dd>
+        </dl>
+        <dl>
+            <dt><label for="sync_interval">{L_REACTIONS_SYNC_INTERVAL}{L_COLON}</label><br><span>{L_REACTIONS_SYNC_INTERVAL_EXPLAIN}</span></dt>
+            <dd><input type="number" id="sync_interval" name="sync_interval" value="{REACTIONS_SYNC_INTERVAL}" min="1000" max="60000" step="500" /> ms</dd>
+        </dl>
+        <dl>
+            <dt><label for="picker_show_categories">{L_REACTIONS_PICKER_SHOW_CATEGORIES}{L_COLON}</label><br><span>{L_REACTIONS_PICKER_SHOW_CATEGORIES_EXPLAIN}</span></dt>
+            <dd><label><input type="checkbox" id="picker_show_categories" name="picker_show_categories" value="1"<!-- IF REACTIONS_PICKER_SHOW_CATEGORIES --> checked="checked"<!-- ENDIF --> /> {L_YES}</label></dd>
+        </dl>
+        <dl>
+            <dt><label for="picker_show_search">{L_REACTIONS_PICKER_SHOW_SEARCH}{L_COLON}</label><br><span>{L_REACTIONS_PICKER_SHOW_SEARCH_EXPLAIN}</span></dt>
+            <dd><label><input type="checkbox" id="picker_show_search" name="picker_show_search" value="1"<!-- IF REACTIONS_PICKER_SHOW_SEARCH --> checked="checked"<!-- ENDIF --> /> {L_YES}</label></dd>
+        </dl>
+        <dl>
+            <dt><label for="picker_use_json">{L_REACTIONS_PICKER_USE_JSON}{L_COLON}</label><br><span>{L_REACTIONS_PICKER_USE_JSON_EXPLAIN}</span></dt>
+            <dd><label><input type="checkbox" id="picker_use_json" name="picker_use_json" value="1"<!-- IF REACTIONS_PICKER_USE_JSON --> checked="checked"<!-- ENDIF --> /> {L_YES}</label></dd>
+        </dl>
+    </fieldset>
     
     <fieldset class="submit-buttons">
         <input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />

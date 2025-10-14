@@ -76,7 +76,30 @@ function toggle_visible(id) {
     let allEmojisData = null;
 
     /** Intervalle (ms) entre deux synchronisations automatiques */
-    const LIVE_SYNC_INTERVAL = 10000;
+    const DEFAULT_OPTIONS = {
+        postEmojiSize: 24,
+        pickerWidth: 320,
+        pickerHeight: 280,
+        pickerEmojiSize: 24,
+        showCategories: true,
+        showSearch: true,
+        useJson: true,
+        syncInterval: 5000,
+    };
+
+    const options = (typeof window !== 'undefined' && typeof window.REACTIONS_OPTIONS === 'object')
+        ? Object.assign({}, DEFAULT_OPTIONS, window.REACTIONS_OPTIONS)
+        : Object.assign({}, DEFAULT_OPTIONS);
+
+    function applyOptionStyles() {
+        const root = document.documentElement;
+        root.style.setProperty('--reactions-post-emoji-size', options.postEmojiSize + 'px');
+        root.style.setProperty('--reactions-picker-width', options.pickerWidth + 'px');
+        root.style.setProperty('--reactions-picker-height', options.pickerHeight + 'px');
+        root.style.setProperty('--reactions-picker-emoji-size', options.pickerEmojiSize + 'px');
+    }
+
+    applyOptionStyles();
 
     /** Identifiant de l'intervalle de synchronisation */
     let liveSyncTimer = null;
@@ -1240,7 +1263,7 @@ function toggle_visible(id) {
      * Démarre la synchronisation automatique.
      */
     function startLiveSync() {
-        if (typeof REACTIONS_AJAX_URL === 'undefined' || typeof REACTIONS_SID === 'undefined' || !REACTIONS_SID) {
+        if (typeof REACTIONS_AJAX_URL === 'undefined') {
             return;
         }
 
@@ -1250,7 +1273,7 @@ function toggle_visible(id) {
         }
 
         performLiveSync();
-        liveSyncTimer = window.setInterval(performLiveSync, LIVE_SYNC_INTERVAL);
+        liveSyncTimer = window.setInterval(performLiveSync, Math.max(1000, options.syncInterval));
     }
 
     /**

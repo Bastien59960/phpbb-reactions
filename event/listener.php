@@ -118,6 +118,17 @@ class listener implements EventSubscriberInterface
             $ajax_url = append_sid('app.php/reactions/ajax');
         }
 
+        $post_emoji_size = (int) ($this->config['bastien59960_reactions_post_emoji_size'] ?? 24);
+        $picker_width = (int) ($this->config['bastien59960_reactions_picker_width'] ?? 320);
+        $picker_height = (int) ($this->config['bastien59960_reactions_picker_height'] ?? 280);
+        $picker_emoji_size = (int) ($this->config['bastien59960_reactions_picker_emoji_size'] ?? 24);
+        $picker_show_categories = (int) ($this->config['bastien59960_reactions_picker_show_categories'] ?? 1);
+        $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 1);
+        $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 1);
+        $sync_interval = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5000);
+
+        $json_path = $picker_use_json ? $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json' : '';
+
         $this->template->assign_vars([
             'S_REACTIONS_ENABLED' => true,
             'REACTIONS_CSS_PATH'  => $css_path,
