@@ -127,8 +127,8 @@ class reaction extends base
 
         try
         {
-            $this->language->add_lang_ext('bastien59960/reactions', 'reactions');
-            $this->language->add_lang_ext('bastien59960/reactions', 'notification/notification.type.reaction');
+            $this->user->add_lang_ext('bastien59960/reactions', 'reactions');
+            $this->user->add_lang_ext('bastien59960/reactions', 'notification/notification.type.reaction');
         }
         catch (\Throwable $e)
         {
