@@ -106,7 +106,7 @@ class notification_task extends \phpbb\cron\task\base
 
         // Récupérer toutes les réactions non notifiées plus anciennes que le seuil
         $sql = 'SELECT r.reaction_id, r.post_id, r.user_id AS reacter_id, r.reaction_emoji, r.reaction_time,
-                       p.poster_id AS author_id, p.post_subject,
+                       p.poster_id AS author_id, p.topic_id, p.post_subject,
                        ru.username AS reacter_name,
                        au.username AS author_name, au.user_email AS author_email, au.user_lang AS author_lang
                 FROM ' . $this->post_reactions_table . ' r
@@ -211,62 +211,14 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
-            // Construire le récapitulatif
-            $recap_lines_arr = [];
-            foreach ($data['posts'] as $post_id => $post_data)
-            {
-                $post_subject = $post_data['post_subject'] ?: '[no subject]';
-                foreach ($post_data['reactions'] as $reaction)
-                {
-                    $when = date('Y-m-d H:i', (int) $reaction['time']);
-                    $reactor = $reaction['reacter_name'] ?: ('#' . $reaction['reacter_id']);
-                    $emoji = $reaction['emoji'] !== '' ? $reaction['emoji'] : '(emoji)';
-                    $recap_lines_arr[] = sprintf(
-                        '[%s] %s a réagi avec %s à votre message "%s"',
-                        $when,
-                        $reactor,
-                        $emoji,
-                        $post_subject
-                    );
-                }
-            }
+            // Envoyer l'e-mail récapitulatif
+            $email_sent = $this->send_digest_email($data, $threshold_timestamp);
 
-            if (empty($recap_lines_arr))
+            // Si l'e-mail a été envoyé (ou si l'utilisateur ne le voulait pas), marquer les réactions comme notifiées
+            if ($email_sent)
             {
                 $this->mark_reactions_as_handled($data['mark_ids']);
-                continue;
             }
-
-            $recap_text = implode("\n", $recap_lines_arr);
-            $since_time = date('Y-m-d H:i', $threshold_timestamp);
-
-            // Envoi via messenger
-            try
-            {
-                // CORRECTION : On injecte le service template pour que le messenger trouve les fichiers de l'extension
-                $messenger = new \messenger(true); // true pour désactiver les notifs internes, on ne veut que l'email
-                $messenger->set_template($this->template);
-
-                $messenger->template('reaction_digest', $author_lang);
-                $messenger->subject('Nouvelles réactions sur vos messages');
-                $messenger->to($author_email, $author_name);
-                $messenger->assign_vars(array(
-                    'USERNAME'    => $author_name,
-                    'SINCE_TIME'  => $since_time,
-                    'RECAP_LINES' => $recap_text,
-                ));
-                $messenger->send(NOTIFY_EMAIL);
-
-                error_log('[Reactions Cron] E-mail digest envoyé à ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions');
-            }
-            catch (\Exception $e)
-            {
-                error_log('[Reactions Cron] Échec envoi mail pour user_id ' . $author_id . ' : ' . $e->getMessage());
-                continue;
-            }
-
-            // Marquer comme notifiées
-            $this->mark_reactions_as_handled($data['mark_ids']);
         }
     }
 
@@ -333,5 +285,68 @@ class notification_task extends \phpbb\cron\task\base
     public function is_runnable()
     {
         return true;
+    }
+
+    /**
+     * Construit et envoie un e-mail récapitulatif à un utilisateur.
+     *
+     * @param array $data Données groupées pour l'auteur
+     * @param int $threshold_timestamp Timestamp du seuil pour le message
+     * @return bool True si l'e-mail a été envoyé ou si l'utilisateur ne le souhaitait pas, false en cas d'échec.
+     */
+    protected function send_digest_email(array $data, int $threshold_timestamp)
+    {
+        $author_id    = (int) $data['author_id'];
+        $author_email = $data['author_email'];
+        $author_name  = $data['author_name'] ?: 'Utilisateur';
+        $author_lang  = $data['author_lang'] ?: 'en';
+
+        // Construire le contenu textuel du récapitulatif
+        $recap_lines_arr = [];
+        foreach ($data['posts'] as $post_id => $post_data)
+        {
+            $post_subject = $post_data['post_subject'] ?: '[sans sujet]';
+            foreach ($post_data['reactions'] as $reaction)
+            {
+                $when = date('d/m/Y H:i', (int) $reaction['time']);
+                $reactor = $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']);
+                $emoji = $reaction['emoji'] ?: '?';
+                $recap_lines_arr[] = sprintf(
+                    '- Le %s, %s a réagi avec %s à votre message : "%s"',
+                    $when, $reactor, $emoji, $post_subject
+                );
+            }
+        }
+
+        if (empty($recap_lines_arr))
+        {
+            return true; // Rien à envoyer, on peut marquer comme traité
+        }
+
+        $recap_text = implode("\n", $recap_lines_arr);
+        $since_time = date('d/m/Y H:i', $threshold_timestamp);
+
+        try
+        {
+            $messenger = new \messenger(null, $this->template, null, null, null, null, true);
+            
+            $messenger->template('reaction_digest', $author_lang);
+            $messenger->subject('Résumé de vos nouvelles réactions'); // Sujet plus clair
+            $messenger->to($author_email, $author_name);
+            $messenger->assign_vars([
+                'USERNAME'    => $author_name,
+                'SINCE_TIME'  => $since_time,
+                'RECAP_LINES' => $recap_text,
+            ]);
+            $messenger->send(NOTIFY_EMAIL);
+
+            error_log('[Reactions Cron] E-mail digest envoyé à ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
+            return true;
+        }
+        catch (\Exception $e)
+        {
+            error_log('[Reactions Cron] Échec envoi mail pour user_id ' . $author_id . ' : ' . $e->getMessage());
+            return false;
+        }
     }
 }

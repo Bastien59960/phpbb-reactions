@@ -143,7 +143,7 @@ class reaction extends base
      * 
      * @return string Le nom canonique du type
      */
-    public static function get_type()
+    public function get_type()
     {
         return 'notification.type.reaction';
     }
@@ -167,14 +167,14 @@ class reaction extends base
     // ========================================================================= 
     // Ces méthodes sont statiques car elles sont appelées AVANT
     // la création d'une instance de la classe
-
+    // Note : Certaines pourraient devenir non-statiques dans les futures versions de phpBB.
     /**
      * Extrait l'ID du message depuis les données de notification
      * 
      * @param array $data Données de la notification (contient post_id)
      * @return int L'ID du message réagi
      */
-    public static function get_item_id($data) 
+    public function get_item_id($data) 
     {
         return (int) ($data['post_id'] ?? 0);
     }
@@ -185,7 +185,7 @@ class reaction extends base
      * @param array $data Données de la notification (contient topic_id)
      * @return int L'ID du sujet contenant le message
      */
-    public static function get_item_parent_id($data) 
+    public function get_item_parent_id($data) 
     {
         return (int) ($data['topic_id'] ?? 0);
     }
@@ -199,7 +199,7 @@ class reaction extends base
      * @param array $data Données de la notification (contient post_author)
      * @return int L'ID de l'auteur du message
      */
-    public static function get_item_author_id($data) 
+    public function get_item_author_id($data) 
     {
         return (int) ($data['post_author'] ?? ($data['poster_id'] ?? 0));
     }
@@ -220,7 +220,7 @@ class reaction extends base
      */
     public function get_url()
     {
-        $post_id = self::get_item_id($this->notification_data);
+        $post_id = $this->get_item_id($this->notification_data);
         
         if (!$post_id) {
             return ''; // Pas d'ID = pas d'URL
@@ -240,11 +240,11 @@ class reaction extends base
      * @param array $data Données de la notification
      * @return string L'URL complète vers le message
      */
-    public static function get_item_url($data) 
+    public function get_item_url($data) 
     {
         global $phpbb_root_path, $phpEx;
         
-        $post_id = self::get_item_id($data);
+        $post_id = $this->get_item_id($data);
         
         if (!$post_id) {
             return ''; 
@@ -302,7 +302,7 @@ class reaction extends base
      * 
      * @return string La clé de langue pour le nom
      */
-    public static function get_item_type_name()
+    public function get_item_type_name()
     {
         return 'NOTIFICATION_TYPE_REACTION';
     }
@@ -314,7 +314,7 @@ class reaction extends base
      * 
      * @return string La cl├® de langue pour la description
      */
-    public static function get_item_type_description()
+    public function get_item_type_description()
     {
         return 'NOTIFICATION_TYPE_REACTION_EXPLAIN';
     }
@@ -390,7 +390,7 @@ class reaction extends base
         return [
             'REACTOR_USERNAME' => $this->data['reacter_username'] ?? '',
             'EMOJI'            => $this->notification_data['emoji'] ?? '',
-            'POST_ID'          => self::get_item_id($this->notification_data),
+            'POST_ID'          => $this->get_item_id($this->notification_data),
         ];
     }
 
@@ -434,7 +434,7 @@ class reaction extends base
         return [
             'emoji'            => $this->notification_data['emoji'] ?? '',
             'reacter_username' => $this->notification_data['reacter_username'] ?? '',
-            'post_id'          => self::get_item_id($this->notification_data),
+            'post_id'          => $this->get_item_id($this->notification_data),
         ];
     }
 
