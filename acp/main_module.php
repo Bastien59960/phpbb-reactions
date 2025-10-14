@@ -92,15 +92,9 @@ class main_module
         
         // Récupérer le service de gestion des langues depuis le container
         // Le container est comme un "magasin" où phpBB stocke tous ses services
-        $language = $phpbb_container->get('language');
-        
-        // Charger le fichier de langue ACP de notre extension
-        // Chemin : language/[langue_actuelle]/acp/common.php
-        // Cela permet d'utiliser $user->lang('ACP_REACTIONS_TITLE') etc.
-        $language->add_lang('acp/common', 'bastien59960/reactions');
-        
-        // Charger aussi les traductions générales
-        $language->add_lang('common', 'bastien59960/reactions');
+        // Charger les fichiers de langue de l'extension dans le contexte utilisateur
+        $user->add_lang_ext('bastien59960/reactions', 'acp/common');
+        $user->add_lang_ext('bastien59960/reactions', 'common');
 
         // ====================================================================
         // ÉTAPE 3 : DÉFINIR LES PROPRIÉTÉS DE LA PAGE
@@ -248,12 +242,11 @@ public function import($id, $mode)
 {
     global $config, $request, $template, $user, $phpbb_container, $db;
 
-    $language = $phpbb_container->get('language');
-    $language->add_lang('acp/common', 'bastien59960/reactions');
-    $language->add_lang('common', 'bastien59960/reactions');
+    $user->add_lang_ext('bastien59960/reactions', 'acp/common');
+    $user->add_lang_ext('bastien59960/reactions', 'common');
 
     $this->tpl_name = 'acp_reactions_import';
-    $this->page_title = 'Importer réactions anciennes';
+    $this->page_title = $user->lang('ACP_REACTIONS_IMPORT');
 
     add_form_key('bastien59960_reactions_import');
 

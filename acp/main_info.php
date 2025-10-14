@@ -25,8 +25,8 @@ class main_info
         global $phpbb_container;
         
         if (isset($phpbb_container)) {
-            $language = $phpbb_container->get('language');
-            $language->add_lang('acp/common', 'bastien59960/reactions');
+            $user = $phpbb_container->get('user');
+            $user->add_lang_ext('bastien59960/reactions', 'acp/common');
         }
     }
 
