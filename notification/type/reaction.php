@@ -29,7 +29,7 @@ use phpbb\auth\auth;
 use phpbb\db\driver\driver_interface;
 use phpbb\config\config;
 use phpbb\template\template;
-use phpbb\controller\helper;
+use bastien59960\reactions\controller\helper as reactions_helper;
 use phpbb\user_loader;
 use phpbb\request\request_interface;
 use phpbb\language\language;
@@ -52,7 +52,7 @@ class reaction extends base
     protected $config;
 
     /** @var helper|null Helper de contrôleur pour les URLs */
-    protected $helper;
+    protected $reactions_helper; // C'est notre helper personnalisé
 
     /** @var template|null Moteur de templates */
     protected $template;
@@ -60,7 +60,7 @@ class reaction extends base
     /** @var user_loader Chargeur d'utilisateurs */
     protected $user_loader;
 
-    /** @var string Chemin racine de phpBB */
+    /** @var string Nom de la table des notifications */
     protected $notifications_table;
 
     /**
@@ -81,16 +81,14 @@ class reaction extends base
      * 8. config              → Configuration du forum
      * 9. user_loader         → Chargeur d'utilisateurs
      * 10. helper             → Helper de contrôleur
-     * 11. request            → Gestionnaire de requêtes
-     * 12. template           → Moteur de templates (déjà dans le parent, mais utile ici)
+     * 11. template           → Moteur de templates
      * 
      * @param driver_interface  $db                  Base de données
      * @param language          $language            Gestionnaire de langues
      * @param user|null         $user                Utilisateur courant
      * @param auth              $auth                Autorisations
      * @param string            $notifications_table Table notifications
-     * @param config|null       $config              Configuration
-     * @param user_loader       $user_loader         Chargeur d'utilisateurs
+     * @param config|null       $config              Configuration 
      * @param helper|null       $helper              Helper de contrôleur
      * @param request_interface|null $request        Requêtes HTTP
      * @param template|null     $template            Templates
@@ -105,8 +103,9 @@ class reaction extends base
         $notifications_table,
         ?config $config,
         user_loader $user_loader,
-        ?helper $helper,
-        ?template $template
+        ?reactions_helper $reactions_helper,
+        ?template $template,
+        ?request_interface $request = null // Optionnel et non utilisé, pour la compatibilité
     ) {
         // Appeler le constructeur de la classe parente
         parent::__construct(
@@ -122,7 +121,8 @@ class reaction extends base
         $this->notifications_table = $notifications_table;
         $this->config = $config;
         $this->user_loader = $user_loader;
-        $this->helper = $helper;
+        $this->reactions_helper = $reactions_helper;
+        $this->template = $template;
 
         // Log de débogage (visible uniquement si DEBUG est activé dans config.php)
         if (defined('DEBUG') && DEBUG) {
