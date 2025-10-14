@@ -98,6 +98,20 @@ class reaction_email_digest extends base
     }
 
     /**
+     * Retourne la clé de langue pour le titre de la notification.
+     *
+     * Requis par l'interface, même si ce type de notification n'a pas de
+     * titre individuel affiché dans la cloche. Nous retournons une clé
+     * générique pour la conformité.
+     *
+     * @return string La clé de langue pour le titre.
+     */
+    public function get_title()
+    {
+        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE';
+    }
+
+    /**
      * Aucune notification individuelle n'est créée : tableau vide.
      */
     public function find_users_for_notification($data, $options = array())
