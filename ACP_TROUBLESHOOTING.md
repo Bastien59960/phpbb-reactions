@@ -1,38 +1,38 @@
-# Dépannage ACP — Extension Reactions
+# DÃ©pannage ACP â€” Extension Reactions
 
-## 🇫🇷 Problèmes courants et solutions
+## ðŸ‡«ðŸ‡· ProblÃ¨mes courants et solutions
 
-### 1. Les réactions n'apparaissent pas
+### 1. Les rÃ©actions n'apparaissent pas
 - Purgez le cache de phpBB
-- Vérifiez que l'extension est activée dans l'ACP
-- Vérifiez que la base de données est en UTF8MB4
+- VÃ©rifiez que l'extension est activÃ©e dans l'ACP
+- VÃ©rifiez que la base de donnÃ©es est en UTF8MB4
 
 ### 2. Les notifications ne fonctionnent pas
-- Vérifiez les préférences utilisateur (UCP)
-- Vérifiez les logs d'erreur
-- Assurez-vous que la tâche cron est bien exécutée
+- VÃ©rifiez les prÃ©fÃ©rences utilisateur (UCP)
+- VÃ©rifiez les logs d'erreur
+- Assurez-vous que la tÃ¢che cron est bien exÃ©cutÃ©e
 
-### 3. Problèmes de migration
-- Vérifiez que toutes les migrations sont passées
-- Vérifiez la structure de la table `phpbb_post_reactions`
+### 3. ProblÃ¨mes de migration
+- VÃ©rifiez que toutes les migrations sont passÃ©es
+- VÃ©rifiez la structure de la table `phpbb_post_reactions`
 
-### 4. Problèmes d'affichage (CSS/JS)
+### 4. ProblÃ¨mes d'affichage (CSS/JS)
 - Purgez le cache du navigateur
-- Vérifiez que les fichiers JS/CSS sont bien chargés
+- VÃ©rifiez que les fichiers JS/CSS sont bien chargÃ©s
 
-### 5. Messages d'erreur fréquents
-- "Limite de types de réactions par message atteinte" : augmentez la limite dans l'ACP
-- "Invalid emoji" : vérifiez le support UTF8MB4
+### 5. Messages d'erreur frÃ©quents
+- "Limite de types de rÃ©actions par message atteinte" : augmentez la limite dans l'ACP
+- "Invalid emoji" : vÃ©rifiez le support UTF8MB4
 
 ### Liens utiles
 - [Forum de support](https://bastien.debucquoi.com/forum/)
-- [Documentation complète](DOCUMENTATION.md)
+- [Documentation complÃ¨te](DOCUMENTATION.md)
 
 ---
 
-# ACP Troubleshooting — Reactions Extension
+# ACP Troubleshooting â€” Reactions Extension
 
-## 🇬🇧 Common issues and solutions
+## ðŸ‡¬ðŸ‡§ Common issues and solutions
 
 ### 1. Reactions do not appear
 - Purge the phpBB cache

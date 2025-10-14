@@ -1,29 +1,29 @@
-# Liste des Fichiers Modifiés et Créés
+# Liste des Fichiers ModifiÃ©s et CrÃ©Ã©s
 
 ## Date : 5 octobre 2025
 
 ---
 
-## 📝 Fichiers Modifiés
+## ðŸ“ Fichiers ModifiÃ©s
 
 ### 1. Corrections Principales
 
 #### `notification/type/reaction.php`
 **Modifications** :
-- Suppression des méthodes `get_item_parent_id()` dupliquées (lignes 211-222)
+- Suppression des mÃ©thodes `get_item_parent_id()` dupliquÃ©es (lignes 211-222)
 - Conservation d'une seule version statique (ligne 183)
-- Amélioration des commentaires pour toutes les méthodes
+- AmÃ©lioration des commentaires pour toutes les mÃ©thodes
 
-**Raison** : Erreur PHP fatale due aux méthodes dupliquées
+**Raison** : Erreur PHP fatale due aux mÃ©thodes dupliquÃ©es
 
 ---
 
 #### `ext.php`
 **Modifications** :
-- Ajout de la méthode `enable_step()` (lignes 60-70)
-- Ajout de la méthode `disable_step()` (lignes 81-91)
-- Ajout de la méthode `purge_step()` (lignes 93-109)
-- Amélioration des commentaires
+- Ajout de la mÃ©thode `enable_step()` (lignes 60-70)
+- Ajout de la mÃ©thode `disable_step()` (lignes 81-91)
+- Ajout de la mÃ©thode `purge_step()` (lignes 93-109)
+- AmÃ©lioration des commentaires
 
 **Raison** : Enregistrement automatique du type de notification lors de l'activation
 
@@ -31,29 +31,29 @@
 
 #### `config/services.yml`
 **Modifications** :
-- Correction du nom du service : `bastien59960.reactions.notification.type.reaction` → `bastien59960.reactions.notification`
-- Amélioration des commentaires pour tous les services
+- Correction du nom du service : `bastien59960.reactions.notification.type.reaction` â†’ `bastien59960.reactions.notification`
+- AmÃ©lioration des commentaires pour tous les services
 
-**Raison** : phpBB n'accepte qu'un seul point après le nom du vendor
+**Raison** : phpBB n'accepte qu'un seul point aprÃ¨s le nom du vendor
 
 ---
 
 #### `controller/ajax.php`
 **Modifications** :
-- Correction des appels à `add_notifications()` : utilisation du nouveau nom de service
-- Ajout de la méthode `trigger_immediate_notification()` (lignes 743-796)
-- Amélioration des commentaires
+- Correction des appels Ã  `add_notifications()` : utilisation du nouveau nom de service
+- Ajout de la mÃ©thode `trigger_immediate_notification()` (lignes 743-796)
+- AmÃ©lioration des commentaires
 
-**Raison** : Notifications immédiates par cloche (sans délai anti-spam)
+**Raison** : Notifications immÃ©diates par cloche (sans dÃ©lai anti-spam)
 
 ---
 
 #### `cron/notification_task.php`
 **Modifications** :
-- Correction des appels à `add_notifications()` : utilisation du nouveau nom de service
-- Amélioration des commentaires pour toutes les méthodes
+- Correction des appels Ã  `add_notifications()` : utilisation du nouveau nom de service
+- AmÃ©lioration des commentaires pour toutes les mÃ©thodes
 
-**Raison** : Notifications différées par email (avec délai anti-spam)
+**Raison** : Notifications diffÃ©rÃ©es par email (avec dÃ©lai anti-spam)
 
 ---
 
@@ -61,21 +61,21 @@
 
 #### `language/fr/common.php`
 **Modifications** :
-- Ajout des chaînes de langue pour les notifications (lignes 109-118)
+- Ajout des chaÃ®nes de langue pour les notifications (lignes 109-118)
 
-**Raison** : Support des notifications en français
+**Raison** : Support des notifications en franÃ§ais
 
 ---
 
 #### `language/en/common.php`
 **Modifications** :
-- Ajout des chaînes de langue pour les notifications (lignes 109-118)
+- Ajout des chaÃ®nes de langue pour les notifications (lignes 109-118)
 
 **Raison** : Support des notifications en anglais
 
 ---
 
-## 📁 Fichiers Créés
+## ðŸ“ Fichiers CrÃ©Ã©s
 
 ### 1. Fichiers de Langue pour les Notifications
 
@@ -83,12 +83,12 @@
 **Contenu** :
 ```php
 $lang = array_merge($lang, array(
-    'NOTIFICATION_TYPE_REACTION' => 'Quelqu\'un a réagi à votre message',
-    'NOTIFICATION_GROUP_REACTIONS' => 'Notifications de réactions',
+    'NOTIFICATION_TYPE_REACTION' => 'Quelqu\'un a rÃ©agi Ã  votre message',
+    'NOTIFICATION_GROUP_REACTIONS' => 'Notifications de rÃ©actions',
 ));
 ```
 
-**Raison** : Textes des notifications en français
+**Raison** : Textes des notifications en franÃ§ais
 
 ---
 
@@ -99,16 +99,16 @@ Subject: {TITLE}
 
 Bonjour {USERNAME},
 
-{REACTOR_NAMES} a réagi à votre message "{POST_TITLE}".
+{REACTOR_NAMES} a rÃ©agi Ã  votre message "{POST_TITLE}".
 
-Vous pouvez consulter votre message et les réactions en cliquant sur le lien suivant :
+Vous pouvez consulter votre message et les rÃ©actions en cliquant sur le lien suivant :
 {U_POST_LINK}
 
 ---
 {EMAIL_SIG}
 ```
 
-**Raison** : Template pour les emails en français
+**Raison** : Template pour les emails en franÃ§ais
 
 ---
 
@@ -148,36 +148,36 @@ You can view your message and the reactions by clicking the following link:
 ### 2. Documentation
 
 #### `GUIDE_TEST_NOTIFICATIONS.md`
-**Contenu** : Guide complet pour tester le système de notifications
+**Contenu** : Guide complet pour tester le systÃ¨me de notifications
 **Sections** :
-- Résumé des corrections
-- Procédure de test détaillée
-- Vérification de la base de données
-- Débogage
+- RÃ©sumÃ© des corrections
+- ProcÃ©dure de test dÃ©taillÃ©e
+- VÃ©rification de la base de donnÃ©es
+- DÃ©bogage
 - Checklist de validation
 
 ---
 
 #### `CORRECTIONS_NOTIFICATIONS.md`
-**Contenu** : Documentation technique détaillée des corrections
+**Contenu** : Documentation technique dÃ©taillÃ©e des corrections
 **Sections** :
-- Résumé des problèmes identifiés
-- Corrections apportées
-- Vérifications à effectuer
-- Base de données
+- RÃ©sumÃ© des problÃ¨mes identifiÃ©s
+- Corrections apportÃ©es
+- VÃ©rifications Ã  effectuer
+- Base de donnÃ©es
 - Configuration ACP
-- Fichiers modifiés
+- Fichiers modifiÃ©s
 
 ---
 
 #### `RESUME_CORRECTIONS.md`
-**Contenu** : Résumé exécutif des corrections
+**Contenu** : RÃ©sumÃ© exÃ©cutif des corrections
 **Sections** :
 - Objectif
-- Problèmes corrigés
-- Checklist de vérification
+- ProblÃ¨mes corrigÃ©s
+- Checklist de vÃ©rification
 - Commandes SQL
-- Fichiers modifiés
+- Fichiers modifiÃ©s
 - Prochaines actions
 - Architecture des notifications
 
@@ -187,128 +187,128 @@ You can view your message and the reactions by clicking the following link:
 **Contenu** : Test rapide en 5 minutes
 **Sections** :
 - Test en 5 minutes
-- Vérification SQL rapide
-- Problèmes courants et solutions
+- VÃ©rification SQL rapide
+- ProblÃ¨mes courants et solutions
 - Tableau de diagnostic
 - Checklist finale
 
 ---
 
 #### `EXPLICATIONS_FINALES.md`
-**Contenu** : Explications détaillées en français
+**Contenu** : Explications dÃ©taillÃ©es en franÃ§ais
 **Sections** :
-- Ce qui a été fait
-- Les 4 problèmes principaux corrigés
-- Fichiers créés
-- Comment ça marche maintenant
+- Ce qui a Ã©tÃ© fait
+- Les 4 problÃ¨mes principaux corrigÃ©s
+- Fichiers crÃ©Ã©s
+- Comment Ã§a marche maintenant
 - Ce que vous devez faire maintenant
-- Vérifications techniques
-- Si ça ne fonctionne pas
+- VÃ©rifications techniques
+- Si Ã§a ne fonctionne pas
 
 ---
 
 #### `FICHIERS_MODIFIES.md`
-**Contenu** : Ce document - Liste complète des fichiers modifiés et créés
+**Contenu** : Ce document - Liste complÃ¨te des fichiers modifiÃ©s et crÃ©Ã©s
 
 ---
 
-## 📊 Statistiques
+## ðŸ“Š Statistiques
 
-### Fichiers Modifiés
+### Fichiers ModifiÃ©s
 - **Total** : 6 fichiers
 - **PHP** : 5 fichiers
 - **YAML** : 1 fichier
 
-### Fichiers Créés
+### Fichiers CrÃ©Ã©s
 - **Total** : 10 fichiers
 - **PHP** : 2 fichiers (langue)
 - **TXT** : 2 fichiers (email)
 - **MD** : 6 fichiers (documentation)
 
 ### Lignes de Code
-- **Modifiées** : ~200 lignes
-- **Ajoutées** : ~1500 lignes (documentation incluse)
-- **Supprimées** : ~30 lignes (doublons)
+- **ModifiÃ©es** : ~200 lignes
+- **AjoutÃ©es** : ~1500 lignes (documentation incluse)
+- **SupprimÃ©es** : ~30 lignes (doublons)
 
 ---
 
-## 🔍 Vérification des Modifications
+## ðŸ” VÃ©rification des Modifications
 
 ### Commande Git
 ```bash
-# Voir tous les fichiers modifiés
+# Voir tous les fichiers modifiÃ©s
 git status
 
-# Voir les différences
+# Voir les diffÃ©rences
 git diff
 
-# Voir les fichiers créés
+# Voir les fichiers crÃ©Ã©s
 git ls-files --others --exclude-standard
 ```
 
-### Fichiers à Vérifier en Priorité
+### Fichiers Ã  VÃ©rifier en PrioritÃ©
 1. `notification/type/reaction.php` - Suppression des doublons
-2. `ext.php` - Méthodes enable/disable/purge
+2. `ext.php` - MÃ©thodes enable/disable/purge
 3. `config/services.yml` - Nom du service
 4. `language/*/notification/reaction.php` - Fichiers de langue
 5. `language/*/email/reaction.txt` - Templates email
 
 ---
 
-## 📦 Checklist de Déploiement
+## ðŸ“¦ Checklist de DÃ©ploiement
 
-### Avant le Déploiement
-- [ ] Vérifier que tous les fichiers sont présents
-- [ ] Vérifier qu'il n'y a pas d'erreurs de syntaxe PHP
-- [ ] Vérifier les permissions des fichiers (644 pour les fichiers, 755 pour les dossiers)
-- [ ] Sauvegarder la base de données
+### Avant le DÃ©ploiement
+- [ ] VÃ©rifier que tous les fichiers sont prÃ©sents
+- [ ] VÃ©rifier qu'il n'y a pas d'erreurs de syntaxe PHP
+- [ ] VÃ©rifier les permissions des fichiers (644 pour les fichiers, 755 pour les dossiers)
+- [ ] Sauvegarder la base de donnÃ©es
 
-### Après le Déploiement
-- [ ] Désactiver puis réactiver l'extension
-- [ ] Vérifier les logs d'erreurs
+### AprÃ¨s le DÃ©ploiement
+- [ ] DÃ©sactiver puis rÃ©activer l'extension
+- [ ] VÃ©rifier les logs d'erreurs
 - [ ] Tester les notifications avec deux comptes utilisateur
-- [ ] Vérifier que "Post reactions" apparaît dans les préférences
+- [ ] VÃ©rifier que "Post reactions" apparaÃ®t dans les prÃ©fÃ©rences
 
 ---
 
-## 🗂️ Structure des Dossiers
+## ðŸ—‚ï¸ Structure des Dossiers
 
 ```
 ext/bastien59960/reactions/
-├── notification/
-│   └── type/
-│       └── reaction.php                    [MODIFIÉ]
-├── controller/
-│   └── ajax.php                            [MODIFIÉ]
-├── cron/
-│   └── notification_task.php               [MODIFIÉ]
-├── config/
-│   └── services.yml                        [MODIFIÉ]
-├── language/
-│   ├── fr/
-│   │   ├── common.php                      [MODIFIÉ]
-│   │   ├── notification/
-│   │   │   └── reaction.php                [CRÉÉ]
-│   │   └── email/
-│   │       └── reaction.txt                [CRÉÉ]
-│   └── en/
-│       ├── common.php                      [MODIFIÉ]
-│       ├── notification/
-│       │   └── reaction.php                [CRÉÉ]
-│       └── email/
-│           └── reaction.txt                [CRÉÉ]
-├── ext.php                                 [MODIFIÉ]
-├── GUIDE_TEST_NOTIFICATIONS.md             [CRÉÉ]
-├── CORRECTIONS_NOTIFICATIONS.md            [CRÉÉ]
-├── RESUME_CORRECTIONS.md                   [CRÉÉ]
-├── TEST_RAPIDE.md                          [CRÉÉ]
-├── EXPLICATIONS_FINALES.md                 [CRÉÉ]
-└── FICHIERS_MODIFIES.md                    [CRÉÉ]
+â”œâ”€â”€ notification/
+â”‚   â””â”€â”€ type/
+â”‚       â””â”€â”€ reaction.php                    [MODIFIÃ‰]
+â”œâ”€â”€ controller/
+â”‚   â””â”€â”€ ajax.php                            [MODIFIÃ‰]
+â”œâ”€â”€ cron/
+â”‚   â””â”€â”€ notification_task.php               [MODIFIÃ‰]
+â”œâ”€â”€ config/
+â”‚   â””â”€â”€ services.yml                        [MODIFIÃ‰]
+â”œâ”€â”€ language/
+â”‚   â”œâ”€â”€ fr/
+â”‚   â”‚   â”œâ”€â”€ common.php                      [MODIFIÃ‰]
+â”‚   â”‚   â”œâ”€â”€ notification/
+â”‚   â”‚   â”‚   â””â”€â”€ reaction.php                [CRÃ‰Ã‰]
+â”‚   â”‚   â””â”€â”€ email/
+â”‚   â”‚       â””â”€â”€ reaction.txt                [CRÃ‰Ã‰]
+â”‚   â””â”€â”€ en/
+â”‚       â”œâ”€â”€ common.php                      [MODIFIÃ‰]
+â”‚       â”œâ”€â”€ notification/
+â”‚       â”‚   â””â”€â”€ reaction.php                [CRÃ‰Ã‰]
+â”‚       â””â”€â”€ email/
+â”‚           â””â”€â”€ reaction.txt                [CRÃ‰Ã‰]
+â”œâ”€â”€ ext.php                                 [MODIFIÃ‰]
+â”œâ”€â”€ GUIDE_TEST_NOTIFICATIONS.md             [CRÃ‰Ã‰]
+â”œâ”€â”€ CORRECTIONS_NOTIFICATIONS.md            [CRÃ‰Ã‰]
+â”œâ”€â”€ RESUME_CORRECTIONS.md                   [CRÃ‰Ã‰]
+â”œâ”€â”€ TEST_RAPIDE.md                          [CRÃ‰Ã‰]
+â”œâ”€â”€ EXPLICATIONS_FINALES.md                 [CRÃ‰Ã‰]
+â””â”€â”€ FICHIERS_MODIFIES.md                    [CRÃ‰Ã‰]
 ```
 
 ---
 
-## 📝 Notes Importantes
+## ðŸ“ Notes Importantes
 
 ### Encodage des Fichiers
 - Tous les fichiers PHP : **UTF-8 sans BOM**
@@ -321,42 +321,42 @@ ext/bastien59960/reactions/
 - Fichiers MD : **644** (rw-r--r--)
 - Dossiers : **755** (rwxr-xr-x)
 
-### Compatibilité
+### CompatibilitÃ©
 - **phpBB** : 3.3.0+
 - **PHP** : 7.4+
 - **MySQL** : 5.6+ (avec support UTF8MB4)
 
 ---
 
-## 🎯 Prochaines Étapes
+## ðŸŽ¯ Prochaines Ã‰tapes
 
-### Immédiat
-1. Désactiver puis réactiver l'extension dans l'ACP
-2. Vérifier que "Post reactions" apparaît dans les préférences
+### ImmÃ©diat
+1. DÃ©sactiver puis rÃ©activer l'extension dans l'ACP
+2. VÃ©rifier que "Post reactions" apparaÃ®t dans les prÃ©fÃ©rences
 3. Tester les notifications avec deux comptes utilisateur
 
 ### Court Terme
 1. Surveiller les logs d'erreurs
 2. Recueillir les retours des utilisateurs
-3. Ajuster le délai anti-spam si nécessaire
+3. Ajuster le dÃ©lai anti-spam si nÃ©cessaire
 
 ### Long Terme
 1. Ajouter des tests unitaires
-2. Optimiser les requêtes SQL
+2. Optimiser les requÃªtes SQL
 3. Ajouter des statistiques de notifications
 
 ---
 
-## 📞 Support
+## ðŸ“ž Support
 
-Pour toute question sur les fichiers modifiés :
-1. Consulter la documentation créée
-2. Vérifier les commentaires dans le code
-3. Vérifier les logs d'erreurs
+Pour toute question sur les fichiers modifiÃ©s :
+1. Consulter la documentation crÃ©Ã©e
+2. VÃ©rifier les commentaires dans le code
+3. VÃ©rifier les logs d'erreurs
 
 ---
 
-**Date de dernière modification** : 5 octobre 2025  
+**Date de derniÃ¨re modification** : 5 octobre 2025  
 **Version de l'extension** : 1.0.1  
 **Auteur** : Bastien59960  
-**Statut** : ✅ Modifications Complètes
+**Statut** : âœ… Modifications ComplÃ¨tes

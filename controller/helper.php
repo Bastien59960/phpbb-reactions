@@ -5,17 +5,17 @@
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/helper.php
  *
- * Rôle :
- * Cette classe fournit des méthodes utilitaires centralisées pour l'extension.
- * Son rôle principal est de générer le bloc HTML des réactions pour un message
- * donné. Ce HTML est ensuite renvoyé par le contrôleur AJAX pour mettre à jour
+ * RÃ´le :
+ * Cette classe fournit des mÃ©thodes utilitaires centralisÃ©es pour l'extension.
+ * Son rÃ´le principal est de gÃ©nÃ©rer le bloc HTML des rÃ©actions pour un message
+ * donnÃ©. Ce HTML est ensuite renvoyÃ© par le contrÃ´leur AJAX pour mettre Ã  jour
  * l'affichage sans recharger la page.
  *
- * Informations reçues :
- * - `get_reactions_html_for_post($post_id)` : Reçoit l'ID d'un message.
+ * Informations reÃ§ues :
+ * - `get_reactions_html_for_post($post_id)` : ReÃ§oit l'ID d'un message.
  *
- * Elle est injectée comme service dans d'autres composants (notamment le
- * contrôleur AJAX) pour éviter la duplication de code.
+ * Elle est injectÃ©e comme service dans d'autres composants (notamment le
+ * contrÃ´leur AJAX) pour Ã©viter la duplication de code.
  *
  *
  * @package bastien59960
@@ -76,75 +76,125 @@ class helper
     }
 
         // =============================================================================
-    // MÉTHODE : Génération du HTML des réactions pour un post
+    // MÃ‰THODE : GÃ©nÃ©ration du HTML des rÃ©actions pour un post
     // =============================================================================
     /**
-     * Génère le HTML complet du bloc de réactions pour un message donné
+     * GÃ©nÃ¨re le HTML complet du bloc de rÃ©actions pour un message donnÃ©
      *
      * @param int $post_id ID du message
-     * @return string HTML prêt à injecter côté client (AJAX)
+     * @return string HTML prÃªt Ã  injecter cÃ´tÃ© client (AJAX)
      */
-    public function get_reactions_html_for_post($post_id)
+        public function get_reactions_html_for_post($post_id)
     {
         $post_id = (int) $post_id;
-        $sql = 'SELECT reaction_emoji, COUNT(reaction_emoji) as reaction_count
-                FROM ' . $this->table_post_reactions . '
-                WHERE post_id = ' . $post_id . '
-                GROUP BY reaction_emoji
-                ORDER BY reaction_count DESC';
+
+        $sql = 'SELECT r.reaction_emoji, r.user_id, u.username
+                FROM ' . $this->table_post_reactions . ' r
+                LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = r.user_id
+                WHERE r.post_id = ' . $post_id . '
+                ORDER BY r.reaction_time ASC';
         $result = $this->db->sql_query($sql);
-        $reactions_data = [];
+
+        $aggregated = [];
         while ($row = $this->db->sql_fetchrow($result)) {
-            $reactions_data[] = $row;
+            $emoji = (string) $row['reaction_emoji'];
+            if ($emoji === '') {
+                continue;
+            }
+
+            if (!isset($aggregated[$emoji])) {
+                $aggregated[$emoji] = [
+                    'count' => 0,
+                    'users' => [],
+                    'user_reacted' => false,
+                ];
+            }
+
+            $aggregated[$emoji]['count']++;
+            $aggregated[$emoji]['users'][] = [
+                'user_id'  => (int) $row['user_id'],
+                'username' => $row['username'] ?? '',
+            ];
         }
         $this->db->sql_freeresult($result);
 
-        $user_reacted_emojis = [];
-        $user_id = $this->user->data['user_id'];
-        $is_logged_in = ($user_id != ANONYMOUS);
+        $user_id = (int) $this->user->data['user_id'];
+        $is_logged_in = ($user_id !== ANONYMOUS);
         if ($is_logged_in) {
-            $sql = 'SELECT reaction_emoji
-                    FROM ' . $this->table_post_reactions . '
-                    WHERE post_id = ' . $post_id . '
-                    AND user_id = ' . $user_id;
-            $result = $this->db->sql_query($sql);
-            while ($row = $this->db->sql_fetchrow($result)) {
-                $user_reacted_emojis[] = $row['reaction_emoji'];
+            foreach ($aggregated as $emoji => &$data) {
+                foreach ($data['users'] as $user_info) {
+                    if ($user_info['user_id'] === $user_id) {
+                        $data['user_reacted'] = true;
+                        break;
+                    }
+                }
             }
-            $this->db->sql_freeresult($result);
+            unset($data);
         }
 
+        $reactions = [];
+        foreach ($aggregated as $emoji => $data) {
+            if ($data['count'] <= 0) {
+                continue;
+            }
+
+            $reactions[] = [
+                'emoji'        => $emoji,
+                'count'        => (int) $data['count'],
+                'users'        => $data['users'],
+                'user_reacted' => !empty($data['user_reacted']),
+            ];
+        }
+
+        usort($reactions, function ($a, $b) {
+            return $b['count'] <=> $a['count'];
+        });
+
         $html = '<div class="post-reactions">';
-        foreach ($reactions_data as $reaction) {
-            $user_reacted = in_array($reaction['reaction_emoji'], $user_reacted_emojis);
-            $active_class = $user_reacted ? ' active' : '';
-            $display_style = ($reaction['reaction_count'] == 0) ? ' style="display:none;"' : '';
+
+        foreach ($reactions as $reaction) {
+            $classes = ['reaction'];
+            if ($reaction['user_reacted']) {
+                $classes[] = 'active';
+            }
+            if (!$is_logged_in) {
+                $classes[] = 'reaction-readonly';
+            }
+
+            $class_attr = implode(' ', $classes);
+            $emoji_attr = htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8');
+            $users_json = htmlspecialchars(json_encode($reaction['users'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+
             $html .= sprintf(
-                '<span class="reaction%s" data-emoji="%s" data-count="%d"%s>%s <span class="count">%d</span></span>',
-                $active_class,
-                htmlspecialchars($reaction['reaction_emoji'], ENT_QUOTES, 'UTF-8'),
-                (int) $reaction['reaction_count'],
-                $display_style,
-                $reaction['reaction_emoji'],
-                (int) $reaction['reaction_count']
+                '<span class="%s" data-emoji="%s" data-count="%d" data-users="%s">%s <span class="count">%d</span></span>',
+                $class_attr,
+                $emoji_attr,
+                (int) $reaction['count'],
+                $users_json,
+                $reaction['emoji'],
+                (int) $reaction['count']
             );
         }
+
         if ($is_logged_in) {
-            $html .= '<span class="reaction-more" title="Ajouter une réaction">+</span>';
+            $tooltip = htmlspecialchars($this->language->lang('REACTIONS_ADD_TOOLTIP'), ENT_QUOTES, 'UTF-8');
+            $html .= '<span class="reaction-more" role="button" title="' . $tooltip . '" aria-label="' . $tooltip . '">&#128077;</span>';
         }
+
         $html .= '</div>';
+
         return $html;
     }
 
     // =============================================================================
-    // MÉTHODE : Génération d'URL (proxy vers controller_helper)
+    // MÃ‰THODE : GÃ©nÃ©ration d'URL (proxy vers controller_helper)
     // =============================================================================
     /**
-     * Génère une URL via le contrôleur phpBB ou fallback append_sid
+     * GÃ©nÃ¨re une URL via le contrÃ´leur phpBB ou fallback append_sid
      *
      * @param string $route
      * @param array $params
-     * @return string URL générée
+     * @return string URL gÃ©nÃ©rÃ©e
      */
     public function route($route, array $params = [])
     {

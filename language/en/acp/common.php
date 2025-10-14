@@ -5,7 +5,7 @@
  * Extension: bastien59960/reactions
  * ============================================================================
  *
- * 📘 Description:
+ * ðŸ“˜ Description:
  * This file contains the English language strings for the Administration
  * Control Panel (ACP) of the Reactions extension.
  *
@@ -54,4 +54,9 @@ $lang = array_merge($lang ?? [], [
     'ACP_REACTIONS_MAX_PER_POST_EXPLAIN' => 'Maximum number of different reaction types allowed on a single post.',
     'ACP_REACTIONS_MAX_PER_USER_EXPLAIN' => 'Maximum number of reactions a user can add to a single post.',
     'ACP_REACTIONS_SPAM_TIME_EXPLAIN'    => 'Minimum delay (in minutes) between sending two e-mail summary digests to the same user.',
+
+    // --- Admin Log Messages ---
+    'LOG_REACTIONS_IMPORT_START'   => '<strong>Attempting to import reactions</strong><br>» Searching for data from an old reactions extension.',
+    'LOG_REACTIONS_IMPORT_EMPTY'   => '<strong>Reactions import skipped</strong><br>» The old tables were found but were empty.',
+    'LOG_REACTIONS_IMPORT_SUCCESS' => '<strong>Reactions import finished</strong><br>» %1$d reactions imported (%2$d skipped).<br>» %3$d users and %4$d posts affected.',
 ]);

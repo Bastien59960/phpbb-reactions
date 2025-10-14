@@ -1,7 +1,7 @@
 {
     "name": "bastien59960/reactions",
     "type": "phpbb-extension",
-    "description": "Extension phpBB 3.3+ permettant aux utilisateurs de réagir aux messages avec des emojis Unicode. Inclut un système de notifications complet avec support des notifications par cloche (immédiates) et par email (avec délai anti-spam).",
+    "description": "Extension phpBB 3.3+ permettant aux utilisateurs de rÃ©agir aux messages avec des emojis Unicode. Inclut un systÃ¨me de notifications complet avec support des notifications par cloche (immÃ©diates) et par email (avec dÃ©lai anti-spam).",
     "homepage": "https://github.com/Bastien59960/phpbb-reactions",
     "version": "1.0.1",
     "keywords": [

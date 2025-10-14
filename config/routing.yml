@@ -1,14 +1,14 @@
-# Routes utilisées par l’extension Reactions.
+# Routes utilisÃ©es par lâ€™extension Reactions.
 #
 # PHPBB charger ce fichier via le service router.
 
-# Endpoint AJAX (ajout/suppression/récupération des réactions).
+# Endpoint AJAX (ajout/suppression/rÃ©cupÃ©ration des rÃ©actions).
 bastien59960_reactions_ajax:
   path: /reactions/ajax
   defaults: { _controller: bastien59960.reactions.ajax:handle }
   methods: [POST]
 
-# Contrôleur de test/debug (facultatif).
+# ContrÃ´leur de test/debug (facultatif).
 bastien59960_reactions_test:
   path: /reactions/test
   defaults: { _controller: bastien59960.reactions.test:handle }

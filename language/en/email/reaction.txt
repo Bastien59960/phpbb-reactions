@@ -1,5 +1,5 @@
 #
-# File: language/en/email/reaction.txt — bastien59960/reactions/language/en/email/reaction.txt
+# File: language/en/email/reaction.txt â€” bastien59960/reactions/language/en/email/reaction.txt
 #
 # Email template for reaction notifications (English).
 #

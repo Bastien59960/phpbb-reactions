@@ -1,150 +1,150 @@
-# 🚀 phpBB Reactions — Extension d’Émojis Ultra-Complète pour phpBB 3.3+
+# ðŸš€ phpBB Reactions â€” Extension dâ€™Ã‰mojis Ultra-ComplÃ¨te pour phpBB 3.3+
 
-Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos membres réagir à chaque message avec l’intégralité des émojis Unicode !  
-**Expérience fluide, notifications intelligentes, personnalisation avancée, et performance garantie.**
+Ajoutez une dimension sociale et moderne Ã  votre forum phpBBâ€¯: laissez vos membres rÃ©agir Ã  chaque message avec lâ€™intÃ©gralitÃ© des Ã©mojis Unicodeâ€¯!  
+**ExpÃ©rience fluide, notifications intelligentes, personnalisation avancÃ©e, et performance garantie.**
 
 ---
 
-## ✨ Fonctionnalités phares
+## âœ¨ FonctionnalitÃ©s phares
 
-- **Réactions illimitées** : Support complet de tous les émojis Unicode (👍 ❤️ 😂 👎 …), y compris les emojis composés et les dernières nouveautés.
-- **Palette intelligente** : 10 emojis courants en accès rapide, palette étendue pour tous les autres.
-- **Multi-réactions** : Jusqu’à 10 réactions différentes par utilisateur et par post (paramétrable).
-- **Compteurs dynamiques** : Affichage en temps réel du nombre de réactions par emoji sous chaque message.
-- **Tooltips interactifs** : Survolez un emoji pour voir qui a réagi.
-- **AJAX ultra-rapide** : Toutes les interactions (ajout, retrait, affichage) sont instantanées, sans rechargement de page.
+- **RÃ©actions illimitÃ©es** : Support complet de tous les Ã©mojis Unicode (ðŸ‘ â¤ï¸ ðŸ˜‚ ðŸ‘Ž â€¦), y compris les emojis composÃ©s et les derniÃ¨res nouveautÃ©s.
+- **Palette intelligente** : 10 emojis courants en accÃ¨s rapide, palette Ã©tendue pour tous les autres.
+- **Multi-rÃ©actions** : Jusquâ€™Ã  10 rÃ©actions diffÃ©rentes par utilisateur et par post (paramÃ©trable).
+- **Compteurs dynamiques** : Affichage en temps rÃ©el du nombre de rÃ©actions par emoji sous chaque message.
+- **Tooltips interactifs** : Survolez un emoji pour voir qui a rÃ©agi.
+- **AJAX ultra-rapide** : Toutes les interactions (ajout, retrait, affichage) sont instantanÃ©es, sans rechargement de page.
 - **Notifications puissantes** :
-  - **Cloche** : Notification immédiate dans le forum.
-  - **Résumé e-mail** : Digest périodique groupé, anti-spam, personnalisable par l’utilisateur.
-- **Préférences utilisateur** : Chaque membre choisit s’il veut recevoir des notifications (cloche, e-mail, ou aucune).
-- **Limites configurables** : Nombre max de réactions par post, par utilisateur, délai anti-spam… tout est ajustable dans l’ACP.
-- **Sécurité avancée** : Protection CSRF, validation stricte des emojis, contrôle des permissions, anti-spam natif.
-- **Support multilingue** : Français et anglais inclus, facilement extensible.
-- **Design responsive** : Parfaitement intégré à prosilver, compatible mobile/tablette.
-- **Logs & debug** : Suivi détaillé des actions et erreurs pour un diagnostic facile.
+  - **Cloche** : Notification immÃ©diate dans le forum.
+  - **RÃ©sumÃ© e-mail** : Digest pÃ©riodique groupÃ©, anti-spam, personnalisable par lâ€™utilisateur.
+- **PrÃ©fÃ©rences utilisateur** : Chaque membre choisit sâ€™il veut recevoir des notifications (cloche, e-mail, ou aucune).
+- **Limites configurables** : Nombre max de rÃ©actions par post, par utilisateur, dÃ©lai anti-spamâ€¦ tout est ajustable dans lâ€™ACP.
+- **SÃ©curitÃ© avancÃ©e** : Protection CSRF, validation stricte des emojis, contrÃ´le des permissions, anti-spam natif.
+- **Support multilingue** : FranÃ§ais et anglais inclus, facilement extensible.
+- **Design responsive** : Parfaitement intÃ©grÃ© Ã  prosilver, compatible mobile/tablette.
+- **Logs & debug** : Suivi dÃ©taillÃ© des actions et erreurs pour un diagnostic facile.
 
 ---
 
-## 🖼️ Aperçu
+## ðŸ–¼ï¸ AperÃ§u
 
-*(Ajoutez ici une capture d’écran si souhaité)*
+*(Ajoutez ici une capture dâ€™Ã©cran si souhaitÃ©)*
 
 ---
 
-## 🛠️ Installation rapide
+## ðŸ› ï¸ Installation rapide
 
-1. **Pré-requis** : phpBB 3.3.10+ (UTF8MB4 activé sur la base de données)
-2. **Téléchargement** : [Dernière version sur GitHub](https://github.com/bastien59960/reactions)
-3. **Déploiement** :
-   - Dézippez dans `ext/bastien59960/reactions/`
-   - Activez l’extension dans l’ACP > Personnalisation > Gérer les extensions
+1. **PrÃ©-requis** : phpBB 3.3.10+ (UTF8MB4 activÃ© sur la base de donnÃ©es)
+2. **TÃ©lÃ©chargement** : [DerniÃ¨re version sur GitHub](https://github.com/bastien59960/reactions)
+3. **DÃ©ploiement** :
+   - DÃ©zippez dans `ext/bastien59960/reactions/`
+   - Activez lâ€™extension dans lâ€™ACP > Personnalisation > GÃ©rer les extensions
 4. **Configuration** :
-   - Rendez-vous dans l’ACP > Extensions > Post Reactions pour ajuster les paramètres (limites, activation, etc.)
-   - Les utilisateurs peuvent gérer leurs préférences dans leur panneau utilisateur
+   - Rendez-vous dans lâ€™ACP > Extensions > Post Reactions pour ajuster les paramÃ¨tres (limites, activation, etc.)
+   - Les utilisateurs peuvent gÃ©rer leurs prÃ©fÃ©rences dans leur panneau utilisateur
 
 ---
 
-## 📝 Fonctionnalités détaillées
+## ðŸ“ FonctionnalitÃ©s dÃ©taillÃ©es
 
-### Réactions & interface
-- Palette d’emojis rapide et palette complète
-- Affichage des réactions sous chaque post
-- Tooltips avec la liste des utilisateurs ayant réagi
-- Ajout/retrait de réaction en un clic (AJAX)
+### RÃ©actions & interface
+- Palette dâ€™emojis rapide et palette complÃ¨te
+- Affichage des rÃ©actions sous chaque post
+- Tooltips avec la liste des utilisateurs ayant rÃ©agi
+- Ajout/retrait de rÃ©action en un clic (AJAX)
 
 ### Notifications
-- **Cloche** : Notification immédiate à l’auteur du message (hors auto-réaction)
-- **Résumé e-mail** : Digest groupé, anti-spam (délai configurable, par défaut 45 min)
-- Préférences individuelles (activer/désactiver chaque type)
+- **Cloche** : Notification immÃ©diate Ã  lâ€™auteur du message (hors auto-rÃ©action)
+- **RÃ©sumÃ© e-mail** : Digest groupÃ©, anti-spam (dÃ©lai configurable, par dÃ©faut 45 min)
+- PrÃ©fÃ©rences individuelles (activer/dÃ©sactiver chaque type)
 
 ### Configuration & personnalisation
-- Limites par post et par utilisateur (modifiables dans l’ACP)
-- Activation/désactivation globale de l’extension
-- Délai anti-spam pour les notifications e-mail
+- Limites par post et par utilisateur (modifiables dans lâ€™ACP)
+- Activation/dÃ©sactivation globale de lâ€™extension
+- DÃ©lai anti-spam pour les notifications e-mail
 - Support complet des emojis Unicode (utf8mb4 requis)
 
-### Sécurité & robustesse
-- Validation CSRF sur toutes les requêtes
-- Validation stricte des emojis (longueur, unicité, caractères)
-- Permissions phpBB respectées (seuls les membres autorisés peuvent réagir)
+### SÃ©curitÃ© & robustesse
+- Validation CSRF sur toutes les requÃªtes
+- Validation stricte des emojis (longueur, unicitÃ©, caractÃ¨res)
+- Permissions phpBB respectÃ©es (seuls les membres autorisÃ©s peuvent rÃ©agir)
 - Nettoyage automatique des notifications orphelines
 
 ### Performance
-- Index SQL optimisés
-- Requêtes AJAX groupées
+- Index SQL optimisÃ©s
+- RequÃªtes AJAX groupÃ©es
 - Cache des emojis
-- Logs détaillés pour le debug
+- Logs dÃ©taillÃ©s pour le debug
 
 ---
 
-## 📦 Structure du projet
+## ðŸ“¦ Structure du projet
 
 ```
 reactions/
-├── ext.php
-├── config/           # Services, paramètres, routes
-├── controller/       # Contrôleurs AJAX, UCP, etc.
-├── event/            # Listener d’événements phpBB
-├── notification/     # Types de notifications personnalisés
-├── cron/             # Tâche cron pour les digests e-mail
-├── migrations/       # Migrations de base de données
-├── language/         # Fichiers de langue (fr, en)
-├── styles/           # Templates, JS, CSS
-└── ...
+â”œâ”€â”€ ext.php
+â”œâ”€â”€ config/           # Services, paramÃ¨tres, routes
+â”œâ”€â”€ controller/       # ContrÃ´leurs AJAX, UCP, etc.
+â”œâ”€â”€ event/            # Listener dâ€™Ã©vÃ©nements phpBB
+â”œâ”€â”€ notification/     # Types de notifications personnalisÃ©s
+â”œâ”€â”€ cron/             # TÃ¢che cron pour les digests e-mail
+â”œâ”€â”€ migrations/       # Migrations de base de donnÃ©es
+â”œâ”€â”€ language/         # Fichiers de langue (fr, en)
+â”œâ”€â”€ styles/           # Templates, JS, CSS
+â””â”€â”€ ...
 ```
 
 ---
 
-## 🔒 Sécurité & bonnes pratiques
+## ðŸ”’ SÃ©curitÃ© & bonnes pratiques
 
-- Validation CSRF et permissions à chaque étape
+- Validation CSRF et permissions Ã  chaque Ã©tape
 - Limites anti-spam configurables
-- Logs d’erreur et de performance
-- Nettoyage automatique des données orphelines
+- Logs dâ€™erreur et de performance
+- Nettoyage automatique des donnÃ©es orphelines
 
 ---
 
-## 🚦 Roadmap & évolutions prévues
+## ðŸš¦ Roadmap & Ã©volutions prÃ©vues
 
-- Réactions personnalisées (emojis propres au forum)
-- Statistiques avancées (tableaux de bord, top réactions)
-- Intégration mobile et PWA
+- RÃ©actions personnalisÃ©es (emojis propres au forum)
+- Statistiques avancÃ©es (tableaux de bord, top rÃ©actions)
+- IntÃ©gration mobile et PWA
 - API REST pour applications tierces
-- Notifications en temps réel (WebSockets)
-- Import/export des réactions
-- Tests automatisés
+- Notifications en temps rÃ©el (WebSockets)
+- Import/export des rÃ©actions
+- Tests automatisÃ©s
 
 ---
 
-## 🤝 Contribution & support
+## ðŸ¤ Contribution & support
 
 - **Bugs, suggestions, contributions** : ouvrez une issue ou une pull request sur GitHub
-- **Documentation complète** : voir le dossier `/docs` et les fichiers `DOCUMENTATION.md`, `CONFIGURATION.md`
-- **Communauté** : [Forum de support](https://bastien.debucquoi.com/forum/)
+- **Documentation complÃ¨te** : voir le dossier `/docs` et les fichiers `DOCUMENTATION.md`, `CONFIGURATION.md`
+- **CommunautÃ©** : [Forum de support](https://bastien.debucquoi.com/forum/)
 
 ---
 
-## 📄 Licence
+## ðŸ“„ Licence
 
 GNU General Public License v2.0  
 (c) 2025 Bastien59960
 
 ---
 
-*Rejoignez la communauté, testez, contribuez, et faites de votre forum un espace vivant et interactif !*
+*Rejoignez la communautÃ©, testez, contribuez, et faites de votre forum un espace vivant et interactifâ€¯!*
 
 ---
 
-# 🚀 phpBB Reactions — The Ultimate Emoji Extension for phpBB 3.3+ (English)
+# ðŸš€ phpBB Reactions â€” The Ultimate Emoji Extension for phpBB 3.3+ (English)
 
 Bring your phpBB forum to life: let your members react to every post with the full range of Unicode emojis!  
 **Smooth experience, smart notifications, advanced customization, and top performance.**
 
 ---
 
-## ✨ Key Features
+## âœ¨ Key Features
 
-- **Unlimited reactions**: Full support for all Unicode emojis (👍 ❤️ 😂 👎 …), including composed and latest emojis.
+- **Unlimited reactions**: Full support for all Unicode emojis (ðŸ‘ â¤ï¸ ðŸ˜‚ ðŸ‘Ž â€¦), including composed and latest emojis.
 - **Smart palette**: 10 quick-access emojis, full palette for all others.
 - **Multi-reactions**: Up to 10 different reactions per user and per post (configurable).
 - **Live counters**: Real-time display of reaction counts per emoji under each post.
@@ -154,7 +154,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
   - **Bell**: Instant in-forum notification.
   - **Email digest**: Periodic grouped digest, anti-spam, user-customizable.
 - **User preferences**: Each member chooses which notifications to receive (bell, email, or none).
-- **Configurable limits**: Max reactions per post, per user, anti-spam delay… all adjustable in the ACP.
+- **Configurable limits**: Max reactions per post, per user, anti-spam delayâ€¦ all adjustable in the ACP.
 - **Advanced security**: CSRF protection, strict emoji validation, permission checks, built-in anti-spam.
 - **Multilingual**: French and English included, easily extensible.
 - **Responsive design**: Perfectly integrated with prosilver, mobile/tablet ready.
@@ -162,13 +162,13 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 
 ---
 
-## 🖼️ Preview
+## ðŸ–¼ï¸ Preview
 
 *(Add a screenshot here if desired)*
 
 ---
 
-## 🛠️ Quick Installation
+## ðŸ› ï¸ Quick Installation
 
 1. **Requirements**: phpBB 3.3.10+ (UTF8MB4 enabled on the database)
 2. **Download**: [Latest version on GitHub](https://github.com/bastien59960/reactions)
@@ -181,7 +181,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 
 ---
 
-## 📝 Detailed Features
+## ðŸ“ Detailed Features
 
 ### Reactions & Interface
 - Quick and full emoji palette
@@ -214,25 +214,25 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 
 ---
 
-## 📦 Project Structure
+## ðŸ“¦ Project Structure
 
 ```
 reactions/
-├── ext.php
-├── config/           # Services, parameters, routes
-├── controller/       # AJAX, UCP, etc. controllers
-├── event/            # phpBB event listener
-├── notification/     # Custom notification types
-├── cron/             # Cron task for email digests
-├── migrations/       # Database migrations
-├── language/         # Language files (fr, en)
-├── styles/           # Templates, JS, CSS
-└── ...
+â”œâ”€â”€ ext.php
+â”œâ”€â”€ config/           # Services, parameters, routes
+â”œâ”€â”€ controller/       # AJAX, UCP, etc. controllers
+â”œâ”€â”€ event/            # phpBB event listener
+â”œâ”€â”€ notification/     # Custom notification types
+â”œâ”€â”€ cron/             # Cron task for email digests
+â”œâ”€â”€ migrations/       # Database migrations
+â”œâ”€â”€ language/         # Language files (fr, en)
+â”œâ”€â”€ styles/           # Templates, JS, CSS
+â””â”€â”€ ...
 ```
 
 ---
 
-## 🔒 Security & Best Practices
+## ðŸ”’ Security & Best Practices
 
 - CSRF and permission checks at every step
 - Configurable anti-spam limits
@@ -241,7 +241,7 @@ reactions/
 
 ---
 
-## 🚦 Roadmap & Upcoming Features
+## ðŸš¦ Roadmap & Upcoming Features
 
 - Custom reactions (forum-specific emojis)
 - Advanced statistics (dashboards, top reactions)
@@ -253,7 +253,7 @@ reactions/
 
 ---
 
-## 🤝 Contribution & Support
+## ðŸ¤ Contribution & Support
 
 - **Bugs, suggestions, contributions**: open an issue or pull request on GitHub
 - **Full documentation**: see `/docs` and the files `DOCUMENTATION.md`, `CONFIGURATION.md`
@@ -261,7 +261,7 @@ reactions/
 
 ---
 
-## 📄 License
+## ðŸ“„ License
 
 GNU General Public License v2.0  
 (c) 2025 Bastien59960

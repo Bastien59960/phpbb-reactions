@@ -1,38 +1,38 @@
 #
-# Fichier : config/parameters.yml — bastien59960/reactions/config/parameters.yml
+# Fichier : config/parameters.yml â€” bastien59960/reactions/config/parameters.yml
 #
-# Fichier de paramètres pour l'extension Reactions.
+# Fichier de paramÃ¨tres pour l'extension Reactions.
 #
-# Ce fichier définit les paramètres personnalisés utilisés par l'extension, comme les valeurs par défaut ou les constantes de configuration.
+# Ce fichier dÃ©finit les paramÃ¨tres personnalisÃ©s utilisÃ©s par l'extension, comme les valeurs par dÃ©faut ou les constantes de configuration.
 #
-# Points clés :
-#   - Centralisation des paramètres techniques
-#   - Utilisé lors de l'installation ou du développement
+# Points clÃ©s :
+#   - Centralisation des paramÃ¨tres techniques
+#   - UtilisÃ© lors de l'installation ou du dÃ©veloppement
 #
-# Ce fichier est chargé automatiquement par phpBB lors de l'initialisation de l'extension.
+# Ce fichier est chargÃ© automatiquement par phpBB lors de l'initialisation de l'extension.
 #
 
 parameters:
     # =============================================================================
-    # TABLES DE BASE DE DONNÉES
+    # TABLES DE BASE DE DONNÃ‰ES
     # =============================================================================
 
-    # Table principale des réactions
-    # Stocke toutes les réactions aux messages du forum
+    # Table principale des rÃ©actions
+    # Stocke toutes les rÃ©actions aux messages du forum
     tables.post_reactions: '%core.table_prefix%post_reactions'
 
-    # Table des préférences utilisateur pour les notifications de réactions
+    # Table des prÃ©fÃ©rences utilisateur pour les notifications de rÃ©actions
     # Contient les choix individuels (activer la cloche, activer le cron)
     tables.reactions_user_prefs: '%core.table_prefix%reactions_user_prefs'
 
-    # Table des sujets (référence)
-    # Utilisée pour les jointures et les vérifications d'autorisation
+    # Table des sujets (rÃ©fÃ©rence)
+    # UtilisÃ©e pour les jointures et les vÃ©rifications d'autorisation
     tables.topics: '%core.table_prefix%topics'
 
-    # Table des forums (référence)
-    # Utilisée pour les jointures et les vérifications d'autorisation
+    # Table des forums (rÃ©fÃ©rence)
+    # UtilisÃ©e pour les jointures et les vÃ©rifications d'autorisation
     tables.forums: '%core.table_prefix%forums'
 
-    # Table des messages (référence)
-    # Utilisée pour les jointures et les vérifications d'autorisation
+    # Table des messages (rÃ©fÃ©rence)
+    # UtilisÃ©e pour les jointures et les vÃ©rifications d'autorisation
     tables.posts: '%core.table_prefix%posts'

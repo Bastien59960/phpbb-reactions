@@ -1,12 +1,12 @@
 <!--
-    Fichier : language/fr/email/reaction_digest.html — bastien59960/reactions
-    Version HTML du courriel de résumé des réactions (français).
+    Fichier : language/fr/email/reaction_digest.html â€” bastien59960/reactions
+    Version HTML du courriel de rÃ©sumÃ© des rÃ©actions (franÃ§ais).
 -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Résumé des réactions reçues sur vos messages</title>
+    <title>RÃ©sumÃ© des rÃ©actions reÃ§ues sur vos messages</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1f2933; background: #f7f9fb; margin: 0; padding: 24px; }
         .digest-card { max-width: 640px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08); }
@@ -30,12 +30,12 @@
 <body>
     <div class="digest-card">
         <h1>Bonjour {USERNAME},</h1>
-        <p>Entre <strong>{DIGEST_SINCE}</strong> et <strong>{DIGEST_UNTIL}</strong>, vous avez reçu de nouvelles réactions regroupées par sujet :</p>
+        <p>Entre <strong>{DIGEST_SINCE}</strong> et <strong>{DIGEST_UNTIL}</strong>, vous avez reÃ§u de nouvelles rÃ©actions regroupÃ©es par sujet :</p>
 
         {DIGEST_HTML}
 
         <div class="digest-tip">
-            Astuce : modifiez ou désactivez ces notifications depuis votre <strong>Panneau de Contrôle Utilisateur → Préférences des réactions</strong>.
+            Astuce : modifiez ou dÃ©sactivez ces notifications depuis votre <strong>Panneau de ContrÃ´le Utilisateur â†’ PrÃ©fÃ©rences des rÃ©actions</strong>.
         </div>
 
         <p class="signature">{DIGEST_SIGNATURE}</p>

@@ -1,22 +1,22 @@
 <?php
 /**
- * Fichier : notification/type/reaction_email_digest.php — bastien59960/reactions/notification/type/reaction_email_digest.php
+ * Fichier : notification/type/reaction_email_digest.php â€” bastien59960/reactions/notification/type/reaction_email_digest.php
  * Fichier : reaction_email_digest.php
  * Chemin : bastien59960/reactions/notification/type/reaction_email_digest.php
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions/blob/main/notification/type/reaction_email_digest.php
  *
- * Type de notification "Résumé e-mail des réactions" pour l'extension Reactions.
- * Rôle :
- * Définit le type de notification "Résumé e-mail des réactions". Cette classe est
- * utilisée exclusivement par la tâche CRON (`cron/notification_task.php`) pour
- * envoyer un e-mail récapitulatif (digest) des réactions reçues.
+ * Type de notification "RÃ©sumÃ© e-mail des rÃ©actions" pour l'extension Reactions.
+ * RÃ´le :
+ * DÃ©finit le type de notification "RÃ©sumÃ© e-mail des rÃ©actions". Cette classe est
+ * utilisÃ©e exclusivement par la tÃ¢che CRON (`cron/notification_task.php`) pour
+ * envoyer un e-mail rÃ©capitulatif (digest) des rÃ©actions reÃ§ues.
  *
- * Ce type est utilisé exclusivement par la tâche cron afin d'envoyer un digest périodique
- * des réactions reçues. Aucune entrée n'est créée dans la cloche phpBB.
- * Contrairement à `reaction.php`, ce type ne crée pas de notification visible
- * dans la cloche. Il sert uniquement de "véhicule" pour envoyer un e-mail
- * formaté avec un template spécifique (`reaction_digest.txt`).
+ * Ce type est utilisÃ© exclusivement par la tÃ¢che cron afin d'envoyer un digest pÃ©riodique
+ * des rÃ©actions reÃ§ues. Aucune entrÃ©e n'est crÃ©Ã©e dans la cloche phpBB.
+ * Contrairement Ã  `reaction.php`, ce type ne crÃ©e pas de notification visible
+ * dans la cloche. Il sert uniquement de "vÃ©hicule" pour envoyer un e-mail
+ * formatÃ© avec un template spÃ©cifique (`reaction_digest.txt`).
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -39,9 +39,9 @@ class reaction_email_digest extends base
     /**
      * Constructeur de la classe.
      *
-     * IMPORTANT : L'ordre des arguments doit correspondre à celui de la classe parente.
+     * IMPORTANT : L'ordre des arguments doit correspondre Ã  celui de la classe parente.
      *
-     * @param driver_interface $db                  Base de données
+     * @param driver_interface $db                  Base de donnÃ©es
      * @param language         $language            Gestionnaire de langues
      * @param user             $user                Utilisateur courant
      * @param auth             $auth                Autorisations
@@ -58,7 +58,7 @@ class reaction_email_digest extends base
         $php_ext,
         $notifications_table
     ) {
-        // Appeler le constructeur de la classe parente avec toutes les dépendances requises.
+        // Appeler le constructeur de la classe parente avec toutes les dÃ©pendances requises.
         parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
 
         try
@@ -84,7 +84,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Clé de langue affichée dans l'UCP (titre).
+     * ClÃ© de langue affichÃ©e dans l'UCP (titre).
      */
     public static function get_item_type_name()
     {
@@ -92,17 +92,17 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Clé de langue affichée dans l'UCP (description).
+     * ClÃ© de langue affichÃ©e dans l'UCP (description).
      */
     public static function get_item_type_description()
     {
-        // Note: La clé de langue a été corrigée pour correspondre aux fichiers de langue.
+        // Note: La clÃ© de langue a Ã©tÃ© corrigÃ©e pour correspondre aux fichiers de langue.
         return 'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC';
     }
 
     /**
-     * Utilisateurs à pré-charger.
-     * Requis par l'interface, mais non utilisé ici.
+     * Utilisateurs Ã  prÃ©-charger.
+     * Requis par l'interface, mais non utilisÃ© ici.
      * @return array
      */
     public function users_to_query()
@@ -111,13 +111,13 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Retourne la clé de langue pour le titre de la notification.
+     * Retourne la clÃ© de langue pour le titre de la notification.
      *
-     * Requis par l'interface, même si ce type de notification n'a pas de
-     * titre individuel affiché dans la cloche. Nous retournons une clé
-     * générique pour la conformité.
+     * Requis par l'interface, mÃªme si ce type de notification n'a pas de
+     * titre individuel affichÃ© dans la cloche. Nous retournons une clÃ©
+     * gÃ©nÃ©rique pour la conformitÃ©.
      *
-     * @return string La clé de langue pour le titre.
+     * @return string La clÃ© de langue pour le titre.
      */
     public function get_title()
     {
@@ -125,7 +125,7 @@ class reaction_email_digest extends base
     }
 
     /**
-     * Aucune notification individuelle n'est créée : tableau vide.
+     * Aucune notification individuelle n'est crÃ©Ã©e : tableau vide.
      */
     public function find_users_for_notification($data, $options = array())
     {
@@ -159,7 +159,7 @@ class reaction_email_digest extends base
                     $reactor = $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']);
                     $emoji = $reaction['emoji'] ?: '?';
                     $recap_lines_arr[] = sprintf(
-                        '- Le %s, %s a réagi avec %s à votre message : "%s"',
+                        '- Le %s, %s a rÃ©agi avec %s Ã  votre message : "%s"',
                         $when, $reactor, $emoji, $post_subject
                     );
                 }
@@ -168,13 +168,13 @@ class reaction_email_digest extends base
 
         return [
             'USERNAME'    => $this->notification_data['author_name'] ?? ($author_data['author_name'] ?? 'Utilisateur'),
-            'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la dernière fois', // Note: SINCE_TIME n'est plus dans le template
+            'SINCE_TIME'  => $this->notification_data['since_time'] ?? 'la derniÃ¨re fois', // Note: SINCE_TIME n'est plus dans le template
             'RECAP_LINES' => implode("\n", $recap_lines_arr),
         ];
     }
 
     /**
-     * Cette notification n'est pas liée à un item spécifique.
+     * Cette notification n'est pas liÃ©e Ã  un item spÃ©cifique.
      * Requis par la classe de base.
      */
     public static function get_item_id($data)

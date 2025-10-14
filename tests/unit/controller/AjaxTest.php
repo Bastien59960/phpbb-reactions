@@ -1,9 +1,9 @@
 <?php
 /**
- * Tests unitaires pour le contrôleur AJAX de l'extension Reactions
+ * Tests unitaires pour le contrÃ´leur AJAX de l'extension Reactions
  * 
- * Ce fichier contient les tests unitaires pour le contrôleur AJAX
- * qui gère les requêtes AJAX liées aux réactions aux messages.
+ * Ce fichier contient les tests unitaires pour le contrÃ´leur AJAX
+ * qui gÃ¨re les requÃªtes AJAX liÃ©es aux rÃ©actions aux messages.
  * 
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -22,30 +22,30 @@ use phpbb\config\config;
 use phpbb\notification\manager;
 
 /**
- * Tests unitaires pour le contrôleur AJAX
+ * Tests unitaires pour le contrÃ´leur AJAX
  * 
- * Teste les fonctionnalités principales du contrôleur AJAX :
- * - Validation des données d'entrée
+ * Teste les fonctionnalitÃ©s principales du contrÃ´leur AJAX :
+ * - Validation des donnÃ©es d'entrÃ©e
  * - Gestion des autorisations
- * - Traitement des requêtes AJAX
+ * - Traitement des requÃªtes AJAX
  * - Gestion des erreurs
  */
 class AjaxTest extends TestCase
 {
     // =============================================================================
-    // PROPRIÉTÉS DE TEST
+    // PROPRIÃ‰TÃ‰S DE TEST
     // =============================================================================
     
-    /** @var ajax Instance du contrôleur AJAX à tester */
+    /** @var ajax Instance du contrÃ´leur AJAX Ã  tester */
     protected $controller;
     
-    /** @var driver_interface Mock de la base de données */
+    /** @var driver_interface Mock de la base de donnÃ©es */
     protected $db;
     
     /** @var user Mock de l'utilisateur */
     protected $user;
     
-    /** @var request Mock de la requête */
+    /** @var request Mock de la requÃªte */
     protected $request;
     
     /** @var auth Mock de l'authentification */
@@ -67,14 +67,14 @@ class AjaxTest extends TestCase
     /**
      * Configuration avant chaque test
      * 
-     * Initialise les mocks et l'instance du contrôleur
+     * Initialise les mocks et l'instance du contrÃ´leur
      * pour chaque test unitaire.
      */
     protected function setUp(): void
     {
         parent::setUp();
         
-        // Créer les mocks
+        // CrÃ©er les mocks
         $this->db = $this->createMock(driver_interface::class);
         $this->user = $this->createMock(user::class);
         $this->request = $this->createMock(request::class);
@@ -83,14 +83,14 @@ class AjaxTest extends TestCase
         $this->config = $this->createMock(config::class);
         $this->notification_manager = $this->createMock(manager::class);
         
-        // Configurer les données utilisateur par défaut
+        // Configurer les donnÃ©es utilisateur par dÃ©faut
         $this->user->data = [
             'user_id' => 1,
             'username' => 'test_user',
             'session_id' => 'test_session_id',
         ];
         
-        // Créer l'instance du contrôleur
+        // CrÃ©er l'instance du contrÃ´leur
         $this->controller = new ajax(
             $this->db,
             $this->user,
@@ -115,23 +115,23 @@ class AjaxTest extends TestCase
     /**
      * Test de validation d'un emoji valide
      * 
-     * Vérifie que la méthode de validation des emojis
+     * VÃ©rifie que la mÃ©thode de validation des emojis
      * accepte les emojis valides.
      */
     public function testValidateValidEmoji()
     {
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('is_valid_emoji');
         $method->setAccessible(true);
         
         // Tester des emojis valides
-        $valid_emojis = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
+        $valid_emojis = ['ðŸ‘', 'ðŸ‘Ž', 'â¤ï¸', 'ðŸ˜‚', 'ðŸ˜®', 'ðŸ˜¢', 'ðŸ˜¡', 'ðŸ”¥', 'ðŸ‘Œ', 'ðŸ¥³'];
         
         foreach ($valid_emojis as $emoji) {
             $this->assertTrue(
                 $method->invoke($this->controller, $emoji),
-                "L'emoji '{$emoji}' devrait être valide"
+                "L'emoji '{$emoji}' devrait Ãªtre valide"
             );
         }
     }
@@ -139,23 +139,23 @@ class AjaxTest extends TestCase
     /**
      * Test de validation d'un emoji invalide
      * 
-     * Vérifie que la méthode de validation des emojis
+     * VÃ©rifie que la mÃ©thode de validation des emojis
      * rejette les emojis invalides.
      */
     public function testValidateInvalidEmoji()
     {
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('is_valid_emoji');
         $method->setAccessible(true);
         
         // Tester des emojis invalides
-        $invalid_emojis = ['', 'a', '123', '👍👍👍👍👍👍👍👍👍👍👍👍👍👍👍👍', '👍👍👍👍👍👍👍👍👍👍👍👍👍👍👍👍👍'];
+        $invalid_emojis = ['', 'a', '123', 'ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘', 'ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘ðŸ‘'];
         
         foreach ($invalid_emojis as $emoji) {
             $this->assertFalse(
                 $method->invoke($this->controller, $emoji),
-                "L'emoji '{$emoji}' devrait être invalide"
+                "L'emoji '{$emoji}' devrait Ãªtre invalide"
             );
         }
     }
@@ -163,12 +163,12 @@ class AjaxTest extends TestCase
     /**
      * Test de validation d'un message valide
      * 
-     * Vérifie que la méthode de validation des messages
+     * VÃ©rifie que la mÃ©thode de validation des messages
      * accepte les messages valides.
      */
     public function testValidateValidPost()
     {
-        // Configurer le mock de la base de données
+        // Configurer le mock de la base de donnÃ©es
         $this->db->expects($this->once())
             ->method('sql_query')
             ->willReturn(true);
@@ -180,7 +180,7 @@ class AjaxTest extends TestCase
         $this->db->expects($this->once())
             ->method('sql_freeresult');
         
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('is_valid_post');
         $method->setAccessible(true);
@@ -188,19 +188,19 @@ class AjaxTest extends TestCase
         // Tester un message valide
         $this->assertTrue(
             $method->invoke($this->controller, 1),
-            "Le message avec l'ID 1 devrait être valide"
+            "Le message avec l'ID 1 devrait Ãªtre valide"
         );
     }
     
     /**
      * Test de validation d'un message invalide
      * 
-     * Vérifie que la méthode de validation des messages
+     * VÃ©rifie que la mÃ©thode de validation des messages
      * rejette les messages invalides.
      */
     public function testValidateInvalidPost()
     {
-        // Configurer le mock de la base de données
+        // Configurer le mock de la base de donnÃ©es
         $this->db->expects($this->once())
             ->method('sql_query')
             ->willReturn(true);
@@ -212,7 +212,7 @@ class AjaxTest extends TestCase
         $this->db->expects($this->once())
             ->method('sql_freeresult');
         
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('is_valid_post');
         $method->setAccessible(true);
@@ -220,7 +220,7 @@ class AjaxTest extends TestCase
         // Tester un message invalide
         $this->assertFalse(
             $method->invoke($this->controller, 999),
-            "Le message avec l'ID 999 devrait être invalide"
+            "Le message avec l'ID 999 devrait Ãªtre invalide"
         );
     }
 
@@ -229,14 +229,14 @@ class AjaxTest extends TestCase
     // =============================================================================
     
     /**
-     * Test d'autorisation pour un utilisateur connecté
+     * Test d'autorisation pour un utilisateur connectÃ©
      * 
-     * Vérifie qu'un utilisateur connecté peut réagir
-     * à un message non verrouillé.
+     * VÃ©rifie qu'un utilisateur connectÃ© peut rÃ©agir
+     * Ã  un message non verrouillÃ©.
      */
     public function testCanReactToPostLoggedIn()
     {
-        // Configurer le mock de la base de données
+        // Configurer le mock de la base de donnÃ©es
         $this->db->expects($this->once())
             ->method('sql_query')
             ->willReturn(true);
@@ -247,14 +247,14 @@ class AjaxTest extends TestCase
                 'post_id' => 1,
                 'forum_id' => 1,
                 'poster_id' => 2,
-                'topic_status' => 0, // Non verrouillé
-                'forum_status' => 0, // Non verrouillé
+                'topic_status' => 0, // Non verrouillÃ©
+                'forum_status' => 0, // Non verrouillÃ©
             ]);
         
         $this->db->expects($this->once())
             ->method('sql_freeresult');
         
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('can_react_to_post');
         $method->setAccessible(true);
@@ -262,22 +262,22 @@ class AjaxTest extends TestCase
         // Tester l'autorisation
         $this->assertTrue(
             $method->invoke($this->controller, 1),
-            "L'utilisateur connecté devrait pouvoir réagir au message"
+            "L'utilisateur connectÃ© devrait pouvoir rÃ©agir au message"
         );
     }
     
     /**
-     * Test d'autorisation pour un utilisateur non connecté
+     * Test d'autorisation pour un utilisateur non connectÃ©
      * 
-     * Vérifie qu'un utilisateur non connecté ne peut pas
-     * réagir à un message.
+     * VÃ©rifie qu'un utilisateur non connectÃ© ne peut pas
+     * rÃ©agir Ã  un message.
      */
     public function testCannotReactToPostNotLoggedIn()
     {
-        // Configurer l'utilisateur comme non connecté
+        // Configurer l'utilisateur comme non connectÃ©
         $this->user->data['user_id'] = 1; // ANONYMOUS
         
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('can_react_to_post');
         $method->setAccessible(true);
@@ -285,19 +285,19 @@ class AjaxTest extends TestCase
         // Tester l'autorisation
         $this->assertFalse(
             $method->invoke($this->controller, 1),
-            "L'utilisateur non connecté ne devrait pas pouvoir réagir au message"
+            "L'utilisateur non connectÃ© ne devrait pas pouvoir rÃ©agir au message"
         );
     }
     
     /**
-     * Test d'autorisation pour un message verrouillé
+     * Test d'autorisation pour un message verrouillÃ©
      * 
-     * Vérifie qu'un utilisateur ne peut pas réagir
-     * à un message dans un sujet verrouillé.
+     * VÃ©rifie qu'un utilisateur ne peut pas rÃ©agir
+     * Ã  un message dans un sujet verrouillÃ©.
      */
     public function testCannotReactToLockedPost()
     {
-        // Configurer le mock de la base de données
+        // Configurer le mock de la base de donnÃ©es
         $this->db->expects($this->once())
             ->method('sql_query')
             ->willReturn(true);
@@ -308,14 +308,14 @@ class AjaxTest extends TestCase
                 'post_id' => 1,
                 'forum_id' => 1,
                 'poster_id' => 2,
-                'topic_status' => 1, // Verrouillé
+                'topic_status' => 1, // VerrouillÃ©
                 'forum_status' => 0,
             ]);
         
         $this->db->expects($this->once())
             ->method('sql_freeresult');
         
-        // Utiliser la réflexion pour accéder à la méthode privée
+        // Utiliser la rÃ©flexion pour accÃ©der Ã  la mÃ©thode privÃ©e
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('can_react_to_post');
         $method->setAccessible(true);
@@ -323,35 +323,35 @@ class AjaxTest extends TestCase
         // Tester l'autorisation
         $this->assertFalse(
             $method->invoke($this->controller, 1),
-            "L'utilisateur ne devrait pas pouvoir réagir à un message verrouillé"
+            "L'utilisateur ne devrait pas pouvoir rÃ©agir Ã  un message verrouillÃ©"
         );
     }
 
     // =============================================================================
-    // TESTS DE FONCTIONNALITÉS
+    // TESTS DE FONCTIONNALITÃ‰S
     // =============================================================================
     
     /**
-     * Test de récupération des emojis courantes
+     * Test de rÃ©cupÃ©ration des emojis courantes
      * 
-     * Vérifie que la méthode retourne la liste
+     * VÃ©rifie que la mÃ©thode retourne la liste
      * des emojis courantes.
      */
     public function testGetCommonEmojis()
     {
         $common_emojis = $this->controller->get_common_emojis();
         
-        $this->assertIsArray($common_emojis, "La méthode devrait retourner un tableau");
-        $this->assertCount(10, $common_emojis, "La méthode devrait retourner 10 emojis");
-        $this->assertContains('👍', $common_emojis, "La liste devrait contenir l'emoji 👍");
-        $this->assertContains('👎', $common_emojis, "La liste devrait contenir l'emoji 👎");
+        $this->assertIsArray($common_emojis, "La mÃ©thode devrait retourner un tableau");
+        $this->assertCount(10, $common_emojis, "La mÃ©thode devrait retourner 10 emojis");
+        $this->assertContains('ðŸ‘', $common_emojis, "La liste devrait contenir l'emoji ðŸ‘");
+        $this->assertContains('ðŸ‘Ž', $common_emojis, "La liste devrait contenir l'emoji ðŸ‘Ž");
     }
     
     /**
-     * Test de la méthode handle avec des données valides
+     * Test de la mÃ©thode handle avec des donnÃ©es valides
      * 
-     * Vérifie que la méthode handle traite correctement
-     * une requête AJAX valide.
+     * VÃ©rifie que la mÃ©thode handle traite correctement
+     * une requÃªte AJAX valide.
      */
     public function testHandleValidRequest()
     {
@@ -368,7 +368,7 @@ class AjaxTest extends TestCase
                 ['bastien59960_reactions_max_per_user', 10],
             ]);
         
-        // Configurer le mock de la base de données pour la validation du message
+        // Configurer le mock de la base de donnÃ©es pour la validation du message
         $this->db->expects($this->atLeastOnce())
             ->method('sql_query')
             ->willReturn(true);
@@ -380,18 +380,18 @@ class AjaxTest extends TestCase
         $this->db->expects($this->atLeastOnce())
             ->method('sql_freeresult');
         
-        // Simuler une requête AJAX valide
+        // Simuler une requÃªte AJAX valide
         $this->request->expects($this->once())
             ->method('is_ajax')
             ->willReturn(true);
         
-        // Tester la méthode handle
+        // Tester la mÃ©thode handle
         $response = $this->controller->handle();
         
         $this->assertInstanceOf(
             \Symfony\Component\HttpFoundation\JsonResponse::class,
             $response,
-            "La méthode devrait retourner une réponse JSON"
+            "La mÃ©thode devrait retourner une rÃ©ponse JSON"
         );
     }
 
@@ -402,7 +402,7 @@ class AjaxTest extends TestCase
     /**
      * Test de gestion d'erreur avec un jeton CSRF invalide
      * 
-     * Vérifie que la méthode handle rejette les requêtes
+     * VÃ©rifie que la mÃ©thode handle rejette les requÃªtes
      * avec un jeton CSRF invalide.
      */
     public function testHandleInvalidCsrfToken()
@@ -413,26 +413,26 @@ class AjaxTest extends TestCase
             ->with('sid', '')
             ->willReturn('invalid_session_id');
         
-        // Tester la méthode handle
+        // Tester la mÃ©thode handle
         $response = $this->controller->handle();
         
         $this->assertInstanceOf(
             \Symfony\Component\HttpFoundation\JsonResponse::class,
             $response,
-            "La méthode devrait retourner une réponse JSON"
+            "La mÃ©thode devrait retourner une rÃ©ponse JSON"
         );
         
         $this->assertEquals(
             403,
             $response->getStatusCode(),
-            "La réponse devrait avoir un code d'erreur 403"
+            "La rÃ©ponse devrait avoir un code d'erreur 403"
         );
     }
     
     /**
      * Test de gestion d'erreur avec un message invalide
      * 
-     * Vérifie que la méthode handle rejette les requêtes
+     * VÃ©rifie que la mÃ©thode handle rejette les requÃªtes
      * avec un ID de message invalide.
      */
     public function testHandleInvalidPostId()
@@ -443,7 +443,7 @@ class AjaxTest extends TestCase
             ->with('sid', '')
             ->willReturn('test_session_id');
         
-        // Configurer le mock de la base de données pour retourner un message invalide
+        // Configurer le mock de la base de donnÃ©es pour retourner un message invalide
         $this->db->expects($this->once())
             ->method('sql_query')
             ->willReturn(true);
@@ -455,19 +455,19 @@ class AjaxTest extends TestCase
         $this->db->expects($this->once())
             ->method('sql_freeresult');
         
-        // Tester la méthode handle
+        // Tester la mÃ©thode handle
         $response = $this->controller->handle();
         
         $this->assertInstanceOf(
             \Symfony\Component\HttpFoundation\JsonResponse::class,
             $response,
-            "La méthode devrait retourner une réponse JSON"
+            "La mÃ©thode devrait retourner une rÃ©ponse JSON"
         );
         
         $this->assertEquals(
             400,
             $response->getStatusCode(),
-            "La réponse devrait avoir un code d'erreur 400"
+            "La rÃ©ponse devrait avoir un code d'erreur 400"
         );
     }
 
@@ -476,16 +476,16 @@ class AjaxTest extends TestCase
     // =============================================================================
     
     /**
-     * Test de performance avec de nombreuses réactions
+     * Test de performance avec de nombreuses rÃ©actions
      * 
-     * Vérifie que le contrôleur peut gérer efficacement
-     * un grand nombre de réactions.
+     * VÃ©rifie que le contrÃ´leur peut gÃ©rer efficacement
+     * un grand nombre de rÃ©actions.
      */
     public function testPerformanceWithManyReactions()
     {
         $start_time = microtime(true);
         
-        // Simuler de nombreuses réactions
+        // Simuler de nombreuses rÃ©actions
         for ($i = 0; $i < 100; $i++) {
             $this->controller->get_common_emojis();
         }
@@ -496,7 +496,7 @@ class AjaxTest extends TestCase
         $this->assertLessThan(
             1.0,
             $execution_time,
-            "L'exécution devrait prendre moins d'une seconde"
+            "L'exÃ©cution devrait prendre moins d'une seconde"
         );
     }
 
@@ -505,9 +505,9 @@ class AjaxTest extends TestCase
     // =============================================================================
     
     /**
-     * Nettoyage après chaque test
+     * Nettoyage aprÃ¨s chaque test
      * 
-     * Nettoie les ressources utilisées pendant les tests.
+     * Nettoie les ressources utilisÃ©es pendant les tests.
      */
     protected function tearDown(): void
     {

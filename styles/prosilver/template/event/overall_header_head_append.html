@@ -1,33 +1,33 @@
 <!--
-    Template : styles/prosilver/template/event/overall_header_head_append.html — bastien59960/reactions
+    Template : styles/prosilver/template/event/overall_header_head_append.html â€” bastien59960/reactions
     
     Template d'injection des ressources CSS et JavaScript pour l'extension Reactions.
     
-    Ce template est injecté dans le <head> de toutes les pages du forum pour charger :
-    - Les styles CSS des réactions
-    - Les scripts JavaScript nécessaires
+    Ce template est injectÃ© dans le <head> de toutes les pages du forum pour charger :
+    - Les styles CSS des rÃ©actions
+    - Les scripts JavaScript nÃ©cessaires
     - Les variables JavaScript globales
-    - Les keywords français pour la recherche d'emojis
+    - Les keywords franÃ§ais pour la recherche d'emojis
     
-    Points clés :
-    - Chargement conditionnel (seulement si les réactions sont activées)
+    Points clÃ©s :
+    - Chargement conditionnel (seulement si les rÃ©actions sont activÃ©es)
     - Injection des variables JavaScript globales
-    - Support des keywords français pour la recherche d'emojis
-    - Debug conditionnel pour le développement
+    - Support des keywords franÃ§ais pour la recherche d'emojis
+    - Debug conditionnel pour le dÃ©veloppement
 -->
 <!-- DEBUG: {DEBUG_REACTIONS} -->
 <!-- IF S_REACTIONS_ENABLED -->
 <link href="{REACTIONS_CSS_PATH}" rel="stylesheet" type="text/css" media="screen" />
 
-<!-- NOUVEAU : Chargement des keywords français pour la recherche -->
+<!-- NOUVEAU : Chargement des keywords franÃ§ais pour la recherche -->
 <script src="{ROOT_PATH}ext/bastien59960/reactions/styles/prosilver/template/js/emoji-keywords-fr.js"></script>
 
 <script>
 {REACTIONS_AJAX_URL_JS}
-var REACTIONS_AJAX_URL = '{U_REACTIONS_AJAX}';
-var REACTIONS_SID = '{S_SESSION_ID}';
-var REACTIONS_JSON_PATH = '{REACTIONS_JSON_PATH}';
-var REACTIONS_OPTIONS = {
+var REACTIONS_AJAX_URL = window.REACTIONS_AJAX_URL || '{U_REACTIONS_AJAX}';
+var REACTIONS_SID = window.REACTIONS_SID || '{S_SESSION_ID}';
+var REACTIONS_JSON_PATH = window.REACTIONS_JSON_PATH || '{REACTIONS_JSON_PATH}';
+var REACTIONS_OPTIONS = window.REACTIONS_OPTIONS || {
     postEmojiSize: parseInt('{REACTIONS_POST_EMOJI_SIZE}', 10) || 24,
     pickerWidth: parseInt('{REACTIONS_PICKER_WIDTH}', 10) || 320,
     pickerHeight: parseInt('{REACTIONS_PICKER_HEIGHT}', 10) || 280,
@@ -39,7 +39,7 @@ var REACTIONS_OPTIONS = {
 };
 </script>
 
-<!-- Script principal des réactions (DOIT être chargé APRÈS emoji-keywords-fr.js) -->
+<!-- Script principal des rÃ©actions (DOIT Ãªtre chargÃ© APRÃˆS emoji-keywords-fr.js) -->
 <script src="{REACTIONS_JS_PATH}"></script>
 
 <!-- ENDIF -->

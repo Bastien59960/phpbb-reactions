@@ -127,7 +127,9 @@ class listener implements EventSubscriberInterface
         $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 1);
         $sync_interval = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5000);
 
-        $json_path = $picker_use_json ? $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json' : '';
+        $json_path = $picker_use_json
+            ? $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json'
+            : '';
 
         $this->template->assign_vars([
             'S_REACTIONS_ENABLED' => true,
@@ -135,8 +137,15 @@ class listener implements EventSubscriberInterface
             'REACTIONS_JS_PATH'   => $js_path,
             'U_REACTIONS_AJAX'    => $ajax_url,
             'S_SESSION_ID'        => isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '',
-            // ✅ CORRECTION : Maintenant $this->root_path existe
-            'REACTIONS_JSON_PATH' => $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json',
+            'REACTIONS_JSON_PATH' => $json_path,
+            'REACTIONS_POST_EMOJI_SIZE'   => $post_emoji_size,
+            'REACTIONS_PICKER_WIDTH'      => $picker_width,
+            'REACTIONS_PICKER_HEIGHT'     => $picker_height,
+            'REACTIONS_PICKER_EMOJI_SIZE' => $picker_emoji_size,
+            'REACTIONS_PICKER_SHOW_CATEGORIES' => $picker_show_categories,
+            'REACTIONS_PICKER_SHOW_SEARCH'     => $picker_show_search,
+            'REACTIONS_PICKER_USE_JSON'        => $picker_use_json,
+            'REACTIONS_SYNC_INTERVAL'          => $sync_interval,
         ]);
 
         $debug_mode = (defined('DEBUG') && DEBUG) ? 'true' : 'false';
@@ -145,7 +154,18 @@ class listener implements EventSubscriberInterface
             'REACTIONS_AJAX_URL_JS',
             'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";' .
             'window.REACTIONS_SID = "' . addslashes(isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '') . '";' .
-            'window.REACTIONS_DEBUG_MODE = ' . $debug_mode . ';'
+            'window.REACTIONS_JSON_PATH = "' . addslashes($json_path) . '";' .
+            'window.REACTIONS_DEBUG_MODE = ' . $debug_mode . ';' .
+            'window.REACTIONS_OPTIONS = {' .
+                'postEmojiSize:' . (int) $post_emoji_size . ',' .
+                'pickerWidth:' . (int) $picker_width . ',' .
+                'pickerHeight:' . (int) $picker_height . ',' .
+                'pickerEmojiSize:' . (int) $picker_emoji_size . ',' .
+                'showCategories:' . ($picker_show_categories ? 'true' : 'false') . ',' .
+                'showSearch:' . ($picker_show_search ? 'true' : 'false') . ',' .
+                'useJson:' . ($picker_use_json ? 'true' : 'false') . ',' .
+                'syncInterval:' . (int) $sync_interval .
+            '};'
         );
     }
 

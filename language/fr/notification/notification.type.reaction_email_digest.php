@@ -5,28 +5,28 @@
  * Extension : bastien59960/reactions
  * ============================================================================
  *
- * 📘 Description :
- * Ce fichier définit toutes les chaînes de langue françaises utilisées pour le
- * type de notification « résumé e-mail des réactions » dans l’extension Reactions
+ * ðŸ“˜ Description :
+ * Ce fichier dÃ©finit toutes les chaÃ®nes de langue franÃ§aises utilisÃ©es pour le
+ * type de notification Â« rÃ©sumÃ© e-mail des rÃ©actions Â» dans lâ€™extension Reactions
  * pour phpBB.
  *
- * 🔍 Rôle :
- *   - Fournir les textes traduits pour les notifications périodiques par e-mail
- *     regroupant plusieurs réactions reçues par l’utilisateur.
- *   - Être utilisé dans :
- *       → Les préférences de notification du Panneau de Contrôle Utilisateur (UCP)
- *       → Les notifications par e-mail groupées envoyées automatiquement
+ * ðŸ” RÃ´le :
+ *   - Fournir les textes traduits pour les notifications pÃ©riodiques par e-mail
+ *     regroupant plusieurs rÃ©actions reÃ§ues par lâ€™utilisateur.
+ *   - ÃŠtre utilisÃ© dans :
+ *       â†’ Les prÃ©fÃ©rences de notification du Panneau de ContrÃ´le Utilisateur (UCP)
+ *       â†’ Les notifications par e-mail groupÃ©es envoyÃ©es automatiquement
  *
- * ⚙️ Notes techniques :
- *   - Ce fichier est chargé via la méthode get_language_file() de la classe :
- *       → /ext/bastien59960/reactions/notification/type/reaction_email_digest.php
- *   - Il complète le fichier :
- *       → notification.type.reaction.php
- *   - Ce fichier doit être synchronisé avec la version anglaise
- *     pour garantir la cohérence des textes et des clés.
+ * âš™ï¸ Notes techniques :
+ *   - Ce fichier est chargÃ© via la mÃ©thode get_language_file() de la classe :
+ *       â†’ /ext/bastien59960/reactions/notification/type/reaction_email_digest.php
+ *   - Il complÃ¨te le fichier :
+ *       â†’ notification.type.reaction.php
+ *   - Ce fichier doit Ãªtre synchronisÃ© avec la version anglaise
+ *     pour garantir la cohÃ©rence des textes et des clÃ©s.
  *
- * 📅 Dernière mise à jour : octobre 2025
- * 👨‍💻 Auteur : Bastien59960
+ * ðŸ“… DerniÃ¨re mise Ã  jour : octobre 2025
+ * ðŸ‘¨â€ðŸ’» Auteur : Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
@@ -41,20 +41,20 @@ if (empty($lang) || !is_array($lang))
 }
 
 // ============================================================================
-// 📬 Chaînes de langue pour les notifications par e-mail de type "résumé"
+// ðŸ“¬ ChaÃ®nes de langue pour les notifications par e-mail de type "rÃ©sumÃ©"
 // ============================================================================
 //
-// Ces chaînes sont utilisées pour :
-//   - Le titre du type de notification dans l’UCP
-//   - La description affichée sous les préférences utilisateur
-//   - Les notifications groupées envoyées par e-mail (digest)
+// Ces chaÃ®nes sont utilisÃ©es pour :
+//   - Le titre du type de notification dans lâ€™UCP
+//   - La description affichÃ©e sous les prÃ©fÃ©rences utilisateur
+//   - Les notifications groupÃ©es envoyÃ©es par e-mail (digest)
 // ============================================================================
 
 $lang = array_merge($lang, array(
 	// --- Groupe de notifications (UCP) ---
-	'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
-	'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'Résumés e-mail des réactions',
-	// --- Résumé par e-mail (UCP) ---
-	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
-	'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.',
+	'NOTIFICATION_GROUP_REACTIONS' => 'RÃ©actions',
+	'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'RÃ©sumÃ©s e-mail des rÃ©actions',
+	// --- RÃ©sumÃ© par e-mail (UCP) ---
+	'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'RÃ©sumÃ© e-mail des rÃ©actions',
+	'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir pÃ©riodiquement un rÃ©sumÃ© par e-mail des rÃ©actions reÃ§ues sur vos messages.',
 ));

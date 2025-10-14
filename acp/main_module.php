@@ -1,31 +1,31 @@
 <?php
 /**
- * Fichier : acp/main_module.php — bastien59960/reactions/acp/main_module.php
+ * Fichier : acp/main_module.php â€” bastien59960/reactions/acp/main_module.php
  *
  * Module principal ACP pour l'extension Reactions.
  *
- * Ce fichier gère la logique métier et l'affichage des pages de configuration de l'extension dans le panneau d'administration (ACP) de phpBB.
+ * Ce fichier gÃ¨re la logique mÃ©tier et l'affichage des pages de configuration de l'extension dans le panneau d'administration (ACP) de phpBB.
  *
- * Points clés :
- *   - Lecture et sauvegarde des paramètres de l'extension
- *   - Intégration avec le template ACP
- *   - Sécurité et validation des entrées administrateur
+ * Points clÃ©s :
+ *   - Lecture et sauvegarde des paramÃ¨tres de l'extension
+ *   - IntÃ©gration avec le template ACP
+ *   - SÃ©curitÃ© et validation des entrÃ©es administrateur
  *
- * Ce module permet à l'administrateur de configurer tous les aspects de l'extension Reactions via l'interface ACP.
+ * Ce module permet Ã  l'administrateur de configurer tous les aspects de l'extension Reactions via l'interface ACP.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
-// Déclaration du namespace (chemin virtuel du fichier dans phpBB)
+// DÃ©claration du namespace (chemin virtuel du fichier dans phpBB)
 // Format : vendeur\nom_extension\acp
 namespace bastien59960\reactions\acp;
 
 /**
  * Classe principale du module ACP
  * 
- * phpBB cherche automatiquement cette classe quand un admin accède
- * à la page de configuration de l'extension.
+ * phpBB cherche automatiquement cette classe quand un admin accÃ¨de
+ * Ã  la page de configuration de l'extension.
  */
 class main_module
 {
@@ -33,7 +33,7 @@ class main_module
      * URL d'action du formulaire
      * 
      * phpBB remplit automatiquement cette variable avec l'URL de la page
-     * actuelle. Elle est utilisée dans le template pour savoir où envoyer
+     * actuelle. Elle est utilisÃ©e dans le template pour savoir oÃ¹ envoyer
      * le formulaire quand on clique sur "Envoyer".
      * 
      * @var string
@@ -43,7 +43,7 @@ class main_module
     /**
      * Titre de la page ACP
      * 
-     * Ce titre apparaît dans l'onglet du navigateur et en haut de la page.
+     * Ce titre apparaÃ®t dans l'onglet du navigateur et en haut de la page.
      * Sera rempli avec la traduction de 'ACP_REACTIONS_SETTINGS'.
      * 
      * @var string
@@ -51,7 +51,7 @@ class main_module
     public $page_title;
 
     /**
-     * Nom du fichier template à utiliser
+     * Nom du fichier template Ã  utiliser
      * 
      * phpBB cherchera le fichier : adm/style/acp_reactions_settings.html
      * 
@@ -61,75 +61,75 @@ class main_module
 
     /**
      * ========================================================================
-     * MÉTHODE PRINCIPALE - POINT D'ENTRÉE DU MODULE
+     * MÃ‰THODE PRINCIPALE - POINT D'ENTRÃ‰E DU MODULE
      * ========================================================================
      * 
-     * Cette méthode est appelée automatiquement par phpBB quand un admin
-     * accède à la page de configuration. Elle fait deux choses :
+     * Cette mÃ©thode est appelÃ©e automatiquement par phpBB quand un admin
+     * accÃ¨de Ã  la page de configuration. Elle fait deux choses :
      * 1. Afficher le formulaire de configuration
-     * 2. Traiter les données soumises par le formulaire
+     * 2. Traiter les donnÃ©es soumises par le formulaire
      * 
-     * @param int    $id   ID du module (fourni par phpBB, rarement utilisé)
+     * @param int    $id   ID du module (fourni par phpBB, rarement utilisÃ©)
      * @param string $mode Mode du module (ex: 'settings')
      */
     public function main($id, $mode)
     {
         // ====================================================================
-        // ÉTAPE 1 : ACCÉDER AUX SERVICES GLOBAUX DE PHPBB
+        // Ã‰TAPE 1 : ACCÃ‰DER AUX SERVICES GLOBAUX DE PHPBB
         // ====================================================================
         
-        // Ces variables "global" permettent d'accéder aux objets phpBB
+        // Ces variables "global" permettent d'accÃ©der aux objets phpBB
         // disponibles partout dans le code
-        global $config,          // Configuration du forum (stockée en DB)
-               $request,         // Gestion des données POST/GET
+        global $config,          // Configuration du forum (stockÃ©e en DB)
+               $request,         // Gestion des donnÃ©es POST/GET
                $template,        // Moteur de templates (affichage HTML)
                $user,            // Informations sur l'utilisateur actuel
-               $phpbb_container; // Container de services (injection de dépendances)
+               $phpbb_container; // Container de services (injection de dÃ©pendances)
 
         // ====================================================================
-        // ÉTAPE 2 : CHARGER LES TRADUCTIONS
+        // Ã‰TAPE 2 : CHARGER LES TRADUCTIONS
         // ====================================================================
         
-        // Récupérer le service de gestion des langues depuis le container
-        // Le container est comme un "magasin" où phpBB stocke tous ses services
+        // RÃ©cupÃ©rer le service de gestion des langues depuis le container
+        // Le container est comme un "magasin" oÃ¹ phpBB stocke tous ses services
         // Charger les fichiers de langue de l'extension dans le contexte utilisateur
         $user->add_lang_ext('bastien59960/reactions', 'acp/common');
         $user->add_lang_ext('bastien59960/reactions', 'common');
 
         // ====================================================================
-        // ÉTAPE 3 : DÉFINIR LES PROPRIÉTÉS DE LA PAGE
+        // Ã‰TAPE 3 : DÃ‰FINIR LES PROPRIÃ‰TÃ‰S DE LA PAGE
         // ====================================================================
         
-        // Nom du template à charger (sans l'extension .html)
+        // Nom du template Ã  charger (sans l'extension .html)
         $this->tpl_name = 'acp_reactions_settings';
         
         // Titre de la page (sera traduit automatiquement)
-        // Cherche la clé 'ACP_REACTIONS_SETTINGS' dans language/*/acp/common.php
+        // Cherche la clÃ© 'ACP_REACTIONS_SETTINGS' dans language/*/acp/common.php
         $this->page_title = $user->lang('ACP_REACTIONS_SETTINGS');
         
         // ====================================================================
-        // ÉTAPE 4 : SÉCURITÉ - GÉNÉRER UN TOKEN CSRF
+        // Ã‰TAPE 4 : SÃ‰CURITÃ‰ - GÃ‰NÃ‰RER UN TOKEN CSRF
         // ====================================================================
         
-        // Un token CSRF protège contre les attaques "Cross-Site Request Forgery"
-        // Il s'agit d'un code secret unique qui est vérifié lors de l'envoi du formulaire
-        // pour s'assurer que la requête vient bien de notre site et non d'un site malveillant
+        // Un token CSRF protÃ¨ge contre les attaques "Cross-Site Request Forgery"
+        // Il s'agit d'un code secret unique qui est vÃ©rifiÃ© lors de l'envoi du formulaire
+        // pour s'assurer que la requÃªte vient bien de notre site et non d'un site malveillant
         add_form_key('bastien59960_reactions');
 
         // ====================================================================
-        // ÉTAPE 5 : TRAITER L'ENVOI DU FORMULAIRE (SI SOUMIS)
+        // Ã‰TAPE 5 : TRAITER L'ENVOI DU FORMULAIRE (SI SOUMIS)
         // ====================================================================
         
-        // Vérifier si le formulaire a été soumis
-        // is_set_post('submit') retourne true si le bouton "Envoyer" a été cliqué
+        // VÃ©rifier si le formulaire a Ã©tÃ© soumis
+        // is_set_post('submit') retourne true si le bouton "Envoyer" a Ã©tÃ© cliquÃ©
         if ($request->is_set_post('submit'))
         {
             // ----------------------------------------------------------------
-            // 5.1 : VÉRIFIER LE TOKEN CSRF
+            // 5.1 : VÃ‰RIFIER LE TOKEN CSRF
             // ----------------------------------------------------------------
             
-            // check_form_key vérifie que le token CSRF est valide
-            // Si invalide, c'est peut-être une attaque → on refuse
+            // check_form_key vÃ©rifie que le token CSRF est valide
+            // Si invalide, c'est peut-Ãªtre une attaque â†’ on refuse
             if (!check_form_key('bastien59960_reactions'))
             {
                 // Afficher une erreur et un lien retour
@@ -141,24 +141,24 @@ class main_module
             }
 
             // ----------------------------------------------------------------
-            // 5.2 : RÉCUPÉRER LES VALEURS DU FORMULAIRE
+            // 5.2 : RÃ‰CUPÃ‰RER LES VALEURS DU FORMULAIRE
             // ----------------------------------------------------------------
             
-            // $request->variable() récupère une valeur POST de façon sécurisée
-            // Syntaxe : variable('nom_du_champ', valeur_par_défaut)
-            // phpBB nettoie automatiquement les données pour éviter les injections
+            // $request->variable() rÃ©cupÃ¨re une valeur POST de faÃ§on sÃ©curisÃ©e
+            // Syntaxe : variable('nom_du_champ', valeur_par_dÃ©faut)
+            // phpBB nettoie automatiquement les donnÃ©es pour Ã©viter les injections
             
             // Temps anti-spam (en minutes)
-            // Si le champ est vide ou invalide, utilise 45 par défaut
+            // Si le champ est vide ou invalide, utilise 45 par dÃ©faut
             $spam_time = $request->variable('spam_time', 45);
             
-            // Nombre max de types de réactions par post
+            // Nombre max de types de rÃ©actions par post
             $max_per_post = $request->variable('max_per_post', 20);
             
-            // Nombre max de réactions par utilisateur par post
+            // Nombre max de rÃ©actions par utilisateur par post
             $max_per_user = $request->variable('max_per_user', 10);
 
-            // Options d'interface supplémentaires
+            // Options d'interface supplÃ©mentaires
             $post_emoji_size = max(8, min(128, $request->variable('post_emoji_size', (int) ($config['bastien59960_reactions_post_emoji_size'] ?? 24))));
             $picker_width = max(200, min(900, $request->variable('picker_width', (int) ($config['bastien59960_reactions_picker_width'] ?? 320))));
             $picker_height = max(200, min(900, $request->variable('picker_height', (int) ($config['bastien59960_reactions_picker_height'] ?? 280))));
@@ -173,8 +173,8 @@ class main_module
             // 5.3 : VALIDER LES VALEURS
             // ----------------------------------------------------------------
             
-            // Vérifier que le temps anti-spam n'est pas négatif
-            // (0 est accepté pour désactiver les notifications)
+            // VÃ©rifier que le temps anti-spam n'est pas nÃ©gatif
+            // (0 est acceptÃ© pour dÃ©sactiver les notifications)
             if ($spam_time < 0)
             {
                 trigger_error(
@@ -183,7 +183,7 @@ class main_module
                 );
             }
             
-            // Vérifier que le nombre de types de réactions est entre 1 et 100
+            // VÃ©rifier que le nombre de types de rÃ©actions est entre 1 et 100
             if ($max_per_post < 1 || $max_per_post > 100)
             {
                 trigger_error(
@@ -192,7 +192,7 @@ class main_module
                 );
             }
             
-            // Vérifier que le nombre de réactions par user est entre 1 et 50
+            // VÃ©rifier que le nombre de rÃ©actions par user est entre 1 et 50
             if ($max_per_user < 1 || $max_per_user > 50)
             {
                 trigger_error(
@@ -202,11 +202,11 @@ class main_module
             }
 
             // ----------------------------------------------------------------
-            // 5.4 : SAUVEGARDER EN BASE DE DONNÉES
+            // 5.4 : SAUVEGARDER EN BASE DE DONNÃ‰ES
             // ----------------------------------------------------------------
             
             // $config->set() enregistre une valeur dans la table phpbb_config
-            // Ces valeurs sont ensuite accessibles partout via $config['nom_clé']
+            // Ces valeurs sont ensuite accessibles partout via $config['nom_clÃ©']
             
             $config->set('bastien59960_reactions_spam_time', $spam_time);
             $config->set('bastien59960_reactions_max_per_post', $max_per_post);
@@ -221,17 +221,17 @@ class main_module
             $config->set('bastien59960_reactions_sync_interval', $sync_interval);
 
             // ----------------------------------------------------------------
-            // 5.5 : AFFICHER UN MESSAGE DE SUCCÈS
+            // 5.5 : AFFICHER UN MESSAGE DE SUCCÃˆS
             // ----------------------------------------------------------------
             
             // trigger_error() avec juste un message (pas de niveau d'erreur)
             // affiche un message de confirmation puis redirige
-            // 'CONFIG_UPDATED' = "Configuration mise à jour avec succès"
+            // 'CONFIG_UPDATED' = "Configuration mise Ã  jour avec succÃ¨s"
             trigger_error($user->lang('CONFIG_UPDATED') . adm_back_link($this->u_action));
         }
 
         // ====================================================================
-        // ÉTAPE 6 : PRÉPARER L'AFFICHAGE DU FORMULAIRE
+        // Ã‰TAPE 6 : PRÃ‰PARER L'AFFICHAGE DU FORMULAIRE
         // ====================================================================
         
         // assign_vars() envoie des variables au template HTML
@@ -256,7 +256,7 @@ class main_module
         // ====================================================================
         
         // Pas besoin de "return" ou "echo" : phpBB utilise automatiquement
-        // le template défini dans $this->tpl_name pour générer la page HTML
+        // le template dÃ©fini dans $this->tpl_name pour gÃ©nÃ©rer la page HTML
     }
     /**
  * Mode import depuis ancienne extension
@@ -273,7 +273,7 @@ public function import($id, $mode)
 
     add_form_key('bastien59960_reactions_import');
 
-    // Vérifier que les anciennes tables existent
+    // VÃ©rifier que les anciennes tables existent
     $old_reactions_table = $phpbb_container->getParameter('core.table_prefix') . 'reactions';
     $old_types_table = $phpbb_container->getParameter('core.table_prefix') . 'reaction_types';
     
@@ -291,27 +291,27 @@ public function import($id, $mode)
         }
 
         if (!$tables_exist) {
-            trigger_error('Les anciennes tables de réactions sont introuvables.' . adm_back_link($this->u_action), E_USER_WARNING);
+            trigger_error('Les anciennes tables de rÃ©actions sont introuvables.' . adm_back_link($this->u_action), E_USER_WARNING);
         }
 
         // Mapping emojis PNG vers Unicode
         $emoji_map = [
-            '1f44d.png' => '👍',  // Like
-            '1f44e.png' => '👎',  // Dislike
-            '1f642.png' => '🙂',  // Happy
-            '1f60d.png' => '😍',  // Love
-            '1f602.png' => '😂',  // Funny
-            '1f611.png' => '😑',  // Neutral
-            '1f641.png' => '🙁',  // Unhappy
-            '1f62f.png' => '😯',  // Surprised
-            '1f62d.png' => '😭',  // Cry
-            '1f621.png' => '😡',  // Mad
-            'OMG.png'   => '😮',  // OMG
+            '1f44d.png' => 'ðŸ‘',  // Like
+            '1f44e.png' => 'ðŸ‘Ž',  // Dislike
+            '1f642.png' => 'ðŸ™‚',  // Happy
+            '1f60d.png' => 'ðŸ˜',  // Love
+            '1f602.png' => 'ðŸ˜‚',  // Funny
+            '1f611.png' => 'ðŸ˜‘',  // Neutral
+            '1f641.png' => 'ðŸ™',  // Unhappy
+            '1f62f.png' => 'ðŸ˜¯',  // Surprised
+            '1f62d.png' => 'ðŸ˜­',  // Cry
+            '1f621.png' => 'ðŸ˜¡',  // Mad
+            'OMG.png'   => 'ðŸ˜®',  // OMG
         ];
 
         $new_reactions_table = $phpbb_container->getParameter('core.table_prefix') . 'post_reactions';
 
-        // Lire anciennes réactions
+        // Lire anciennes rÃ©actions
         $sql = "SELECT reaction_user_id, post_id, topic_id, reaction_file_name, reaction_time 
                 FROM $old_reactions_table 
                 ORDER BY reaction_time ASC";
@@ -323,7 +323,7 @@ public function import($id, $mode)
         while ($row = $db->sql_fetchrow($result)) {
             $png_name = $row['reaction_file_name'];
             
-            // Vérifier si on a un mapping
+            // VÃ©rifier si on a un mapping
             if (!isset($emoji_map[$png_name])) {
                 $skipped++;
                 continue;
@@ -331,7 +331,7 @@ public function import($id, $mode)
 
             $emoji = $emoji_map[$png_name];
 
-            // Vérifier doublon
+            // VÃ©rifier doublon
             $check_sql = 'SELECT reaction_id FROM ' . $new_reactions_table . '
                          WHERE post_id = ' . (int) $row['post_id'] . '
                            AND user_id = ' . (int) $row['reaction_user_id'] . "
@@ -345,14 +345,14 @@ public function import($id, $mode)
                 continue;
             }
 
-            // Insérer dans nouvelle table
+            // InsÃ©rer dans nouvelle table
             $insert_data = [
                 'post_id' => (int) $row['post_id'],
                 'topic_id' => (int) $row['topic_id'],
                 'user_id' => (int) $row['reaction_user_id'],
                 'reaction_emoji' => $emoji,
                 'reaction_time' => (int) $row['reaction_time'],
-                'reaction_notified' => 1, // Déjà anciennes
+                'reaction_notified' => 1, // DÃ©jÃ  anciennes
             ];
 
             $insert_sql = 'INSERT INTO ' . $new_reactions_table . ' ' . $db->sql_build_array('INSERT', $insert_data);
@@ -366,7 +366,7 @@ public function import($id, $mode)
         }
         $db->sql_freeresult($result);
 
-        trigger_error("Importation terminée : $imported réactions importées, $skipped ignorées." . adm_back_link($this->u_action));
+        trigger_error("Importation terminÃ©e : $imported rÃ©actions importÃ©es, $skipped ignorÃ©es." . adm_back_link($this->u_action));
     }
 
     $template->assign_vars([

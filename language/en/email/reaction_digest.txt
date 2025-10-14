@@ -1,4 +1,4 @@
-Subject: Reactions on your posts — summary
+Subject: Reactions on your posts â€” summary
 
 Hello {USERNAME},
 
@@ -6,7 +6,7 @@ Between {DIGEST_SINCE} and {DIGEST_UNTIL} you received new reactions grouped by 
 
 {DIGEST_TEXT}
 
-Tip: Adjust or disable these emails from your User Control Panel → Reaction Preferences.
+Tip: Adjust or disable these emails from your User Control Panel â†’ Reaction Preferences.
 
 --
 {DIGEST_SIGNATURE}

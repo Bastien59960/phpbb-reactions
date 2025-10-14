@@ -1,16 +1,16 @@
 <?php
 /**
- * Fichier : tests/bootstrap.php — bastien59960/reactions/tests/bootstrap.php
+ * Fichier : tests/bootstrap.php â€” bastien59960/reactions/tests/bootstrap.php
  *
  * Bootstrap pour les tests de l'extension Reactions.
  *
  * Ce fichier initialise l'environnement de test pour l'extension Reactions.
  * Il configure les autoloaders, les variables d'environnement, et les
- * services nécessaires pour l'exécution des tests.
+ * services nÃ©cessaires pour l'exÃ©cution des tests.
  *
- * Points clés de la logique métier :
+ * Points clÃ©s de la logique mÃ©tier :
  *   - Configuration de l'environnement de test phpBB
- *   - Initialisation des services et dépendances
+ *   - Initialisation des services et dÃ©pendances
  *   - Configuration des autoloaders pour les tests
  *   - Gestion des variables d'environnement de test
  *
@@ -22,7 +22,7 @@
 // CONFIGURATION DE BASE
 // =============================================================================
 
-// Définir l'environnement de test
+// DÃ©finir l'environnement de test
 define('PHPBB_TESTING', true);
 define('PHPBB_INSTALLED', true);
 
@@ -44,10 +44,10 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
 }
 
 // =============================================================================
-// CONFIGURATION DE LA BASE DE DONNÉES DE TEST
+// CONFIGURATION DE LA BASE DE DONNÃ‰ES DE TEST
 // =============================================================================
 
-// Configuration de la base de données en mémoire pour les tests
+// Configuration de la base de donnÃ©es en mÃ©moire pour les tests
 $db_config = [
     'dbms' => 'sqlite',
     'dbhost' => ':memory:',
@@ -81,7 +81,7 @@ $services_config = [
 // =============================================================================
 
 /**
- * Créer une instance de test de la base de données
+ * CrÃ©er une instance de test de la base de donnÃ©es
  * 
  * @return \phpbb\db\driver\driver_interface
  */
@@ -96,7 +96,7 @@ function create_test_database()
 }
 
 /**
- * Créer une instance de test de l'utilisateur
+ * CrÃ©er une instance de test de l'utilisateur
  * 
  * @return \phpbb\user
  */
@@ -116,7 +116,7 @@ function create_test_user()
 }
 
 /**
- * Créer une instance de test de la configuration
+ * CrÃ©er une instance de test de la configuration
  * 
  * @return \phpbb\config\config
  */
@@ -200,7 +200,7 @@ function create_test_config()
 }
 
 /**
- * Créer une instance de test de la requête
+ * CrÃ©er une instance de test de la requÃªte
  * 
  * @return \phpbb\request\request
  */
@@ -212,7 +212,7 @@ function create_test_request()
 }
 
 /**
- * Créer une instance de test du template
+ * CrÃ©er une instance de test du template
  * 
  * @return \phpbb\template\template
  */
@@ -224,7 +224,7 @@ function create_test_template()
 }
 
 /**
- * Créer une instance de test de la langue
+ * CrÃ©er une instance de test de la langue
  * 
  * @return \phpbb\language\language
  */
@@ -236,7 +236,7 @@ function create_test_language()
 }
 
 /**
- * Créer une instance de test de l'authentification
+ * CrÃ©er une instance de test de l'authentification
  * 
  * @return \phpbb\auth\auth
  */
@@ -248,7 +248,7 @@ function create_test_auth()
 }
 
 /**
- * Créer une instance de test du gestionnaire de notifications
+ * CrÃ©er une instance de test du gestionnaire de notifications
  * 
  * @return \phpbb\notification\manager
  */
@@ -260,7 +260,7 @@ function create_test_notification_manager()
 }
 
 /**
- * Créer une instance de test du chargeur d'utilisateurs
+ * CrÃ©er une instance de test du chargeur d'utilisateurs
  * 
  * @return \phpbb\user_loader
  */
@@ -272,10 +272,10 @@ function create_test_user_loader()
 }
 
 // =============================================================================
-// CONFIGURATION DES RÉPERTOIRES DE TEST
+// CONFIGURATION DES RÃ‰PERTOIRES DE TEST
 // =============================================================================
 
-// Créer les répertoires de test s'ils n'existent pas
+// CrÃ©er les rÃ©pertoires de test s'ils n'existent pas
 $test_dirs = [
     __DIR__ . '/logs',
     __DIR__ . '/cache',
@@ -292,7 +292,7 @@ foreach ($test_dirs as $dir) {
 // CONFIGURATION DES CONSTANTES DE TEST
 // =============================================================================
 
-// Définir les constantes nécessaires pour les tests
+// DÃ©finir les constantes nÃ©cessaires pour les tests
 if (!defined('ANONYMOUS')) {
     define('ANONYMOUS', 1);
 }
@@ -345,15 +345,15 @@ if (function_exists('xdebug_start_trace')) {
     xdebug_start_trace(__DIR__ . '/logs/xdebug_trace');
 }
 
-// Log de démarrage des tests
-error_log('[Tests] Bootstrap initialisé - ' . date('Y-m-d H:i:s'));
+// Log de dÃ©marrage des tests
+error_log('[Tests] Bootstrap initialisÃ© - ' . date('Y-m-d H:i:s'));
 
 // =============================================================================
 // FONCTIONS DE TEST GLOBALES
 // =============================================================================
 
 /**
- * Vérifier si l'environnement de test est configuré
+ * VÃ©rifier si l'environnement de test est configurÃ©
  * 
  * @return bool
  */
@@ -399,8 +399,8 @@ function cleanup_test_environment()
 // FIN DU BOOTSTRAP
 // =============================================================================
 
-// Marquer le bootstrap comme terminé
+// Marquer le bootstrap comme terminÃ©
 define('PHPBB_TEST_BOOTSTRAP_LOADED', true);
 
 // Log de fin du bootstrap
-error_log('[Tests] Bootstrap terminé - ' . date('Y-m-d H:i:s'));
+error_log('[Tests] Bootstrap terminÃ© - ' . date('Y-m-d H:i:s'));

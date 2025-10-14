@@ -1,31 +1,38 @@
 /**
- * Fichier : styles/prosilver/theme/reactions.css — bastien59960/reactions
+ * Fichier : styles/prosilver/theme/reactions.css â€” bastien59960/reactions
  *
  * Feuille de style CSS pour l'extension Reactions.
  *
- * Ce fichier contient tous les styles CSS nécessaires pour l'affichage
- * et l'interactivité des réactions aux messages du forum.
+ * Ce fichier contient tous les styles CSS nÃ©cessaires pour l'affichage
+ * et l'interactivitÃ© des rÃ©actions aux messages du forum.
  *
- * Points clés de la logique métier :
- * - Conteneur principal des réactions
- * - Boutons de réactions avec emojis
+ * Points clÃ©s de la logique mÃ©tier :
+ * - Conteneur principal des rÃ©actions
+ * - Boutons de rÃ©actions avec emojis
  * - Bouton "plus" pour ouvrir la palette
- * - Palette d'emojis avec catégories
+ * - Palette d'emojis avec catÃ©gories
  * - Tooltips avec liste des utilisateurs
- * - États interactifs (hover, active, loading)
- * - Mode lecture seule pour utilisateurs non connectés
+ * - Ã‰tats interactifs (hover, active, loading)
+ * - Mode lecture seule pour utilisateurs non connectÃ©s
  * - Responsive design
  * 
  * @copyright (c) 2025 Bastien59960
  * - Responsive design
  */
+:root {
+    --reactions-post-emoji-size: 24px;
+    --reactions-picker-width: 320px;
+    --reactions-picker-height: 280px;
+    --reactions-picker-emoji-size: 24px;
+}
+
 
 /* ============================================================================= */
 /* CONTENEUR PRINCIPAL */
 /* ============================================================================= */
 
 /**
- * Conteneur principal des réactions
+ * Conteneur principal des rÃ©actions
  * 
  * Position relative pour permettre le positionnement absolu
  * des palettes et tooltips.
@@ -35,10 +42,10 @@
 }
 
 /**
- * Zone d'affichage des réactions
+ * Zone d'affichage des rÃ©actions
  * 
- * Contient toutes les réactions d'un message avec
- * une bordure supérieure et un espacement approprié.
+ * Contient toutes les rÃ©actions d'un message avec
+ * une bordure supÃ©rieure et un espacement appropriÃ©.
  */
 .post-reactions {
     margin-top: 10px;
@@ -57,8 +64,8 @@
 /**
  * Bouton "plus" pour ouvrir la palette d'emojis
  * 
- * Toujours positionné à gauche avec un style distinctif
- * pour indiquer qu'il permet d'ajouter des réactions.
+ * Toujours positionnÃ© Ã  gauche avec un style distinctif
+ * pour indiquer qu'il permet d'ajouter des rÃ©actions.
  */
 .reaction-more {
     display: inline-flex;
@@ -69,20 +76,20 @@
     border-radius: 15px;
     padding: 8px 8px;
     cursor: pointer;
-    font-size: 24px;
+    font-size: var(--reactions-post-emoji-size, 24px);
     font-weight: bold;
     color: #6c757d;
     transition: all 0.2s ease;
-    min-width: 32px;
-    height: 28px;
+    min-width: calc(var(--reactions-post-emoji-size, 24px) + 8px);
+    height: calc(var(--reactions-post-emoji-size, 24px) + 4px);
     order: -1;
     margin-right: 8px;
 }
 
 /**
- * État de survol du bouton "plus"
+ * Ã‰tat de survol du bouton "plus"
  * 
- * Change l'apparence au survol pour indiquer l'interactivité.
+ * Change l'apparence au survol pour indiquer l'interactivitÃ©.
  */
 .reaction-more:hover {
     background: #e9ecef;
@@ -90,7 +97,7 @@
     border-color: #adb5bd;
 }
 
-/* ========== RÉACTIONS ========== */
+/* ========== RÃ‰ACTIONS ========== */
 .post-reactions .reaction {
     display: inline-flex;
     align-items: center;
@@ -99,7 +106,8 @@
     border-radius: 15px;
     padding: 8px 8px;
     cursor: pointer;
-    font-size: 28px;
+    font-size: var(--reactions-post-emoji-size, 24px);
+    min-height: calc(var(--reactions-post-emoji-size, 24px) + 12px);
     transition: all 0.2s ease;
     user-select: none;
     min-width: 40px;
@@ -129,7 +137,7 @@
     font-size: 12px;
 }
 
-/* ========== RÉACTIONS EN LECTURE SEULE ========== */
+/* ========== RÃ‰ACTIONS EN LECTURE SEULE ========== */
 .post-reactions-readonly .reaction {
     cursor: default !important;
     opacity: 0.8;
@@ -147,7 +155,7 @@
 
 /*
 =============================================================================
- PICKER D'EMOJIS - NOUVEAU STYLE INSPIRÉ DE LINKEDIN
+ PICKER D'EMOJIS - NOUVEAU STYLE INSPIRÃ‰ DE LINKEDIN
 =============================================================================
 */
 
@@ -156,7 +164,9 @@
     border: 1px solid #e0e0e0;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-    width: 340px;
+    width: var(--reactions-picker-width, 320px);
+    max-width: var(--reactions-picker-width, 320px);
+    max-height: var(--reactions-picker-height, 280px);
     height: 420px;
     overflow: hidden;
     display: flex;
@@ -212,7 +222,7 @@
 }
 
 .emoji-picker-close::before {
-    content: '✕';
+    content: 'âœ•';
 }
 
 /* ========== CONTENU PRINCIPAL SCROLLABLE ========== */
@@ -220,11 +230,11 @@
     flex-grow: 1;
     overflow-y: auto;
     padding: 0 8px;
-    scrollbar-width: thin; /* Standard pour Firefox et accepté partout */
+    scrollbar-width: thin; /* Standard pour Firefox et acceptÃ© partout */
     scrollbar-color: #e0e0e0 white; /* Couleur du thumb et du track (standard moderne) */
 }
 
-/* ========== CATÉGORIES ET GRILLES ========== */
+/* ========== CATÃ‰GORIES ET GRILLES ========== */
 .emoji-category {
     font-size: 14px;
     font-weight: 600;
@@ -246,8 +256,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: var(--reactions-picker-emoji-size, 24px);
+    height: var(--reactions-picker-emoji-size, 24px);
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.15s ease;
@@ -258,7 +268,7 @@
     background: #f3f6f8;
 }
 
-/* ========== RÉSULTATS DE RECHERCHE ========== */
+/* ========== RÃ‰SULTATS DE RECHERCHE ========== */
 .emoji-search-results {
     padding: 8px;
     height: 100%;
@@ -340,7 +350,7 @@
 
 /*
 =============================================================================
- PICKER D'EMOJIS - NOUVEAU STYLE INSPIRÉ DE LINKEDIN (v3)
+ PICKER D'EMOJIS - NOUVEAU STYLE INSPIRÃ‰ DE LINKEDIN (v3)
 =============================================================================
 */
 
@@ -349,8 +359,10 @@
     border: 1px solid #e0e0e0;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-    width: 340px;
-    height: 450px; /* Augmenté un peu pour la section fixe */
+    width: var(--reactions-picker-width, 320px);
+    max-width: var(--reactions-picker-width, 320px);
+    max-height: var(--reactions-picker-height, 280px);
+    height: 450px; /* AugmentÃ© un peu pour la section fixe */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -364,7 +376,7 @@
     padding: 4px 8px;
     border-bottom: 1px solid #f0f0f0;
     background: white;
-    flex-shrink: 0; /* Empêche de rétrécir */
+    flex-shrink: 0; /* EmpÃªche de rÃ©trÃ©cir */
 }
 
 .emoji-tab {
@@ -426,7 +438,7 @@
     flex-shrink: 0;
 }
 .emoji-picker-close:hover { background: #f3f6f8; }
-.emoji-picker-close::before { content: '✕'; }
+.emoji-picker-close::before { content: 'âœ•'; }
 
 /* ========== NOUVEAU : CORPS DU PICKER ========== */
 .emoji-picker-body {
@@ -436,7 +448,7 @@
     overflow: hidden; /* Important */
 }
 
-/* ========== NOUVEAU : SECTION "FRÉQUEMMENT UTILISÉ" (FIXE) ========== */
+/* ========== NOUVEAU : SECTION "FRÃ‰QUEMMENT UTILISÃ‰" (FIXE) ========== */
 .emoji-frequent-section {
     padding: 8px 16px 12px 16px;
     border-bottom: 1px solid #f0f0f0;
@@ -448,11 +460,11 @@
     flex-grow: 1;
     overflow-y: auto;
     padding: 0 8px;
-    scrollbar-width: thin; /* Standard pour Firefox et accepté partout */
+    scrollbar-width: thin; /* Standard pour Firefox et acceptÃ© partout */
     scrollbar-color: #e0e0e0 white; /* Couleur du thumb et du track (standard moderne) */
 }
 
-/* ========== TITRES DE CATÉGORIE (Commun aux deux sections) ========== */
+/* ========== TITRES DE CATÃ‰GORIE (Commun aux deux sections) ========== */
 .emoji-category-title {
     font-size: 14px;
     font-weight: 600;
@@ -464,7 +476,7 @@
     z-index: 5;
 }
 .emoji-frequent-section .emoji-category-title {
-    position: static; /* Pas besoin d'être sticky */
+    position: static; /* Pas besoin d'Ãªtre sticky */
 }
 
 
@@ -490,11 +502,11 @@
     background: #f3f6f8;
 }
 
-/* ========== RÉSULTATS DE RECHERCHE ========== */
+/* ========== RÃ‰SULTATS DE RECHERCHE ========== */
 .emoji-search-results {
     padding: 8px;
     height: 100%;
-    overflow-y: auto; /* Permet le scroll dans les résultats */
+    overflow-y: auto; /* Permet le scroll dans les rÃ©sultats */
 }
 
 .emoji-no-results {
@@ -534,4 +546,17 @@
 .reaction-user-tooltip .reaction-user-link:not(:last-child)::after {
     content: ', ';
     color: #666;
+}
+
+.emoji-picker--no-categories .emoji-tabs,
+.emoji-picker--no-categories .emoji-picker-main {
+    display: none;
+}
+
+.emoji-picker--no-search .emoji-search-input {
+    display: none !important;
+}
+
+.emoji-picker--no-search .emoji-picker-header {
+    justify-content: flex-end;
 }

@@ -2,13 +2,13 @@
 <!--
     Configuration PHPUnit pour l'extension Reactions
     
-    Ce fichier configure les tests unitaires et d'intégration
-    pour l'extension Reactions. Il définit les répertoires de tests,
-    les règles de couverture de code, et les options de test.
+    Ce fichier configure les tests unitaires et d'intÃ©gration
+    pour l'extension Reactions. Il dÃ©finit les rÃ©pertoires de tests,
+    les rÃ¨gles de couverture de code, et les options de test.
     
     Utilisation :
     - Tests unitaires : phpunit tests/unit/
-    - Tests d'intégration : phpunit tests/integration/
+    - Tests d'intÃ©gration : phpunit tests/integration/
     - Tous les tests : phpunit
     - Avec couverture : phpunit --coverage-html coverage/
 -->
@@ -23,7 +23,7 @@
          cacheResultFile=".phpunit.result.cache">
 
     <!-- ============================================================================= -->
-    <!-- CONFIGURATION GÉNÉRALE -->
+    <!-- CONFIGURATION GÃ‰NÃ‰RALE -->
     <!-- ============================================================================= -->
     
     <testsuites>
@@ -32,12 +32,12 @@
             <directory>tests/unit</directory>
         </testsuite>
         
-        <!-- Tests d'intégration -->
+        <!-- Tests d'intÃ©gration -->
         <testsuite name="Integration">
             <directory>tests/integration</directory>
         </testsuite>
         
-        <!-- Tests de fonctionnalité -->
+        <!-- Tests de fonctionnalitÃ© -->
         <testsuite name="Functional">
             <directory>tests/functional</directory>
         </testsuite>
@@ -91,7 +91,7 @@
     </php>
 
     <!-- ============================================================================= -->
-    <!-- FILTRES ET RÈGLES -->
+    <!-- FILTRES ET RÃˆGLES -->
     <!-- ============================================================================= -->
     
     <filter>
@@ -131,10 +131,10 @@
     </extensions>
 
     <!-- ============================================================================= -->
-    <!-- CONFIGURATION SPÉCIFIQUE -->
+    <!-- CONFIGURATION SPÃ‰CIFIQUE -->
     <!-- ============================================================================= -->
     
-    <!-- Configuration pour les tests de base de données -->
+    <!-- Configuration pour les tests de base de donnÃ©es -->
     <php>
         <ini name="pdo_mysql.default_socket" value="/tmp/mysql.sock"/>
         <ini name="mysqli.default_socket" value="/tmp/mysql.sock"/>
@@ -146,7 +146,7 @@
         <ini name="opcache.enable_cli" value="0"/>
     </php>
 
-    <!-- Configuration pour les tests de sécurité -->
+    <!-- Configuration pour les tests de sÃ©curitÃ© -->
     <php>
         <ini name="allow_url_fopen" value="0"/>
         <ini name="allow_url_include" value="0"/>
