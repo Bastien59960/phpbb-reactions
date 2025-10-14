@@ -29,4 +29,8 @@ $lang = array_merge($lang ?? [], [
     // --- Résumé par e-mail (UCP) ---
     'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
     'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions reçues sur vos messages.',
+
+    // --- Libellés des options UCP ---
+    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Réactions à mes messages',
+    'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION_EMAIL_DIGEST' => 'Résumés e-mail des réactions',
 ]);

@@ -199,6 +199,7 @@ class listener implements EventSubscriberInterface
             'notification/notification.type.reaction',
             'notification/notification.type.reaction_email_digest',
             'ucp_reactions',
+            'acp/common',
         ];
 
         foreach ($language_sets as $lang_set) {
@@ -208,12 +209,7 @@ class listener implements EventSubscriberInterface
             ];
         }
 
-        if (!empty($event['is_admin']) && $event['is_admin']) {
-            $event['lang_set_ext'][] = [
-                'ext_name' => 'bastien59960/reactions',
-                'lang_set' => 'acp/common',
-            ];
-        }
+        return;
     }
 
     private function get_user_reactions($post_id, $user_id)
