@@ -3,21 +3,19 @@
 # Modèle d'e-mail pour le résumé périodique des réactions (français).
 #
 # Variables disponibles :
-#   {USERNAME}    Nom du destinataire
-#   {SINCE_TIME}  Date/heure de début de la période
-#   {RECAP_LINES} Liste formatée des réactions (déjà échappée)
+#   {USERNAME}      Nom du destinataire
+#   {DIGEST_SINCE}  Date/heure de début de la période
+#   {DIGEST_TEXT}   Liste formatée des réactions regroupées par sujet
 #
 Subject: Résumé des réactions reçues sur vos messages
 
 Bonjour {USERNAME},
 
-Vous avez reçu de nouvelles réactions sur vos messages depuis le {SINCE_TIME}.
+Entre {DIGEST_SINCE} et maintenant, vous avez reçu de nouvelles réactions regroupées par sujet :
 
-Voici le récapitulatif de l'activité :
-----------------------------------------------------------
-{RECAP_LINES}
-----------------------------------------------------------
+{DIGEST_TEXT}
 
-Vous pouvez gérer la fréquence de ces e-mails ou les désactiver depuis votre Panneau de Contrôle Utilisateur.
+Astuce : modifiez ou désactivez ces notifications depuis votre Panneau de Contrôle Utilisateur → Préférences des réactions.
 
+--
 {EMAIL_SIG}

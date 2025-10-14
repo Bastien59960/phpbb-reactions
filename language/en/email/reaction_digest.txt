@@ -3,21 +3,19 @@
 # Email template for the periodic reaction digest (English).
 #
 # Variables:
-#   {USERNAME}    Recipient name
-#   {SINCE_TIME}  Start date/time of the digest window
-#   {RECAP_LINES} Formatted list of reactions (already escaped)
+#   {USERNAME}      Recipient name
+#   {DIGEST_SINCE}  Start date/time of the digest window
+#   {DIGEST_TEXT}   Formatted list of reactions grouped by topic
 #
-Subject: Summary of reactions received on your posts
+Subject: Reactions on your posts — summary
 
 Hello {USERNAME},
 
-You have received new reactions on your posts since {SINCE_TIME}.
+Between {DIGEST_SINCE} and now you received new reactions grouped by topic:
 
-Here is a summary of the activity:
-----------------------------------------------------------
-{RECAP_LINES}
-----------------------------------------------------------
+{DIGEST_TEXT}
 
-You can manage the frequency of these emails or disable them from your User Control Panel.
+Tip: Adjust or disable these emails from your User Control Panel → Reaction Preferences.
 
+--
 {EMAIL_SIG}

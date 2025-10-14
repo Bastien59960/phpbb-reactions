@@ -161,6 +161,13 @@ class notification_task extends \phpbb\cron\task\base
                 ];
             }
 
+            // Ignorer les réactions où l'auteur réagit à son propre message.
+            if ($author_id === $reacter_id)
+            {
+                $this->mark_reactions_as_handled([$reaction_id]);
+                continue;
+            }
+
             if (!isset($by_author[$author_id]['posts'][$post_id]))
             {
                 $by_author[$author_id]['posts'][$post_id] = [
@@ -357,24 +364,22 @@ class notification_task extends \phpbb\cron\task\base
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
 
-        // Construire le contenu textuel du récapitulatif
-        $recap_lines_arr = [];
+        // Construire le contenu textuel & HTML du récapitulatif
+        $grouped_by_subject = [];
         foreach ($data['posts'] as $post_id => $post_data)
         {
             $post_subject = $post_data['post_subject'] ?: '[sans sujet]';
             foreach ($post_data['reactions'] as $reaction)
             {
-                $when = date('d/m/Y H:i', (int) $reaction['time']);
-                $reactor = $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']);
-                $emoji = $reaction['emoji'] ?: '?';
-                $recap_lines_arr[] = sprintf(
-                    '- Le %s, %s a réagi avec %s à votre message : "%s"',
-                    $when, $reactor, $emoji, $post_subject
-                );
+                $grouped_by_subject[$post_subject][] = [
+                    'time'    => date('d/m/Y H:i', (int) $reaction['time']),
+                    'reactor' => $reaction['reacter_name'] ?: ('Utilisateur #' . $reaction['reacter_id']),
+                    'emoji'   => $reaction['emoji'] ?: '?',
+                ];
             }
         }
 
-        if (empty($recap_lines_arr))
+        if (empty($grouped_by_subject))
         {
             error_log('[Reactions Cron] Aucun contenu à envoyer pour user_id ' . $author_id . ' (récapitulatif vide).');
             return [
@@ -382,7 +387,34 @@ class notification_task extends \phpbb\cron\task\base
             ];
         }
 
-        $recap_text = implode("\n", $recap_lines_arr);
+        $sections_text = [];
+        $sections_html = [];
+
+        foreach ($grouped_by_subject as $subject => $entries)
+        {
+            $text_lines = [];
+            $html_items = [];
+            foreach ($entries as $entry)
+            {
+                $text_lines[] = sprintf('  • [%s] %s — %s', $entry['time'], $entry['reactor'], $entry['emoji']);
+                $html_items[] = sprintf(
+                    '<li><span class="digest-time">%s</span><span class="digest-user">%s</span><span class="digest-emoji">%s</span></li>',
+                    htmlspecialchars($entry['time'], ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($entry['reactor'], ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($entry['emoji'], ENT_QUOTES, 'UTF-8')
+                );
+            }
+
+            $sections_text[] = $subject . "\n" . implode("\n", $text_lines);
+            $sections_html[] = sprintf(
+                '<div class="digest-topic"><h3>%s</h3><ul>%s</ul></div>',
+                htmlspecialchars($subject, ENT_QUOTES, 'UTF-8'),
+                implode('', $html_items)
+            );
+        }
+
+        $recap_text = implode("\n\n", $sections_text);
+        $recap_html = implode("\n", $sections_html);
         $since_time = date('d/m/Y H:i', $threshold_timestamp);
 
         try
@@ -393,8 +425,9 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->to($author_email, $author_name);
             $messenger->assign_vars([
                 'USERNAME'    => $author_name,
-                'SINCE_TIME'  => $since_time,
-                'RECAP_LINES' => $recap_text,
+                'DIGEST_SINCE'=> $since_time,
+                'DIGEST_TEXT' => $recap_text,
+                'DIGEST_HTML' => $recap_html,
             ]);
             $messenger->send(NOTIFY_EMAIL);
 
