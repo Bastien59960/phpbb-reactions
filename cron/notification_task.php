@@ -410,7 +410,7 @@ class notification_task extends \phpbb\cron\task\base
         {
             $messenger = new \messenger(false, $this->template);
 
-            $messenger->template('@bastien59960_reactions/reaction_digest', $author_lang);
+            $messenger->template('reaction_digest', $author_lang);
             $messenger->to($author_email, $author_name);
 
             $messenger->assign_vars([
