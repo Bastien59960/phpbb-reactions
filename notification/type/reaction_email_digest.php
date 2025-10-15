@@ -62,8 +62,7 @@ class reaction_email_digest extends base
 
         try
         {
-            $this->user->add_lang_ext('bastien59960/reactions', 'reactions');
-            $this->user->add_lang_ext('bastien59960/reactions', 'notification/notification.type.reaction_email_digest');
+            $this->user->add_lang_ext('bastien59960/reactions', 'common');
         }
         catch (\Throwable $e)
         {

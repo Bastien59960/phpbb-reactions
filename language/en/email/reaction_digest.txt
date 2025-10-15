@@ -1,12 +1,12 @@
-Subject: Reactions on your posts — summary
+Subject: New reactions to your posts on {SITENAME}
 
 Hello {USERNAME},
 
-Between {DIGEST_SINCE} and {DIGEST_UNTIL} you received new reactions grouped by topic:
+Here is a summary of the new reactions to your posts since your last visit:
 
-{DIGEST_TEXT}
+{RECAP_LINES}
 
-Tip: Adjust or disable these emails from your User Control Panel → Reaction Preferences.
+You can change your notification settings at any time in your User Control Panel.
 
---
-{DIGEST_SIGNATURE}
+---
+{EMAIL_SIG}

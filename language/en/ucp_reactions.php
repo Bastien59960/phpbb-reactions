@@ -1,11 +1,12 @@
 <?php
 /**
- * File: language/en/ucp_reactions.php — bastien59960/reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * File: ucp_reactions.php
+ * Path: bastien59960/reactions/language/en/ucp_reactions.php
+ * Author: Bastien (bastien59960)
+ * GitHub: https://github.com/bastien59960/reactions
  *
  * Role:
- * This file contains the English language strings for the Reactions preferences
+ * This file contains the English language strings for the reactions preferences
  * page in the User Control Panel (UCP).
  *
  * @copyright (c) 2025 Bastien59960
@@ -17,10 +18,10 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
-    'UCP_REACTIONS_TITLE'           => 'Reactions Preferences',
-    'UCP_REACTIONS_EXPLAIN'         => 'Choose how you want to be notified when other members react to your posts.',
-    'UCP_REACTIONS_NOTIFY'          => 'Notify me about new reactions (board notification)',
-    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Receive an instant notification in the forum bell.',
+    'UCP_REACTIONS_TITLE'           => 'Reactions preferences',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choose how to be notified when members react to your posts.',
+    'UCP_REACTIONS_NOTIFY'          => 'Notify me about new reactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Receive an instant notification in the forum\'s notification bell.',
     'UCP_REACTIONS_EMAIL'           => 'Notify me about new reactions (e-mail)',
     'UCP_REACTIONS_EMAIL_EXPLAIN'   => 'Receive a periodic e-mail summary of new reactions.',
     'UCP_REACTIONS_SAVED'           => 'Your reaction preferences have been saved.',
