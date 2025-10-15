@@ -332,8 +332,8 @@ class notification_task extends \phpbb\cron\task\base
             return false;
         }
 
-        // Vérifier directement dans la table users (colonne user_reactions_cron_email)
-        $sql = 'SELECT user_reactions_cron_email
+        // Vérifier directement dans la table users (colonne user_reactions_email)
+        $sql = 'SELECT user_reactions_email
                 FROM ' . USERS_TABLE . '
                 WHERE user_id = ' . (int) $user_id;
         $result = $this->db->sql_query($sql);
@@ -345,8 +345,8 @@ class notification_task extends \phpbb\cron\task\base
             return false;
         }
 
-        // user_reactions_cron_email : 1 = reçoit les e-mails, 0 = désactivé
-        return ((int) $row['user_reactions_cron_email']) === 0;
+        // user_reactions_email : 1 = reçoit les e-mails, 0 = désactivé
+        return ((int) $row['user_reactions_email']) === 0;
     }
 
     /**

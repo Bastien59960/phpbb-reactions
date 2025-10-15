@@ -31,6 +31,6 @@ $lang = array_merge($lang ?? [], [
     'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des nouvelles réactions sur vos messages.',
 
     // --- Aides pour les résumés ---
-    'REACTIONS_DIGEST_VIEW_POST' => 'Voir ce message',
-    'REACTIONS_DIGEST_SIGNATURE' => 'Merci, l\'équipe %s',
+    'REACTIONS_DIGEST_VIEW_POST' => 'Voir le message',
+    'REACTIONS_DIGEST_SIGNATURE' => 'Merci de votre participation, L\'équipe de %s',
 ]);
