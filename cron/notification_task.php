@@ -182,7 +182,7 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
-            $subject_plain = ($post_subject !== '') ? html_entity_decode($post_subject, ENT_QUOTES, 'UTF-8') : $this->language->lang('NO_SUBJECT');
+            $subject_plain = ($post_subject !== '') ? $post_subject : $this->language->lang('NO_SUBJECT');
             $post_url_absolute = generate_board_url() . '/viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
             $post_url_relative = 'viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
             $profile_url_absolute = generate_board_url() . '/memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
@@ -255,7 +255,7 @@ class notification_task extends \phpbb\cron\task\base
             // Vérifier préférence utilisateur
             $disable_cron_email = $this->get_user_disable_cron_email_pref($author_id);
 
-            if ($disable_cron_email)
+            if ($disable_cron_email === true)
             {
                 $skipped_pref += $reaction_total_for_author;
                 error_log('[Reactions Cron] Skip user_id ' . $author_id . ' (préférence e-mail désactivée).');
@@ -423,24 +423,18 @@ class notification_task extends \phpbb\cron\task\base
             // Itérer sur les posts et les assigner comme des blocs au template
             foreach ($data['posts'] as $post_data)
             {
-                // Préparer un tableau de réactions pour ce post
-                $reactions_data = [];
-                foreach ($post_data['reactions'] as $reaction)
-                {
-                    $reactions_data[] = [
-                        'EMOJI'                => $reaction['emoji'],
-                        'REACTER_NAME'         => $reaction['reacter_name'],
-                        'TIME_FORMATTED'       => $reaction['time_formatted'],
-                        'PROFILE_URL_ABSOLUTE' => $reaction['profile_url_absolute'],
-                    ];
-                }
-
-                // Assigner le post et son tableau de réactions
+                // 1. Assigner les données du post (boucle externe)
                 $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => $post_data['subject_plain'],
                     'POST_URL_ABSOLUTE' => $post_data['post_url_absolute'],
-                    'reactions'         => $reactions_data,
                 ]);
+
+                // 2. Itérer sur les réactions et les assigner au sous-bloc (boucle interne)
+                // C'est la méthode standard de phpBB. `assign_block_vars` AJOUTE une ligne à chaque appel.
+                foreach ($post_data['reactions'] as $reaction)
+                {
+                    $messenger->assign_block_vars('posts.reactions', $reaction);
+                }
             }
 
             $messenger->send(NOTIFY_EMAIL);
