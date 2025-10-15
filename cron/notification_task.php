@@ -415,7 +415,7 @@ class notification_task extends \phpbb\cron\task\base
 
             foreach ($post_data['reactions'] as $reaction)
             {
-                $text_lines[] = sprintf('• %s %s (%s) — %s : %s', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted'], $reaction['profile_url_absolute']);
+                $text_lines[] = sprintf('• %s %s (%s) — %s', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted'], $reaction['profile_url_absolute']);
                 $html_items[] = sprintf(
                     '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">%s</span></li>',
                     htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8'),
