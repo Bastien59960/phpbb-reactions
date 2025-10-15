@@ -119,15 +119,6 @@ public function enable_step($old_state)
             }
         }
 
-        // Activation du type "email digest"
-        try {
-            $notification_manager->enable_notifications('notification.type.reaction_email_digest');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] enable_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
-
         return 'notification';
     }
 
@@ -158,9 +149,6 @@ public function enable_step($old_state)
 			
 			// Désactiver la notification cloche
 			$notification_manager->disable_notifications('notification.type.reaction');
-			
-			// Désactiver la notification email groupée
-			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
 			
 			return 'notification';
 		}
@@ -201,14 +189,6 @@ public function purge_step($old_state)
         } catch (\phpbb\notification\exception $e) {
             if (defined('DEBUG')) {
                 trigger_error('[Reactions] purge_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
-
-        try {
-            $notification_manager->purge_notifications('notification.type.reaction_email_digest');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] purge_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
             }
         }
 
