@@ -5,17 +5,17 @@
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/helper.php
  *
- * RÃ´le :
- * Cette classe fournit des mÃ©thodes utilitaires centralisÃ©es pour l'extension.
- * Son rÃ´le principal est de gÃ©nÃ©rer le bloc HTML des rÃ©actions pour un message
- * donnÃ©. Ce HTML est ensuite renvoyÃ© par le contrÃ´leur AJAX pour mettre Ã  jour
+ * Rôle :
+ * Cette classe fournit des méthodes utilitaires centralisées pour l'extension.
+ * Son rôle principal est de générer le bloc HTML des réactions pour un message
+ * donné. Ce HTML est ensuite renvoyé par le contrôleur AJAX pour mettre à jour
  * l'affichage sans recharger la page.
  *
- * Informations reÃ§ues :
- * - `get_reactions_html_for_post($post_id)` : ReÃ§oit l'ID d'un message.
+ * Informations reçues :
+ * - `get_reactions_html_for_post($post_id)` : Reçoit l'ID d'un message.
  *
- * Elle est injectÃ©e comme service dans d'autres composants (notamment le
- * contrÃ´leur AJAX) pour Ã©viter la duplication de code.
+ * Elle est injectée comme service dans d'autres composants (notamment le
+ * contrôleur AJAX) pour éviter la duplication de code.
  *
  *
  * @package bastien59960
@@ -76,13 +76,13 @@ class helper
     }
 
         // =============================================================================
-    // MÃ‰THODE : GÃ©nÃ©ration du HTML des rÃ©actions pour un post
+    // MÉTHODE : Génération du HTML des réactions pour un post
     // =============================================================================
     /**
-     * GÃ©nÃ¨re le HTML complet du bloc de rÃ©actions pour un message donnÃ©
+     * Génère le HTML complet du bloc de réactions pour un message donné
      *
      * @param int $post_id ID du message
-     * @return string HTML prÃªt Ã  injecter cÃ´tÃ© client (AJAX)
+     * @return string HTML prêt à injecter côté client (AJAX)
      */
         public function get_reactions_html_for_post($post_id)
     {
@@ -187,14 +187,14 @@ class helper
     }
 
     // =============================================================================
-    // MÃ‰THODE : GÃ©nÃ©ration d'URL (proxy vers controller_helper)
+    // MÉTHODE : Génération d'URL (proxy vers controller_helper)
     // =============================================================================
     /**
-     * GÃ©nÃ¨re une URL via le contrÃ´leur phpBB ou fallback append_sid
+     * Génère une URL via le contrôleur phpBB ou fallback append_sid
      *
      * @param string $route
      * @param array $params
-     * @return string URL gÃ©nÃ©rÃ©e
+     * @return string URL générée
      */
     public function route($route, array $params = [])
     {

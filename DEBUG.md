@@ -1,108 +1,108 @@
 # Guide de Debug - Extension phpBB Reactions
 
-## ProblÃ¨mes identifiÃ©s et corrigÃ©s
+## Problèmes identifiés et corrigés
 
-### 1. Synchronisation des Ã©mojis courantes
-- **ProblÃ¨me** : Les listes d'Ã©mojis n'Ã©taient pas identiques entre les fichiers
-- **Solution** : SynchronisÃ© toutes les listes avec `['ðŸ‘', 'ðŸ‘Ž', 'â¤ï¸', 'ðŸ˜‚', 'ðŸ˜®', 'ðŸ˜¢', 'ðŸ˜¡', 'ðŸ”¥', 'ðŸ‘Œ', 'ðŸ¥³']`
+### 1. Synchronisation des émojis courantes
+- **Problème** : Les listes d'émojis n'étaient pas identiques entre les fichiers
+- **Solution** : Synchronisé toutes les listes avec `['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳']`
 
 ### 2. Templates HTML incorrects
-- **ProblÃ¨me** : Le template `reactions.html` utilisait une structure incorrecte
-- **Solution** : CorrigÃ© pour correspondre Ã  la structure attendue par le listener
+- **Problème** : Le template `reactions.html` utilisait une structure incorrecte
+- **Solution** : Corrigé pour correspondre à la structure attendue par le listener
 
 ### 3. Logs de debug excessifs
-- **ProblÃ¨me** : Trop de logs de debug dans le code de production
-- **Solution** : SupprimÃ© les logs de debug non essentiels
+- **Problème** : Trop de logs de debug dans le code de production
+- **Solution** : Supprimé les logs de debug non essentiels
 
-### 4. IncohÃ©rence dans les noms de variables
-- **ProblÃ¨me** : MÃ©lange entre `popular_emojis` et `common_emojis`
-- **Solution** : StandardisÃ© sur `common_emojis` partout
+### 4. Incohérence dans les noms de variables
+- **Problème** : Mélange entre `popular_emojis` et `common_emojis`
+- **Solution** : Standardisé sur `common_emojis` partout
 
 ## Comment tester l'extension
 
-### 1. VÃ©rifier l'installation
+### 1. Vérifier l'installation
 ```bash
-# AccÃ©der Ã  l'URL de test
+# Accéder à l'URL de test
 https://votre-forum.com/app.php/reactions/test
 ```
 
-### 2. VÃ©rifier les logs
+### 2. Vérifier les logs
 ```bash
-# VÃ©rifier les logs d'erreur PHP
+# Vérifier les logs d'erreur PHP
 tail -f /var/log/php/error.log | grep "Reactions"
 ```
 
-### 3. Tester les rÃ©actions
+### 3. Tester les réactions
 1. Se connecter au forum
 2. Aller sur un topic
-3. Cliquer sur le bouton "+" Ã  cÃ´tÃ© des posts
-4. SÃ©lectionner un emoji
-5. VÃ©rifier que la rÃ©action s'affiche
+3. Cliquer sur le bouton "+" à côté des posts
+4. Sélectionner un emoji
+5. Vérifier que la réaction s'affiche
 
-### 4. VÃ©rifier la base de donnÃ©es
+### 4. Vérifier la base de données
 ```sql
--- VÃ©rifier que la table existe
+-- Vérifier que la table existe
 SHOW TABLES LIKE 'phpbb_post_reactions';
 
--- VÃ©rifier la structure
+-- Vérifier la structure
 DESCRIBE phpbb_post_reactions;
 
--- VÃ©rifier les donnÃ©es
+-- Vérifier les données
 SELECT * FROM phpbb_post_reactions LIMIT 10;
 ```
 
-## ProblÃ¨mes courants et solutions
+## Problèmes courants et solutions
 
-### 1. Les rÃ©actions ne s'affichent pas
-- VÃ©rifier que l'extension est activÃ©e
-- VÃ©rifier que les templates sont purgÃ©s
-- VÃ©rifier les logs d'erreur
+### 1. Les réactions ne s'affichent pas
+- Vérifier que l'extension est activée
+- Vérifier que les templates sont purgés
+- Vérifier les logs d'erreur
 
 ### 2. Erreur CSRF
-- VÃ©rifier que `REACTIONS_SID` est dÃ©fini dans le JavaScript
-- VÃ©rifier que l'utilisateur est connectÃ©
+- Vérifier que `REACTIONS_SID` est défini dans le JavaScript
+- Vérifier que l'utilisateur est connecté
 
-### 3. ProblÃ¨mes d'encodage UTF-8
-- VÃ©rifier que la base de donnÃ©es utilise `utf8mb4`
-- VÃ©rifier que la connexion utilise `utf8mb4_bin`
+### 3. Problèmes d'encodage UTF-8
+- Vérifier que la base de données utilise `utf8mb4`
+- Vérifier que la connexion utilise `utf8mb4_bin`
 
 ### 4. JavaScript ne fonctionne pas
-- VÃ©rifier que le fichier `reactions.js` est chargÃ©
-- VÃ©rifier la console du navigateur pour les erreurs
-- VÃ©rifier que `REACTIONS_AJAX_URL` est dÃ©fini
+- Vérifier que le fichier `reactions.js` est chargé
+- Vérifier la console du navigateur pour les erreurs
+- Vérifier que `REACTIONS_AJAX_URL` est défini
 
 ## Structure des fichiers
 
 ```
 ext/
-â”œâ”€â”€ bastien59960/
-â”‚   â””â”€â”€ reactions/
-â”‚       â”œâ”€â”€ controller/
-â”‚       â”‚   â”œâ”€â”€ ajax.php      # Gestion AJAX des rÃ©actions
-â”‚       â”‚   â”œâ”€â”€ main.php      # ContrÃ´leur principal
-â”‚       â”‚   â””â”€â”€ test.php      # ContrÃ´leur de test
-â”‚       â”œâ”€â”€ event/
-â”‚       â”‚   â””â”€â”€ listener.php  # Gestion des Ã©vÃ©nements
-â”‚       â”œâ”€â”€ config/
-â”‚       â”‚   â”œâ”€â”€ services.yml  # Configuration des services
-â”‚       â”‚   â”œâ”€â”€ routing.yml   # Configuration des routes
-â”‚       â”‚   â””â”€â”€ parameters.yml # ParamÃ¨tres
-â”‚       â”œâ”€â”€ styles/
-â”‚       â”‚   â””â”€â”€ prosilver/
-â”‚       â”‚       â”œâ”€â”€ template/
-â”‚       â”‚       â”‚   â”œâ”€â”€ js/
-â”‚       â”‚       â”‚   â”‚   â””â”€â”€ reactions.js
-â”‚       â”‚       â”‚   â””â”€â”€ event/
-â”‚       â”‚       â”‚       â”œâ”€â”€ reactions.html
-â”‚       â”‚       â”‚       â””â”€â”€ viewtopic_body_postrow_content_after.html
-â”‚       â”‚       â””â”€â”€ theme/
-â”‚       â”‚           â”œâ”€â”€ reactions.css
-â”‚       â”‚           â””â”€â”€ categories.json
-â”‚       â””â”€â”€ language/
-â”‚           â”œâ”€â”€ fr/
-â”‚           â”‚   â””â”€â”€ common.php
-â”‚           â””â”€â”€ en/
-â”‚               â””â”€â”€ common.php
+├── bastien59960/
+│   └── reactions/
+│       ├── controller/
+│       │   ├── ajax.php      # Gestion AJAX des réactions
+│       │   ├── main.php      # Contrôleur principal
+│       │   └── test.php      # Contrôleur de test
+│       ├── event/
+│       │   └── listener.php  # Gestion des événements
+│       ├── config/
+│       │   ├── services.yml  # Configuration des services
+│       │   ├── routing.yml   # Configuration des routes
+│       │   └── parameters.yml # Paramètres
+│       ├── styles/
+│       │   └── prosilver/
+│       │       ├── template/
+│       │       │   ├── js/
+│       │       │   │   └── reactions.js
+│       │       │   └── event/
+│       │       │       ├── reactions.html
+│       │       │       └── viewtopic_body_postrow_content_after.html
+│       │       └── theme/
+│       │           ├── reactions.css
+│       │           └── categories.json
+│       └── language/
+│           ├── fr/
+│           │   └── common.php
+│           └── en/
+│               └── common.php
 ```
 
 ## Commandes utiles
@@ -110,18 +110,18 @@ ext/
 ### Purger le cache des templates
 ```bash
 # Dans l'ACP de phpBB
-Administration > GÃ©nÃ©ral > Purger le cache
+Administration > Général > Purger le cache
 ```
 
-### VÃ©rifier les permissions
+### Vérifier les permissions
 ```bash
-# VÃ©rifier que les fichiers sont accessibles
+# Vérifier que les fichiers sont accessibles
 ls -la ext/bastien59960/reactions/
 ```
 
-### Tester la base de donnÃ©es
+### Tester la base de données
 ```sql
--- Tester l'insertion d'une rÃ©action
+-- Tester l'insertion d'une réaction
 INSERT INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time) 
-VALUES (1, 1, 1, 'ðŸ‘', UNIX_TIMESTAMP());
+VALUES (1, 1, 1, '👍', UNIX_TIMESTAMP());
 ```

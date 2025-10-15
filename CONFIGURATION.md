@@ -1,17 +1,17 @@
 # Configuration de l'extension Reactions
 
-## ðŸ‡«ðŸ‡· ParamÃ¨tres de configuration
+## 🇫🇷 Paramètres de configuration
 
-L'extension utilise plusieurs paramÃ¨tres stockÃ©s dans la table `phpbb_config` :
+L'extension utilise plusieurs paramètres stockés dans la table `phpbb_config` :
 
-### ParamÃ¨tres principaux
+### Paramètres principaux
 
-| ParamÃ¨tre                                 | Valeur par dÃ©faut | Description                                                        |
+| Paramètre                                 | Valeur par défaut | Description                                                        |
 |-------------------------------------------|------------------|--------------------------------------------------------------------|
-| `bastien59960_reactions_enabled`          | `1`              | Active/dÃ©sactive l'extension (1 = activÃ©, 0 = dÃ©sactivÃ©)           |
-| `bastien59960_reactions_max_per_post`     | `20`             | Nombre max de types de rÃ©actions diffÃ©rents par post                |
-| `bastien59960_reactions_max_per_user`     | `10`             | Nombre max de rÃ©actions par utilisateur et par post                 |
-| `bastien59960_reactions_spam_time`        | `2700`           | DÃ©lai anti-spam (en secondes) pour le digest e-mail (dÃ©faut 45 min) |
+| `bastien59960_reactions_enabled`          | `1`              | Active/désactive l'extension (1 = activé, 0 = désactivé)           |
+| `bastien59960_reactions_max_per_post`     | `20`             | Nombre max de types de réactions différents par post                |
+| `bastien59960_reactions_max_per_user`     | `10`             | Nombre max de réactions par utilisateur et par post                 |
+| `bastien59960_reactions_spam_time`        | `2700`           | Délai anti-spam (en secondes) pour le digest e-mail (défaut 45 min) |
 
 ### Configuration via l'ACP
 
@@ -24,47 +24,47 @@ L'extension utilise plusieurs paramÃ¨tres stockÃ©s dans la table `phpbb_conf
 ```sql
 -- Activer l'extension
 UPDATE phpbb_config SET config_value = '1' WHERE config_name = 'bastien59960_reactions_enabled';
--- Limite de types de rÃ©actions par post
+-- Limite de types de réactions par post
 UPDATE phpbb_config SET config_value = '20' WHERE config_name = 'bastien59960_reactions_max_per_post';
--- Limite de rÃ©actions par utilisateur
+-- Limite de réactions par utilisateur
 UPDATE phpbb_config SET config_value = '10' WHERE config_name = 'bastien59960_reactions_max_per_user';
--- DÃ©lai anti-spam (en secondes)
+-- Délai anti-spam (en secondes)
 UPDATE phpbb_config SET config_value = '2700' WHERE config_name = 'bastien59960_reactions_spam_time';
 ```
 
 ### Limites et comportement
 
-- **max_per_post** : EmpÃªche qu'un post ait trop de types de rÃ©actions diffÃ©rents (20 par dÃ©faut)
-- **max_per_user** : EmpÃªche qu'un utilisateur rÃ©agisse trop souvent sur le mÃªme post (10 par dÃ©faut)
-- **spam_time** : DÃ©lai minimal entre deux digests e-mail pour un mÃªme utilisateur
+- **max_per_post** : Empêche qu'un post ait trop de types de réactions différents (20 par défaut)
+- **max_per_user** : Empêche qu'un utilisateur réagisse trop souvent sur le même post (10 par défaut)
+- **spam_time** : Délai minimal entre deux digests e-mail pour un même utilisateur
 
 ### Messages d'erreur
 
-- "Limite de types de rÃ©actions par message atteinte"
-- "Limite de rÃ©actions par utilisateur atteinte"
+- "Limite de types de réactions par message atteinte"
+- "Limite de réactions par utilisateur atteinte"
 
 ### Migration automatique
 
-Les paramÃ¨tres sont crÃ©Ã©s lors de l'installation de l'extension (migration).
+Les paramètres sont créés lors de l'installation de l'extension (migration).
 
 ### Recommandations
 
-- **Petits forums** : Gardez les valeurs par dÃ©faut
-- **Forums trÃ¨s actifs** : Augmentez les limites si besoin
-- **Forums avec modÃ©ration stricte** : Diminuez les limites pour Ã©viter le spam
+- **Petits forums** : Gardez les valeurs par défaut
+- **Forums très actifs** : Augmentez les limites si besoin
+- **Forums avec modération stricte** : Diminuez les limites pour éviter le spam
 
-### DÃ©pannage
+### Dépannage
 
-1. VÃ©rifiez que les paramÃ¨tres existent dans `phpbb_config`
+1. Vérifiez que les paramètres existent dans `phpbb_config`
 2. Purgez le cache de phpBB
-3. VÃ©rifiez les logs d'erreur
+3. Vérifiez les logs d'erreur
 4. Testez avec l'URL de test si disponible
 
 ---
 
 # Reactions Extension Configuration (English)
 
-## ðŸ‡¬ðŸ‡§ Configuration parameters
+## 🇬🇧 Configuration parameters
 
 The extension uses several parameters stored in the `phpbb_config` table:
 

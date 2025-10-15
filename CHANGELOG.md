@@ -1,216 +1,216 @@
 # Changelog - Extension Reactions
 
-Toutes les modifications notables de l'extension Reactions sont documentÃ©es dans ce fichier.
+Toutes les modifications notables de l'extension Reactions sont documentées dans ce fichier.
 
-Le format est basÃ© sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
-et ce projet adhÃ¨re au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
+et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.1] - 2025-01-XX
 
-### AjoutÃ©
-- **SystÃ¨me de notifications complet** :
-  - Notifications par cloche (immÃ©diates)
-  - Notifications par email avec dÃ©lai anti-spam (45 min par dÃ©faut)
-  - Groupement intelligent des rÃ©actions multiples
-  - PrÃ©fÃ©rences utilisateur configurables
+### Ajouté
+- **Système de notifications complet** :
+  - Notifications par cloche (immédiates)
+  - Notifications par email avec délai anti-spam (45 min par défaut)
+  - Groupement intelligent des réactions multiples
+  - Préférences utilisateur configurables
 
-- **Type de notification personnalisÃ©** :
+- **Type de notification personnalisé** :
   - Classe `bastien59960\reactions\notification\type\reaction`
-  - Support des notifications groupÃ©es
+  - Support des notifications groupées
   - Gestion des utilisateurs multiples
-  - Templates d'email personnalisÃ©s
+  - Templates d'email personnalisés
 
-- **TÃ¢che cron pour les notifications** :
-  - Envoi diffÃ©rÃ© des emails avec anti-spam
+- **Tâche cron pour les notifications** :
+  - Envoi différé des emails avec anti-spam
   - Groupement par message et auteur
-  - Marquage automatique des rÃ©actions notifiÃ©es
+  - Marquage automatique des réactions notifiées
   - Gestion des erreurs et reprises
 
-- **Configuration Ã©tendue** :
-  - Option `bastien59960_reactions_spam_time` pour le dÃ©lai anti-spam
+- **Configuration étendue** :
+  - Option `bastien59960_reactions_spam_time` pour le délai anti-spam
   - Limites configurables par message et utilisateur
-  - Activation/dÃ©sactivation globale de l'extension
+  - Activation/désactivation globale de l'extension
 
 - **Fichiers de langue complets** :
-  - Support franÃ§ais et anglais
+  - Support français et anglais
   - Messages de notification
   - Templates d'email
-  - Messages d'erreur et de succÃ¨s
+  - Messages d'erreur et de succès
 
-- **Documentation complÃ¨te** :
-  - Guide de dÃ©veloppement
+- **Documentation complète** :
+  - Guide de développement
   - Documentation technique
-  - Changelog dÃ©taillÃ©
+  - Changelog détaillé
   - Commentaires de code exhaustifs
 
-### ModifiÃ©
-- **ContrÃ´leur AJAX** :
+### Modifié
+- **Contrôleur AJAX** :
   - Ajout du gestionnaire de notifications
-  - MÃ©thode `trigger_immediate_notification()` pour les notifications immÃ©diates
-  - Gestion des erreurs amÃ©liorÃ©e
-  - Logs de debug dÃ©taillÃ©s
+  - Méthode `trigger_immediate_notification()` pour les notifications immédiates
+  - Gestion des erreurs améliorée
+  - Logs de debug détaillés
 
-- **Listener d'Ã©vÃ©nements** :
+- **Listener d'événements** :
   - Configuration des variables de notification
-  - Gestion des donnÃ©es utilisateur
-  - Optimisation des requÃªtes
+  - Gestion des données utilisateur
+  - Optimisation des requêtes
 
 - **Services de configuration** :
   - Ajout du service de notification
-  - Configuration des dÃ©pendances
-  - Tags appropriÃ©s pour les services
+  - Configuration des dépendances
+  - Tags appropriés pour les services
 
-- **Base de donnÃ©es** :
+- **Base de données** :
   - Colonne `reaction_notified` pour l'anti-spam
-  - Index optimisÃ©s pour les requÃªtes de notification
-  - Support UTF8MB4 pour les emojis composÃ©s
+  - Index optimisés pour les requêtes de notification
+  - Support UTF8MB4 pour les emojis composés
 
-### CorrigÃ©
+### Corrigé
 - **Nom du service de notification** :
   - Correction de `bastien59960.reactions.notification.type.reaction` vers `bastien59960.reactions.notification`
   - Harmonisation des noms dans tous les fichiers
-  - Correction des rÃ©fÃ©rences dans les migrations
+  - Correction des références dans les migrations
 
 - **Gestion des notifications** :
-  - Distinction claire entre notifications immÃ©diates et diffÃ©rÃ©es
+  - Distinction claire entre notifications immédiates et différées
   - Correction de la logique anti-spam (emails uniquement)
   - Gestion des erreurs de notification
 
-- **Validation des donnÃ©es** :
-  - AmÃ©lioration de la validation des emojis
-  - Support des emojis composÃ©s (ZWJ)
-  - VÃ©rification des autorisations
+- **Validation des données** :
+  - Amélioration de la validation des emojis
+  - Support des emojis composés (ZWJ)
+  - Vérification des autorisations
 
-### SÃ©curitÃ©
-- **Validation renforcÃ©e** :
-  - VÃ©rification des jetons CSRF
-  - Validation des emojis et des donnÃ©es
+### Sécurité
+- **Validation renforcée** :
+  - Vérification des jetons CSRF
+  - Validation des emojis et des données
   - Protection contre les injections SQL
 
 - **Gestion des erreurs** :
-  - Logs dÃ©taillÃ©s pour le debug
+  - Logs détaillés pour le debug
   - Gestion gracieuse des erreurs
-  - Protection des donnÃ©es sensibles
+  - Protection des données sensibles
 
 ## [1.0.0] - 2025-01-XX
 
-### AjoutÃ©
-- **FonctionnalitÃ©s de base** :
-  - SystÃ¨me de rÃ©actions aux messages
-  - Support des emojis courantes (10 emojis prÃ©dÃ©finis)
-  - Support des emojis Ã©tendus via fichier JSON
-  - Compteurs en temps rÃ©el
+### Ajouté
+- **Fonctionnalités de base** :
+  - Système de réactions aux messages
+  - Support des emojis courantes (10 emojis prédéfinis)
+  - Support des emojis étendus via fichier JSON
+  - Compteurs en temps réel
 
 - **Interface utilisateur** :
-  - Affichage des rÃ©actions sous chaque message
+  - Affichage des réactions sous chaque message
   - Bouton "plus" pour ouvrir la palette d'emojis
   - Tooltips avec liste des utilisateurs
-  - Mode lecture seule pour utilisateurs non connectÃ©s
+  - Mode lecture seule pour utilisateurs non connectés
 
-- **ContrÃ´leur AJAX** :
-  - Gestion des requÃªtes d'ajout/suppression de rÃ©actions
-  - Validation des donnÃ©es et autorisations
-  - Gestion des erreurs et Ã©tats de chargement
+- **Contrôleur AJAX** :
+  - Gestion des requêtes d'ajout/suppression de réactions
+  - Validation des données et autorisations
+  - Gestion des erreurs et états de chargement
   - Support des limites configurables
 
-- **Base de donnÃ©es** :
-  - Table `phpbb_post_reactions` pour stocker les rÃ©actions
-  - Index optimisÃ©s pour les performances
+- **Base de données** :
+  - Table `phpbb_post_reactions` pour stocker les réactions
+  - Index optimisés pour les performances
   - Support UTF8MB4 pour les emojis
 
 - **Configuration** :
   - Options de configuration dans l'ACP
   - Limites par message et utilisateur
-  - Activation/dÃ©sactivation de l'extension
+  - Activation/désactivation de l'extension
 
 - **Fichiers de langue** :
-  - Support franÃ§ais et anglais
+  - Support français et anglais
   - Messages d'interface utilisateur
-  - Messages d'erreur et de succÃ¨s
+  - Messages d'erreur et de succès
 
 - **Styles et JavaScript** :
   - CSS responsive et moderne
-  - JavaScript ES6+ pour l'interactivitÃ©
-  - Gestion des Ã©vÃ©nements et des Ã©tats
+  - JavaScript ES6+ pour l'interactivité
+  - Gestion des événements et des états
 
-### ModifiÃ©
+### Modifié
 - **Architecture** :
   - Structure modulaire et extensible
-  - SÃ©paration des responsabilitÃ©s
+  - Séparation des responsabilités
   - Utilisation des services phpBB
 
-### CorrigÃ©
-- **CompatibilitÃ©** :
+### Corrigé
+- **Compatibilité** :
   - Support phpBB 3.3.0+
-  - CompatibilitÃ© avec les thÃ¨mes existants
+  - Compatibilité avec les thèmes existants
   - Gestion des conflits de CSS
 
-### SÃ©curitÃ©
+### Sécurité
 - **Validation** :
-  - VÃ©rification des autorisations
-  - Validation des donnÃ©es d'entrÃ©e
+  - Vérification des autorisations
+  - Validation des données d'entrée
   - Protection contre les attaques XSS
 
-## [0.9.0] - 2025-01-XX (Version de dÃ©veloppement)
+## [0.9.0] - 2025-01-XX (Version de développement)
 
-### AjoutÃ©
+### Ajouté
 - **Prototype initial** :
   - Structure de base de l'extension
-  - ContrÃ´leur AJAX basique
+  - Contrôleur AJAX basique
   - Template d'affichage simple
   - Styles CSS de base
 
-### ModifiÃ©
+### Modifié
 - **Architecture** :
   - Refactoring complet de l'architecture
-  - AmÃ©lioration de la structure des fichiers
+  - Amélioration de la structure des fichiers
   - Optimisation des performances
 
-### CorrigÃ©
-- **Bugs de dÃ©veloppement** :
+### Corrigé
+- **Bugs de développement** :
   - Correction des erreurs de syntaxe
-  - AmÃ©lioration de la gestion des erreurs
-  - Optimisation des requÃªtes de base de donnÃ©es
+  - Amélioration de la gestion des erreurs
+  - Optimisation des requêtes de base de données
 
 ## Notes de version
 
 ### Version 1.0.1
-Cette version apporte un systÃ¨me de notifications complet avec support des notifications par cloche et par email. Elle inclut Ã©galement une documentation exhaustive et des amÃ©liorations de sÃ©curitÃ©.
+Cette version apporte un système de notifications complet avec support des notifications par cloche et par email. Elle inclut également une documentation exhaustive et des améliorations de sécurité.
 
 ### Version 1.0.0
-Version stable initiale avec toutes les fonctionnalitÃ©s de base des rÃ©actions. Cette version est prÃªte pour la production.
+Version stable initiale avec toutes les fonctionnalités de base des réactions. Cette version est prête pour la production.
 
 ### Version 0.9.0
-Version de dÃ©veloppement avec les fonctionnalitÃ©s de base. Cette version Ã©tait destinÃ©e aux tests et Ã  la validation des concepts.
+Version de développement avec les fonctionnalités de base. Cette version était destinée aux tests et à la validation des concepts.
 
 ## Roadmap
 
-### Version 1.1.0 (PrÃ©vue)
-- **RÃ©actions personnalisÃ©es** : Emojis spÃ©cifiques au forum
-- **Statistiques avancÃ©es** : Tableaux de bord des rÃ©actions
+### Version 1.1.0 (Prévue)
+- **Réactions personnalisées** : Emojis spécifiques au forum
+- **Statistiques avancées** : Tableaux de bord des réactions
 - **API REST** : Interface pour applications tierces
-- **AmÃ©liorations de performance** : Cache Redis, optimisations
+- **Améliorations de performance** : Cache Redis, optimisations
 
-### Version 1.2.0 (PrÃ©vue)
-- **IntÃ©gration mobile** : Optimisation pour les appareils mobiles
-- **WebSockets** : Notifications en temps rÃ©el
+### Version 1.2.0 (Prévue)
+- **Intégration mobile** : Optimisation pour les appareils mobiles
+- **WebSockets** : Notifications en temps réel
 - **PWA** : Application web progressive
-- **Tests automatisÃ©s** : Suite de tests complÃ¨te
+- **Tests automatisés** : Suite de tests complète
 
-### Version 2.0.0 (PrÃ©vue)
-- **Refactoring majeur** : Architecture modernisÃ©e
-- **Nouvelles fonctionnalitÃ©s** : RÃ©actions avancÃ©es
-- **CompatibilitÃ©** : Support phpBB 4.0
+### Version 2.0.0 (Prévue)
+- **Refactoring majeur** : Architecture modernisée
+- **Nouvelles fonctionnalités** : Réactions avancées
+- **Compatibilité** : Support phpBB 4.0
 - **Performance** : Optimisations majeures
 
 ## Support
 
-### Versions supportÃ©es
+### Versions supportées
 - **Version actuelle** : 1.0.1
-- **Versions prÃ©cÃ©dentes** : 1.0.0 (support de sÃ©curitÃ© uniquement)
-- **Versions de dÃ©veloppement** : Non supportÃ©es
+- **Versions précédentes** : 1.0.0 (support de sécurité uniquement)
+- **Versions de développement** : Non supportées
 
-### CompatibilitÃ©
+### Compatibilité
 - **phpBB** : 3.3.0+
 - **PHP** : 7.4+
 - **MySQL** : 5.7+ / MariaDB 10.2+
@@ -218,9 +218,9 @@ Version de dÃ©veloppement avec les fonctionnalitÃ©s de base. Cette version �
 
 ### Migration
 - **Depuis 1.0.0** : Migration automatique via les migrations phpBB
-- **Depuis 0.9.0** : RÃ©installation recommandÃ©e
-- **Sauvegarde** : Toujours effectuer une sauvegarde avant la mise Ã  jour
+- **Depuis 0.9.0** : Réinstallation recommandée
+- **Sauvegarde** : Toujours effectuer une sauvegarde avant la mise à jour
 
 ---
 
-*Ce changelog est maintenu Ã  jour avec chaque version de l'extension.*
+*Ce changelog est maintenu à jour avec chaque version de l'extension.*

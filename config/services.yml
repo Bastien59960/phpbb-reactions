@@ -1,16 +1,16 @@
 #
-# Fichier : config/services.yml â€” bastien59960/reactions/config/services.yml
+# Fichier : config/services.yml — bastien59960/reactions/config/services.yml
 #
-# Ce fichier dÃ©clare l'ensemble des services (contrÃ´leurs, listeners, types de
-# notifications, helpers, tÃ¢ches cron, etc.) utilisÃ©s par l'extension Reactions.
-# Chaque service indique la classe et la liste des dÃ©pendances injectÃ©es par le
-# conteneur Symfony embarquÃ© dans phpBB.
+# Ce fichier déclare l'ensemble des services (contrôleurs, listeners, types de
+# notifications, helpers, tâches cron, etc.) utilisés par l'extension Reactions.
+# Chaque service indique la classe et la liste des dépendances injectées par le
+# conteneur Symfony embarqué dans phpBB.
 #
 # IMPORTANT :
-# - VÃ©rifier que lâ€™ordre des arguments correspond exactement au constructeur
-#   de la classe ciblÃ©e.
-# - Les identifiants de services sont utilisÃ©s ailleurs dans lâ€™extension
-#   (ex. ext.php, controller/ajax.php, etc.) : ne pas les renommer Ã  la lÃ©gÃ¨re.
+# - Vérifier que l'ordre des arguments correspond exactement au constructeur
+#   de la classe ciblée.
+# - Les identifiants de services sont utilisés ailleurs dans l'extension
+#   (ex. ext.php, controller/ajax.php, etc.) : ne pas les renommer à la légère.
 #
 
 imports:
@@ -18,7 +18,7 @@ imports:
 
 services:
     # =========================================================================
-    # HELPER CENTRALISÃ‰
+    # HELPER CENTRALISÉ
     # =========================================================================
     bastien59960.reactions.helper:
         class: bastien59960\reactions\controller\helper
@@ -28,18 +28,18 @@ services:
             - '@template'                   # phpbb\template\template
             - '@language'                   # phpbb\language\language
             - '@controller.helper'          # phpbb\controller\helper
-            - '%tables.post_reactions%'     # nom de la table des rÃ©actions
+            - '%tables.post_reactions%'     # nom de la table des réactions
             - '%tables.posts%'              # nom de la table des messages
 
     # =========================================================================
-    # LISTENER D'Ã‰VÃ‰NEMENTS
+    # LISTENER D'ÉVÉNEMENTS
     # =========================================================================
     bastien59960.reactions.listener:
         class: bastien59960\reactions\event\listener
         arguments:
-            - '@dbal.conn'                  # 1. Base de donnÃ©es
+            - '@dbal.conn'                  # 1. Base de données
             - '@user'                       # 2. Utilisateur courant
-            - '%tables.post_reactions%'     # 3. Table des rÃ©actions
+            - '%tables.post_reactions%'     # 3. Table des réactions
             - '%tables.posts%'              # 4. Table des messages
             - '@template'                   # 5. Moteur de templates
             - '@language'                   # 6. Langues
@@ -51,7 +51,7 @@ services:
             - { name: event.listener }
 
     # =========================================================================
-    # CONTRÃ”LEUR AJAX
+    # CONTRÔLEUR AJAX
     # =========================================================================
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
@@ -72,7 +72,7 @@ services:
             - '@bastien59960.reactions.helper'
 
     # =========================================================================
-    # CONTRÃ”LEUR DE TEST
+    # CONTRÔLEUR DE TEST
     # =========================================================================
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
@@ -83,7 +83,7 @@ services:
             - '%tables.posts%'
 
     # =========================================================================
-    # TÃ‚CHE CRON (DIGEST E-MAIL)
+    # TÂCHE CRON (DIGEST E-MAIL)
     # =========================================================================
     bastien59960.reactions.notificationtask:
         class: bastien59960\reactions\cron\notification_task
@@ -102,7 +102,7 @@ services:
             - { name: cron.task }
 
     # =========================================================================
-    # TYPE DE NOTIFICATION : RÃ‰ACTION (CLIC CLOCHE)
+    # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)
     # =========================================================================
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
@@ -147,7 +147,7 @@ services:
         public: true
 
     # =========================================================================
-    # CONTRÃ”LEUR UCP (PREFERENCES UTILISATEURS)
+    # CONTRÔLEUR UCP (PREFERENCES UTILISATEURS)
     # =========================================================================
     bastien59960.reactions.controller.ucp_reactions:
         class: bastien59960\reactions\controller\ucp_reactions

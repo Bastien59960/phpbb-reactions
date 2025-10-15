@@ -1,51 +1,51 @@
 # Documentation de l'extension Reactions pour phpBB
 
-## ðŸ‡«ðŸ‡· Vue d'ensemble
+## 🇫🇷 Vue d'ensemble
 
-L'extension Reactions permet aux utilisateurs de rÃ©agir aux messages du forum avec des emojis. Elle inclut un systÃ¨me de notifications complet (cloche + e-mail), une interface moderne et rapide, et une configuration avancÃ©e.
+L'extension Reactions permet aux utilisateurs de réagir aux messages du forum avec des emojis. Elle inclut un système de notifications complet (cloche + e-mail), une interface moderne et rapide, et une configuration avancée.
 
-### FonctionnalitÃ©s principales
-- RÃ©actions illimitÃ©es (tous les emojis Unicode)
-- Palette rapide + palette complÃ¨te
+### Fonctionnalités principales
+- Réactions illimitées (tous les emojis Unicode)
+- Palette rapide + palette complète
 - Compteurs dynamiques et tooltips interactifs
-- Notifications immÃ©diates (cloche) et digest e-mail groupÃ©
-- PrÃ©fÃ©rences utilisateur (cloche, e-mail, aucune)
+- Notifications immédiates (cloche) et digest e-mail groupé
+- Préférences utilisateur (cloche, e-mail, aucune)
 - Limites configurables (par post, par utilisateur, anti-spam)
-- SÃ©curitÃ© avancÃ©e (CSRF, validation, permissions)
+- Sécurité avancée (CSRF, validation, permissions)
 - Multilingue (FR/EN)
-- Design responsive et performance optimisÃ©e
+- Design responsive et performance optimisée
 
 ### Architecture technique
-- ContrÃ´leur AJAX pour toutes les interactions dynamiques
-- Listener d'Ã©vÃ©nements pour l'intÃ©gration forum
-- Types de notifications personnalisÃ©s
-- TÃ¢che cron pour l'envoi des digests e-mail
-- Migrations pour la base de donnÃ©es
-- Fichiers de langue et templates personnalisÃ©s
+- Contrôleur AJAX pour toutes les interactions dynamiques
+- Listener d'événements pour l'intégration forum
+- Types de notifications personnalisés
+- Tâche cron pour l'envoi des digests e-mail
+- Migrations pour la base de données
+- Fichiers de langue et templates personnalisés
 
-### Base de donnÃ©es
-- Table `phpbb_post_reactions` : stocke toutes les rÃ©actions (voir migration)
-- Index optimisÃ©s pour la performance
+### Base de données
+- Table `phpbb_post_reactions` : stocke toutes les réactions (voir migration)
+- Index optimisés pour la performance
 
-### SÃ©curitÃ©
+### Sécurité
 - Validation CSRF, permissions, validation stricte des emojis
 - Limites anti-spam et nettoyage automatique
 
 ### Performance
-- AJAX, index SQL, cache emojis, logs dÃ©taillÃ©s
+- AJAX, index SQL, cache emojis, logs détaillés
 
 ### Roadmap
-- RÃ©actions personnalisÃ©es, statistiques, API REST, WebSockets, PWA, tests automatisÃ©s
+- Réactions personnalisées, statistiques, API REST, WebSockets, PWA, tests automatisés
 
 ### Contribution
 - Issues et pull requests bienvenus sur GitHub
-- Documentation complÃ¨te dans les fichiers du projet
+- Documentation complète dans les fichiers du projet
 
 ---
 
 # Reactions Extension Documentation (English)
 
-## ðŸ‡¬ðŸ‡§ Overview
+## 🇬🇧 Overview
 
 The Reactions extension lets users react to forum posts with emojis. It features a complete notification system (bell + email), a modern and fast interface, and advanced configuration.
 

@@ -1,25 +1,25 @@
 <!--
-    Template : styles/prosilver/template/event/overall_header_head_append.html â€” bastien59960/reactions
+    Template : styles/prosilver/template/event/overall_header_head_append.html — bastien59960/reactions
     
     Template d'injection des ressources CSS et JavaScript pour l'extension Reactions.
     
-    Ce template est injectÃ© dans le <head> de toutes les pages du forum pour charger :
-    - Les styles CSS des rÃ©actions
-    - Les scripts JavaScript nÃ©cessaires
+    Ce template est injecté dans le <head> de toutes les pages du forum pour charger :
+    - Les styles CSS des réactions
+    - Les scripts JavaScript nécessaires
     - Les variables JavaScript globales
-    - Les keywords franÃ§ais pour la recherche d'emojis
+    - Les keywords français pour la recherche d'emojis
     
-    Points clÃ©s :
-    - Chargement conditionnel (seulement si les rÃ©actions sont activÃ©es)
+    Points clés :
+    - Chargement conditionnel (seulement si les réactions sont activées)
     - Injection des variables JavaScript globales
-    - Support des keywords franÃ§ais pour la recherche d'emojis
-    - Debug conditionnel pour le dÃ©veloppement
+    - Support des keywords français pour la recherche d'emojis
+    - Debug conditionnel pour le développement
 -->
 <!-- DEBUG: {DEBUG_REACTIONS} -->
 <!-- IF S_REACTIONS_ENABLED -->
 <link href="{REACTIONS_CSS_PATH}" rel="stylesheet" type="text/css" media="screen" />
 
-<!-- NOUVEAU : Chargement des keywords franÃ§ais pour la recherche -->
+<!-- NOUVEAU : Chargement des keywords français pour la recherche -->
 <script src="{ROOT_PATH}ext/bastien59960/reactions/styles/prosilver/template/js/emoji-keywords-fr.js"></script>
 
 <script>
@@ -39,7 +39,7 @@ var REACTIONS_OPTIONS = window.REACTIONS_OPTIONS || {
 };
 </script>
 
-<!-- Script principal des rÃ©actions (DOIT Ãªtre chargÃ© APRÃˆS emoji-keywords-fr.js) -->
+<!-- Script principal des réactions (DOIT être chargé APRÈS emoji-keywords-fr.js) -->
 <script src="{REACTIONS_JS_PATH}"></script>
 
 <!-- ENDIF -->

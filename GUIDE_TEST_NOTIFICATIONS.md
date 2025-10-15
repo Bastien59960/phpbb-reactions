@@ -1,34 +1,34 @@
-# Guide de test des notifications â€” Extension Reactions
+# Guide de test des notifications — Extension Reactions
 
-## ðŸ‡«ðŸ‡· Tester les notifications
+## 🇫🇷 Tester les notifications
 
-### 1. Notifications cloche (immÃ©diates)
-- Ajoutez une rÃ©action Ã  un message dâ€™un autre utilisateur
-- VÃ©rifiez que lâ€™auteur du message reÃ§oit une notification dans la cloche
-- VÃ©rifiez que lâ€™auto-notification (rÃ©agir Ã  son propre message) ne dÃ©clenche rien
+### 1. Notifications cloche (immédiates)
+- Ajoutez une réaction à un message d'un autre utilisateur
+- Vérifiez que l'auteur du message reçoit une notification dans la cloche
+- Vérifiez que l'auto-notification (réagir à son propre message) ne déclenche rien
 
 ### 2. Notifications e-mail (digest)
-- Activez lâ€™option "RÃ©sumÃ© e-mail" dans les prÃ©fÃ©rences utilisateur
-- Ajoutez plusieurs rÃ©actions sur diffÃ©rents messages
-- Lancez la tÃ¢che cron (ou attendez le dÃ©lai anti-spam)
-- VÃ©rifiez la rÃ©ception du digest e-mail
+- Activez l'option "Résumé e-mail" dans les préférences utilisateur
+- Ajoutez plusieurs réactions sur différents messages
+- Lancez la tâche cron (ou attendez le délai anti-spam)
+- Vérifiez la réception du digest e-mail
 
 ### 3. Cas particuliers
-- DÃ©sactivez les notifications dans le panneau utilisateur et vÃ©rifiez lâ€™absence de notification
-- Testez les limites (max rÃ©actions, dÃ©lai anti-spam)
+- Désactivez les notifications dans le panneau utilisateur et vérifiez l'absence de notification
+- Testez les limites (max réactions, délai anti-spam)
 
-### 4. DÃ©pannage
-- VÃ©rifiez les logs dâ€™erreur si une notification nâ€™est pas reÃ§ue
+### 4. Dépannage
+- Vérifiez les logs d'erreur si une notification n'est pas reçue
 - Purgez le cache si besoin
 
 ---
 
-# Notification Testing Guide â€” Reactions Extension
+# Notification Testing Guide — Reactions Extension
 
-## ðŸ‡¬ðŸ‡§ Testing notifications
+## 🇬🇧 Testing notifications
 
 ### 1. Bell notifications (instant)
-- Add a reaction to another userâ€™s post
+- Add a reaction to another user's post
 - Check that the post author receives a bell notification
 - Check that self-reaction does not trigger a notification
 

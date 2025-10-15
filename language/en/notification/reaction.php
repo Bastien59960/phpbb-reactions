@@ -5,7 +5,7 @@
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions/blob/main/language/en/notification/reaction.php
  *
- * RÃ´le :
+ * Rôle :
  * This file defines the English language strings for the notifications of the
  * Reactions extension. It is used to display messages in the notification
  * bell and in the user preferences (UCP).

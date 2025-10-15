@@ -1,6 +1,6 @@
 <?php
 /**
- * File: language/en/ucp_reactions.php â€” bastien59960/reactions
+ * File: language/en/ucp_reactions.php — bastien59960/reactions
  * @author  Bastien (bastien59960)
  * @github  https://github.com/bastien59960/reactions
  *

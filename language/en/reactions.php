@@ -5,7 +5,7 @@
  * Extension: bastien59960/reactions
  * ============================================================================
  *
- * ðŸ“˜ Description:
+ * 📘 Description:
  * This file centralizes all English language strings for the notifications
  * of the Reactions extension.
  *

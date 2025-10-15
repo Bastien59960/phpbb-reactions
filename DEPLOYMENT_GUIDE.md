@@ -1,17 +1,17 @@
-# Guide de dÃ©ploiement - Correction des traductions ACP
+# Guide de déploiement - Correction des traductions ACP
 
-## ProblÃ¨me identifiÃ©
-Le fichier `language/fr/acp/common.php` manque sur le serveur, ce qui cause l'affichage des clÃ©s de traduction au lieu des textes franÃ§ais dans l'ACP.
+## Problème identifié
+Le fichier `language/fr/acp/common.php` manque sur le serveur, ce qui cause l'affichage des clés de traduction au lieu des textes français dans l'ACP.
 
 ## Solutions
 
-### Option 1 : DÃ©ploiement via Git (RecommandÃ©)
+### Option 1 : Déploiement via Git (Recommandé)
 
 #### Sur votre machine locale :
 ```bash
 # 1. Commiter les modifications
 git add language/fr/acp/common.php
-git commit -m "Fix: Ajouter le fichier de traduction ACP franÃ§ais manquant"
+git commit -m "Fix: Ajouter le fichier de traduction ACP français manquant"
 
 # 2. Pousser vers GitHub
 git push origin main
@@ -19,10 +19,10 @@ git push origin main
 
 #### Sur le serveur :
 ```bash
-# 1. Aller dans le rÃ©pertoire de l'extension
+# 1. Aller dans le répertoire de l'extension
 cd /home/bastien/www/forum/ext/bastien59960/reactions
 
-# 2. RÃ©cupÃ©rer les modifications
+# 2. Récupérer les modifications
 git pull origin main
 
 # 3. Purger le cache
@@ -36,15 +36,15 @@ php test_language.php
 
 ### Option 2 : Correction directe sur le serveur
 
-#### TÃ©lÃ©charger et exÃ©cuter le script de correction :
+#### Télécharger et exécuter le script de correction :
 ```bash
-# 1. Aller dans le rÃ©pertoire de l'extension
+# 1. Aller dans le répertoire de l'extension
 cd /home/bastien/www/forum/ext/bastien59960/reactions
 
-# 2. CrÃ©er le rÃ©pertoire
+# 2. Créer le répertoire
 mkdir -p language/fr/acp
 
-# 3. CrÃ©er le fichier de traduction
+# 3. Créer le fichier de traduction
 cat > language/fr/acp/common.php << 'EOF'
 <?php
 /**
@@ -68,26 +68,26 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
     // Titre principal ACP
-    'ACP_REACTIONS_TITLE'                   => 'RÃ©glages des rÃ©actions',
+    'ACP_REACTIONS_TITLE'                   => 'Réglages des réactions',
 
-    // Page de paramÃ¨tres ACP
-    'ACP_REACTIONS_SETTINGS'                => 'Configuration des rÃ©actions',
-    'ACP_REACTIONS_SETTINGS_EXPLAIN'        => 'Ici, vous pouvez gÃ©rer les paramÃ¨tres pour l\'extension de rÃ©actions aux messages.',
+    // Page de paramètres ACP
+    'ACP_REACTIONS_SETTINGS'                => 'Configuration des réactions',
+    'ACP_REACTIONS_SETTINGS_EXPLAIN'        => 'Ici, vous pouvez gérer les paramètres pour l\'extension de réactions aux messages.',
 
     // Champs de configuration
-    'REACTIONS_SPAM_TIME'                   => 'FenÃªtre anti-spam des notifications',
-    'REACTIONS_SPAM_TIME_EXPLAIN'           => 'Le temps en minutes Ã  attendre avant d\'envoyer une notification groupÃ©e Ã  l\'auteur du message. Mettre Ã  0 pour dÃ©sactiver les notifications.',
-    'REACTIONS_MAX_PER_POST'                => 'Nombre maximal de types de rÃ©action par message',
-    'REACTIONS_MAX_PER_POST_EXPLAIN'        => 'Le nombre maximal de types de rÃ©action uniques qu\'un seul message peut recevoir.',
-    'REACTIONS_MAX_PER_USER'                => 'Nombre maximal de rÃ©actions par utilisateur par message',
-    'REACTIONS_MAX_PER_USER_EXPLAIN'        => 'Le nombre maximal de rÃ©actions qu\'un seul utilisateur peut ajouter Ã  un seul message.',
+    'REACTIONS_SPAM_TIME'                   => 'Fenêtre anti-spam des notifications',
+    'REACTIONS_SPAM_TIME_EXPLAIN'           => 'Le temps en minutes à attendre avant d\'envoyer une notification groupée à l\'auteur du message. Mettre à 0 pour désactiver les notifications.',
+    'REACTIONS_MAX_PER_POST'                => 'Nombre maximal de types de réaction par message',
+    'REACTIONS_MAX_PER_POST_EXPLAIN'        => 'Le nombre maximal de types de réaction uniques qu\'un seul message peut recevoir.',
+    'REACTIONS_MAX_PER_USER'                => 'Nombre maximal de réactions par utilisateur par message',
+    'REACTIONS_MAX_PER_USER_EXPLAIN'        => 'Le nombre maximal de réactions qu\'un seul utilisateur peut ajouter à un seul message.',
 
-    // Termes gÃ©nÃ©raux
+    // Termes généraux
     'MINUTES'                               => 'Minutes',
 ));
 EOF
 
-# 4. DÃ©finir les permissions
+# 4. Définir les permissions
 chmod 644 language/fr/acp/common.php
 
 # 5. Tester
@@ -98,7 +98,7 @@ cd /home/bastien/www/forum
 rm -rf cache/*
 ```
 
-## VÃ©rification
+## Vérification
 
 ### 1. Test des traductions
 ```bash
@@ -106,57 +106,57 @@ cd /home/bastien/www/forum/ext/bastien59960/reactions
 php test_language.php
 ```
 
-**RÃ©sultat attendu :**
+**Résultat attendu :**
 ```
 === Test des traductions ACP ===
 
---- Test franÃ§ais ---
-âœ“ ACP_REACTIONS_TITLE: RÃ©glages des rÃ©actions
-âœ“ ACP_REACTIONS_SETTINGS: Configuration des rÃ©actions
+--- Test français ---
+✓ ACP_REACTIONS_TITLE: Réglages des réactions
+✓ ACP_REACTIONS_SETTINGS: Configuration des réactions
 
 --- Test anglais ---
-âœ“ ACP_REACTIONS_TITLE: Post Reactions
-âœ“ ACP_REACTIONS_SETTINGS: Reactions Settings
+✓ ACP_REACTIONS_TITLE: Post Reactions
+✓ ACP_REACTIONS_SETTINGS: Reactions Settings
 
-=== Test terminÃ© ===
+=== Test terminé ===
 ```
 
 ### 2. Test dans l'ACP
 1. Aller dans **Administration > Extensions**
-2. Chercher **"Post Reactions"** (devrait Ãªtre en franÃ§ais)
+2. Chercher **"Post Reactions"** (devrait être en français)
 3. Cliquer dessus pour voir la page de configuration
-4. VÃ©rifier que tous les labels sont en franÃ§ais
+4. Vérifier que tous les labels sont en français
 
 ## Structure des fichiers de langue
 
 ```
 language/
-â”œâ”€â”€ fr/
-â”‚   â”œâ”€â”€ acp/
-â”‚   â”‚   â””â”€â”€ common.php    # âœ… CrÃ©Ã© - Traductions ACP franÃ§aises
-â”‚   â””â”€â”€ common.php        # âœ… Existe - Traductions gÃ©nÃ©rales franÃ§aises
-â””â”€â”€ en/
-    â”œâ”€â”€ acp/
-    â”‚   â””â”€â”€ common.php    # âœ… Existe - Traductions ACP anglaises
-    â””â”€â”€ common.php        # âœ… Existe - Traductions gÃ©nÃ©rales anglaises
+├── fr/
+│   ├── acp/
+│   │   └── common.php    # ✅ Créé - Traductions ACP françaises
+│   └── common.php        # ✅ Existe - Traductions générales françaises
+└── en/
+    ├── acp/
+    │   └── common.php    # ✅ Existe - Traductions ACP anglaises
+    └── common.php        # ✅ Existe - Traductions générales anglaises
 ```
 
-## DÃ©pannage
+## Dépannage
 
 ### Si les traductions ne s'affichent toujours pas :
 
-1. **VÃ©rifier les permissions :**
+1. **Vérifier les permissions :**
    ```bash
    chmod 644 language/fr/acp/common.php
    ```
 
-2. **VÃ©rifier l'encodage :**
+2. **Vérifier l'encodage :**
    ```bash
    file language/fr/acp/common.php
    # Doit afficher : UTF-8 Unicode text
    ```
 
-3. **VÃ©rifier la syntaxe PHP :**
+3. **Vérifier la syntaxe PHP :**
    ```bash
    php -l language/fr/acp/common.php
    # Doit afficher : No syntax errors detected
@@ -168,7 +168,7 @@ language/
    rm -rf cache/*
    ```
 
-5. **RedÃ©marrer le serveur web :**
+5. **Redémarrer le serveur web :**
    ```bash
    sudo systemctl restart apache2
    # ou
@@ -178,10 +178,10 @@ language/
 ## Commandes utiles
 
 ```bash
-# VÃ©rifier la structure des fichiers
+# Vérifier la structure des fichiers
 find language/ -name "*.php" -type f
 
-# VÃ©rifier les permissions
+# Vérifier les permissions
 find language/ -name "*.php" -exec ls -la {} \;
 
 # Tester tous les fichiers PHP

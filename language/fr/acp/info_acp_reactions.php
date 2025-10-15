@@ -1,7 +1,7 @@
 <?php
 /**
  * Fichier : language/fr/acp/info_acp_reactions.php
- * SynchronisÃ© avec language/en/acp/info_acp_reactions.php
+ * Synchronisé avec language/en/acp/info_acp_reactions.php
  */
 
 if (!defined('IN_PHPBB')) {
@@ -9,7 +9,7 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
-    'ACP_REACTIONS_TITLE'    => 'RÃ©actions aux messages',
-    'ACP_REACTIONS_SETTINGS' => 'ParamÃ¨tres',
-    'ACP_REACTIONS_IMPORT'   => 'Importer les rÃ©actions',
+    'ACP_REACTIONS_TITLE'    => 'Réactions aux messages',
+    'ACP_REACTIONS_SETTINGS' => 'Paramètres',
+    'ACP_REACTIONS_IMPORT'   => 'Importer les réactions',
 ]);

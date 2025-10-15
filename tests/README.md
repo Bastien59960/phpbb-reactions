@@ -1,50 +1,50 @@
 # Tests de l'extension Reactions
 
-Ce rÃ©pertoire contient tous les tests pour l'extension Reactions, incluant les tests unitaires, d'intÃ©gration et de fonctionnalitÃ©.
+Ce répertoire contient tous les tests pour l'extension Reactions, incluant les tests unitaires, d'intégration et de fonctionnalité.
 
 ## Structure des tests
 
 ```
 tests/
-â”œâ”€â”€ bootstrap.php                    # Bootstrap pour les tests
-â”œâ”€â”€ phpunit.xml                     # Configuration PHPUnit
-â”œâ”€â”€ README.md                       # Ce fichier
-â”œâ”€â”€ unit/                           # Tests unitaires
-â”‚   â””â”€â”€ controller/
-â”‚       â””â”€â”€ AjaxTest.php           # Tests du contrÃ´leur AJAX
-â”œâ”€â”€ integration/                    # Tests d'intÃ©gration
-â”‚   â””â”€â”€ ReactionsIntegrationTest.php # Tests d'intÃ©gration complets
-â”œâ”€â”€ functional/                     # Tests de fonctionnalitÃ©
-â”œâ”€â”€ logs/                          # Logs des tests
-â”œâ”€â”€ cache/                         # Cache des tests
-â””â”€â”€ temp/                          # Fichiers temporaires
+├── bootstrap.php                    # Bootstrap pour les tests
+├── phpunit.xml                     # Configuration PHPUnit
+├── README.md                       # Ce fichier
+├── unit/                           # Tests unitaires
+│   └── controller/
+│       └── AjaxTest.php           # Tests du contrôleur AJAX
+├── integration/                    # Tests d'intégration
+│   └── ReactionsIntegrationTest.php # Tests d'intégration complets
+├── functional/                     # Tests de fonctionnalité
+├── logs/                          # Logs des tests
+├── cache/                         # Cache des tests
+└── temp/                          # Fichiers temporaires
 ```
 
 ## Types de tests
 
 ### Tests unitaires
 - **Objectif** : Tester les composants individuels de l'extension
-- **Couverture** : Classes, mÃ©thodes, fonctions
-- **Isolation** : Chaque test est indÃ©pendant
-- **Mocks** : Utilisation de mocks pour les dÃ©pendances
+- **Couverture** : Classes, méthodes, fonctions
+- **Isolation** : Chaque test est indépendant
+- **Mocks** : Utilisation de mocks pour les dépendances
 
-### Tests d'intÃ©gration
+### Tests d'intégration
 - **Objectif** : Tester l'interaction entre les composants
-- **Couverture** : Flux de donnÃ©es, intÃ©gration base de donnÃ©es
-- **Environnement** : Base de donnÃ©es de test, services rÃ©els
-- **DonnÃ©es** : DonnÃ©es de test rÃ©alistes
+- **Couverture** : Flux de données, intégration base de données
+- **Environnement** : Base de données de test, services réels
+- **Données** : Données de test réalistes
 
-### Tests de fonctionnalitÃ©
-- **Objectif** : Tester les fonctionnalitÃ©s complÃ¨tes
-- **Couverture** : Cas d'usage utilisateur, scÃ©narios complets
+### Tests de fonctionnalité
+- **Objectif** : Tester les fonctionnalités complètes
+- **Couverture** : Cas d'usage utilisateur, scénarios complets
 - **Environnement** : Environnement proche de la production
 - **Interface** : Tests d'interface utilisateur
 
-## ExÃ©cution des tests
+## Exécution des tests
 
-### PrÃ©requis
+### Prérequis
 ```bash
-# Installer les dÃ©pendances de test
+# Installer les dépendances de test
 composer install --dev
 
 # Installer PHPUnit
@@ -59,16 +59,16 @@ phpunit
 # Tests unitaires uniquement
 phpunit tests/unit/
 
-# Tests d'intÃ©gration uniquement
+# Tests d'intégration uniquement
 phpunit tests/integration/
 
-# Tests de fonctionnalitÃ© uniquement
+# Tests de fonctionnalité uniquement
 phpunit tests/functional/
 
 # Avec couverture de code
 phpunit --coverage-html coverage/
 
-# Tests spÃ©cifiques
+# Tests spécifiques
 phpunit tests/unit/controller/AjaxTest.php
 ```
 
@@ -83,7 +83,7 @@ export DB_DATABASE=:memory:
 php -d memory_limit=512M -d max_execution_time=300
 ```
 
-## Ã‰criture de tests
+## Écriture de tests
 
 ### Structure d'un test unitaire
 ```php
@@ -116,12 +116,12 @@ class MaClasseTest extends TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        // Nettoyage aprÃ¨s chaque test
+        // Nettoyage après chaque test
     }
 }
 ```
 
-### Structure d'un test d'intÃ©gration
+### Structure d'un test d'intégration
 ```php
 <?php
 namespace bastien59960\reactions\tests\integration;
@@ -133,7 +133,7 @@ class MonTestIntegration extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Initialisation de la base de donnÃ©es de test
+        // Initialisation de la base de données de test
         $this->initializeTestDatabase();
     }
     
@@ -153,7 +153,7 @@ class MonTestIntegration extends TestCase
 - **Fonctions** : > 90%
 - **Classes** : > 85%
 
-### GÃ©nÃ©ration du rapport
+### Génération du rapport
 ```bash
 # Rapport HTML
 phpunit --coverage-html coverage/
@@ -167,22 +167,22 @@ phpunit --coverage-clover coverage/clover.xml
 
 ### Exclusions
 Les fichiers suivants sont exclus de la couverture :
-- `vendor/` - DÃ©pendances externes
+- `vendor/` - Dépendances externes
 - `tests/` - Code de test
 - `composer.json` - Configuration
 - `README.md` - Documentation
 - `CHANGELOG.md` - Historique
 - `DOCUMENTATION.md` - Documentation
-- `GUIDE_DEVELOPPEMENT.md` - Guide de dÃ©veloppement
+- `GUIDE_DEVELOPPEMENT.md` - Guide de développement
 - `GUIDE_INSTALLATION.md` - Guide d'installation
 
-## DonnÃ©es de test
+## Données de test
 
-### Base de donnÃ©es de test
-- **Type** : SQLite en mÃ©moire
-- **Tables** : Structure complÃ¨te de l'extension
-- **DonnÃ©es** : DonnÃ©es de test rÃ©alistes
-- **Isolation** : Base de donnÃ©es fraÃ®che pour chaque test
+### Base de données de test
+- **Type** : SQLite en mémoire
+- **Tables** : Structure complète de l'extension
+- **Données** : Données de test réalistes
+- **Isolation** : Base de données fraîche pour chaque test
 
 ### Fichiers de test
 - **Emojis** : Fichiers JSON de test
@@ -210,58 +210,58 @@ tail -f tests/logs/coverage.log
 define('PHPBB_TESTING', true);
 define('PHPBB_DEBUG', true);
 
-// Logs dÃ©taillÃ©s
+// Logs détaillés
 error_log('[Test] Message de debug');
 ```
 
 ### Outils de debug
-- **Xdebug** : DÃ©bogueur PHP
-- **PHPUnit** : Outils de test intÃ©grÃ©s
+- **Xdebug** : Débogueur PHP
+- **PHPUnit** : Outils de test intégrés
 - **Coverage** : Analyse de couverture
 - **Profiler** : Analyse de performance
 
 ## Bonnes pratiques
 
-### Ã‰criture de tests
+### Écriture de tests
 - **Nommage** : Noms descriptifs et clairs
 - **Structure** : Arrange-Act-Assert
-- **Isolation** : Tests indÃ©pendants
-- **DonnÃ©es** : DonnÃ©es de test minimales
-- **Assertions** : Assertions spÃ©cifiques
+- **Isolation** : Tests indépendants
+- **Données** : Données de test minimales
+- **Assertions** : Assertions spécifiques
 
 ### Maintenance
-- **Mise Ã  jour** : Tests Ã  jour avec le code
+- **Mise à jour** : Tests à jour avec le code
 - **Refactoring** : Refactoring des tests
 - **Documentation** : Documentation des tests
 - **Performance** : Optimisation des tests
 
-### IntÃ©gration continue
+### Intégration continue
 - **Automatisation** : Tests automatiques
 - **Rapports** : Rapports de test
-- **Notifications** : Notifications d'Ã©chec
-- **DÃ©ploiement** : Tests avant dÃ©ploiement
+- **Notifications** : Notifications d'échec
+- **Déploiement** : Tests avant déploiement
 
-## DÃ©pannage
+## Dépannage
 
-### ProblÃ¨mes courants
-- **MÃ©moire** : Augmenter la limite de mÃ©moire
-- **Temps** : Augmenter le temps d'exÃ©cution
-- **Base de donnÃ©es** : VÃ©rifier la configuration
-- **Permissions** : VÃ©rifier les permissions de fichiers
+### Problèmes courants
+- **Mémoire** : Augmenter la limite de mémoire
+- **Temps** : Augmenter le temps d'exécution
+- **Base de données** : Vérifier la configuration
+- **Permissions** : Vérifier les permissions de fichiers
 
 ### Solutions
 ```bash
-# ProblÃ¨me de mÃ©moire
+# Problème de mémoire
 php -d memory_limit=1G phpunit
 
-# ProblÃ¨me de temps
+# Problème de temps
 php -d max_execution_time=600 phpunit
 
-# ProblÃ¨me de base de donnÃ©es
+# Problème de base de données
 export DB_CONNECTION=sqlite
 export DB_DATABASE=:memory:
 
-# ProblÃ¨me de permissions
+# Problème de permissions
 chmod -R 755 tests/
 ```
 
@@ -278,11 +278,11 @@ chmod -R 755 tests/
 - [PHP_CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 - [PHPStan](https://phpstan.org/)
 
-### CommunautÃ©
+### Communauté
 - [PHPUnit GitHub](https://github.com/sebastianbergmann/phpunit)
 - [PHP Testing Community](https://www.php.net/manual/en/intro.pdo.php)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/phpunit)
 
 ---
 
-*Cette documentation est maintenue Ã  jour avec chaque version de l'extension.*
+*Cette documentation est maintenue à jour avec chaque version de l'extension.*

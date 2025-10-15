@@ -14,7 +14,7 @@ reaction_type_id 	reaction_type_order_id 	reaction_file_name 	reaction_type_titl
 10 			11 			1f621.png 		Mad 			1
 11 			4 			OMG.png 		OMG 			1
 
-Et la table phpbb3_reactions elle ressemble Ã  Ã§a :
+Et la table phpbb3_reactions elle ressemble à ça :
 
 Textes complets
 reaction_id 	reaction_user_id 	poster_id 	post_id 	topic_id 	reaction_type_id  reaction_file_name reaction_type_title reaction_time 	
@@ -47,98 +47,98 @@ reaction_id 	reaction_user_id 	poster_id 	post_id 	topic_id 	reaction_type_id  r
 
 root@Serveur-Forum:/home/bastien/www/forum/ext/bastien59960/reactions# tree -a
 .
-â”œâ”€â”€ acp
-â”‚Â Â  â”œâ”€â”€ main_info.php
-â”‚Â Â  â””â”€â”€ main_module.php
-â”œâ”€â”€ adm
-â”‚Â Â  â””â”€â”€ style
-â”‚Â Â      â””â”€â”€ acp_reactions_settings.html
-â”œâ”€â”€ bastien59960
-â”‚Â Â  â””â”€â”€ reactions
-â”‚Â Â      â””â”€â”€ language
-â”‚Â Â          â””â”€â”€ fr
-â”‚Â Â              â””â”€â”€ acp
-â”‚Â Â                  â””â”€â”€ common.php
-â”œâ”€â”€ composer.json
-â”œâ”€â”€ config
-â”‚Â Â  â”œâ”€â”€ parameters.yml
-â”‚Â Â  â”œâ”€â”€ routing.yml
-â”‚Â Â  â”œâ”€â”€ services.yml
-â”‚Â Â  â””â”€â”€ services.yml.backup
-â”œâ”€â”€ controller
-â”‚Â Â  â”œâ”€â”€ ajax.php
-â”‚Â Â  â”œâ”€â”€ main.php
-â”‚Â Â  â””â”€â”€ test.php
-â”œâ”€â”€ cron
-â”‚Â Â  â””â”€â”€ notification_task.php
-â”œâ”€â”€ event
-â”‚Â Â  â””â”€â”€ listener.php
-â”œâ”€â”€ ext.php
-â”œâ”€â”€ .git
-â”‚Â Â  â”œâ”€â”€ branches
-â”‚Â Â  â”œâ”€â”€ COMMIT_EDITMSG
-â”‚Â Â  â”œâ”€â”€ config
-â”‚Â Â  â”œâ”€â”€ description
-â”‚Â Â  â”œâ”€â”€ FETCH_HEAD
-â”‚Â Â  â”œâ”€â”€ HEAD
-â”‚Â Â  â”œâ”€â”€ hooks
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ applypatch-msg.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ commit-msg.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ fsmonitor-watchman.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ post-update.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ pre-applypatch.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ pre-commit.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ pre-merge-commit.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ prepare-commit-msg.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ pre-push.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ pre-rebase.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ pre-receive.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ push-to-checkout.sample
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ sendemail-validate.sample
-â”‚Â Â  â”‚Â Â  â””â”€â”€ update.sample
-â”‚Â Â  â”œâ”€â”€ index
-â”‚Â Â  â”œâ”€â”€ info
-â”‚Â Â  â”‚Â Â  â””â”€â”€ exclude
-â”‚Â Â  â”œâ”€â”€ logs
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ HEAD
-â”‚Â Â  â”‚Â Â  â””â”€â”€ refs
-â”‚Â Â  â”‚Â Â      â”œâ”€â”€ heads
-â”‚Â Â  â”‚Â Â      â”‚Â Â  â””â”€â”€ main
-â”‚Â Â  â”‚Â Â      â””â”€â”€ remotes
-â”‚Â Â  â”‚Â Â          â””â”€â”€ origin
-â”‚Â Â  â”‚Â Â              â”œâ”€â”€ HEAD
-â”‚Â Â  â”‚Â Â              â”œâ”€â”€ main
-â”‚Â Â  â”‚Â Â              â””â”€â”€ Pre-version
-â”œâ”€â”€ language
-â”‚Â Â  â”œâ”€â”€ en
-â”‚Â Â  â”‚Â Â  â”œâ”€â”€ acp
-â”‚Â Â  â”‚Â Â  â”‚Â Â  â””â”€â”€ common.php
-â”‚Â Â  â”‚Â Â  â””â”€â”€ common.php
-â”‚Â Â  â””â”€â”€ fr
-â”‚Â Â      â””â”€â”€ common.php
-â”œâ”€â”€ LICENSE
-â”œâ”€â”€ migrations
-â”‚Â Â  â”œâ”€â”€ release_1_0_0.php
-â”‚Â Â  â””â”€â”€ release_1_0_1.php
-â”œâ”€â”€ notification
-â”‚Â Â  â””â”€â”€ type
-â”‚Â Â      â””â”€â”€ reaction.php
-â”œâ”€â”€ README.md
-â””â”€â”€ styles
-    â””â”€â”€ prosilver
-        â”œâ”€â”€ template
-        â”‚Â Â  â”œâ”€â”€ event
-        â”‚Â Â  â”‚Â Â  â”œâ”€â”€ overall_header_head_append.html
-        â”‚Â Â  â”‚Â Â  â”œâ”€â”€ reactions.html.old
-        â”‚Â Â  â”‚Â Â  â””â”€â”€ viewtopic_body_postrow_content_after.html
-        â”‚Â Â  â””â”€â”€ js
-        â”‚Â Â      â””â”€â”€ reactions.js
-        â””â”€â”€ theme
-            â”œâ”€â”€ categories.json
-            â””â”€â”€ reactions.css
+├── acp
+│   ├── main_info.php
+│   └── main_module.php
+├── adm
+│   └── style
+│       └── acp_reactions_settings.html
+├── bastien59960
+│   └── reactions
+│       └── language
+│           └── fr
+│               └── acp
+│                   └── common.php
+├── composer.json
+├── config
+│   ├── parameters.yml
+│   ├── routing.yml
+│   ├── services.yml
+│   └── services.yml.backup
+├── controller
+│   ├── ajax.php
+│   ├── main.php
+│   └── test.php
+├── cron
+│   └── notification_task.php
+├── event
+│   └── listener.php
+├── ext.php
+├── .git
+│   ├── branches
+│   ├── COMMIT_EDITMSG
+│   ├── config
+│   ├── description
+│   ├── FETCH_HEAD
+│   ├── HEAD
+│   ├── hooks
+│   │   ├── applypatch-msg.sample
+│   │   ├── commit-msg.sample
+│   │   ├── fsmonitor-watchman.sample
+│   │   ├── post-update.sample
+│   │   ├── pre-applypatch.sample
+│   │   ├── pre-commit.sample
+│   │   ├── pre-merge-commit.sample
+│   │   ├── prepare-commit-msg.sample
+│   │   ├── pre-push.sample
+│   │   ├── pre-rebase.sample
+│   │   ├── pre-receive.sample
+│   │   ├── push-to-checkout.sample
+│   │   ├── sendemail-validate.sample
+│   │   └── update.sample
+│   ├── index
+│   ├── info
+│   │   └── exclude
+│   ├── logs
+│   │   ├── HEAD
+│   │   └── refs
+│   │       ├── heads
+│   │       │   └── main
+│   │       └── remotes
+│   │           └── origin
+│   │               ├── HEAD
+│   │               ├── main
+│   │               └── Pre-version
+├── language
+│   ├── en
+│   │   ├── acp
+│   │   │   └── common.php
+│   │   └── common.php
+│   └── fr
+│       └── common.php
+├── LICENSE
+├── migrations
+│   ├── release_1_0_0.php
+│   └── release_1_0_1.php
+├── notification
+│   └── type
+│       └── reaction.php
+├── README.md
+└── styles
+    └── prosilver
+        ├── template
+        │   ├── event
+        │   │   ├── overall_header_head_append.html
+        │   │   ├── reactions.html.old
+        │   │   └── viewtopic_body_postrow_content_after.html
+        │   └── js
+        │       └── reactions.js
+        └── theme
+            ├── categories.json
+            └── reactions.css
 
 5. Logs de debug
 
-Les logs sont parfaits pour le dÃ©veloppement, mais pense Ã  :
+Les logs sont parfaits pour le développement, mais pense à :
 
 

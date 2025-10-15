@@ -1,36 +1,36 @@
 <?php
 /**
- * Fichier : ext.php â€” bastien59960/reactions/ext.php
+ * Fichier : ext.php — bastien59960/reactions/ext.php
  *
  * Classe principale de l'extension Reactions pour phpBB.
  *
- * Ce fichier gÃ¨re l'activation, la dÃ©sactivation et la purge de l'extension, 
- * ainsi que l'enregistrement des types de notifications personnalisÃ©s auprÃ¨s du systÃ¨me phpBB.
+ * Ce fichier gère l'activation, la désactivation et la purge de l'extension, 
+ * ainsi que l'enregistrement des types de notifications personnalisés auprès du système phpBB.
  *
- * Points clÃ©s de la logique mÃ©tier :
- *   - VÃ©rification de la compatibilitÃ© phpBB
- *   - Enregistrement/dÃ©sactivation/purge des types de notifications lors des changements d'Ã©tat de l'extension
+ * Points clés de la logique métier :
+ *   - Vérification de la compatibilité phpBB
+ *   - Enregistrement/désactivation/purge des types de notifications lors des changements d'état de l'extension
  *   - Gestion de la version de l'extension (pour les migrations)
  *
  * IMPORTANT - Distinction entre NOM DE SERVICE et NOM DE TYPE :
  * 
- *   ðŸ“¦ NOM DE SERVICE (dans services.yml) : 
+ *   📦 NOM DE SERVICE (dans services.yml) : 
  *      'bastien59960.reactions.notification'
- *      â†’ UtilisÃ© par Symfony pour l'injection de dÃ©pendances
- *      â†’ C'est juste un identifiant interne pour charger la classe
+ *      → Utilisé par Symfony pour l'injection de dépendances
+ *      → C'est juste un identifiant interne pour charger la classe
  * 
- *   ðŸ”” NOM DE TYPE (dans la mÃ©thode get_type() de la classe) :
+ *   🔔 NOM DE TYPE (dans la méthode get_type() de la classe) :
  *      'notification.type.reaction'
- *      â†’ UtilisÃ© par phpBB pour identifier le type de notification en base de donnÃ©es
- *      â†’ C'est ce qui est stockÃ© dans phpbb_notification_types
- *      â†’ C'est ce qu'il faut utiliser avec enable_notifications()
+ *      → Utilisé par phpBB pour identifier le type de notification en base de données
+ *      → C'est ce qui est stocké dans phpbb_notification_types
+ *      → C'est ce qu'il faut utiliser avec enable_notifications()
  * 
- * âš ï¸  ERREUR COMMUNE : Utiliser le nom du service au lieu du nom du type
- *     âŒ $notification_manager->enable_notifications('bastien59960.reactions.notification');
- *     âœ… $notification_manager->enable_notifications('notification.type.reaction');
+ * ⚠️  ERREUR COMMUNE : Utiliser le nom du service au lieu du nom du type
+ *     ❌ $notification_manager->enable_notifications('bastien59960.reactions.notification');
+ *     ✅ $notification_manager->enable_notifications('notification.type.reaction');
  *
- * Ce fichier est le point d'entrÃ©e de l'extension pour phpBB et doit Ãªtre prÃ©sent 
- * pour que l'extension soit reconnue et gÃ©rÃ©e correctement.
+ * Ce fichier est le point d'entrée de l'extension pour phpBB et doit être présent 
+ * pour que l'extension soit reconnue et gérée correctement.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -41,16 +41,16 @@ namespace bastien59960\reactions;
 /**
  * Classe principale de l'extension
  * 
- * GÃ¨re l'activation, dÃ©sactivation et la configuration des notifications
+ * Gère l'activation, désactivation et la configuration des notifications
  * de l'extension Reactions.
  */
 class ext extends \phpbb\extension\base
 {
 	/**
-	 * VÃ©rifie si l'extension peut Ãªtre activÃ©e
+	 * Vérifie si l'extension peut être activée
 	 * 
-	 * Cette mÃ©thode est appelÃ©e par phpBB AVANT d'activer l'extension.
-	 * Elle permet de vÃ©rifier que l'environnement est compatible.
+	 * Cette méthode est appelée par phpBB AVANT d'activer l'extension.
+	 * Elle permet de vérifier que l'environnement est compatible.
 	 * 
 	 * @return bool True si phpBB >= 3.3.0, False sinon
 	 */
@@ -63,8 +63,8 @@ class ext extends \phpbb\extension\base
 	/**
 	 * Retourne la version actuelle de l'extension
 	 * 
-	 * Cette version DOIT correspondre aux migrations prÃ©sentes dans le dossier migrations/
-	 * Si la version change, phpBB exÃ©cutera les nouvelles migrations automatiquement.
+	 * Cette version DOIT correspondre aux migrations présentes dans le dossier migrations/
+	 * Si la version change, phpBB exécutera les nouvelles migrations automatiquement.
 	 * 
 	 * @return string Version de l'extension (doit correspondre aux migrations)
 	 */
@@ -74,43 +74,43 @@ class ext extends \phpbb\extension\base
 	}
 
 	/**
-	 * Ã‰tape d'activation de l'extension
+	 * Étape d'activation de l'extension
 	 * 
-	 * Cette mÃ©thode est appelÃ©e par phpBB lors de l'activation de l'extension.
-	 * Elle enregistre les types de notifications auprÃ¨s du systÃ¨me de notifications phpBB.
+	 * Cette méthode est appelée par phpBB lors de l'activation de l'extension.
+	 * Elle enregistre les types de notifications auprès du système de notifications phpBB.
 	 * 
 	 * CORRECTION CRITIQUE :
 	 * On doit utiliser les NOMS DE TYPES (get_type()) et NON les noms de services.
 	 * 
-	 * L'extension Reactions possÃ¨de DEUX types de notifications :
+	 * L'extension Reactions possède DEUX types de notifications :
 	 * 
-	 * 1ï¸âƒ£ notification.type.reaction (notification cloche instantanÃ©e)
-	 *    - DÃ©fini dans : notification/type/reaction.php
-	 *    - MÃ©thode get_type() retourne : 'notification.type.reaction'
-	 *    - UtilisÃ© pour : Notifier immÃ©diatement l'auteur d'un post qu'on a rÃ©agi
+	 * 1️⃣ notification.type.reaction (notification cloche instantanée)
+	 *    - Défini dans : notification/type/reaction.php
+	 *    - Méthode get_type() retourne : 'notification.type.reaction'
+	 *    - Utilisé pour : Notifier immédiatement l'auteur d'un post qu'on a réagi
 	 * 
-	 * 2ï¸âƒ£ notification.type.reaction_email_digest (notification email groupÃ©e)
-	 *    - DÃ©fini dans : notification/type/reaction_email_digest.php
-	 *    - MÃ©thode get_type() retourne : 'notification.type.reaction_email_digest'
-	 *    - UtilisÃ© pour : Envoyer un rÃ©sumÃ© pÃ©riodique par email (cron)
+	 * 2️⃣ notification.type.reaction_email_digest (notification email groupée)
+	 *    - Défini dans : notification/type/reaction_email_digest.php
+	 *    - Méthode get_type() retourne : 'notification.type.reaction_email_digest'
+	 *    - Utilisé pour : Envoyer un résumé périodique par email (cron)
 	 * 
-	 * Ces noms DOIVENT correspondre EXACTEMENT Ã  ce qui est :
-	 * - RetournÃ© par la mÃ©thode get_type() de chaque classe
-	 * - StockÃ© dans phpbb_notification_types (colonne notification_type_name)
-	 * - CrÃ©Ã© par la migration (migrations/release_1_0_0.php)
+	 * Ces noms DOIVENT correspondre EXACTEMENT à ce qui est :
+	 * - Retourné par la méthode get_type() de chaque classe
+	 * - Stocké dans phpbb_notification_types (colonne notification_type_name)
+	 * - Créé par la migration (migrations/release_1_0_0.php)
 	 * 
-	 * @param mixed $old_state Ã‰tat prÃ©cÃ©dent de l'extension (false = premiÃ¨re activation)
-	 * @return string|mixed 'notification' si premiÃ¨re activation, sinon rÃ©sultat parent
+	 * @param mixed $old_state État précédent de l'extension (false = première activation)
+	 * @return string|mixed 'notification' si première activation, sinon résultat parent
 	 */
 public function enable_step($old_state)
 {
     if ($old_state === false)
     {
-        // RÃ©cupÃ©rer le gestionnaire de notifications phpBB
+        // Récupérer le gestionnaire de notifications phpBB
         $notification_manager = $this->container->get('notification_manager');
 
-        // âœ… Utiliser uniquement les NOMS DE TYPES (get_type())
-        // Activation du type "cloche" (instantanÃ©)
+        // ✅ Utiliser uniquement les NOMS DE TYPES (get_type())
+        // Activation du type "cloche" (instantané)
         try {
             $notification_manager->enable_notifications('notification.type.reaction');
         } catch (\phpbb\notification\exception $e) {
@@ -136,30 +136,30 @@ public function enable_step($old_state)
 
 
 	/**
-	 * Ã‰tape de dÃ©sactivation de l'extension
+	 * Étape de désactivation de l'extension
 	 * 
-	 * Cette mÃ©thode est appelÃ©e par phpBB lors de la dÃ©sactivation de l'extension.
-	 * Elle dÃ©sactive les types de notifications (mais ne les supprime PAS de la base).
+	 * Cette méthode est appelée par phpBB lors de la désactivation de l'extension.
+	 * Elle désactive les types de notifications (mais ne les supprime PAS de la base).
 	 * 
 	 * Les notifications existantes restent en base mais ne sont plus actives.
-	 * L'utilisateur peut rÃ©activer l'extension sans perdre les notifications passÃ©es.
+	 * L'utilisateur peut réactiver l'extension sans perdre les notifications passées.
 	 * 
-	 * @param mixed $old_state Ã‰tat prÃ©cÃ©dent de l'extension (false = premiÃ¨re dÃ©sactivation)
-	 * @return string|mixed 'notification' si premiÃ¨re dÃ©sactivation, sinon rÃ©sultat parent
+	 * @param mixed $old_state État précédent de l'extension (false = première désactivation)
+	 * @return string|mixed 'notification' si première désactivation, sinon résultat parent
 	 */
 	public function disable_step($old_state)
 	{
 		if ($old_state === false)
 		{
-			// RÃ©cupÃ©rer le gestionnaire de notifications phpBB
+			// Récupérer le gestionnaire de notifications phpBB
 			$notification_manager = $this->container->get('notification_manager');
 			
-			// âœ… CORRECTION : Utiliser les NOMS DE TYPES (get_type())
+			// ✅ CORRECTION : Utiliser les NOMS DE TYPES (get_type())
 			
-			// DÃ©sactiver la notification cloche
+			// Désactiver la notification cloche
 			$notification_manager->disable_notifications('notification.type.reaction');
 			
-			// DÃ©sactiver la notification email groupÃ©e
+			// Désactiver la notification email groupée
 			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
 			
 			return 'notification';
@@ -169,26 +169,26 @@ public function enable_step($old_state)
 	}
 
 	/**
-	 * Ã‰tape de purge de l'extension
+	 * Étape de purge de l'extension
 	 * 
-	 * Cette mÃ©thode est appelÃ©e par phpBB lors de la SUPPRESSION DÃ‰FINITIVE de l'extension.
-	 * Elle supprime TOUTES les notifications de l'extension de la base de donnÃ©es.
+	 * Cette méthode est appelée par phpBB lors de la SUPPRESSION DÉFINITIVE de l'extension.
+	 * Elle supprime TOUTES les notifications de l'extension de la base de données.
 	 * 
-	 * âš ï¸  ATTENTION : Cette action est IRRÃ‰VERSIBLE
-	 * Toutes les notifications existantes seront dÃ©finitivement supprimÃ©es.
+	 * ⚠️  ATTENTION : Cette action est IRRÉVERSIBLE
+	 * Toutes les notifications existantes seront définitivement supprimées.
 	 * 
-	 * La purge est diffÃ©rente de la dÃ©sactivation :
-	 * - DÃ©sactivation : Les donnÃ©es restent, mais l'extension est inactive
-	 * - Purge : Les donnÃ©es sont supprimÃ©es dÃ©finitivement
+	 * La purge est différente de la désactivation :
+	 * - Désactivation : Les données restent, mais l'extension est inactive
+	 * - Purge : Les données sont supprimées définitivement
 	 * 
-	 * Lors de la purge, phpBB va Ã©galement :
-	 * 1. ExÃ©cuter les mÃ©thodes revert_data() et revert_schema() des migrations
-	 * 2. Supprimer les tables crÃ©Ã©es par l'extension
-	 * 3. Supprimer les colonnes ajoutÃ©es par l'extension
+	 * Lors de la purge, phpBB va également :
+	 * 1. Exécuter les méthodes revert_data() et revert_schema() des migrations
+	 * 2. Supprimer les tables créées par l'extension
+	 * 3. Supprimer les colonnes ajoutées par l'extension
 	 * 4. Supprimer les configurations de l'extension
 	 * 
-	 * @param mixed $old_state Ã‰tat prÃ©cÃ©dent de l'extension (false = premiÃ¨re purge)
-	 * @return string|mixed 'notification' si premiÃ¨re purge, sinon rÃ©sultat parent
+	 * @param mixed $old_state État précédent de l'extension (false = première purge)
+	 * @return string|mixed 'notification' si première purge, sinon résultat parent
 	 */
 public function purge_step($old_state)
 {

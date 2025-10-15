@@ -1,13 +1,13 @@
 <?php
 /**
- * Fichier : language/en/common.php â€” bastien59960/reactions
+ * Fichier : language/en/common.php — bastien59960/reactions
  * @author  Bastien (bastien59960)
  * @github  https://github.com/bastien59960/reactions
  *
- * RÃ´le :
- * Ce fichier contient les chaÃ®nes de langue anglaises gÃ©nÃ©rales pour l'interface
+ * Rôle :
+ * Ce fichier contient les chaînes de langue anglaises générales pour l'interface
  * utilisateur (UI), les messages d'erreur, les tooltips, et les options de
- * l'extension. Il est chargÃ© sur la plupart des pages oÃ¹ l'extension est active.
+ * l'extension. Il est chargé sur la plupart des pages où l'extension est active.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

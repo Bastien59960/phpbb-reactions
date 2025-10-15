@@ -5,9 +5,9 @@
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions/blob/main/language/fr/ucp_reactions.php
  *
- * RÃ´le :
- * Ce fichier contient les chaÃ®nes de langue franÃ§aises pour la page de prÃ©fÃ©rences
- * des rÃ©actions dans le panneau de contrÃ´le de l'utilisateur (UCP).
+ * Rôle :
+ * Ce fichier contient les chaînes de langue françaises pour la page de préférences
+ * des réactions dans le panneau de contrôle de l'utilisateur (UCP).
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -24,11 +24,11 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-    'UCP_REACTIONS_TITLE'           => 'PrÃ©fÃ©rences des rÃ©actions',
-    'UCP_REACTIONS_EXPLAIN'         => 'Choisissez comment Ãªtre averti lorsque des membres rÃ©agissent Ã  vos messages.',
-    'UCP_REACTIONS_NOTIFY'          => 'M\'avertir des nouvelles rÃ©actions (notification)',
-    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification instantanÃ©e dans la cloche du forum.',
-    'UCP_REACTIONS_EMAIL'           => 'M\'avertir des nouvelles rÃ©actions (e-mail)',
-    'UCP_REACTIONS_EMAIL_EXPLAIN'   => 'Recevoir un rÃ©sumÃ© pÃ©riodique par e-mail des nouvelles rÃ©actions.',
-    'UCP_REACTIONS_SAVED'           => 'Vos prÃ©fÃ©rences de rÃ©actions ont Ã©tÃ© enregistrÃ©es.',
+    'UCP_REACTIONS_TITLE'           => 'Préférences des réactions',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choisissez comment être averti lorsque des membres réagissent à vos messages.',
+    'UCP_REACTIONS_NOTIFY'          => 'M\'avertir des nouvelles réactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification instantanée dans la cloche du forum.',
+    'UCP_REACTIONS_EMAIL'           => 'M\'avertir des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_EMAIL_EXPLAIN'   => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
+    'UCP_REACTIONS_SAVED'           => 'Vos préférences de réactions ont été enregistrées.',
 ));

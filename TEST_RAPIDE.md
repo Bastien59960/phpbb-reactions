@@ -1,112 +1,112 @@
-# Test Rapide - SystÃ¨me de Notifications
+# Test Rapide - Système de Notifications
 
 ## âš¡ Test en 5 Minutes
 
-### Ã‰tape 1 : RÃ©activer l'Extension (30 secondes)
+### Étape 1 : Réactiver l'Extension (30 secondes)
 ```
-1. ACP > Personnalisation > GÃ©rer les extensions
-2. Cliquer sur "DÃ©sactiver" pour l'extension "Post Reactions"
+1. ACP > Personnalisation > Gérer les extensions
+2. Cliquer sur "Désactiver" pour l'extension "Post Reactions"
 3. Cliquer sur "Activer" pour l'extension "Post Reactions"
-4. VÃ©rifier qu'aucune erreur n'apparaÃ®t
+4. Vérifier qu'aucune erreur n'apparaît
 ```
-âœ… **RÃ©sultat attendu** : Message "Extension activÃ©e avec succÃ¨s"
+✅ **Résultat attendu** : Message "Extension activée avec succès"
 
 ---
 
-### Ã‰tape 2 : VÃ©rifier les PrÃ©fÃ©rences (1 minute)
+### Étape 2 : Vérifier les Préférences (1 minute)
 ```
 1. Se connecter avec un compte utilisateur
 2. Aller dans : Panneau de l'utilisateur
-3. Cliquer sur : PrÃ©fÃ©rences du forum
-4. Cliquer sur : Modifier les prÃ©fÃ©rences des notifications
+3. Cliquer sur : Préférences du forum
+4. Cliquer sur : Modifier les préférences des notifications
 5. Chercher "Post reactions" dans la liste
 ```
-âœ… **RÃ©sultat attendu** : 
+✅ **Résultat attendu** : 
 - "Post reactions" est visible
-- Case "Notification" cochÃ©e (cloche)
-- Case "Email" cochÃ©e
+- Case "Notification" cochée (cloche)
+- Case "Email" cochée
 
 ---
 
-### Ã‰tape 3 : Test Notification Cloche (2 minutes)
+### Étape 3 : Test Notification Cloche (2 minutes)
 ```
-1. Avec l'utilisateur A : CrÃ©er un nouveau message dans un sujet
-2. Se dÃ©connecter
+1. Avec l'utilisateur A : Créer un nouveau message dans un sujet
+2. Se déconnecter
 3. Se connecter avec l'utilisateur B
-4. Ajouter une rÃ©action ðŸ‘ au message de l'utilisateur A
-5. Se dÃ©connecter
+4. Ajouter une réaction 👍 au message de l'utilisateur A
+5. Se déconnecter
 6. Se reconnecter avec l'utilisateur A
-7. Cliquer sur l'icÃ´ne de cloche (notifications)
+7. Cliquer sur l'icône de cloche (notifications)
 ```
-âœ… **RÃ©sultat attendu** : 
-- Notification visible : "[Nom B] a rÃ©agi Ã  votre message"
+✅ **Résultat attendu** : 
+- Notification visible : "[Nom B] a réagi à votre message"
 - Cliquer dessus redirige vers le message
 
 ---
 
-### Ã‰tape 4 : Test Email (Optionnel - 45 minutes)
+### Étape 4 : Test Email (Optionnel - 45 minutes)
 ```
-1. RÃ©pÃ©ter l'Ã©tape 3
+1. Répéter l'étape 3
 2. Attendre 45 minutes
-3. VÃ©rifier l'email de l'utilisateur A
+3. Vérifier l'email de l'utilisateur A
 ```
-âœ… **RÃ©sultat attendu** : Email reÃ§u avec le nom de l'utilisateur B et un lien vers le message
+✅ **Résultat attendu** : Email reçu avec le nom de l'utilisateur B et un lien vers le message
 
 ---
 
-## ðŸ” VÃ©rification SQL Rapide
+## 🔍 Vérification SQL Rapide
 
 ```sql
--- VÃ©rifier que le type de notification est enregistrÃ©
+-- Vérifier que le type de notification est enregistré
 SELECT * FROM phpbb_notification_types 
 WHERE notification_type_name = 'bastien59960.reactions.notification';
 ```
-âœ… **RÃ©sultat attendu** : 1 ligne retournÃ©e
+✅ **Résultat attendu** : 1 ligne retournée
 
 ```sql
--- VÃ©rifier les notifications crÃ©Ã©es
+-- Vérifier les notifications créées
 SELECT COUNT(*) FROM phpbb_notifications 
 WHERE notification_type_name = 'bastien59960.reactions.notification';
 ```
-âœ… **RÃ©sultat attendu** : Nombre > 0 aprÃ¨s avoir testÃ©
+✅ **Résultat attendu** : Nombre > 0 après avoir testé
 
 ---
 
-## âŒ Si Ã‡a Ne Fonctionne Pas
+## ❌ Si Ça Ne Fonctionne Pas
 
-### ProblÃ¨me : "Post reactions" n'apparaÃ®t pas dans les prÃ©fÃ©rences
+### Problème : "Post reactions" n'apparaît pas dans les préférences
 
 **Solution 1** : Forcer l'enregistrement
 ```php
-// Dans phpBB, exÃ©cuter :
+// Dans phpBB, exécuter :
 $notification_manager = $container->get('notification_manager');
 $notification_manager->enable_notifications('bastien59960.reactions.notification');
 ```
 
-**Solution 2** : VÃ©rifier les logs
+**Solution 2** : Vérifier les logs
 ```
 ACP > Maintenance > Logs d'erreurs
 ```
 
-**Solution 3** : VÃ©rifier le service
+**Solution 3** : Vérifier le service
 ```
 Ouvrir : ext/bastien59960/reactions/config/services.yml
 Chercher : bastien59960.reactions.notification
-VÃ©rifier : tags: - { name: notification.type }
+Vérifier : tags: - { name: notification.type }
 ```
 
 ---
 
-### ProblÃ¨me : Notification par cloche non reÃ§ue
+### Problème : Notification par cloche non reçue
 
-**VÃ©rifier** :
-1. L'utilisateur A a bien activÃ© les notifications dans ses prÃ©fÃ©rences
-2. L'utilisateur B n'est pas l'utilisateur A (on ne se notifie pas soi-mÃªme)
+**Vérifier** :
+1. L'utilisateur A a bien activé les notifications dans ses préférences
+2. L'utilisateur B n'est pas l'utilisateur A (on ne se notifie pas soi-même)
 3. Les logs d'erreurs : `ACP > Maintenance > Logs d'erreurs`
 
 **Solution** :
 ```
-VÃ©rifier que le service ajax a bien le notification_manager :
+Vérifier que le service ajax a bien le notification_manager :
 Fichier : config/services.yml
 Ligne : bastien59960.reactions.ajax
 Argument : - '@notification_manager'
@@ -114,52 +114,52 @@ Argument : - '@notification_manager'
 
 ---
 
-### ProblÃ¨me : Email non reÃ§u
+### Problème : Email non reçu
 
-**VÃ©rifier** :
-1. Le cron s'exÃ©cute : `ACP > SystÃ¨me > TÃ¢ches cron`
-2. Le dÃ©lai anti-spam : `ACP > Extensions > Reactions` (45 min par dÃ©faut)
-3. La configuration email du forum : `ACP > GÃ©nÃ©ral > Configuration email`
+**Vérifier** :
+1. Le cron s'exécute : `ACP > Système > Tâches cron`
+2. Le délai anti-spam : `ACP > Extensions > Reactions` (45 min par défaut)
+3. La configuration email du forum : `ACP > Général > Configuration email`
 
 **Solution** :
 ```bash
-# ExÃ©cuter le cron manuellement
+# Exécuter le cron manuellement
 php bin/phpbbcli.php cron:run
 ```
 
 ---
 
-## ðŸ“Š Tableau de Diagnostic
+## 📊 Tableau de Diagnostic
 
-| SymptÃ´me | Cause Probable | Solution |
+| Symptôme | Cause Probable | Solution |
 |----------|----------------|----------|
-| Pas dans prÃ©fÃ©rences | Type non enregistrÃ© | DÃ©sactiver/rÃ©activer extension |
-| Cloche ne fonctionne pas | Service mal configurÃ© | VÃ©rifier services.yml |
-| Email non reÃ§u | Cron ne tourne pas | ExÃ©cuter cron manuellement |
-| Erreur PHP | MÃ©thodes dupliquÃ©es | VÃ©rifier reaction.php |
+| Pas dans préférences | Type non enregistré | Désactiver/réactiver extension |
+| Cloche ne fonctionne pas | Service mal configuré | Vérifier services.yml |
+| Email non reçu | Cron ne tourne pas | Exécuter cron manuellement |
+| Erreur PHP | Méthodes dupliquées | Vérifier reaction.php |
 
 ---
 
-## ðŸŽ¯ Checklist Finale
+## 🎯 Checklist Finale
 
-- [ ] Extension activÃ©e sans erreur
-- [ ] "Post reactions" visible dans prÃ©fÃ©rences
-- [ ] Options "Cloche" et "Email" cochÃ©es par dÃ©faut
-- [ ] Notification par cloche reÃ§ue immÃ©diatement
-- [ ] Email reÃ§u aprÃ¨s 45 minutes (optionnel)
+- [ ] Extension activée sans erreur
+- [ ] "Post reactions" visible dans préférences
+- [ ] Options "Cloche" et "Email" cochées par défaut
+- [ ] Notification par cloche reçue immédiatement
+- [ ] Email reçu après 45 minutes (optionnel)
 - [ ] Aucune erreur dans les logs
 
 ---
 
-## ðŸ“ž Besoin d'Aide ?
+## 📞 Besoin d'Aide ?
 
-1. **Documentation complÃ¨te** : `GUIDE_TEST_NOTIFICATIONS.md`
-2. **DÃ©tails techniques** : `CORRECTIONS_NOTIFICATIONS.md`
-3. **RÃ©sumÃ©** : `RESUME_CORRECTIONS.md`
-4. **DÃ©pannage ACP** : `ACP_TROUBLESHOOTING.md`
+1. **Documentation complète** : `GUIDE_TEST_NOTIFICATIONS.md`
+2. **Détails techniques** : `CORRECTIONS_NOTIFICATIONS.md`
+3. **Résumé** : `RESUME_CORRECTIONS.md`
+4. **Dépannage ACP** : `ACP_TROUBLESHOOTING.md`
 
 ---
 
-**Temps total estimÃ©** : 5 minutes (sans le test email)  
-**DifficultÃ©** : â­ Facile  
-**PrÃ©requis** : AccÃ¨s ACP + 2 comptes utilisateur
+**Temps total estimé** : 5 minutes (sans le test email)  
+**Difficulté** : ⭐ Facile  
+**Prérequis** : Accès ACP + 2 comptes utilisateur
