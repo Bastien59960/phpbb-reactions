@@ -1,15 +1,14 @@
 <?php
 /**
- * ============================================================================
  * Fichier : language/fr/acp/common.php
  * Extension : bastien59960/reactions
- * ============================================================================
  *
  * Description :
  * Chaînes de langue françaises pour le panneau d'administration (ACP)
  * de l'extension Reactions.
- * 
- * © 2025 Bastien59960 — Licence GNU GPL v2
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 if (!defined('IN_PHPBB')) {

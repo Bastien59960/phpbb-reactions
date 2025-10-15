@@ -218,7 +218,9 @@ class ajax
             
             // Récupérer le corps brut de la requête POST.
             $raw = file_get_contents('php://input');
-            error_log("[Reactions RID=$rid] raw payload (".strlen($raw)." bytes): " . $raw);
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] raw payload (".strlen($raw)." bytes): " . $raw);
+            }
 
             // Tentative de décodage JSON avec gestion d'erreur robuste
             try {
@@ -458,7 +460,9 @@ class ajax
         } finally {
             // Enregistrer le temps d'exécution de la requête.
             $elapsed = round((microtime(true) - $t0) * 1000);
-            error_log("[Reactions RID=$rid] handle() terminé en {$elapsed}ms");
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] handle() terminé en {$elapsed}ms");
+            }
         }
     }
 
@@ -489,7 +493,9 @@ class ajax
 
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
-        error_log("[Reactions RID=$rid] add_reaction enter post_id=$post_id emoji=$emoji user_id=" . (int)$this->user->data['user_id']);
+        if (defined('DEBUG') && DEBUG) {
+            error_log("[Reactions RID=$rid] add_reaction enter post_id=$post_id emoji=$emoji user_id=" . (int)$this->user->data['user_id']);
+        }
 
         try {
             $post_id = (int) $post_id;
@@ -497,11 +503,15 @@ class ajax
 
             // Topic lookup
             $sql = 'SELECT topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . $post_id;
-            error_log("[Reactions RID=$rid] topic lookup SQL: $sql");
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] topic lookup SQL: $sql");
+            }
             $result = $this->db->sql_query($sql);
             $row = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
-            error_log("[Reactions RID=$rid] topic lookup fetched=" . json_encode($row));
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] topic lookup fetched=" . json_encode($row));
+            }
 
             if (!$row || !isset($row['topic_id'])) {
                 ob_end_clean();
@@ -520,11 +530,15 @@ class ajax
               AND user_id = ' . $user_id . "
               AND reaction_emoji COLLATE utf8mb4_bin = '" . $this->db->sql_escape($emoji) . "'";
 
-            error_log("[Reactions RID=$rid] duplicate SQL: $dupSql");
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] duplicate SQL: $dupSql");
+            }
             $result = $this->db->sql_query($dupSql);
             $already = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
-            error_log("[Reactions RID=$rid] duplicate found=" . json_encode((bool)$already));
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] duplicate found=" . json_encode((bool)$already));
+            }
 
             if ($already) {
                 ob_end_clean();
@@ -545,7 +559,9 @@ class ajax
                 'reaction_time'     => time(),
                 'reaction_notified' => 0,
             ];
-            error_log("[Reactions RID=$rid] sql_ary=" . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] sql_ary=" . json_encode($sql_ary, JSON_UNESCAPED_UNICODE));
+            }
 
             // Vérification du charset de la connexion
             $res = $this->db->sql_query("SHOW VARIABLES LIKE 'character_set_connection'");
@@ -557,7 +573,9 @@ class ajax
 
             try {
                 $insertSql = 'INSERT INTO ' . $this->post_reactions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-                error_log("[Reactions RID=$rid] insert SQL: $insertSql");
+                if (defined('DEBUG') && DEBUG) {
+                    error_log("[Reactions RID=$rid] insert SQL: $insertSql");
+                }
             } catch (\Throwable $buildEx) {
                 error_log("[Reactions RID=$rid] sql_build_array error: " . $buildEx->getMessage());
                 ob_end_clean();
@@ -585,7 +603,9 @@ class ajax
             }
 
             $elapsed = round((microtime(true) - $t0) * 1000);
-            error_log("[Reactions RID=$rid] add_reaction OK in {$elapsed}ms");
+            if (defined('DEBUG') && DEBUG) {
+                error_log("[Reactions RID=$rid] add_reaction OK in {$elapsed}ms");
+            }
             
             // Récupère les réactions mises à jour
             $reactions = $this->get_reactions_array($post_id);
@@ -629,14 +649,18 @@ class ajax
     private function remove_reaction($post_id, $emoji)
     {
         $rid = bin2hex(random_bytes(8));
-        error_log("[Reactions RID=$rid] remove_reaction enter post_id=$post_id emoji=$emoji");
+        if (defined('DEBUG') && DEBUG) {
+            error_log("[Reactions RID=$rid] remove_reaction enter post_id=$post_id emoji=$emoji");
+        }
 
         $sql = 'DELETE FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . (int) $post_id . '
                   AND user_id = ' . (int) $this->user->data['user_id'] . "
                   AND reaction_emoji COLLATE utf8mb4_bin = '" . $this->db->sql_escape($emoji) . "'";
         
-        error_log("[Reactions RID=$rid] delete SQL: $sql");
+        if (defined('DEBUG') && DEBUG) {
+            error_log("[Reactions RID=$rid] delete SQL: $sql");
+        }
         $this->db->sql_query($sql);
 
         // Récupérer les réactions mises à jour
