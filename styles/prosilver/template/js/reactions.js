@@ -489,12 +489,22 @@ function toggle_visible(id) {
                 flags: '🏳️',
             };
 
+            const findIcon = (categoryKey) => {
+                const lowerKey = categoryKey.toLowerCase();
+                for (const key in iconMap) {
+                    if (lowerKey.includes(key)) {
+                        return iconMap[key];
+                    }
+                }
+                return '🔹'; // Fallback si aucune icône n'est trouvée
+            };
+
             const availableKeys = Object.keys(emojiData.emojis);
             const tabDefinitions = [
                 { key: 'frequent', emoji: iconMap.frequent, title: 'Utilisé fréquemment' },
                 ...availableKeys.map((key) => ({
                     key,
-                    emoji: iconMap[key] || '🔹',
+                    emoji: findIcon(key),
                     title: key.charAt(0).toUpperCase() + key.slice(1),
                 })),
             ];
