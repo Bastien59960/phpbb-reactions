@@ -423,21 +423,24 @@ class notification_task extends \phpbb\cron\task\base
             // Itérer sur les posts et les assigner comme des blocs au template
             foreach ($data['posts'] as $post_data)
             {
-                $messenger->assign_block_vars('posts', [
-                    'SUBJECT_PLAIN'     => $post_data['subject_plain'],
-                    'POST_URL_ABSOLUTE' => $post_data['post_url_absolute'],
-                ]);
-
-                // Itérer sur les réactions de chaque post et les assigner comme un sous-bloc
+                // Préparer un tableau de réactions pour ce post
+                $reactions_data = [];
                 foreach ($post_data['reactions'] as $reaction)
                 {
-                    $messenger->assign_block_vars('posts.reactions', [
+                    $reactions_data[] = [
                         'EMOJI'                => $reaction['emoji'],
                         'REACTER_NAME'         => $reaction['reacter_name'],
                         'TIME_FORMATTED'       => $reaction['time_formatted'],
                         'PROFILE_URL_ABSOLUTE' => $reaction['profile_url_absolute'],
-                    ]);
+                    ];
                 }
+
+                // Assigner le post et son tableau de réactions
+                $messenger->assign_block_vars('posts', [
+                    'SUBJECT_PLAIN'     => $post_data['subject_plain'],
+                    'POST_URL_ABSOLUTE' => $post_data['post_url_absolute'],
+                    'reactions'         => $reactions_data,
+                ]);
             }
 
             $messenger->send(NOTIFY_EMAIL);
