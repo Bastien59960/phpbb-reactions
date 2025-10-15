@@ -94,5 +94,4 @@ $lang = array_merge($lang, array(
     'REACTION_LIMIT_POST'       => 'Limite de types de réactions pour ce message atteinte',
     'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
     'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
-
 ));

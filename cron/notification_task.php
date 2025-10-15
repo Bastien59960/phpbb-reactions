@@ -113,8 +113,7 @@ class notification_task extends \phpbb\cron\task\base
             include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
         }
 
-        $this->language->add_lang('common');
-        $this->language->add_lang('reactions', 'bastien59960/reactions');
+        $this->language->add_lang_ext('bastien59960/reactions', 'reactions');
 
         // Seuil chronologique pour récupérer les réactions.
         // On s'assure que seules les réactions plus anciennes que le délai sont traitées.
@@ -403,15 +402,19 @@ class notification_task extends \phpbb\cron\task\base
         try
         {
             $messenger = new \messenger(false, $this->template);
-
-            $messenger->template('@bastien59960_reactions/reaction_digest', $author_lang);
+    
+            // Le chemin doit pointer vers le répertoire 'email' dans les templates
+            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
             $messenger->to($author_email, $author_name);
-
+    
+            // Charger la langue pour l'utilisateur cible
+            $this->language->add_lang('reactions', 'bastien59960/reactions', false, $author_lang);
+    
             $messenger->assign_vars([
                 'USERNAME'         => $author_name,
                 'DIGEST_SINCE'     => $since_time,
                 'DIGEST_UNTIL'     => date('d/m/Y H:i'),
-                'DIGEST_SIGNATURE' => $this->language->lang('REACTIONS_DIGEST_SIGNATURE', $this->config['sitename'] ?? 'Forum'),
+                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
 
             // Itérer sur les posts et les assigner comme des blocs au template
