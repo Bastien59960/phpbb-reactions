@@ -116,9 +116,9 @@ services:
             - '%core.table_prefix%notifications'
             - '@config'
             - '@user_loader'
-            - '@bastien59960.reactions.helper'
             - '@request'
             - '@template'
+            - '@bastien59960.reactions.helper'
         tags:
             - { name: notification.type }
 
