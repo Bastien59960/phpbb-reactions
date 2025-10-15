@@ -213,6 +213,13 @@ public function create_notification_type()
 {
     $types_table = $this->table_prefix . 'notification_types';
 
+    // Nettoyage préventif d'une ancienne entrée erronée
+    $malformed_name = 'bastien59960.reactions.notification.type.reaction';
+    $sql_cleanup = 'DELETE FROM ' . $types_table . "
+        WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
+    $this->db->sql_query($sql_cleanup);
+
+
     // === TYPE 1 : notification.type.reaction (instantané, cloche) ===
     // Ce type gère les notifications immédiates dans la "cloche" du forum.
     $canonical_name = 'notification.type.reaction';
