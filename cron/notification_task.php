@@ -70,7 +70,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->notification_manager = $notification_manager;
         $this->user_loader = $user_loader;
         $this->language = $language;
-        $this->template = $template;
+        $this->template = $template; // Ligne essentielle à restaurer
         $this->post_reactions_table = $post_reactions_table;
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
@@ -468,7 +468,10 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = new \messenger(true); // true pour activer les e-mails
+            // Correction : Il faut passer le template au constructeur pour que les e-mails fonctionnent
+            // Le premier paramètre (use_queue) est déprécié, on passe false.
+            // Le second est le template, qui est crucial.
+            $messenger = new \messenger(false, $this->template);
             
             // Utiliser le template de l'extension. Le nom du fichier est déterminé par le nom du template.
             // phpBB cherchera reaction_digest.html et reaction_digest.txt
