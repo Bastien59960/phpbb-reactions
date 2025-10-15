@@ -258,6 +258,13 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
+            // Si, après tous les filtres, il n'y a plus de posts avec des réactions valides, on ignore.
+            if (empty($data['posts']))
+            {
+                $this->mark_reactions_as_handled($data['mark_ids']);
+                continue;
+            }
+
             // Envoyer l'e-mail récapitulatif
             $result = $this->send_digest_email($data, $threshold_timestamp);
 
