@@ -399,6 +399,15 @@ class notification_task extends \phpbb\cron\task\base
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
 
+        // Si aucun post à notifier, on s'arrête. (Déjà géré dans le code appelant, mais double sécurité)
+        if (empty($data['posts']))
+        {
+            error_log('[Reactions Cron] Aucun contenu à envoyer pour user_id ' . $author_id . ' (récapitulatif vide).');
+            return [
+                'status' => 'skipped_empty',
+            ];
+        }
+
         $view_message_label = $this->language->lang('REACTIONS_DIGEST_VIEW_POST');
 
         $sections_text = [];
@@ -409,19 +418,18 @@ class notification_task extends \phpbb\cron\task\base
             $subject_plain = $post_data['subject_plain'] ?: '[sans sujet]';
             $subject_html = htmlspecialchars($subject_plain, ENT_QUOTES, 'UTF-8');
             $post_url_abs = $post_data['post_url_absolute'];
-            $post_url_rel = $post_data['post_url_relative'];
 
             $text_lines = [];
             $html_items = [];
 
             foreach ($post_data['reactions'] as $reaction)
             {
-                // Version texte : Nom cliquable (pour les clients mail qui transforment les liens)
+                // Version texte
                 $text_lines[] = sprintf('• %s %s (%s) - Profil : %s', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted'], $reaction['profile_url_absolute']);
 
-                // Version HTML : Nom est un lien direct
+                // Version HTML
                 $html_items[] = sprintf(
-                    '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">%s</span></li>',
+                    '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">(%s)</span></li>',
                     htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8'),
                     htmlspecialchars($reaction['profile_url_absolute'], ENT_QUOTES, 'UTF-8'),
                     htmlspecialchars($reaction['reacter_name'], ENT_QUOTES, 'UTF-8'),
@@ -434,10 +442,10 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
-            // Version texte : Le titre du sujet est suivi du lien vers le message
-            $sections_text[] = sprintf("%s (%s)\n%s", $subject_plain, $post_url_abs, implode("\n", $text_lines));
+            // Section pour la version texte
+            $sections_text[] = sprintf("%s\n%s\n%s", $subject_plain, $post_url_abs, implode("\n", $text_lines));
 
-            // Version HTML : Le titre du sujet est un lien
+            // Section pour la version HTML
             $sections_html[] = sprintf(
                 '<div class="digest-topic"><h3><a href="%s">%s</a></h3><ul>%s</ul></div>',
                 htmlspecialchars($post_url_abs, ENT_QUOTES, 'UTF-8'),
@@ -460,18 +468,21 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = new \messenger(null, $this->template, null, null, null, null, true);
+            $messenger = new \messenger(true); // true pour activer les e-mails
             
+            // Utiliser le template de l'extension. Le nom du fichier est déterminé par le nom du template.
+            // phpBB cherchera reaction_digest.html et reaction_digest.txt
             $messenger->template('@bastien59960_reactions/reaction_digest', $author_lang);
             $messenger->to($author_email, $author_name);
             $messenger->assign_vars([
-                'USERNAME'    => $author_name,
-                'DIGEST_SINCE'=> $since_time,
-                'DIGEST_UNTIL'=> date('d/m/Y H:i'),
-                'DIGEST_TEXT' => $recap_text,
-                'DIGEST_HTML' => $recap_html,
+                'USERNAME'         => $author_name,
+                'DIGEST_SINCE'     => $since_time,
+                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
+                'DIGEST_TEXT'      => $recap_text, // Pour la version texte
+                'DIGEST_HTML'      => $recap_html, // Pour la version HTML
                 'DIGEST_SIGNATURE' => $this->language->lang('REACTIONS_DIGEST_SIGNATURE', $this->config['sitename'] ?? 'Forum'),
             ]);
+
             $messenger->send(NOTIFY_EMAIL);
 
             error_log('[Reactions Cron] E-mail digest envoyé à ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
