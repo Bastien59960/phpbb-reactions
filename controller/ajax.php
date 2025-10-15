@@ -134,7 +134,7 @@ class ajax
         $php_ext,
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager,
-        \bastien59960\reactions\controller\helper $reactions_helper
+        \bastien59960\reactions\controller\helper $reactions_helper // Ajout du paramètre manquant
     ) {
         // Initialisation des propriétés
         $this->db = $db;
@@ -150,7 +150,7 @@ class ajax
         $this->php_ext = $php_ext;
         $this->config = $config;
         $this->notification_manager = $notification_manager;
-        $this->reactions_helper = $reactions_helper;
+        $this->reactions_helper = $reactions_helper; // Ligne à restaurer
         
         // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
