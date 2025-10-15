@@ -8,8 +8,8 @@
  * Description :
  * Chaînes de langue françaises pour le panneau d'administration (ACP)
  * de l'extension Reactions.
- *
- * © 2025 Bastien59960 — Licence GNU GPL v2.
+ * 
+ * © 2025 Bastien59960 — Licence GNU GPL v2
  */
 
 if (!defined('IN_PHPBB')) {

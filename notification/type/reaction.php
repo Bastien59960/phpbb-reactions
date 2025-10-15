@@ -277,14 +277,14 @@ class reaction extends base
     /**
      * Retourne la clé de langue pour le titre de la notification
      * 
-     * CORRECTION IMPORTANTE : Cette cl├® DOIT correspondre exactement
+     * CORRECTION IMPORTANTE : Cette clé DOIT correspondre exactement
      * à celle définie dans notification/notification.type.reaction.php
      * 
      * Format du message : "%s a réagi à votre message avec %s"
-     * - %s = nom de l'utilisateur qui a r├®agi
+     * - %s = nom de l'utilisateur qui a réagi
      * - %s = emoji utilisé
      * 
-     * @return string La clé de langue (SANS le préfixe L_)
+     * @return string La clé de langue (SANS le préfixe L_).
      */
     public function get_title()
     {
@@ -324,9 +324,9 @@ class reaction extends base
     /**
      * Retourne la description du type affichée dans l'UCP
      * 
-     * Doit correspondre à une clé dans le fichier de langue de la notification.
+     * Doit correspondre à une clé dans le fichier de langue de la notification
      * 
-     * @return string La cl├® de langue pour la description
+     * @return string La clé de langue pour la description
      */
     public static function get_item_type_description()
     {
@@ -344,8 +344,8 @@ class reaction extends base
      * - On notifie l'auteur du message (poster_id)
      * - SAUF si c'est lui-même qui a réagi (pas d'auto-notification)
      * 
-     * @param array $type_data Données de la réaction
-     * @param array $options   Options suppl├®mentaires (non utilis├® ici)
+     * @param array $type_data Données de la réaction.
+     * @param array $options   Options supplémentaires (non utilisé ici).
      * @return array Liste des IDs utilisateur à notifier
      */
     public function find_users_for_notification($type_data, $options = array())
@@ -369,7 +369,7 @@ class reaction extends base
      * Dans notre cas, on n'a pas besoin de charger de donn├®es
      * utilisateur supplémentaires (le nom est déjà dans les données de la notification)
      * 
-     * @return array Liste vide (pas de chargement n├®cessaire)
+     * @return array Liste vide (pas de chargement nécessaire)
      */
     public function users_to_query()
     {
@@ -423,13 +423,13 @@ class reaction extends base
      * @param object $lang    Objet de langue (non utilisé, on utilise get_title())
      * @return array [clé_langue, [paramètres]]
      */
-    public function get_title_for_user($user_id, $lang)
+    public function get_title_for_user($user_id, $lang = null)
     {
         return [
             $this->get_title(), // Clé : NOTIFICATION_TYPE_REACTION
             [
-                $this->notification_data['reacter_username'] ?? '', // Param 1 : Nom du réacteur
-                $this->notification_data['emoji'] ?? '',             // Param 2 : Emoji
+                $this->notification_data['reacter_username'] ?? 'Quelqu\'un', // Param 1 : Nom du réacteur
+                $this->notification_data['emoji'] ?? '?',             // Param 2 : Emoji
             ],
         ];
     }
