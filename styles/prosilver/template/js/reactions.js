@@ -443,7 +443,7 @@ function toggle_visible(id) {
             const categoriesContainer = document.createElement('div');
             categoriesContainer.className = 'emoji-categories-container';
 
-            Object.entries(emojiData.emojis).forEach(([category, subcategories]) => {
+            Object.entries(emojiData.emojis).filter(([category]) => category !== 'Component').forEach(([category, subcategories]) => {
                 const catTitle = document.createElement('div');
                 catTitle.className = 'emoji-category-title';
                 catTitle.textContent = category;
@@ -480,7 +480,7 @@ function toggle_visible(id) {
             const categoryIconMap = {
                 'frequent': '⭐',
                 'Smileys & Emotion': '😄',
-                'People & Body': '😊',
+                'People & Body': '',
                 'Animals & Nature': '🐻',
                 'Food & Drink': '🍔',
                 'Travel & Places': '✈️',
@@ -490,7 +490,7 @@ function toggle_visible(id) {
                 'Flags': '🏳️',
             };
 
-            const availableKeys = Object.keys(emojiData.emojis);
+            const availableKeys = Object.keys(emojiData.emojis).filter(key => key !== 'Component');
             const tabDefinitions = [
                 ...availableKeys.map((key) => ({
                     key,
