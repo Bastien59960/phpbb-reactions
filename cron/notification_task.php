@@ -116,11 +116,12 @@ class notification_task extends \phpbb\cron\task\base
         $this->language->add_lang('common');
         $this->language->add_lang('reactions', 'bastien59960/reactions');
 
-        // Seuil chronologique
-        $threshold_timestamp = time() - $spam_delay;
+        // Seuil chronologique pour récupérer les réactions.
+        // On s'assure que seules les réactions plus anciennes que le délai sont traitées.
+        $threshold_timestamp = time() - $spam_delay; // $spam_delay est en secondes
         $run_start = microtime(true);
 
-        error_log('[Reactions Cron] Run start (minutes=' . $spam_minutes . ', threshold=' . $threshold_timestamp . ')');
+        error_log('[Reactions Cron] Run start (interval=' . $spam_minutes . ' min, threshold=' . date('Y-m-d H:i:s', $threshold_timestamp) . ')');
 
         // Récupérer toutes les réactions non notifiées plus anciennes que le seuil
         $sql = 'SELECT r.reaction_id, r.post_id, r.user_id AS reacter_id, r.reaction_emoji, r.reaction_time,
