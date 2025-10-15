@@ -332,21 +332,30 @@ class notification_task extends \phpbb\cron\task\base
             return false;
         }
 
-        // Vérifier directement dans la table users (colonne user_reactions_email)
-        $sql = 'SELECT user_reactions_email
-                FROM ' . USERS_TABLE . '
-                WHERE user_id = ' . (int) $user_id;
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-
-        if (!$row)
+        try
         {
-            return false;
-        }
+            // Vérifier directement dans la table users (colonne user_reactions_email)
+            $sql = 'SELECT user_reactions_cron_email
+                    FROM ' . USERS_TABLE . '
+                    WHERE user_id = ' . (int) $user_id;
+            $result = $this->db->sql_query($sql);
+            $row = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
 
-        // user_reactions_email : 1 = reçoit les e-mails, 0 = désactivé
-        return ((int) $row['user_reactions_email']) === 0;
+            if (!$row)
+            {
+                return false; // L'utilisateur n'existe pas
+            }
+
+            // user_reactions_cron_email : 1 = reçoit les e-mails, 0 = désactivé
+            return ((int) $row['user_reactions_cron_email']) === 0;
+        }
+        catch (\phpbb\db\exception $e)
+        {
+            // La colonne n'existe probablement pas, on considère que l'utilisateur veut recevoir les e-mails.
+            error_log('[Reactions Cron] DB Error checking pref for user ' . $user_id . ': ' . $e->getMessage() . '. Assuming pref is ON.');
+            return false; // Ne pas désactiver les e-mails
+        }
     }
 
     /**

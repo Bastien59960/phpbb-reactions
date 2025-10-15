@@ -78,7 +78,7 @@ class ucp_reactions
 		// Récupérer les préférences actuelles de l'utilisateur.
 		// L'objet $this->user->data contient déjà ces informations, pas besoin de requête SQL.
 		$current_notify = (bool) ($this->user->data['user_reactions_notify'] ?? 1);
-		$current_email = (bool) ($this->user->data['user_reactions_email'] ?? 1);
+		$current_email = (bool) ($this->user->data['user_reactions_cron_email'] ?? 1);
 
 		// Vérifier si le formulaire a été soumis.
 		$submit = $this->request->is_set_post('submit');
@@ -87,12 +87,12 @@ class ucp_reactions
 		{
 			// Récupérer les nouvelles valeurs depuis le formulaire.
 			$new_notify = $this->request->variable('user_reactions_notify', 0);
-			$new_email = $this->request->variable('user_reactions_email', 0);
+			$new_email = $this->request->variable('user_reactions_cron_email', 0);
 
 			// Mettre à jour la base de données.
 			$sql = 'UPDATE ' . $this->table_prefix . 'users
 					SET user_reactions_notify = ' . (int) $new_notify . ',
-					    user_reactions_email = ' . (int) $new_email . '
+					    user_reactions_cron_email = ' . (int) $new_email . '
 					WHERE user_id = ' . $user_id;
 			$this->db->sql_query($sql);
 
@@ -104,7 +104,7 @@ class ucp_reactions
 		$this->template->assign_vars(array(
 			'U_ACTION'				=> $this->u_action,
 			'UCP_REACTIONS_NOTIFY'	=> $current_notify,
-			'UCP_REACTIONS_EMAIL'	=> $current_email, // Pour le résumé par e-mail
+			'UCP_REACTIONS_CRON_EMAIL'	=> $current_email, // Pour le résumé par e-mail
 			'S_NOTIFY_CHECKED'      => ($current_notify) ? ' checked="checked"' : '',
 			'S_EMAIL_CHECKED'       => ($current_email) ? ' checked="checked"' : '',
 		));
