@@ -398,93 +398,47 @@ class notification_task extends \phpbb\cron\task\base
         $author_email = $data['author_email'];
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
+        $since_time = date('d/m/Y H:i', $threshold_timestamp);
 
-        // Si aucun post à notifier, on s'arrête. (Déjà géré dans le code appelant, mais double sécurité)
         if (empty($data['posts']))
         {
             error_log('[Reactions Cron] Aucun contenu à envoyer pour user_id ' . $author_id . ' (récapitulatif vide).');
-            return [
-                'status' => 'skipped_empty',
-            ];
+            return ['status' => 'skipped_empty'];
         }
-
-        $view_message_label = $this->language->lang('REACTIONS_DIGEST_VIEW_POST');
-
-        $sections_text = [];
-        $sections_html = [];
-
-        foreach ($data['posts'] as $post_id => $post_data)
-        {
-            $subject_plain = $post_data['subject_plain'] ?: '[sans sujet]';
-            $subject_html = htmlspecialchars($subject_plain, ENT_QUOTES, 'UTF-8');
-            $post_url_abs = $post_data['post_url_absolute'];
-
-            $text_lines = [];
-            $html_items = [];
-
-            foreach ($post_data['reactions'] as $reaction)
-            {
-                // Version texte
-                $text_lines[] = sprintf('• %s %s (%s) - Profil : %s', $reaction['emoji'], $reaction['reacter_name'], $reaction['time_formatted'], $reaction['profile_url_absolute']);
-
-                // Version HTML
-                $html_items[] = sprintf(
-                    '<li><span class="digest-emoji">%s</span><span class="digest-user"><a href="%s">%s</a></span><span class="digest-time">(%s)</span></li>',
-                    htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($reaction['profile_url_absolute'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($reaction['reacter_name'], ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($reaction['time_formatted'], ENT_QUOTES, 'UTF-8')
-                );
-            }
-
-            if (empty($text_lines))
-            {
-                continue;
-            }
-
-            // Section pour la version texte
-            $sections_text[] = sprintf("%s\n%s\n%s", $subject_plain, $post_url_abs, implode("\n", $text_lines));
-
-            // Section pour la version HTML
-            $sections_html[] = sprintf(
-                '<div class="digest-topic"><h3><a href="%s">%s</a></h3><ul>%s</ul></div>',
-                htmlspecialchars($post_url_abs, ENT_QUOTES, 'UTF-8'),
-                $subject_html,
-                implode('', $html_items)
-            );
-        }
-
-        if (empty($sections_text))
-        {
-            error_log('[Reactions Cron] Aucun contenu à envoyer pour user_id ' . $author_id . ' (récapitulatif vide).');
-            return [
-                'status' => 'skipped_empty',
-            ];
-        }
-
-        $recap_text = implode("\n\n", $sections_text);
-        $recap_html = implode("\n", $sections_html);
-        $since_time = date('d/m/Y H:i', $threshold_timestamp);
 
         try
         {
-            // Correction : Il faut passer le template au constructeur pour que les e-mails fonctionnent
-            // Le premier paramètre (use_queue) est déprécié, on passe false.
-            // Le second est le template, qui est crucial.
             $messenger = new \messenger(false, $this->template);
-            
-            // Utiliser le template de l'extension. Le nom du fichier est déterminé par le nom du template.
-            // phpBB cherchera reaction_digest.html et reaction_digest.txt
+
             $messenger->template('@bastien59960_reactions/reaction_digest', $author_lang);
             $messenger->to($author_email, $author_name);
+
             $messenger->assign_vars([
                 'USERNAME'         => $author_name,
                 'DIGEST_SINCE'     => $since_time,
                 'DIGEST_UNTIL'     => date('d/m/Y H:i'),
-                'DIGEST_TEXT'      => $recap_text, // Pour la version texte
-                'DIGEST_HTML'      => $recap_html, // Pour la version HTML
                 'DIGEST_SIGNATURE' => $this->language->lang('REACTIONS_DIGEST_SIGNATURE', $this->config['sitename'] ?? 'Forum'),
             ]);
+
+            // Itérer sur les posts et les assigner comme des blocs au template
+            foreach ($data['posts'] as $post_data)
+            {
+                $messenger->assign_block_vars('posts', [
+                    'SUBJECT_PLAIN'     => $post_data['subject_plain'],
+                    'POST_URL_ABSOLUTE' => $post_data['post_url_absolute'],
+                ]);
+
+                // Itérer sur les réactions de chaque post et les assigner comme un sous-bloc
+                foreach ($post_data['reactions'] as $reaction)
+                {
+                    $messenger->assign_block_vars('posts.reactions', [
+                        'EMOJI'                => $reaction['emoji'],
+                        'REACTER_NAME'         => $reaction['reacter_name'],
+                        'TIME_FORMATTED'       => $reaction['time_formatted'],
+                        'PROFILE_URL_ABSOLUTE' => $reaction['profile_url_absolute'],
+                    ]);
+                }
+            }
 
             $messenger->send(NOTIFY_EMAIL);
 
@@ -495,7 +449,12 @@ class notification_task extends \phpbb\cron\task\base
         }
         catch (\Exception $e)
         {
-            error_log('[Reactions Cron] Échec envoi mail pour user_id ' . $author_id . ' : ' . $e->getMessage());
+            // Log d'erreur amélioré
+            $error_details = "File: " . $e->getFile() . "\n" .
+                             "Line: " . $e->getLine() . "\n" .
+                             "Trace: " . $e->getTraceAsString();
+            error_log('[Reactions Cron] Échec critique lors de l\'envoi de l\'e-mail pour user_id ' . $author_id . ' : ' . $e->getMessage());
+            error_log('[Reactions Cron] Détails de l\'erreur: ' . $error_details);
             return [
                 'status' => 'failed',
                 'error'  => $e->getMessage(),
