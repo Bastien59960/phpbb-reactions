@@ -432,14 +432,6 @@ class notification_task extends \phpbb\cron\task\base
                 // Itérer sur les réactions et les assigner au sous-bloc (boucle interne)
                 foreach ($post_data['reactions'] as $reaction)
                 {
-                    // Pour la version HTML, nous construisons directement le <li> pour plus de robustesse.
-                    $reaction['REACTION_HTML'] = sprintf(
-                        '<li><span class="digest-emoji">%s</span> <span class="digest-user"><a href="%s">%s</a></span> <span class="digest-time">(%s)</span></li>',
-                        htmlspecialchars($reaction['EMOJI'], ENT_QUOTES, 'UTF-8'),
-                        htmlspecialchars($reaction['PROFILE_URL_ABSOLUTE'], ENT_QUOTES, 'UTF-8'),
-                        htmlspecialchars($reaction['REACTER_NAME'], ENT_QUOTES, 'UTF-8'),
-                        htmlspecialchars($reaction['TIME_FORMATTED'], ENT_QUOTES, 'UTF-8')
-                    );
                     $messenger->assign_block_vars('posts.reactions', $reaction);
                 }
             }

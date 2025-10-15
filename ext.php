@@ -111,13 +111,13 @@ public function enable_step($old_state)
 
         // ✅ Utiliser uniquement les NOMS DE TYPES (get_type())
         // Activation du type "cloche" (instantané)
-        try {
-            $notification_manager->enable_notifications('notification.type.reaction');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] enable_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
+        // try {
+        //     $notification_manager->enable_notifications('notification.type.reaction');
+        // } catch (\phpbb\notification\exception $e) {
+        //     if (defined('DEBUG')) {
+        //         trigger_error('[Reactions] enable_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
+        //     }
+        // }
 
         // Activation du type "email digest"
         try {
@@ -157,7 +157,7 @@ public function enable_step($old_state)
 			// ✅ CORRECTION : Utiliser les NOMS DE TYPES (get_type())
 			
 			// Désactiver la notification cloche
-			$notification_manager->disable_notifications('notification.type.reaction');
+			// $notification_manager->disable_notifications('notification.type.reaction');
 			
 			// Désactiver la notification email groupée
 			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
@@ -194,15 +194,15 @@ public function purge_step($old_state)
 {
     if ($old_state === false)
     {
-        $notification_manager = $this->container->get('notification_manager');
+        // $notification_manager = $this->container->get('notification_manager');
 
-        try {
-            $notification_manager->purge_notifications('notification.type.reaction');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] purge_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
+        // try {
+        //     $notification_manager->purge_notifications('notification.type.reaction');
+        // } catch (\phpbb\notification\exception $e) {
+        //     if (defined('DEBUG')) {
+        //         trigger_error('[Reactions] purge_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
+        //     }
+        // }
 
         try {
             $notification_manager->purge_notifications('notification.type.reaction_email_digest');

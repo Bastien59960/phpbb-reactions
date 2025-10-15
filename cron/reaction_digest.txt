@@ -1,0 +1,16 @@
+Subject: Nouvelles réactions à vos messages
+
+Bonjour {USERNAME},
+
+Entre {DIGEST_SINCE} et {DIGEST_UNTIL}, vous avez reçu de nouvelles réactions regroupées par sujet :
+
+<!-- BEGIN posts -->
+
+{posts.SUBJECT_PLAIN}
+({posts.POST_URL_ABSOLUTE})
+<!-- BEGIN reactions -->
+  • {posts.reactions.EMOJI} {posts.reactions.REACTER_NAME} ({posts.reactions.TIME_FORMATTED}) - Profil : {posts.reactions.PROFILE_URL_ABSOLUTE}
+<!-- END reactions -->
+<!-- END posts -->
+
+{DIGEST_SIGNATURE}
