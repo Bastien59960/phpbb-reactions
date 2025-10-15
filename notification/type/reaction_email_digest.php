@@ -48,8 +48,6 @@ class reaction_email_digest extends \phpbb\notification\type\base
      */
     public function get_email_template()
     {
-        // Le préfixe de l'extension est géré par le messenger,
-        // il suffit de donner le nom du fichier de base.
         return 'reaction_digest';
     }
 
