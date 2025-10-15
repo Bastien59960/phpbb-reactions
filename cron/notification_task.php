@@ -182,21 +182,16 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
-            $subject_plain = ($post_subject !== '') ? $post_subject : $this->language->lang('NO_SUBJECT');
-            $post_url_absolute = generate_board_url() . '/viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
-            $post_url_relative = 'viewtopic.' . $this->php_ext . '?p=' . $post_id . '#p' . $post_id;
-            $profile_url_absolute = generate_board_url() . '/memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
-            $profile_url_relative = 'memberlist.' . $this->php_ext . '?mode=viewprofile&u=' . (int) $reacter_id;
+            $subject_plain = ($post_subject !== '') ? strip_tags($post_subject) : $this->language->lang('NO_SUBJECT');
+            $post_url_absolute = generate_board_url() . "/viewtopic.{$this->php_ext}?p={$post_id}#p{$post_id}";
+            $profile_url_absolute = generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$reacter_id}";
 
             if (!isset($by_author[$author_id]['posts'][$post_id]))
             {
                 $by_author[$author_id]['posts'][$post_id] = [
-                    'topic_id'          => $topic_id,
-                    'post_subject'      => $post_subject,
-                    'subject_plain'     => $subject_plain,
-                    'post_url_absolute' => $post_url_absolute,
-                    'post_url_relative' => $post_url_relative,
-                    'reactions'         => [],
+                    'SUBJECT_PLAIN'     => $subject_plain,
+                    'POST_URL_ABSOLUTE' => $post_url_absolute,
+                    'reactions'         => [], // Initialiser le tableau des réactions pour ce post
                 ];
             }
 
@@ -208,7 +203,6 @@ class notification_task extends \phpbb\cron\task\base
                 'TIME'                 => $r_time,
                 'TIME_FORMATTED'       => date('d/m/Y H:i', $r_time),
                 'PROFILE_URL_ABSOLUTE' => $profile_url_absolute,
-                'PROFILE_URL_RELATIVE' => $profile_url_relative,
             ];
 
             $by_author[$author_id]['mark_ids'][] = $reaction_id;
@@ -423,12 +417,7 @@ class notification_task extends \phpbb\cron\task\base
             // Itérer sur les posts et les assigner comme des blocs au template
             foreach ($data['posts'] as $post_data)
             {
-                // Assigner les données du post (boucle externe)
-                $messenger->assign_block_vars('posts', [
-                    'SUBJECT_PLAIN'     => $post_data['subject_plain'],
-                    'POST_URL_ABSOLUTE' => $post_data['post_url_absolute'],
-                ]);
-
+                $messenger->assign_block_vars('posts', $post_data);
                 // Itérer sur les réactions et les assigner au sous-bloc (boucle interne)
                 foreach ($post_data['reactions'] as $reaction)
                 {
