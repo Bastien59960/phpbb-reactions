@@ -423,16 +423,23 @@ class notification_task extends \phpbb\cron\task\base
             // Itérer sur les posts et les assigner comme des blocs au template
             foreach ($data['posts'] as $post_data)
             {
-                // 1. Assigner les données du post (boucle externe)
+                // Assigner les données du post (boucle externe)
                 $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => $post_data['subject_plain'],
                     'POST_URL_ABSOLUTE' => $post_data['post_url_absolute'],
                 ]);
 
-                // 2. Itérer sur les réactions et les assigner au sous-bloc (boucle interne)
-                // C'est la méthode standard de phpBB. `assign_block_vars` AJOUTE une ligne à chaque appel.
+                // Itérer sur les réactions et les assigner au sous-bloc (boucle interne)
                 foreach ($post_data['reactions'] as $reaction)
                 {
+                    // Pour la version HTML, nous construisons directement le <li> pour plus de robustesse.
+                    $reaction['REACTION_HTML'] = sprintf(
+                        '<li><span class="digest-emoji">%s</span> <span class="digest-user"><a href="%s">%s</a></span> <span class="digest-time">(%s)</span></li>',
+                        htmlspecialchars($reaction['EMOJI'], ENT_QUOTES, 'UTF-8'),
+                        htmlspecialchars($reaction['PROFILE_URL_ABSOLUTE'], ENT_QUOTES, 'UTF-8'),
+                        htmlspecialchars($reaction['REACTER_NAME'], ENT_QUOTES, 'UTF-8'),
+                        htmlspecialchars($reaction['TIME_FORMATTED'], ENT_QUOTES, 'UTF-8')
+                    );
                     $messenger->assign_block_vars('posts.reactions', $reaction);
                 }
             }

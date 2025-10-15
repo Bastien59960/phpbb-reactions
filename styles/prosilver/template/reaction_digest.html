@@ -86,11 +86,7 @@
             <h3><a href="{posts.POST_URL_ABSOLUTE}">{posts.SUBJECT_PLAIN}</a></h3>
             <ul>
                 <!-- BEGIN reactions -->
-                <li>
-                    <span class="digest-emoji">{posts.reactions.EMOJI}</span>
-                    <span class="digest-user"><a href="{posts.reactions.PROFILE_URL_ABSOLUTE}">{posts.reactions.REACTER_NAME}</a></span>
-                    <span class="digest-time">({posts.reactions.TIME_FORMATTED})</span>
-                </li>
+                {posts.reactions.REACTION_HTML}
                 <!-- END reactions -->
             </ul>
         </div>
