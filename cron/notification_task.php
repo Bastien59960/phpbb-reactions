@@ -113,8 +113,9 @@ class notification_task extends \phpbb\cron\task\base
             include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
         }
 
-        $this->language->add_lang_ext('bastien59960/reactions', 'reactions');
-
+        // Charge uniquement le fichier de langue nécessaire pour les logs et les messages génériques.
+        // La langue de l'e-mail sera chargée pour chaque utilisateur individuellement.
+        $this->language->add_lang('common', 'bastien59960/reactions');
         // Seuil chronologique pour récupérer les réactions.
         // On s'assure que seules les réactions plus anciennes que le délai sont traitées.
         $threshold_timestamp = time() - $spam_delay; // $spam_delay est en secondes
