@@ -475,36 +475,27 @@ function toggle_visible(id) {
         }
 
         if (enableCategories && tabsContainer) {
-            const iconMap = {
-                frequent: '⭐',
-                smileys: '😄',
-                people: '😊',
-                animals: '🐻',
-                nature: '🌿',
-                food: '🍔',
-                activities: '⚽',
-                travel: '✈️',
-                objects: '💡',
-                symbols: '🔣',
-                flags: '🏳️',
-            };
-
-            const findIcon = (categoryKey) => {
-                const lowerKey = categoryKey.toLowerCase();
-                for (const key in iconMap) {
-                    if (lowerKey.includes(key)) {
-                        return iconMap[key];
-                    }
-                }
-                return '🔹'; // Fallback si aucune icône n'est trouvée
+            // Table de correspondance directe entre le nom de la catégorie (du JSON) et son icône.
+            // C'est plus robuste qu'une recherche par mot-clé.
+            const categoryIconMap = {
+                'frequent': '⭐',
+                'Smileys & Emotion': '😄',
+                'People & Body': '😊',
+                'Animals & Nature': '🐻',
+                'Food & Drink': '🍔',
+                'Travel & Places': '✈️',
+                'Activities': '⚽',
+                'Objects': '💡',
+                'Symbols': '🔣',
+                'Flags': '🏳️',
             };
 
             const availableKeys = Object.keys(emojiData.emojis);
             const tabDefinitions = [
-                { key: 'frequent', emoji: iconMap.frequent, title: 'Utilisé fréquemment' },
                 ...availableKeys.map((key) => ({
                     key,
-                    emoji: findIcon(key),
+                    // On cherche une correspondance exacte dans la map. Si non trouvée, on met un fallback.
+                    emoji: categoryIconMap[key] || '🔹',
                     title: key.charAt(0).toUpperCase() + key.slice(1),
                 })),
             ];
