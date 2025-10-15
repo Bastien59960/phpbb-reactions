@@ -36,5 +36,5 @@ $lang = array_merge($lang ?? [], [
 
     // --- Aides pour les résumés ---
     'REACTIONS_DIGEST_VIEW_POST' => 'Voir ce message',
-    'REACTIONS_DIGEST_SIGNATURE' => 'Merci, l'équipe %s',
+    'REACTIONS_DIGEST_SIGNATURE' => 'Merci, l\'équipe %s',
 ]);
