@@ -265,6 +265,9 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
+            // TRANSFORMATION CRUCIALE : Convertir le tableau associatif des posts en tableau indexé.
+            $data['posts'] = array_values($data['posts']);
+
             // Envoyer l'e-mail récapitulatif
             $result = $this->send_digest_email($data, $threshold_timestamp);
 
