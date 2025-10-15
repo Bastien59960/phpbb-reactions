@@ -38,11 +38,10 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-	// --- Groupe de notifications (UCP) ---
-	'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
-	'NOTIFICATION_TYPE_NOTIFICATION.TYPE.REACTION' => 'Réactions à mes messages',
-	// --- Notification instantanée (cloche & UCP) ---
-	'NOTIFICATION_TYPE_REACTION' => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
-	'NOTIFICATION_TYPE_REACTION_TITLE'	=> 'Quelqu'un a réagi à l'un de vos messages',
-	'NOTIFICATION_TYPE_REACTION_DESC'	=> 'Recevoir une notification lorsqu'un utilisateur réagit à l'un de vos messages.',
+    // --- Groupe de notifications (UCP) ---
+    'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
+    // --- Notification instantanée (cloche & UCP) ---
+    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
+    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Réactions à mes messages',
+    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification lorsqu\'un utilisateur réagit à l\'un de vos messages.',
 ));

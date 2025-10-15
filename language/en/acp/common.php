@@ -29,7 +29,7 @@ $lang = array_merge($lang ?? [], [
     'REACTIONS_MAX_PER_POST'             => 'Maximum reaction types per post',
     'REACTIONS_MAX_PER_POST_EXPLAIN'     => 'Maximum number of different reaction types allowed on a single post.',
     'REACTIONS_MAX_PER_USER'             => 'Maximum reactions per user',
-    'REACTIONS_MAX_PER_USER_EXPLAIN'     => 'Maximum number of reactions a single user can add to a post.',
+    'REACTIONS_MAX_PER_USER_EXPLAIN'     => 'Maximum number of reactions a user can add to a single post.',
 
     'REACTIONS_DISPLAY_SETTINGS'         => 'Display & picker settings',
     'REACTIONS_POST_EMOJI_SIZE'          => 'Post emoji size',
