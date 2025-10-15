@@ -201,14 +201,14 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             $by_author[$author_id]['posts'][$post_id]['reactions'][] = [
-                'reaction_id'          => $reaction_id,
-                'reacter_id'           => $reacter_id,
-                'reacter_name'         => $reacter_name,
-                'emoji'                => $emoji ?: '?',
-                'time'                 => $r_time,
-                'time_formatted'       => date('d/m/Y H:i', $r_time),
-                'profile_url_absolute' => $profile_url_absolute,
-                'profile_url_relative' => $profile_url_relative,
+                'REACTION_ID'          => $reaction_id,
+                'REACTER_ID'           => $reacter_id,
+                'REACTER_NAME'         => $reacter_name,
+                'EMOJI'                => $emoji ?: '?',
+                'TIME'                 => $r_time,
+                'TIME_FORMATTED'       => date('d/m/Y H:i', $r_time),
+                'PROFILE_URL_ABSOLUTE' => $profile_url_absolute,
+                'PROFILE_URL_RELATIVE' => $profile_url_relative,
             ];
 
             $by_author[$author_id]['mark_ids'][] = $reaction_id;
