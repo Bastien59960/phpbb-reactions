@@ -27,28 +27,28 @@ class reaction_email_digest extends \phpbb\notification\type\base
 
     public function __construct(
         // Dépendances pour le parent
-        \phpbb\db\driver\driver_interface $db,   // 1. @dbal.conn
-        \phpbb\language\language $language,      // 2. @language
-        \phpbb\user $user,                       // 3. @user
-        \phpbb\auth\auth $auth,                  // 4. @auth
-        $phpbb_root_path,                       // 5. %core.root_path%
-        $php_ext,                               // 6. %core.php_ext%
-        $notifications_table                    // 7. %core.table_prefix%notifications
-    )
-    {
-        // 1. Appel explicite du constructeur parent
+        \phpbb\db\driver\driver_interface $db,
+        \phpbb\language\language $language,
+        \phpbb\user $user,
+        \phpbb\auth\auth $auth,
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table,
+        \phpbb\config\config $config // Injection de @config
+    ) {
+        // Appel du constructeur parent avec le bon ordre
         parent::__construct(
             $user,
-            $auth,
+            $language,
             $db,
+            $auth,
             $phpbb_root_path,
             $php_ext,
-            $notifications_table,
-            $language
+            $notifications_table
         );
 
         $this->language = $language;
-        $this->config = $this->container->get('config');
+        $this->config = $config;
     }
 
     /**
@@ -80,6 +80,17 @@ class reaction_email_digest extends \phpbb\notification\type\base
     public function get_email_template()
     {
         return 'reaction_digest';
+    }
+
+    /**
+     * Spécifie le fichier de langue à charger.
+     * Doit pointer vers le fichier unifié.
+     *
+     * @return string
+     */
+    public function get_language_file()
+    {
+        return 'bastien59960/reactions/notification/reaction';
     }
 
     /**

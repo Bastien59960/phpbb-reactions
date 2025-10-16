@@ -32,7 +32,7 @@ $lang = array_merge($lang, array(
 	'NOTIFICATION_TYPE_REACTION'         => '<strong>%1$s</strong> reacted to your post with %2$s',
 	'NOTIFICATION_TYPE_REACTION_TITLE'   => 'Someone reacted to one of your posts',
 	'NOTIFICATION_TYPE_REACTION_DESC'    => 'Receive a notification when a user reacts to one of your posts.',
-
+	
 	// Notification Type: Email digest (cron)
 	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_TITLE' => 'Reactions e-mail summary',
 	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_DESC'  => 'Periodically receive an e-mail summary of reactions to your posts.',
