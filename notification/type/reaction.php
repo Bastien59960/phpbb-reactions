@@ -90,7 +90,6 @@ class reaction extends base
      * @param auth              $auth                Autorisations
      * @param string            $notifications_table Table notifications
      * @param config|null       $config              Configuration 
-     * @param request_interface|null $request        Requêtes HTTP
      * @param template|null     $template            Templates
      */
     public function __construct(
@@ -103,7 +102,6 @@ class reaction extends base
         $notifications_table,
         ?config $config,
         user_loader $user_loader,
-        ?request_interface $request,
         ?template $template,
         ?reactions_helper $reactions_helper
     ) {

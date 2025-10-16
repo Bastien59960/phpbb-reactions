@@ -93,7 +93,6 @@ services:
             - '@notification_manager'
             - '@user_loader'
             - '@language'
-            - '@template'
             - '%tables.post_reactions%'
             - '%core.root_path%'
             - '%core.php_ext%'
@@ -116,7 +115,6 @@ services:
             - '%core.table_prefix%notifications'
             - '@config'
             - '@user_loader'
-            - '@request'
             - '@template'
             - '@bastien59960.reactions.helper'
         tags:
@@ -128,6 +126,7 @@ services:
     bastien59960.reactions.notification.cron_email:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         arguments:
+            # Dépendances requises par la classe de base (\phpbb\notification\type\base)
             - '@dbal.conn'
             - '@language'
             - '@user'
@@ -135,6 +134,9 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%core.table_prefix%notifications'
+            # Dépendance spécifique à notre classe
+            - '@template'
+            - '@config'
         tags:
             - { name: notification.type }
 

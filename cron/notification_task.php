@@ -32,9 +32,6 @@ class notification_task extends \phpbb\cron\task\base
     /** @var \phpbb\user_loader */
     protected $user_loader;
 
-    /** @var \phpbb\template\template */
-    protected $template;
-
     /** @var \phpbb\language\language */
     protected $language;
 
@@ -59,7 +56,6 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\notification\manager $notification_manager,
         \phpbb\user_loader $user_loader,
         \phpbb\language\language $language,
-        \phpbb\template\template $template,
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
@@ -70,7 +66,6 @@ class notification_task extends \phpbb\cron\task\base
         $this->notification_manager = $notification_manager;
         $this->user_loader = $user_loader;
         $this->language = $language;
-        $this->template = $template; // Ligne essentielle à restaurer
         $this->post_reactions_table = $post_reactions_table;
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
@@ -412,65 +407,32 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = new \messenger(false, $this->template);
- 
-            // Charger la langue pour l'utilisateur cible
-            // Ceci charge le fichier language/{$author_lang}/common.php de l'extension,
-            // qui contient L_HELLO et L_REACTIONS_DIGEST_INTRO.
-            $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
-
-            // Syntaxe correcte pour charger un template d'e-mail d'extension
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
-            $messenger->to($author_email, $author_name);
-
-            // Variables globales pour le template
-            $messenger->assign_vars([
-                'USERNAME'         => $author_name,
-                'DIGEST_SINCE'     => $since_time_formatted,
-                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
-                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
+            // Utiliser le notification_manager pour envoyer l'e-mail.
+            // C'est la méthode standard de phpBB qui gère correctement les templates HTML.
+            $this->notification_manager->add_notifications('bastien59960.reactions.notification.cron_email', [
+                // Les données passées ici seront disponibles dans la classe reaction_email_digest
+                'author_id'             => $author_id,
+                'author_name'           => $author_name,
+                'since_time_formatted'  => $since_time_formatted,
+                'posts'                 => $data['posts'],
             ]);
 
-            // Log pour déboguer les données
-            error_log('[Reactions Cron] Données posts pour user_id ' . $author_id . ': ' . json_encode($data['posts']));
+            // Forcer l'envoi immédiat des notifications par e-mail
+            $this->notification_manager->send_notifications(NOTIFY_EMAIL);
 
-            // Itérer sur les posts et les assigner comme des blocs au template
-            foreach ($data['posts'] as $post_data)
-            {
-                // Étape 1 : Assigner les données du bloc parent 'posts'
-                $messenger->assign_block_vars('posts', [
-                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
-                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'], // Les URLs n'ont pas besoin d'être échappées ici
-                ]);
-
-                // Étape 2 : Itérer sur les réactions et les assigner au sous-bloc 'posts.reactions'
-                foreach ($post_data['reactions'] as $reaction)
-                {
-                    // La syntaxe correcte est d'utiliser le nom du bloc parent comme préfixe.
-                    $messenger->assign_block_vars('posts.reactions', [
-                        'EMOJI'                => $reaction['EMOJI'],
-                        'REACTER_NAME'         => $reaction['REACTER_NAME'],
-                        'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
-                        'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
-                    ]);
-                }
-            }
-
-            $messenger->send(NOTIFY_EMAIL);
-
-            error_log('[Reactions Cron] E-mail digest envoyé à ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
+            error_log('[Reactions Cron] E-mail digest préparé pour ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
             return [
                 'status' => 'sent',
             ];
         }
         catch (\Exception $e)
         {
-            // Log d'erreur amélioré
             $error_details = "File: " . $e->getFile() . "\n" .
                              "Line: " . $e->getLine() . "\n" .
                              "Trace: " . $e->getTraceAsString();
             error_log('[Reactions Cron] Échec critique lors de l\'envoi de l\'e-mail pour user_id ' . $author_id . ' : ' . $e->getMessage());
             error_log('[Reactions Cron] Détails de l\'erreur: ' . $error_details);
+
             return [
                 'status' => 'failed',
                 'error'  => $e->getMessage(),
