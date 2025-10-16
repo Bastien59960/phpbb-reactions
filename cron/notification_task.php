@@ -446,12 +446,18 @@ class notification_task extends \phpbb\cron\task\base
                 // Étape 2 : Itérer sur les réactions et les assigner au sous-bloc 'posts.reactions'
                 foreach ($post_data['reactions'] as $reaction)
                 {
+                    // Construire la ligne de texte traduite
+                    $reaction_line = sprintf(
+                        $this->language->lang('REACTIONS_DIGEST_LINE'),
+                        $reaction['EMOJI'],
+                        '<a href="' . $reaction['PROFILE_URL_ABSOLUTE'] . '">' . $reaction['REACTER_NAME'] . '</a>',
+                        $reaction['TIME_FORMATTED']
+                    );
+
                     // La syntaxe correcte est d'utiliser le nom du bloc parent comme préfixe.
                     $messenger->assign_block_vars('posts.reactions', [
-                        'REACTER_NAME'         => $reaction['REACTER_NAME'],
-                        'EMOJI'                => $reaction['EMOJI'],
-                        'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
-                        'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
+                        // On passe maintenant la ligne complète au template
+                        'LINE' => $reaction_line,
                     ]);
                 }
             }
