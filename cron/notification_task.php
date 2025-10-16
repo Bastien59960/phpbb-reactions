@@ -419,8 +419,8 @@ class notification_task extends \phpbb\cron\task\base
             ]);
 
             // Forcer l'envoi immédiat des notifications par e-mail.
-            // La méthode correcte est process_notifications().
-            $this->notification_manager->process_notifications('email', [$author_id]);
+            // La méthode correcte est send(). Elle prend le type de média et un user_id unique.
+            $this->notification_manager->send('email', $author_id);
 
             error_log('[Reactions Cron] E-mail digest préparé pour ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
             return [
