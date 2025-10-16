@@ -413,29 +413,48 @@ class notification_task extends \phpbb\cron\task\base
         try
         {
             $messenger = new \messenger(false, $this->template);
-    
-            // Le chemin doit pointer vers le répertoire 'email' dans les templates
+
+            // Définir explicitement le template HTML
             $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
             $messenger->to($author_email, $author_name);
-    
+
+            // Ajouter les headers pour HTML et UTF-8
+            $messenger->headers('Content-type: text/html; charset=UTF-8');
+            $messenger->headers('Content-Transfer-Encoding: 8bit');
+
             // Charger la langue pour l'utilisateur cible
             $this->language->add_lang('reactions', 'bastien59960/reactions', false, $author_lang);
-    
+
+            // Variables globales pour le template
             $messenger->assign_vars([
-                'USERNAME'         => $author_name,
+                'USERNAME'         => htmlspecialchars($author_name),
                 'DIGEST_SINCE'     => $since_time,
                 'DIGEST_UNTIL'     => date('d/m/Y H:i'),
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
 
+            // Log pour déboguer les données
+            error_log('[Reactions Cron] Données posts pour user_id ' . $author_id . ': ' . json_encode($data['posts']));
+
             // Itérer sur les posts et les assigner comme des blocs au template
             foreach ($data['posts'] as $post_data)
             {
-                $messenger->assign_block_vars('posts', $post_data);
-                // Itérer sur les réactions et les assigner au sous-bloc (boucle interne)
+                $messenger->assign_block_vars('posts', [
+                    'SUBJECT_PLAIN'     => htmlspecialchars($post_data['SUBJECT_PLAIN']),
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                ]);
+                // Itérer sur les réactions
                 foreach ($post_data['reactions'] as $reaction)
                 {
-                    $messenger->assign_block_vars('posts.reactions', $reaction);
+                    $messenger->assign_block_vars('posts.reactions', [
+                        'REACTION_ID'          => $reaction['REACTION_ID'],
+                        'REACTER_ID'           => $reaction['REACTER_ID'],
+                        'REACTER_NAME'         => htmlspecialchars($reaction['REACTER_NAME']),
+                        'EMOJI'                => $reaction['EMOJI'],
+                        'TIME'                 => $reaction['TIME'],
+                        'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
+                        'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
+                    ]);
                 }
             }
 
