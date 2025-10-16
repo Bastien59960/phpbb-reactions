@@ -114,7 +114,6 @@ class reaction extends base
         // Stocker les dépendances spécifiques à cette classe
         $this->notifications_table = $notifications_table;
         $this->config = $config;
-        $this->language = $language;
         $this->user_loader = $user_loader;
 		$this->template = $template;
         $this->reactions_helper = $reactions_helper;

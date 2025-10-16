@@ -70,9 +70,7 @@ class notification_task extends \phpbb\cron\task\base
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
-        $table_prefix,
-        \phpbb\notification\messenger_factory $messenger_factory,
-        \Symfony\Component\Console\Output\OutputInterface $io = null
+        $table_prefix
     ) {
         $this->db = $db;
         $this->config = $config;
@@ -84,16 +82,6 @@ class notification_task extends \phpbb\cron\task\base
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
-        $this->messenger_factory = $messenger_factory;
-        $this->io = $io;
-    }
-
-    /**
-     * Nom de la tâche
-     */
-    public function get_name()
-    {
-        return 'bastien59960.reactions.notificationtask';
     }
 
     /**
@@ -490,7 +478,8 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = $this->messenger_factory->get_messenger('email');
+            $container = \phpbb\di\container_builder::get_container();
+            $messenger = $container->get('messenger_factory')->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);

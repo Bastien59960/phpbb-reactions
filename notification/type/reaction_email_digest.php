@@ -19,12 +19,6 @@ if (!defined('IN_PHPBB'))
 
 class reaction_email_digest extends \phpbb\notification\type\base
 {
-    /** @var \phpbb\user_loader */
-    protected $user_loader;
-
-    /** @var \phpbb\template\template */
-    protected $template;
-
     /** @var \phpbb\config\config */
     protected $config;
 
