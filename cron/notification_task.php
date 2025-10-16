@@ -60,8 +60,6 @@ class notification_task extends \phpbb\cron\task\base
      * Constructeur
      */
     public function __construct(
-        $phpbb_root_path,
-        $php_ext,
         \phpbb\db\driver\driver_interface $db,
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager,
@@ -69,12 +67,13 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\language\language $language,
         \phpbb\template\template $template,
         $post_reactions_table,
-        $table_prefix,
-        \phpbb\notification\messenger_factory $messenger_factory,
+        $phpbb_root_path,
+        $php_ext,
+        $table_prefix
+        // Note: messenger_factory and io are not in the current services.yml for this service
+        // \phpbb\notification\messenger_factory $messenger_factory,
         \Symfony\Component\Console\Output\OutputInterface $io = null
     ) {
-        $this->phpbb_root_path = $phpbb_root_path;
-        $this->php_ext = $php_ext;
         $this->db = $db;
         $this->config = $config;
         $this->notification_manager = $notification_manager;
@@ -82,8 +81,9 @@ class notification_task extends \phpbb\cron\task\base
         $this->language = $language;
         $this->template = $template;
         $this->post_reactions_table = $post_reactions_table;
+        $this->phpbb_root_path = $phpbb_root_path;
+        $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
-        $this->messenger_factory = $messenger_factory;
         $this->io = $io;
     }
 
@@ -489,7 +489,7 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = $this->messenger_factory->get_messenger('email');
+            $messenger = $this->container->get('messenger_factory')->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);

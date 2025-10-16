@@ -37,7 +37,6 @@ class reaction_email_digest extends \phpbb\notification\type\base
         $phpbb_root_path,
         $php_ext,
         $notifications_table,
-        // Dépendances pour cette classe
         \phpbb\user_loader $user_loader,
         \phpbb\template\template $template,
         \phpbb\config\config $config

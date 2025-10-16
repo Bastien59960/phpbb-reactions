@@ -7,9 +7,9 @@
 # conteneur Symfony embarqué dans phpBB.
 #
 # IMPORTANT :
-# - Vérifier que l'ordre des arguments correspond exactement au constructeur
+# - Vérifier que l’ordre des arguments correspond exactement au constructeur
 #   de la classe ciblée.
-# - Les identifiants de services sont utilisés ailleurs dans l'extension
+# - Les identifiants de services sont utilisés ailleurs dans l’extension
 #   (ex. ext.php, controller/ajax.php, etc.) : ne pas les renommer à la légère.
 #
 
@@ -88,18 +88,16 @@ services:
     bastien59960.reactions.notificationtask:
         class: bastien59960\reactions\cron\notification_task
         arguments:
-            - '%core.root_path%'            # 1. phpbb_root_path
-            - '%core.php_ext%'              # 2. php_ext
-            - '@dbal.conn'                  # 3. db
-            - '@config'                     # 4. config
-            - '@notification_manager'       # 5. notification_manager
-            - '@user_loader'                # 6. user_loader
-            - '@language'                   # 7. language
-            - '@template'                   # 8. template
-            - '%tables.post_reactions%'     # 9. post_reactions_table
-            - '%core.table_prefix%'         # 10. table_prefix
-            - '@messenger_factory'          # 11. messenger_factory
-            - '@?console.io'                # 12. console.io (optionnel)
+            - '@dbal.conn'
+            - '@config'
+            - '@notification_manager'
+            - '@user_loader'
+            - '@language'
+            - '@template'
+            - '%tables.post_reactions%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '%core.table_prefix%'
         tags:
             - { name: cron.task }
 
@@ -109,17 +107,18 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@dbal.conn'                          # 1. db (driver_interface)
-            - '@language'                           # 2. language
-            - '@user'                               # 3. user
-            - '@auth'                               # 4. auth
-            - '%core.root_path%'                    # 5. phpbb_root_path
-            - '%core.php_ext%'                      # 6. php_ext
-            - '%core.table_prefix%notifications'    # 7. notifications_table
-            - '@config'                             # 8. config
-            - '@user_loader'                        # 9. user_loader
-            - '@template'                           # 10. template
-            - '@bastien59960.reactions.helper'      # 11. reactions_helper
+            - '@dbal.conn'
+            - '@language'
+            - '@user'
+            - '@auth'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '%core.table_prefix%notifications'
+            - '@config'
+            - '@user_loader'
+            - '@bastien59960.reactions.helper'
+            - '@request'
+            - '@template'
         tags:
             - { name: notification.type }
 
@@ -129,7 +128,6 @@ services:
     bastien59960.reactions.notification.cron_email:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         arguments:
-            # Dépendances requises par la classe de base (\phpbb\notification\type\base)
             - '@dbal.conn'
             - '@language'
             - '@user'
@@ -137,10 +135,6 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%core.table_prefix%notifications'
-            # Dépendance spécifique à notre classe
-            - '@user_loader'
-            - '@template'
-            - '@config'
         tags:
             - { name: notification.type }
 
