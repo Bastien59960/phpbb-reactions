@@ -104,7 +104,7 @@ class reaction extends base
         string $notifications_table,           // 7. %core.table_prefix%notifications
         config $config,                        // 8. @config
         user_loader $user_loader,              // 9. @user_loader
-        helper $reactions_helper,              // 10. @bastien59960.reactions.helper
+        reactions_helper $reactions_helper,    // 10. @bastien59960.reactions.helper
         request_interface $request,            // 11. @request
         template $template                     // 12. @template
     ) {
