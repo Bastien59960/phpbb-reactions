@@ -416,6 +416,8 @@ class notification_task extends \phpbb\cron\task\base
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
+            // CORRECTION CRITIQUE : Charger aussi les fichiers de langue principaux de phpBB.
+            $this->language->add_lang(['common', 'email'], false, false, $author_lang);
 
             // 2. Charger le template d'e-mail (HTML + TXT)
             $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
