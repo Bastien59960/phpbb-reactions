@@ -94,4 +94,20 @@ $lang = array_merge($lang, array(
     'REACTION_LIMIT_POST'       => 'Limite de types de réactions pour ce message atteinte',
     'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
     'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
+
+    // =============================================================================
+    // NOTIFICATIONS PAR E-MAIL (CRON DIGEST)
+    // =============================================================================
+    'REACTIONS_DIGEST_SUBJECT'      => 'Résumé des réactions sur vos messages',
+    'REACTIONS_DIGEST_INTRO'        => 'Voici un résumé des nouvelles réactions que vos messages ont reçues récemment.',
+    'REACTIONS_DIGEST_SIGNATURE'    => 'Merci de votre participation sur %s.', // %s sera remplacé par le nom du site
+    'REACTIONS_PREFERENCES_HINT'    => 'Vous pouvez gérer vos préférences de notification dans votre Panneau de l\'utilisateur.',
+    'NO_SUBJECT'                    => '(Sans sujet)',
+
+    // =============================================================================
+    // NOTIFICATIONS INSTANTANÉES (CLOCHE)
+    // =============================================================================
+    'NOTIFICATION_TYPE_REACTION'            => '%1$s a réagi à votre message avec %2$s',
+    'NOTIFICATION_TYPE_REACTION_TITLE'      => 'Réactions à vos messages',
+    'NOTIFICATION_TYPE_REACTION_DESC'       => 'Recevoir une notification lorsqu\'un utilisateur réagit à l\'un de vos messages.',
 ));

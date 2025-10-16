@@ -268,8 +268,9 @@ class notification_task extends \phpbb\cron\task\base
             // TRANSFORMATION CRUCIALE : Convertir le tableau associatif des posts en tableau indexé.
             $data['posts'] = array_values($data['posts']);
 
+            $since_time_formatted = date('d/m/Y H:i', $threshold_timestamp);
             // Envoyer l'e-mail récapitulatif
-            $result = $this->send_digest_email($data, $threshold_timestamp);
+            $result = $this->send_digest_email($data, $since_time_formatted);
 
             if (!is_array($result))
             {
@@ -393,16 +394,15 @@ class notification_task extends \phpbb\cron\task\base
      * Construit et envoie un e-mail récapitulatif à un utilisateur.
      *
      * @param array $data Données groupées pour l'auteur
-     * @param int $threshold_timestamp Timestamp du seuil pour le message
+     * @param string $since_time_formatted Date formatée du début de la période.
      * @return array{status:string,error?:string} Statut d'envoi (sent, skipped_empty, failed).
      */
-    protected function send_digest_email(array $data, int $threshold_timestamp)
+    protected function send_digest_email(array $data, string $since_time_formatted)
     {
         $author_id    = (int) $data['author_id'];
         $author_email = $data['author_email'];
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
-        $since_time = date('d/m/Y H:i', $threshold_timestamp);
 
         if (empty($data['posts']))
         {
@@ -426,7 +426,7 @@ class notification_task extends \phpbb\cron\task\base
             // Variables globales pour le template
             $messenger->assign_vars([
                 'USERNAME'         => htmlspecialchars($author_name),
-                'DIGEST_SINCE'     => $since_time,
+                'DIGEST_SINCE'     => $since_time_formatted,
                 'DIGEST_UNTIL'     => date('d/m/Y H:i'),
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
