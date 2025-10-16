@@ -71,20 +71,25 @@ class notification_task extends \phpbb\cron\task\base
         $php_ext,                                              // 9. %core.php_ext%
         $table_prefix,                                         // 10. %core.table_prefix%
         \phpbb\notification\messenger_factory $messenger_factory, // 11. @messenger_factory
-        \Symfony\Component\Console\Output\OutputInterface $io = null // 12. @?console.io
+        ?\Symfony\Component\Console\Output\OutputInterface $io = null // 12. @?console.io
     ) {
-        $this->db                   = $db;
-        $this->config               = $config;
+        // 1. Appel du constructeur parent avec les arguments qu'il attend.
+        // La classe de base de phpBB n'attend aucun argument par défaut.
+        parent::__construct();
+
+        // 2. Assignation de toutes les dépendances aux propriétés de la classe.
+        $this->db = $db;
+        $this->config = $config;
         $this->notification_manager = $notification_manager;
-        $this->user_loader          = $user_loader;
-        $this->language             = $language;
-        $this->template             = $template;
+        $this->user_loader = $user_loader;
+        $this->language = $language;
+        $this->template = $template;
         $this->post_reactions_table = $post_reactions_table;
-        $this->phpbb_root_path      = $phpbb_root_path;
-        $this->php_ext              = $php_ext;
-        $this->table_prefix         = $table_prefix;
-        $this->messenger_factory    = $messenger_factory;
-        $this->io                   = $io;
+        $this->phpbb_root_path = $phpbb_root_path;
+        $this->php_ext = $php_ext;
+        $this->table_prefix = $table_prefix;
+        $this->messenger_factory = $messenger_factory;
+        $this->io = $io;
     }
 
     /**

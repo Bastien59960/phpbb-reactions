@@ -45,20 +45,20 @@ echo -e "🚀 Lancement du script de maintenance (ordre validé).\n"
 sleep 0.45
 
 # ==============================================================================
-# 1️⃣ PURGE CACHE (AVANT)
+# 1️⃣ DÉSACTIVATION DE L'EXTENSION
 # ==============================================================================
-echo "───[ 1️⃣  PURGE DU CACHE (AVANT) ]────────────────────────────────"
-sleep 0.45
-php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
-check_status "Cache initial purgé."
-
-# ==============================================================================
-# 2️⃣ DÉSACTIVATION DE L'EXTENSION
-# ==============================================================================
-echo "───[ 2️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
+echo "───[ 1️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
 sleep 0.45
 php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv
 check_status "Extension désactivée."
+
+# ==============================================================================
+# 2️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
+# ==============================================================================
+echo "───[ 2️⃣  PURGE DU CACHE (APRÈS DÉSACTIVATION) ]────────────────────"
+sleep 0.45
+php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
+check_status "Cache purgé après désactivation."
 
 # ==============================================================================
 # 3️⃣ SUPPRESSION FICHIER cron.lock
