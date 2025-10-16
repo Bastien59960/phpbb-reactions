@@ -439,19 +439,19 @@ class notification_task extends \phpbb\cron\task\base
             // Itérer sur les posts et les assigner comme des blocs au template
             foreach ($data['posts'] as $post_data)
             {
+                // Étape 1 : Assigner les données du bloc parent 'posts'
                 $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => htmlspecialchars($post_data['SUBJECT_PLAIN']),
                     'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
                 ]);
-                // Itérer sur les réactions
+
+                // Étape 2 : Itérer sur les réactions et les assigner au sous-bloc 'posts.reactions'
                 foreach ($post_data['reactions'] as $reaction)
                 {
+                    // La syntaxe correcte est d'utiliser le nom du bloc parent comme préfixe.
                     $messenger->assign_block_vars('posts.reactions', [
-                        'REACTION_ID'          => $reaction['REACTION_ID'],
-                        'REACTER_ID'           => $reaction['REACTER_ID'],
                         'REACTER_NAME'         => htmlspecialchars($reaction['REACTER_NAME']),
                         'EMOJI'                => $reaction['EMOJI'],
-                        'TIME'                 => $reaction['TIME'],
                         'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
                         'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
                     ]);
