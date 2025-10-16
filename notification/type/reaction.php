@@ -105,7 +105,7 @@ class reaction extends base
         reactions_helper $reactions_helper
     ) {
         // Appeler le constructeur de la classe parente
-		parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
+		parent::__construct($user, $auth, $db, $phpbb_root_path, $php_ext, $notifications_table);
 
         // Stocker les dépendances spécifiques à cette classe
         $this->notifications_table = $notifications_table;
