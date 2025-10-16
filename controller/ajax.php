@@ -1,21 +1,21 @@
 <?php
 /**
- * Fichier : controller/ajax.php — bastien59960/reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : ajax.php
+ * Chemin : bastien59960/reactions/controller/ajax.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce fichier est le **cœur de l'interactivité** de l'extension. Il reçoit et traite
- * toutes les requêtes AJAX envoyées par le client (`reactions.js`) pour :
- *   - Ajouter ou supprimer une réaction.
- *   - Obtenir la liste des utilisateurs ayant réagi.
+ * Ce fichier est le cœur de l'interactivité de l'extension. Il reçoit et traite
+ * toutes les requêtes AJAX envoyées par le client (reactions.js) pour ajouter ou
+ * supprimer une réaction, et obtenir la liste des utilisateurs ayant réagi.
  * Il renvoie systématiquement une réponse au format JSON.
  *
  * Informations reçues (Payload JSON) :
- * - `post_id` : ID du message concerné.
- * - `emoji` : L'emoji de la réaction (Unicode).
- * - `action` : L'action à effectuer ('add', 'remove', 'get_users').
- * - `sid` : Le jeton de session pour la protection CSRF.
+ * - `post_id` : ID du message concerné
+ * - `emoji` : L'emoji de la réaction (Unicode)
+ * - `action` : L'action à effectuer ('add', 'remove', 'get_users')
+ * - `sid` : Le jeton de session pour la protection CSRF
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

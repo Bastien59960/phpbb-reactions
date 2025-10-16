@@ -1,20 +1,17 @@
 <?php
 /**
- * Fichier : migrations/release_1_0_0.php — bastien59960/reactions/migrations/release_1_0_0.php
- * ============================================================================
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : release_1_0_0.php
+ * Chemin : bastien59960/reactions/migrations/release_1_0_0.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce fichier est la **migration d'installation initiale** de l'extension.
- * Il est exécuté une seule fois lorsque l'extension est activée pour la première fois.
- * Il est responsable de :
- *   1. Créer la table `phpbb_post_reactions` pour stocker les réactions.
- *   2. Ajouter les colonnes nécessaires aux tables `phpbb_users` et `phpbb_notifications`.
- *   3. Insérer les options de configuration par défaut dans la table `phpbb_config`.
- *   4. Enregistrer les nouveaux types de notification (`cloche` et `email digest`).
- *   5. Tenter d'importer les données d'une ancienne extension de réactions si elle est détectée.
- * ============================================================================
+ * Ce fichier est la migration d'installation initiale de l'extension. Il est
+ * exécuté une seule fois lors de la première activation pour mettre en place la
+ * structure de la base de données : création de la table des réactions, ajout des
+ * colonnes pour les préférences utilisateur, insertion des configurations par
+ * défaut et enregistrement des nouveaux types de notification. Il gère aussi
+ * l'importation des données d'une ancienne extension si détectée.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

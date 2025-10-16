@@ -1,13 +1,14 @@
 <?php
 /**
- * Fichier : cron/test_task.php — bastien59960/reactions
- *
- * Tâche cron de test minimaliste.
+ * Fichier : test_task.php
+ * Chemin : bastien59960/reactions/cron/test_task.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Cette tâche sert uniquement à vérifier si le système de cron de phpBB
- * enregistre et exécute correctement une nouvelle tâche de cette extension.
- * Elle n'a aucune dépendance pour éviter tout conflit.
+ * Définit une tâche cron de test minimaliste. Elle sert uniquement à vérifier si le
+ * système de cron de phpBB enregistre et exécute correctement une nouvelle tâche
+ * de cette extension, sans aucune dépendance pour éviter tout conflit.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

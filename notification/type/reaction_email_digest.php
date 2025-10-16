@@ -1,10 +1,14 @@
 <?php
 /**
- * Fichier : notification/type/reaction_email_digest.php — bastien59960/reactions
+ * Fichier : reaction_email_digest.php
+ * Chemin : bastien59960/reactions/notification/type/reaction_email_digest.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
+ * Rôle :
  * Définit le type de notification pour l'envoi groupé d'e-mails (digest).
- * Cette classe est essentielle pour que le système de messagerie de phpBB
- * puisse trouver et utiliser les templates d'e-mail de l'extension.
+ * Cette classe est utilisée par la tâche cron pour construire et envoyer les
+ * e-mails de résumé contenant les nouvelles réactions.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

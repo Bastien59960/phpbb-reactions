@@ -1,36 +1,15 @@
 <?php
 /**
- * Fichier : ext.php — bastien59960/reactions/ext.php
+ * Fichier : ext.php
+ * Chemin : bastien59960/reactions/ext.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
- * Classe principale de l'extension Reactions pour phpBB.
- *
- * Ce fichier gère l'activation, la désactivation et la purge de l'extension, 
- * ainsi que l'enregistrement des types de notifications personnalisés auprès du système phpBB.
- *
- * Points clés de la logique métier :
- *   - Vérification de la compatibilité phpBB
- *   - Enregistrement/désactivation/purge des types de notifications lors des changements d'état de l'extension
- *   - Gestion de la version de l'extension (pour les migrations)
- *
- * IMPORTANT - Distinction entre NOM DE SERVICE et NOM DE TYPE :
- * 
- *   📦 NOM DE SERVICE (dans services.yml) : 
- *      'bastien59960.reactions.notification'
- *      → Utilisé par Symfony pour l'injection de dépendances
- *      → C'est juste un identifiant interne pour charger la classe
- * 
- *   🔔 NOM DE TYPE (dans la méthode get_type() de la classe) :
- *      'notification.type.reaction'
- *      → Utilisé par phpBB pour identifier le type de notification en base de données
- *      → C'est ce qui est stocké dans phpbb_notification_types
- *      → C'est ce qu'il faut utiliser avec enable_notifications()
- * 
- * ⚠️  ERREUR COMMUNE : Utiliser le nom du service au lieu du nom du type
- *     ❌ $notification_manager->enable_notifications('bastien59960.reactions.notification');
- *     ✅ $notification_manager->enable_notifications('notification.type.reaction');
- *
- * Ce fichier est le point d'entrée de l'extension pour phpBB et doit être présent 
- * pour que l'extension soit reconnue et gérée correctement.
+ * Rôle :
+ * Ce fichier est la classe principale et le point d'entrée de l'extension pour phpBB.
+ * Il gère le cycle de vie de l'extension : activation, désactivation, et purge des
+ * données. Il est responsable de l'enregistrement des types de notifications
+ * personnalisés auprès du système phpBB.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
