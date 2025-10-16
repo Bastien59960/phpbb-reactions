@@ -1,19 +1,18 @@
 <?php
 /**
  * Fichier : reaction.php
- * Chemin : bastien59960/reactions/notification/type/reaction.php
+ * Chemin : ext/bastien59960/reactions/notification/type/reaction.php
  * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/notification/type/reaction.php
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Définit le type de notification "Réaction à un message". Cette classe est
  * responsable de la création des notifications instantanées (dans la cloche)
  * lorsqu'un utilisateur réagit au message d'un autre.
  *
- * Informations reçues :
- * - Via le `notification_manager` : un tableau de données contenant `post_id`,
- *   `topic_id`, `post_author`, `reacter`, `reacter_username`, et `emoji`.
- * Test insertion commentaire pour UTF8
+ * Cette classe implémente les méthodes requises par l'interface de notification
+ * de phpBB pour trouver les destinataires, générer le texte et le lien de la
+ * notification, et la stocker en base de données.
  * Elle implémente les méthodes requises par phpBB pour trouver les destinataires,
  * générer le texte et le lien de la notification, et la stocker en base de données.
  *
@@ -109,16 +108,15 @@ class reaction extends base
         template $template                  // 12. @template
     ) {
         // Appeler le constructeur de la classe parente
-        // CORRECTION : L'ordre des arguments doit être strictement celui attendu par la classe `base`.
-        // L'ordre correct est : user, language, db, auth, root_path, php_ext, notifications_table
+        // L'ordre attendu par \phpbb\notification\type\base est : user, language, db, auth, root_path, php_ext, notifications_table
 		parent::__construct(
-			$user,
-			$language, // <- Doit être en 2ème position
-			$db,
-			$auth,
-			$phpbb_root_path,
-			$php_ext,
-			$notifications_table
+            $user,
+            $language,
+            $db,
+            $auth,
+            $phpbb_root_path,
+            $php_ext,
+            $notifications_table
         );
 
         // Stocker les dépendances spécifiques à cette classe
