@@ -476,8 +476,8 @@ class notification_task extends \phpbb\cron\task\base
             else error_log($lang_load_message);
 
             // CORRECTION : Chargement simplifié - phpBB gère automatiquement la langue
-            $this->language->add_lang('common', 'bastien59960/reactions');
-            $this->language->add_lang(['common', 'email']);
+            $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
+
             
             // 2. Charger le template d'e-mail en utilisant la syntaxe standard de phpBB.
             $template_load_message = "$log_prefix Chargement du template '@bastien59960_reactions/email/reaction_digest' pour la langue '$author_lang'.";
