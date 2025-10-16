@@ -27,7 +27,7 @@ $lang = array_merge($lang ?? [], array(
 	'NOTIFICATION_TYPE_REACTION'         => '<strong>%1$s</strong> a réagi à votre message avec %2$s',
 	'NOTIFICATION_TYPE_REACTION_TITLE'   => 'Quelqu\'un a réagi à l\'un de vos messages',
 	'NOTIFICATION_TYPE_REACTION_DESC'    => 'Recevoir une notification lorsqu\'un utilisateur réagit à l\'un de vos messages.',
-
+	
 	// Type de notification : Résumé par e-mail (cron)
 	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé des réactions par e-mail',
 	'NOTIFICATION_TYPE_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des réactions à vos messages.',
