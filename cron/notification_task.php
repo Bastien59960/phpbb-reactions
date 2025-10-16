@@ -70,7 +70,9 @@ class notification_task extends \phpbb\cron\task\base
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
-        $table_prefix
+        $table_prefix,
+        \phpbb\notification\messenger_factory $messenger_factory,
+        \Symfony\Component\Console\Output\OutputInterface $io = null
     ) {
         $this->db = $db;
         $this->config = $config;
@@ -82,6 +84,8 @@ class notification_task extends \phpbb\cron\task\base
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
+        $this->messenger_factory = $messenger_factory;
+        $this->io = $io;
     }
 
     /**
@@ -105,13 +109,7 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
-        // Détecter si on est en mode CLI pour afficher les logs dans la console
-        $io = null;
-        if (defined('IN_CLI') && IN_CLI)
-        {
-            $container = \phpbb\di\container_builder::get_container();
-            $io = $container->get('console.io');
-        }
+        $io = $this->io;
 
         // Récupérer le délai anti-spam (en minutes, défaut : 45)
         $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
@@ -492,8 +490,7 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $container = \phpbb\di\container_builder::get_container();
-            $messenger = $container->get('messenger_factory')->get_messenger('email');
+            $messenger = $this->messenger_factory->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
