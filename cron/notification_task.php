@@ -71,7 +71,6 @@ class notification_task extends \phpbb\cron\task\base
         $php_ext,
         $table_prefix
     ) {
-        parent::__construct();
         $this->db                   = $db;
         $this->config               = $config;
         $this->notification_manager = $notification_manager;
