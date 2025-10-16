@@ -78,13 +78,12 @@ class reaction extends base
      * 7. notifications_table → Table des notifications
      * 
      * Les 5 suivants sont spécifiques à cette extension :
-     * 8. config              → Configuration
-     * 9. user_loader         → Chargeur d'utilisateurs
-     * 10. request            → Gestionnaire de requêtes
-     * 11. template           → Moteur de templates
-     * 12. reactions_helper   → Helper personnalisé
+     * 8. config            → Configuration
+     * 9. user_loader       → Chargeur d'utilisateurs
+     * 10. template         → Moteur de templates
+     * 11. reactions_helper → Helper personnalisé
      * 
-     * @param driver_interface  $db                  Base de données
+     * @param driver_interface  $db                  Base de données 
      * @param language          $language            Gestionnaire de langues
      * @param user|null         $user                Utilisateur courant
      * @param auth              $auth                Autorisations
@@ -92,19 +91,19 @@ class reaction extends base
      * @param config|null       $config              Configuration 
      * @param template|null     $template            Templates
      */
-	public function __construct(
-		driver_interface $db,
-		language $language,
-		user $user,
-		auth $auth,
-		string $phpbb_root_path,
-		string $php_ext,
-		$notifications_table,
-		config $config,
-		user_loader $user_loader,
-		template $template,
-		reactions_helper $reactions_helper
-	) {
+    public function __construct(
+        driver_interface $db,
+        language $language,
+        user $user,
+        auth $auth,
+        string $phpbb_root_path,
+        string $php_ext,
+        $notifications_table,
+        config $config,
+        user_loader $user_loader,
+        template $template,
+        reactions_helper $reactions_helper
+    ) {
         // Appeler le constructeur de la classe parente
 		parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
 
