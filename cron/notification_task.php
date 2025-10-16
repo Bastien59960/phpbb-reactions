@@ -415,7 +415,7 @@ class notification_task extends \phpbb\cron\task\base
             $messenger = new \messenger(false, $this->template);
 
             // Définir explicitement le template HTML
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
+            $messenger->template('reaction_digest', 'bastien59960_reactions', $author_lang);
             $messenger->to($author_email, $author_name);
 
             // Ajouter les headers pour HTML et UTF-8
