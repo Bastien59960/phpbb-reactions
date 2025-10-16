@@ -49,8 +49,13 @@ sleep 0.45
 # ==============================================================================
 echo "───[ 1️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
 sleep 0.45
-php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv
-check_status "Extension désactivée."
+
+# On tente de désactiver l'extension. On ajoute `|| true` pour que le script ne
+# s'arrête pas si l'extension est déjà désactivée (ce qui produit une erreur).
+# Le script devient ainsi "ré-exécutable" même après un échec.
+php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv || true
+
+check_status "Tentative de désactivation de l'extension terminée."
 
 # ==============================================================================
 # 2️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
