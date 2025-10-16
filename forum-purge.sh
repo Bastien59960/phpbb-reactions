@@ -170,7 +170,7 @@ echo ""
 echo "───[ 🔍  VÉRIFICATION FINALE DE LA TÂCHE CRON ]───────────────────────────────"
 sleep 0.45
 
-CRON_TASK_NAME="bastien59960.reactions.notificationtask"
+CRON_TASK_NAME="bastien59960.reactions.notification_task"
 CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 
 echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
