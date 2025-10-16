@@ -98,8 +98,6 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%core.table_prefix%'
-            - '@messenger_factory'
-            - '@?console.io'
         tags:
             - { name: cron.task }
 

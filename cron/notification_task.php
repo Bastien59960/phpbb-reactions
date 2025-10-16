@@ -60,7 +60,6 @@ class notification_task extends \phpbb\cron\task\base
      * Constructeur
      */
     public function __construct(
-        // L'ordre des arguments doit correspondre exactement à services.yml
         \phpbb\db\driver\driver_interface $db,
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager,
@@ -72,16 +71,17 @@ class notification_task extends \phpbb\cron\task\base
         $php_ext,
         $table_prefix
     ) {
-        $this->db = $db;
-        $this->config = $config;
+        parent::__construct();
+        $this->db                   = $db;
+        $this->config               = $config;
         $this->notification_manager = $notification_manager;
-        $this->user_loader = $user_loader;
-        $this->language = $language;
-        $this->template = $template;
+        $this->user_loader          = $user_loader;
+        $this->language             = $language;
+        $this->template             = $template;
         $this->post_reactions_table = $post_reactions_table;
-        $this->phpbb_root_path = $phpbb_root_path;
-        $this->php_ext = $php_ext;
-        $this->table_prefix = $table_prefix;
+        $this->phpbb_root_path      = $phpbb_root_path;
+        $this->php_ext              = $php_ext;
+        $this->table_prefix         = $table_prefix;
     }
 
     /**
@@ -97,7 +97,12 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
-        $io = $this->io;
+        // Détecter si on est en mode CLI pour afficher les logs dans la console
+        $io = null;
+        if ($this->container->has('console.io'))
+        {
+            $io = $this->container->get('console.io');
+        }
 
         // Récupérer le délai anti-spam (en minutes, défaut : 45)
         $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
@@ -478,8 +483,7 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $container = \phpbb\di\container_builder::get_container();
-            $messenger = $container->get('messenger_factory')->get_messenger('email');
+            $messenger = $this->container->get('messenger_factory')->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);

@@ -19,6 +19,9 @@ if (!defined('IN_PHPBB'))
 
 class reaction_email_digest extends \phpbb\notification\type\base
 {
+    /** @var \phpbb\language\language */
+    protected $language;
+
     /** @var \phpbb\config\config */
     protected $config;
 
@@ -43,6 +46,9 @@ class reaction_email_digest extends \phpbb\notification\type\base
             $notifications_table,
             $language
         );
+
+        $this->language = $language;
+        $this->config = $this->container->get('config');
     }
 
     /**
