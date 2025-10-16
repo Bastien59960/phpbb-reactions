@@ -96,6 +96,7 @@ $lang = array_merge($lang, [
 	'REACTIONS_DIGEST_SIGNATURE'    => 'Thank you for your participation on %s.', // %s will be replaced by the site name
 	'REACTIONS_PREFERENCES_HINT'    => 'You can manage your notification preferences in your User Control Panel.',
 	'REACTIONS_DIGEST_LINE'         => '%1$s by %2$s on %3$s', // %1$=emoji, %2$=username, %3$=date
+	'REACTIONS_DIGEST_LINE_HTML'    => 'by <a href="{posts.reactions.PROFILE_URL_ABSOLUTE}">{posts.reactions.REACTER_NAME}</a> on {posts.reactions.TIME_FORMATTED}',
 	'NO_SUBJECT'                    => '(No subject)',
 
 	// =============================================================================
