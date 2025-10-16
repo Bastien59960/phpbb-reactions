@@ -99,6 +99,7 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%core.table_prefix%'
+            - '@service_container'
         tags:
             - { name: cron.task }
 

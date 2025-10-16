@@ -53,6 +53,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var string Préfixe des tables phpBB */
     protected $table_prefix;
 
+    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
+    protected $container;
+
     /**
      * Constructeur
      */
@@ -67,7 +70,8 @@ class notification_task extends \phpbb\cron\task\base
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
-        $table_prefix
+        $table_prefix,
+        \Symfony\Component\DependencyInjection\ContainerInterface $container
     ) {
         $this->db = $db;
         $this->config = $config;
@@ -80,6 +84,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
+        $this->container = $container;
     }
 
     /**
@@ -103,6 +108,13 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
+        // Détecter si on est en mode CLI pour afficher les logs dans la console
+        $io = null;
+        if ($this->container->has('console.io'))
+        {
+            $io = $this->container->get('console.io');
+        }
+
         // Récupérer le délai anti-spam (en minutes, défaut : 45)
         $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
         if ($spam_minutes <= 0)
@@ -126,7 +138,12 @@ class notification_task extends \phpbb\cron\task\base
         $threshold_timestamp = time() - $spam_delay; // $spam_delay est en secondes
         $run_start = microtime(true);
 
-        error_log('[Reactions Cron] Run start (interval=' . $spam_minutes . ' min, threshold=' . date('Y-m-d H:i:s', $threshold_timestamp) . ')');
+        $start_message = '[Reactions Cron] Run start (interval=' . $spam_minutes . ' min, threshold=' . date('Y-m-d H:i:s', $threshold_timestamp) . ')';
+        if ($io) {
+            $io->writeln("<info>$start_message</info>");
+        } else {
+            error_log($start_message);
+        }
 
         // Récupérer toutes les réactions non notifiées plus anciennes que le seuil
         $sql = 'SELECT r.reaction_id, r.post_id, r.user_id AS reacter_id, r.reaction_emoji, r.reaction_time,
@@ -246,7 +263,12 @@ class notification_task extends \phpbb\cron\task\base
             if (empty($author_email))
             {
                 $skipped_no_email += $reaction_total_for_author;
-                error_log('[Reactions Cron] Skip user_id ' . $author_id . ' (aucune adresse e-mail).');
+                $skip_message = '[Reactions Cron] Skip user_id ' . $author_id . ' (aucune adresse e-mail).';
+                if ($io) {
+                    $io->writeln("<comment>$skip_message</comment>");
+                } else {
+                    error_log($skip_message);
+                }
                 $this->mark_reactions_as_handled($data['mark_ids']);
                 continue;
             }
@@ -257,7 +279,12 @@ class notification_task extends \phpbb\cron\task\base
             if ($disable_cron_email === true)
             {
                 $skipped_pref += $reaction_total_for_author;
-                error_log('[Reactions Cron] Skip user_id ' . $author_id . ' (préférence e-mail désactivée).');
+                $skip_message = '[Reactions Cron] Skip user_id ' . $author_id . ' (préférence e-mail désactivée).';
+                if ($io) {
+                    $io->writeln("<comment>$skip_message</comment>");
+                } else {
+                    error_log($skip_message);
+                }
                 // Utilisateur a désactivé les récap emails
                 $this->mark_reactions_as_handled($data['mark_ids']);
                 continue;
@@ -275,7 +302,7 @@ class notification_task extends \phpbb\cron\task\base
 
             $since_time_formatted = date('d/m/Y H:i', $threshold_timestamp);
             // Envoyer l'e-mail récapitulatif
-            $result = $this->send_digest_email($data, $since_time_formatted);
+            $result = $this->send_digest_email($data, $since_time_formatted, $io);
 
             if (!is_array($result))
             {
@@ -295,14 +322,20 @@ class notification_task extends \phpbb\cron\task\base
             else
             {
                 $skipped_failed += $reaction_total_for_author;
-                error_log('[Reactions Cron] Envoi non abouti pour user_id ' . $author_id . ' (status=' . $result['status'] . ').');
+                $fail_message = '[Reactions Cron] Envoi non abouti pour user_id ' . $author_id . ' (status=' . $result['status'] . ').';
+                if ($io) {
+                    $io->writeln("<error>$fail_message</error>");
+                } else {
+                    error_log($fail_message);
+                }
             }
         }
 
         $this->config->set('bastien59960_reactions_cron_last_run', time());
 
         $duration_ms = (microtime(true) - $run_start) * 1000;
-        error_log(sprintf(
+
+        $summary_message = sprintf(
             '[Reactions Cron] Run complete in %.1fms (authors=%d, reactions=%d, sent=%d, no_email=%d, pref_off=%d, empty=%d, failed=%d)',
             $duration_ms,
             $processed_authors,
@@ -312,7 +345,13 @@ class notification_task extends \phpbb\cron\task\base
             $skipped_pref,
             $skipped_empty,
             $skipped_failed
-        ));
+        );
+
+        if ($io) {
+            $io->writeln("<info>$summary_message</info>");
+        } else {
+            error_log($summary_message);
+        }
     }
 
     /**
@@ -400,18 +439,23 @@ class notification_task extends \phpbb\cron\task\base
      *
      * @param array $data Données groupées pour l'auteur
      * @param string $since_time_formatted Date formatée du début de la période.
+     * @param \Symfony\Component\Console\Output\OutputInterface|null $io L'objet de sortie console, si disponible.
      * @return array{status:string,error?:string} Statut d'envoi (sent, skipped_empty, failed).
      */
-    protected function send_digest_email(array $data, string $since_time_formatted)
+    protected function send_digest_email(array $data, string $since_time_formatted, $io = null)
     {
         $author_id    = (int) $data['author_id'];
         $author_email = $data['author_email'];
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
 
+        $log_prefix = '[Reactions Cron]';
+
         if (empty($data['posts']))
         {
-            error_log('[Reactions Cron] Aucun contenu à envoyer pour user_id ' . $author_id . ' (récapitulatif vide).');
+            $message = "$log_prefix Aucun contenu à envoyer pour user_id $author_id (récapitulatif vide).";
+            if ($io) $io->writeln("<comment>$message</comment>");
+            else error_log($message);
             return ['status' => 'skipped_empty'];
         }
 
@@ -425,7 +469,7 @@ class notification_task extends \phpbb\cron\task\base
             $this->language->add_lang(['common', 'email'], false, false, $author_lang);
 
             // 2. Charger le template d'e-mail (HTML + TXT)
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
+            $messenger->template('reaction_digest', $author_lang);
 
             // 3. Définir le destinataire
             $messenger->to($author_email, $author_name);
@@ -455,17 +499,26 @@ class notification_task extends \phpbb\cron\task\base
             // 6. Envoyer l'e-mail
             $messenger->send(NOTIFY_EMAIL);
 
-            error_log('[Reactions Cron] E-mail digest envoyé à ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
+            $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
+            if ($io) $io->writeln("<info>$message</info>");
+            else error_log($message);
+
             return [
                 'status' => 'sent',
             ];
         }
         catch (\Exception $e)
         {
-            // Log d'erreur détaillé pour le débogage
-            $error_details = "File: " . $e->getFile() . " Line: " . $e->getLine();
-            error_log('[Reactions Cron] Exception in send_digest_email for user_id ' . $author_id . ': ' . $e->getMessage());
-            error_log('[Reactions Cron] Exception details: ' . $error_details);
+            $error_message = "$log_prefix Exception in send_digest_email for user_id $author_id: " . $e->getMessage();
+            $error_details = "$log_prefix Exception details: File: " . $e->getFile() . " Line: " . $e->getLine();
+
+            if ($io) {
+                $io->writeln("<error>$error_message</error>");
+                $io->writeln("<error>$error_details</error>");
+            } else {
+                error_log($error_message);
+                error_log($error_details);
+            }
 
             return [
                 'status' => 'failed',
