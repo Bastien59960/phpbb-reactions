@@ -182,7 +182,7 @@ class notification_task extends \phpbb\cron\task\base
                 continue;
             }
 
-            $subject_plain = ($post_subject !== '') ? strip_tags($post_subject) : $this->language->lang('NO_SUBJECT');
+            $subject_plain = ($post_subject !== '') ? html_entity_decode(strip_tags($post_subject), ENT_QUOTES, 'UTF-8') : $this->language->lang('NO_SUBJECT');
             $post_url_absolute = generate_board_url() . "/viewtopic.{$this->php_ext}?p={$post_id}#p{$post_id}";
             $profile_url_absolute = generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$reacter_id}";
 
@@ -425,7 +425,7 @@ class notification_task extends \phpbb\cron\task\base
 
             // Variables globales pour le template
             $messenger->assign_vars([
-                'USERNAME'         => htmlspecialchars($author_name),
+                'USERNAME'         => $author_name,
                 'DIGEST_SINCE'     => $since_time_formatted,
                 'DIGEST_UNTIL'     => date('d/m/Y H:i'),
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
@@ -439,8 +439,8 @@ class notification_task extends \phpbb\cron\task\base
             {
                 // Étape 1 : Assigner les données du bloc parent 'posts'
                 $messenger->assign_block_vars('posts', [
-                    'SUBJECT_PLAIN'     => htmlspecialchars($post_data['SUBJECT_PLAIN']),
-                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'], // Les URLs n'ont pas besoin d'être échappées ici
                 ]);
 
                 // Étape 2 : Itérer sur les réactions et les assigner au sous-bloc 'posts.reactions'
@@ -448,7 +448,7 @@ class notification_task extends \phpbb\cron\task\base
                 {
                     // La syntaxe correcte est d'utiliser le nom du bloc parent comme préfixe.
                     $messenger->assign_block_vars('posts.reactions', [
-                        'REACTER_NAME'         => htmlspecialchars($reaction['REACTER_NAME']),
+                        'REACTER_NAME'         => $reaction['REACTER_NAME'],
                         'EMOJI'                => $reaction['EMOJI'],
                         'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
                         'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
