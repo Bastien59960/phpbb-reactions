@@ -160,11 +160,20 @@ class notification_task extends \phpbb\cron\task\base
 
         $result = $this->db->sql_query($sql);
 
+        $total_reactions_found = $this->db->sql_affectedrows($result);
+        $found_message = '[Reactions Cron] Found ' . $total_reactions_found . ' unnotified reactions to process.';
+        if ($io) {
+            $io->writeln("<info>$found_message</info>");
+        } else {
+            error_log($found_message);
+        }
+
         // Structure de regroupement par auteur
         $by_author = [];
 
         while ($row = $this->db->sql_fetchrow($result))
         {
+            // Extraction des données de la ligne
             $reaction_id   = (int) $row['reaction_id'];
             $post_id       = (int) $row['post_id'];
             $author_id     = isset($row['author_id']) ? (int) $row['author_id'] : 0;
@@ -181,6 +190,12 @@ class notification_task extends \phpbb\cron\task\base
             if ($author_id <= 0)
             {
                 // Post orphelin -> marquer pour éviter les boucles
+                $orphan_message = '[Reactions Cron] Skipping reaction_id ' . $reaction_id . ' (orphan post, no author). Marking as handled.';
+                if ($io) {
+                    $io->writeln("<comment>$orphan_message</comment>");
+                } else {
+                    error_log($orphan_message);
+                }
                 $this->mark_reactions_as_handled([$reaction_id]);
                 continue;
             }
@@ -200,6 +215,12 @@ class notification_task extends \phpbb\cron\task\base
             // Ignorer les réactions où l'auteur réagit à son propre message.
             if ($author_id === $reacter_id)
             {
+                $self_react_message = '[Reactions Cron] Skipping reaction_id ' . $reaction_id . ' (self-reaction). Marking as handled.';
+                if ($io) {
+                    $io->writeln("<comment>$self_react_message</comment>");
+                } else {
+                    error_log($self_react_message);
+                }
                 $this->mark_reactions_as_handled([$reaction_id]);
                 continue;
             }
@@ -235,6 +256,12 @@ class notification_task extends \phpbb\cron\task\base
         // Si rien à traiter
         if (empty($by_author))
         {
+            $nothing_message = '[Reactions Cron] No reactions to process after grouping. Exiting.';
+            if ($io) {
+                $io->writeln("<info>$nothing_message</info>");
+            } else {
+                error_log($nothing_message);
+            }
             return;
         }
 
@@ -293,6 +320,12 @@ class notification_task extends \phpbb\cron\task\base
             // Si, après tous les filtres, il n'y a plus de posts avec des réactions valides, on ignore.
             if (empty($data['posts']))
             {
+                $empty_posts_message = '[Reactions Cron] Skip user_id ' . $author_id . ' (no valid posts left after filtering).';
+                if ($io) {
+                    $io->writeln("<comment>$empty_posts_message</comment>");
+                } else {
+                    error_log($empty_posts_message);
+                }
                 $this->mark_reactions_as_handled($data['mark_ids']);
                 continue;
             }
