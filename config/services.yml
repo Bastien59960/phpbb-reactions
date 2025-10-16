@@ -20,67 +20,67 @@ services:
     # =========================================================================
     # HELPER CENTRALISÉ
     # =========================================================================
-    bastien59960.reactions.helper:
-        class: bastien59960\reactions\controller\helper
-        arguments:
-            - '@dbal.conn'                  # driver_interface
-            - '@user'                       # phpbb\user
-            - '@template'                   # phpbb\template\template
-            - '@language'                   # phpbb\language\language
-            - '@controller.helper'          # phpbb\controller\helper
-            - '%tables.post_reactions%'     # nom de la table des réactions
-            - '%tables.posts%'              # nom de la table des messages
+    #bastien59960.reactions.helper:
+    #    class: bastien59960\reactions\controller\helper
+    #    arguments:
+    #        - '@dbal.conn'                  # driver_interface
+    #        - '@user'                       # phpbb\user
+    #        - '@template'                   # phpbb\template\template
+    #        - '@language'                   # phpbb\language\language
+    #        - '@controller.helper'          # phpbb\controller\helper
+    #        - '%tables.post_reactions%'     # nom de la table des réactions
+    #        - '%tables.posts%'              # nom de la table des messages
 
     # =========================================================================
     # LISTENER D'ÉVÉNEMENTS
     # =========================================================================
-    bastien59960.reactions.listener:
-        class: bastien59960\reactions\event\listener
-        arguments:
-            - '@dbal.conn'                  # 1. Base de données
-            - '@user'                       # 2. Utilisateur courant
-            - '%tables.post_reactions%'     # 3. Table des réactions
-            - '%tables.posts%'              # 4. Table des messages
-            - '@template'                   # 5. Moteur de templates
-            - '@language'                   # 6. Langues
-            - '@bastien59960.reactions.helper' # 7. Helper maison
-            - '@config'                     # 8. Configuration
-            - '%core.root_path%'            # 9. Chemin racine phpBB
-            - '%core.php_ext%'              # 10. Extension PHP
-        tags:
-            - { name: event.listener }
+    #bastien59960.reactions.listener:
+    #    class: bastien59960\reactions\event\listener
+    #    arguments:
+    #        - '@dbal.conn'                  # 1. Base de données
+    #        - '@user'                       # 2. Utilisateur courant
+    #        - '%tables.post_reactions%'     # 3. Table des réactions
+    #        - '%tables.posts%'              # 4. Table des messages
+    #        - '@template'                   # 5. Moteur de templates
+    #        - '@language'                   # 6. Langues
+    #        - '@bastien59960.reactions.helper' # 7. Helper maison
+    #        - '@config'                     # 8. Configuration
+    #        - '%core.root_path%'            # 9. Chemin racine phpBB
+    #        - '%core.php_ext%'              # 10. Extension PHP
+    #    tags:
+    #        - { name: event.listener }
 
     # =========================================================================
     # CONTRÔLEUR AJAX
     # =========================================================================
-    bastien59960.reactions.ajax:
-        class: bastien59960\reactions\controller\ajax
-        arguments:
-            - '@dbal.conn'
-            - '@user'
-            - '@request'
-            - '@auth'
-            - '@language'
-            - '%tables.post_reactions%'
-            - '%tables.posts%'
-            - '%tables.topics%'
-            - '%tables.forums%'
-            - '%core.root_path%'
-            - '%core.php_ext%'
-            - '@config'
-            - '@notification_manager'
-            - '@bastien59960.reactions.helper'
+    #bastien59960.reactions.ajax:
+    #    class: bastien59960\reactions\controller\ajax
+    #    arguments:
+    #        - '@dbal.conn'
+    #        - '@user'
+    #        - '@request'
+    #        - '@auth'
+    #        - '@language'
+    #        - '%tables.post_reactions%'
+    #        - '%tables.posts%'
+    #        - '%tables.topics%'
+    #        - '%tables.forums%'
+    #        - '%core.root_path%'
+    #        - '%core.php_ext%'
+    #        - '@config'
+    #        - '@notification_manager'
+    #        - '@bastien59960.reactions.helper'
 
     # =========================================================================
     # CONTRÔLEUR DE TEST
     # =========================================================================
-    bastien59960.reactions.test:
-        class: bastien59960\reactions\controller\test
-        arguments:
-            - '@dbal.conn'
-            - '@user'
-            - '%tables.post_reactions%'
-            - '%tables.posts%'
+    #bastien59960.reactions.test:
+    #    class: bastien59960\reactions\controller\test
+    #    arguments:
+    #        - '@dbal.conn'
+    #        - '@user'
+    #        - '%tables.post_reactions%'
+    #        - '%tables.posts%'
 
     # =========================================================================
     # TÂCHE CRON DE TEST (MINIMALISTE)
@@ -115,57 +115,57 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)
     # =========================================================================
-    bastien59960.reactions.notification:
-        class: bastien59960\reactions\notification\type\reaction
-        arguments:
-            - '@dbal.conn'                      # 1. db
-            - '@language'                       # 2. language
-            - '@user'                           # 3. user
-            - '@auth'                           # 4. auth
-            - '%core.root_path%'                # 5. phpbb_root_path
-            - '%core.php_ext%'                  # 6. php_ext
-            - '%core.table_prefix%notifications' # 7. notifications_table
-            - '@config'                         # 8. config
-            - '@user_loader'                    # 9. user_loader
-            - '@bastien59960.reactions.helper'  # 10. reactions_helper
-            - '@request'                        # 11. request
-            - '@template'                       # 12. template
-        tags:
-            - { name: notification.type }
+    #bastien59960.reactions.notification:
+    #    class: bastien59960\reactions\notification\type\reaction
+    #    arguments:
+    #        - '@dbal.conn'                      # 1. db
+    #        - '@language'                       # 2. language
+    #        - '@user'                           # 3. user
+    #        - '@auth'                           # 4. auth
+    #        - '%core.root_path%'                # 5. phpbb_root_path
+    #        - '%core.php_ext%'                  # 6. php_ext
+    #        - '%core.table_prefix%notifications' # 7. notifications_table
+    #        - '@config'                         # 8. config
+    #        - '@user_loader'                    # 9. user_loader
+    #        - '@bastien59960.reactions.helper'  # 10. reactions_helper
+    #        - '@request'                        # 11. request
+    #        - '@template'                       # 12. template
+    #    tags:
+    #        - { name: notification.type }
 
     # =========================================================================
     # TYPE DE NOTIFICATION : DIGEST COURRIEL
     # =========================================================================
-    bastien59960.reactions.notification.cron_email:
-        class: bastien59960\reactions\notification\type\reaction_email_digest
-        arguments:
-            - '@dbal.conn'                      # 1. driver_interface
-            - '@language'                       # 2. language
-            - '@user'                           # 3. user
-            - '@auth'                           # 4. auth
-            - '%core.root_path%'                # 5. phpbb_root_path
-            - '%core.php_ext%'                  # 6. php_ext
-            - '%core.table_prefix%notifications' # 7. notifications_table
-        tags:
-            - { name: notification.type }
+    #bastien59960.reactions.notification.cron_email:
+    #    class: bastien59960\reactions\notification\type\reaction_email_digest
+    #    arguments:
+    #        - '@dbal.conn'                      # 1. driver_interface
+    #        - '@language'                       # 2. language
+    #        - '@user'                           # 3. user
+    #        - '@auth'                           # 4. auth
+    #        - '%core.root_path%'                # 5. phpbb_root_path
+    #        - '%core.php_ext%'                  # 6. php_ext
+    #        - '%core.table_prefix%notifications' # 7. notifications_table
+    #    tags:
+    #        - { name: notification.type }
 
-    notification.type.reaction:
-        alias: bastien59960.reactions.notification
-        public: true
+    #notification.type.reaction:
+    #    alias: bastien59960.reactions.notification
+    #    public: true
 
-    notification.type.reaction_email_digest:
-        alias: bastien59960.reactions.notification.cron_email
-        public: true
+    #notification.type.reaction_email_digest:
+    #    alias: bastien59960.reactions.notification.cron_email
+    #    public: true
 
     # =========================================================================
     # CONTRÔLEUR UCP (PREFERENCES UTILISATEURS)
     # =========================================================================
-    bastien59960.reactions.controller.ucp_reactions:
-        class: bastien59960\reactions\controller\ucp_reactions
-        arguments:
-            - '@user'                   # 1. user
-            - '@dbal.conn'              # 2. driver_interface
-            - '@request'                # 3. request
-            - '@template'               # 4. template
-            - '%core.table_prefix%'     # 5. table_prefix
-            - '@controller.helper'      # 6. controller.helper
+    #bastien59960.reactions.controller.ucp_reactions:
+    #    class: bastien59960\reactions\controller\ucp_reactions
+    #    arguments:
+    #        - '@user'                   # 1. user
+    #        - '@dbal.conn'              # 2. driver_interface
+    #        - '@request'                # 3. request
+    #        - '@template'               # 4. template
+    #        - '%core.table_prefix%'     # 5. table_prefix
+    #        - '@controller.helper'      # 6. controller.helper
