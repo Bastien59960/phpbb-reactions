@@ -109,17 +109,17 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@dbal.conn'
-            - '@language'
-            - '@user'
-            - '@auth'
-            - '%core.root_path%'
-            - '%core.php_ext%'
-            - '%core.table_prefix%notifications'
-            - '@config'
-            - '@user_loader'
-            - '@template'
-            - '@bastien59960.reactions.helper'
+            - '@dbal.conn'                          # 1. db
+            - '@language'                           # 2. language
+            - '@user'                               # 3. user
+            - '@auth'                               # 4. auth
+            - '%core.root_path%'                    # 5. phpbb_root_path
+            - '%core.php_ext%'                      # 6. php_ext
+            - '%core.table_prefix%notifications'    # 7. notifications_table
+            - '@config'                             # 8. config
+            - '@user_loader'                        # 9. user_loader
+            - '@template'                           # 10. template
+            - '@bastien59960.reactions.helper'      # 11. reactions_helper
         tags:
             - { name: notification.type }
 

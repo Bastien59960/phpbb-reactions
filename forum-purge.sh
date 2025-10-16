@@ -49,7 +49,7 @@ sleep 1
 # ==============================================================================
 echo "───[ 1️⃣  PURGE DU CACHE (AVANT) ]────────────────────────────────"
 sleep 1
-php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge
+php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
 check_status "Cache initial purgé."
 
 # ==============================================================================
@@ -57,7 +57,7 @@ check_status "Cache initial purgé."
 # ==============================================================================
 echo "───[ 2️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
 sleep 1
-php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions
+php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv
 check_status "Extension désactivée."
 
 # ==============================================================================
@@ -92,7 +92,7 @@ check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
 # ==============================================================================
 echo "───[ 5️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
 sleep 1
-php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions
+php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv
 check_status "Extension réactivée."
 
 # ==============================================================================
@@ -100,7 +100,7 @@ check_status "Extension réactivée."
 # ==============================================================================
 echo "───[ 6️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
 sleep 1
-php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge
+php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
 check_status "Cache purgé et container reconstruit."
 
 # ==============================================================================
@@ -108,7 +108,7 @@ check_status "Cache purgé et container reconstruit."
 # ==============================================================================
 echo "───[ 7️⃣  TEST FINAL DU CRON ]──────────────────────────────────"
 sleep 1
-php "$FORUM_ROOT/bin/phpbbcli.php" cron:run
+php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv
 check_status "Cron exécuté."
 
 
@@ -138,12 +138,6 @@ check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 # ==============================================================================
 # 🔍 CHECK FINAL EXTENSION STATUS (Version corrigée avec l'astérisque)
 # ==============================================================================
-# ... (le reste de votre script ici) ...
-
-
-# ==============================================================================
-# 🔍 CHECK FINAL EXTENSION STATUS (Version corrigée avec l'astérisque)
-# ==============================================================================
 echo ""
 echo "───[ 🔍  VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]──────────────────────────────"
 sleep 1
@@ -162,4 +156,23 @@ if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
     echo -e "${GREEN}✅ Extension détectée comme ACTIVE (présence du '*') — tout est OK.${NC}"
 else
     echo -e "${WHITE_ON_RED}⚠️ ATTENTION : L'extension ne ressort pas comme active (pas de '*' au début).${NC}"
+fi
+
+# ==============================================================================
+# 🔍 CHECK FINAL CRON TASK STATUS
+# ==============================================================================
+echo ""
+echo "───[ 🔍  VÉRIFICATION FINALE DE LA TÂCHE CRON ]───────────────────────────────"
+sleep 1
+
+CRON_TASK_NAME="bastien59960.reactions.notificationtask"
+CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
+
+echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
+echo "$CRON_LIST_OUTPUT"
+
+if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
+    echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}"
+else
+    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}"
 fi
