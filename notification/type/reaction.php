@@ -95,18 +95,18 @@ class reaction extends base
      * @param template|null     $template            Templates
      */
     public function __construct(
-        driver_interface $db,                  // 1. @dbal.conn
-        language $language,                    // 2. @language
-        user $user,                            // 3. @user
-        auth $auth,                            // 4. @auth
-        string $phpbb_root_path,               // 5. %core.root_path%
-        string $php_ext,                       // 6. %core.php_ext%
-        string $notifications_table,           // 7. %core.table_prefix%notifications
-        config $config,                        // 8. @config
-        user_loader $user_loader,              // 9. @user_loader
-        reactions_helper $reactions_helper,    // 10. @bastien59960.reactions.helper
-        request_interface $request,            // 11. @request
-        template $template                     // 12. @template
+        driver_interface $db,               // 1. @dbal.conn
+        language $language,                 // 2. @language
+        user $user,                         // 3. @user
+        auth $auth,                         // 4. @auth
+        string $phpbb_root_path,            // 5. %core.root_path%
+        string $php_ext,                    // 6. %core.php_ext%
+        string $notifications_table,        // 7. %core.table_prefix%notifications
+        config $config,                     // 8. @config
+        user_loader $user_loader,           // 9. @user_loader
+        reactions_helper $reactions_helper, // 10. @bastien59960.reactions.helper
+        request_interface $request,         // 11. @request
+        template $template                  // 12. @template
     ) {
         // Appeler le constructeur de la classe parente
         // CORRECTION : L'ordre des arguments doit être strictement celui attendu par la classe `base`.
@@ -119,12 +119,15 @@ class reaction extends base
 			$phpbb_root_path,
 			$php_ext,
 			$notifications_table
-		);
+        );
 
         // Stocker les dépendances spécifiques à cette classe
+        $this->db = $db;
+        $this->user = $user;
+        $this->auth = $auth;
         $this->notifications_table = $notifications_table;
         $this->config = $config;
-        $this->language = $language;
+        // $this->language est déjà défini par le parent
         $this->user_loader = $user_loader;
 		$this->template = $template;
         $this->reactions_helper = $reactions_helper;
