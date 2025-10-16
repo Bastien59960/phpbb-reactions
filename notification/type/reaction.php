@@ -101,7 +101,7 @@ class reaction extends base
         auth $auth,                            // 4. @auth
         string $phpbb_root_path,               // 5. %core.root_path%
         string $php_ext,                       // 6. %core.php_ext%
-        $notifications_table,                 // 7. %core.table_prefix%notifications
+        string $notifications_table,           // 7. %core.table_prefix%notifications
         config $config,                        // 8. @config
         user_loader $user_loader,              // 9. @user_loader
         reactions_helper $reactions_helper,    // 10. @bastien59960.reactions.helper
