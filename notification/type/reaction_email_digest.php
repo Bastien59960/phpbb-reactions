@@ -36,10 +36,7 @@ class reaction_email_digest extends \phpbb\notification\type\base
         \phpbb\auth\auth $auth,
         $phpbb_root_path,
         $php_ext,
-        $notifications_table,
-        \phpbb\user_loader $user_loader,
-        \phpbb\template\template $template,
-        \phpbb\config\config $config
+        $notifications_table
     )
     {
         // 1. Appel explicite du constructeur parent
@@ -52,11 +49,6 @@ class reaction_email_digest extends \phpbb\notification\type\base
             $notifications_table,
             $language
         );
-
-        // 2. Stockage des dépendances spécifiques
-        $this->user_loader = $user_loader;
-        $this->template = $template;
-        $this->config = $config;
     }
 
     /**
