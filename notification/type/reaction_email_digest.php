@@ -36,13 +36,13 @@ class reaction_email_digest extends \phpbb\notification\type\base
     {
         // 1. Appel explicite du constructeur parent
         parent::__construct(
-            $db,
-            $language,
             $user,
             $auth,
+            $db,
             $phpbb_root_path,
             $php_ext,
-            $notifications_table
+            $notifications_table,
+            $language
         );
 
         // 2. Stockage des dépendances spécifiques
