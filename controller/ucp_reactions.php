@@ -1,19 +1,17 @@
 <?php
 /**
- * Fichier : controller/ucp_reactions.php — bastien59960/reactions
- * @author  Bastien (bastien59960)
+ * Fichier : ucp_reactions.php
+ * Chemin : bastien59960/reactions/controller/ucp_reactions.php
+ * Auteur : Bastien (bastien59960)
  * @github  https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Ce contrôleur gère la logique métier de la page de préférences des réactions
  * dans le Panneau de Contrôle Utilisateur (UCP). Il est responsable de :
- *   - Afficher le formulaire avec les préférences actuelles de l'utilisateur.
- *   - Traiter la soumission du formulaire et mettre à jour la base de données.
+ * - Afficher le formulaire avec les préférences actuelles de l'utilisateur.
+ * - Traiter la soumission du formulaire et mettre à jour la base de données.
  *
- * Informations reçues :
- * - Via le formulaire POST : les nouvelles valeurs pour `user_reactions_notify` et `user_reactions_email`.
- *
- * Il est appelé par le module `ucp/reactions_module.php`.
+ * Il est appelé par le module UCP correspondant.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

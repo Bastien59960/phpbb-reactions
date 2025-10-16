@@ -1,4 +1,19 @@
 <?php
+/**
+ * Fichier : release_1_0_4.php
+ * Chemin : bastien59960/reactions/migrations/release_1_0_4.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
+ * Ce fichier de migration est exécuté lors de la mise à jour de l'extension
+ * vers la version 1.0.4. Il ajoute des options de configuration supplémentaires
+ * pour l'interface utilisateur, comme la taille des emojis et les paramètres
+ * du sélecteur (picker).
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
 
 namespace bastien59960\reactions\migrations;
 

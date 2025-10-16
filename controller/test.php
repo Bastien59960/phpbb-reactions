@@ -3,17 +3,14 @@
  * Fichier : test.php
  * Chemin : bastien59960/reactions/controller/test.php
  * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/test.php
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Ce contrôleur fournit un point de terminaison de diagnostic pour l'extension.
  * Il effectue une série de vérifications (connexion BDD, existence des tables,
  * support UTF8MB4) et retourne les résultats au format JSON.
  *
- * Il est destiné uniquement au développement et au débogage, et ne reçoit
- * aucune information en entrée. Il ne doit pas être exposé en production.
- *
- * URL d'accès : /app.php/reactions/test
+ * Il est destiné uniquement au développement et au débogage.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

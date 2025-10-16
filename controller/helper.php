@@ -3,7 +3,7 @@
  * Fichier : helper.php
  * Chemin : bastien59960/reactions/controller/helper.php
  * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions/blob/main/controller/helper.php
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Cette classe fournit des méthodes utilitaires centralisées pour l'extension.
@@ -11,17 +11,11 @@
  * donné. Ce HTML est ensuite renvoyé par le contrôleur AJAX pour mettre à jour
  * l'affichage sans recharger la page.
  *
- * Informations reçues :
- * - `get_reactions_html_for_post($post_id)` : Reçoit l'ID d'un message.
- *
  * Elle est injectée comme service dans d'autres composants (notamment le
  * contrôleur AJAX) pour éviter la duplication de code.
  *
- *
- * @package bastien59960
-eactions
- * @author  bastien
- * @license http://opensource.org/licenses/gpl-license.php GNU Public License
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 namespace bastien59960\reactions\controller;
 
