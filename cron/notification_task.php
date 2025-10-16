@@ -41,9 +41,6 @@ class notification_task extends \phpbb\cron\task\base
     /** @var \phpbb\template\template */
     protected $template;
 
-    /** @var \phpbb\notification\messenger_factory */
-    protected $messenger_factory;
-
     /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
 
@@ -73,8 +70,7 @@ class notification_task extends \phpbb\cron\task\base
         $phpbb_root_path,                                      // 8. %core.root_path%
         $php_ext,                                              // 9. %core.php_ext%
         $table_prefix,                                         // 10. %core.table_prefix%
-        \phpbb\notification\messenger_factory $messenger_factory, // 11. @messenger_factory
-        ?\Symfony\Component\Console\Output\OutputInterface $io = null // 12. @?console.io
+        ?\Symfony\Component\Console\Output\OutputInterface $io = null // 11. @?console.io
     ) {
         // 1. Appel du constructeur parent avec les arguments qu'il attend.
         // La classe de base de phpBB n'attend aucun argument par défaut.
@@ -91,7 +87,6 @@ class notification_task extends \phpbb\cron\task\base
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
-        $this->messenger_factory = $messenger_factory;
         $this->io = $io;
     }
 
@@ -474,7 +469,10 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = $this->messenger_factory->get_messenger('email');
+            // CORRECTION : Instancier manuellement la classe messenger
+            // Le paramètre `false` désactive le chargement des templates par défaut.
+            $messenger = new \messenger(false);
+
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
