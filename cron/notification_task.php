@@ -415,7 +415,7 @@ class notification_task extends \phpbb\cron\task\base
             $messenger = new \messenger(false, $this->template);
  
             // Syntaxe correcte pour charger un template d'e-mail d'extension
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
+            $messenger->template('@bastien59960_reactions/email/reaction_digest.html', $author_lang);
             $messenger->to($author_email, $author_name);
 
             // Charger la langue pour l'utilisateur cible
