@@ -1,3 +1,4 @@
+# config/services.yml
 #
 # Fichier : config/services.yml — bastien59960/reactions/config/services.yml
 #
@@ -7,9 +8,9 @@
 # conteneur Symfony embarqué dans phpBB.
 #
 # IMPORTANT :
-# - Vérifier que l’ordre des arguments correspond exactement au constructeur
+# - Vérifier que l'ordre des arguments correspond exactement au constructeur
 #   de la classe ciblée.
-# - Les identifiants de services sont utilisés ailleurs dans l’extension
+# - Les identifiants de services sont utilisés ailleurs dans l'extension
 #   (ex. ext.php, controller/ajax.php, etc.) : ne pas les renommer à la légère.
 #
 
@@ -85,16 +86,16 @@ services:
     # =========================================================================
     # TÂCHE CRON DE TEST (MINIMALISTE)
     # =========================================================================
-    bastien59960.reactions.testtask:
+    cron.task.bastien59960.reactions.testtask:
         class: bastien59960\reactions\cron\test_task
         # Pas d'arguments, pas de dépendances.
         tags:
             - { name: cron.task }
 
     # =========================================================================
-    # TÂCHE CRON (DIGEST E-MAIL)
+    # TÂCHE CRON (DIGEST E-MAIL) - CORRECTION CRITIQUE
     # =========================================================================
-    bastien59960.reactions.notificationtask:
+    cron.task.bastien59960.reactions.notificationtask:
         class: bastien59960\reactions\cron\notification_task
         arguments:
             - '@dbal.conn'                  # 1. driver_interface
