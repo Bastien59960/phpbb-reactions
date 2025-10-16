@@ -114,7 +114,6 @@ class reaction extends base
         $this->notifications_table = $notifications_table;
         $this->config = $config;
         $this->user_loader = $user_loader;
-		$this->language = $language;
 		$this->template = $template;
         $this->reactions_helper = $reactions_helper;
 
