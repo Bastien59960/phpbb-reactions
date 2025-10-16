@@ -72,10 +72,6 @@ class notification_task extends \phpbb\cron\task\base
         $table_prefix,                                         // 10. %core.table_prefix%
         ?\Symfony\Component\Console\Output\OutputInterface $io = null // 11. @?console.io
     ) {
-        // 1. Appel du constructeur parent avec les arguments qu'il attend.
-        // La classe de base de phpBB n'attend aucun argument par défaut.
-        parent::__construct();
-
         // 2. Assignation de toutes les dépendances aux propriétés de la classe.
         $this->db = $db;
         $this->config = $config;
