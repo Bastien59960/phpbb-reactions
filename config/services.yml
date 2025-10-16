@@ -88,18 +88,18 @@ services:
     bastien59960.reactions.notificationtask:
         class: bastien59960\reactions\cron\notification_task
         arguments:
+            - '%core.root_path%'
+            - '%core.php_ext%'
             - '@dbal.conn'
             - '@config'
             - '@notification_manager'
             - '@user_loader'
             - '@language'
             - '@template'
-            - '@messenger_factory'
             - '%tables.post_reactions%'
-            - '%core.root_path%'
-            - '%core.php_ext%'
             - '%core.table_prefix%'
             - '@service_container'
+            - '@messenger_factory'
         tags:
             - { name: cron.task }
 
