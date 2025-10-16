@@ -41,7 +41,8 @@ class reaction_email_digest extends \phpbb\notification\type\base
             $db,
             $phpbb_root_path,
             $php_ext,
-            $notifications_table
+            $notifications_table,
+            $language
         );
 
         // 2. Stockage des dépendances spécifiques
