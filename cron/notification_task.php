@@ -421,7 +421,7 @@ class notification_task extends \phpbb\cron\task\base
             // Charger la langue pour l'utilisateur cible
             // Ceci charge le fichier language/{$author_lang}/common.php de l'extension,
             // qui contient L_HELLO et L_REACTIONS_DIGEST_INTRO.
-            $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
+            $messenger->add_lang('common', 'bastien59960/reactions', false, $author_lang);
 
             // Variables globales pour le template
             $messenger->assign_vars([

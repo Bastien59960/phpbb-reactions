@@ -1,7 +1,6 @@
 Subject: Résumé des réactions sur vos messages
 
 {L_HELLO} {USERNAME},
-
 {L_REACTIONS_DIGEST_INTRO: {DIGEST_SINCE} | {DIGEST_UNTIL}}
 
 <!-- BEGIN posts -->
