@@ -98,8 +98,8 @@ services:
             - '@template'                   # 8. template
             - '%tables.post_reactions%'     # 9. post_reactions_table
             - '%core.table_prefix%'         # 10. table_prefix
-            - '@service_container'          # 11. container
-            - '@messenger_factory'          # 12. messenger_factory
+            - '@messenger_factory'          # 11. messenger_factory
+            - '@?console.io'                # 12. console.io (optionnel)
         tags:
             - { name: cron.task }
 

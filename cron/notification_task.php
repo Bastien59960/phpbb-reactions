@@ -53,8 +53,8 @@ class notification_task extends \phpbb\cron\task\base
     /** @var string Préfixe des tables phpBB */
     protected $table_prefix;
 
-    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
-    protected $container;
+    /** @var \Symfony\Component\Console\Output\OutputInterface|null */
+    protected $io;
 
     /**
      * Constructeur
@@ -70,8 +70,8 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\template\template $template,
         $post_reactions_table,
         $table_prefix,
-        \Symfony\Component\DependencyInjection\ContainerInterface $container,
-        \phpbb\notification\messenger_factory $messenger_factory
+        \phpbb\notification\messenger_factory $messenger_factory,
+        \Symfony\Component\Console\Output\OutputInterface $io = null
     ) {
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
@@ -83,8 +83,8 @@ class notification_task extends \phpbb\cron\task\base
         $this->template = $template;
         $this->post_reactions_table = $post_reactions_table;
         $this->table_prefix = $table_prefix;
-        $this->container = $container;
         $this->messenger_factory = $messenger_factory;
+        $this->io = $io;
     }
 
     /**
@@ -108,12 +108,7 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
-        // Détecter si on est en mode CLI pour afficher les logs dans la console
-        $io = null;
-        if ($this->container->has('console.io'))
-        {
-            $io = $this->container->get('console.io');
-        }
+        $io = $this->io;
 
         // Récupérer le délai anti-spam (en minutes, défaut : 45)
         $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
