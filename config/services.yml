@@ -118,7 +118,7 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@dbal.conn'                      # 1. driver_interface
+            - '@dbal.conn'                      # 1. db
             - '@language'                       # 2. language
             - '@user'                           # 3. user
             - '@auth'                           # 4. auth
