@@ -102,37 +102,38 @@ class ext extends \phpbb\extension\base
 	 * @param mixed $old_state État précédent de l'extension (false = première activation)
 	 * @return string|mixed 'notification' si première activation, sinon résultat parent
 	 */
-public function enable_step($old_state)
-{
-    if ($old_state === false)
-    {
-        // Récupérer le gestionnaire de notifications phpBB
-        $notification_manager = $this->container->get('notification_manager');
+	public function enable_step($old_state)
+	{
+		// TEMPORAIREMENT DÉSACTIVÉ POUR LE TEST DU CRON
+		// if ($old_state === false)
+		// {
+		//     // Récupérer le gestionnaire de notifications phpBB
+		//     $notification_manager = $this->container->get('notification_manager');
+		//
+		//     // ✅ Utiliser uniquement les NOMS DE TYPES (get_type())
+		//     // Activation du type "cloche" (instantané)
+		//     try {
+		//         $notification_manager->enable_notifications('notification.type.reaction');
+		//     } catch (\phpbb\notification\exception $e) {
+		//         if (defined('DEBUG')) {
+		//             trigger_error('[Reactions] enable_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
+		//         }
+		//     }
+		//
+		//     // Activation du type "email digest" (cron)
+		//     try {
+		//         $notification_manager->enable_notifications('notification.type.reaction_email_digest');
+		//     } catch (\phpbb\notification\exception $e) {
+		//         if (defined('DEBUG')) {
+		//             trigger_error('[Reactions] enable_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
+		//         }
+		//     }
+		//
+		//     return 'notification';
+		// }
 
-        // ✅ Utiliser uniquement les NOMS DE TYPES (get_type())
-        // Activation du type "cloche" (instantané)
-        try {
-            $notification_manager->enable_notifications('notification.type.reaction');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] enable_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
-
-        // Activation du type "email digest" (cron)
-        try {
-            $notification_manager->enable_notifications('notification.type.reaction_email_digest');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] enable_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
-
-        return 'notification';
-    }
-
-    return parent::enable_step($old_state);
-}
+		return parent::enable_step($old_state);
+	}
 
 
 	/**
@@ -149,21 +150,22 @@ public function enable_step($old_state)
 	 */
 	public function disable_step($old_state)
 	{
-		if ($old_state === false)
-		{
-			// Récupérer le gestionnaire de notifications phpBB
-			$notification_manager = $this->container->get('notification_manager');
-			
-			// ✅ CORRECTION : Utiliser les NOMS DE TYPES (get_type())
-			
-			// Désactiver la notification cloche
-			$notification_manager->disable_notifications('notification.type.reaction');
-
-			// Désactiver la notification email digest
-			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
-			
-			return 'notification';
-		}
+		// TEMPORAIREMENT DÉSACTIVÉ POUR LE TEST DU CRON
+		// if ($old_state === false)
+		// {
+		// 	// Récupérer le gestionnaire de notifications phpBB
+		// 	$notification_manager = $this->container->get('notification_manager');
+		// 	
+		// 	// ✅ CORRECTION : Utiliser les NOMS DE TYPES (get_type())
+		// 	
+		// 	// Désactiver la notification cloche
+		// 	$notification_manager->disable_notifications('notification.type.reaction');
+		//
+		// 	// Désactiver la notification email digest
+		// 	$notification_manager->disable_notifications('notification.type.reaction_email_digest');
+		// 	
+		// 	return 'notification';
+		// }
 		
 		return parent::disable_step($old_state);
 	}
@@ -190,32 +192,33 @@ public function enable_step($old_state)
 	 * @param mixed $old_state État précédent de l'extension (false = première purge)
 	 * @return string|mixed 'notification' si première purge, sinon résultat parent
 	 */
-public function purge_step($old_state)
-{
-    if ($old_state === false)
-    {
-        $notification_manager = $this->container->get('notification_manager');
+	public function purge_step($old_state)
+	{
+		// TEMPORAIREMENT DÉSACTIVÉ POUR LE TEST DU CRON
+		// if ($old_state === false)
+		// {
+		//     $notification_manager = $this->container->get('notification_manager');
+		//
+		//     try {
+		//         $notification_manager->purge_notifications('notification.type.reaction');
+		//     } catch (\phpbb\notification\exception $e) {
+		//         if (defined('DEBUG')) {
+		//             trigger_error('[Reactions] purge_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
+		//         }
+		//     }
+		//
+		//     try {
+		//         $notification_manager->purge_notifications('notification.type.reaction_email_digest');
+		//     } catch (\phpbb\notification\exception $e) {
+		//         if (defined('DEBUG')) {
+		//             trigger_error('[Reactions] purge_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
+		//         }
+		//     }
+		//
+		//     return 'notification';
+		// }
 
-        try {
-            $notification_manager->purge_notifications('notification.type.reaction');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] purge_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
-
-        try {
-            $notification_manager->purge_notifications('notification.type.reaction_email_digest');
-        } catch (\phpbb\notification\exception $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] purge_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
-            }
-        }
-
-        return 'notification';
-    }
-
-    return parent::purge_step($old_state);
-}
+		return parent::purge_step($old_state);
+	}
 
 }
