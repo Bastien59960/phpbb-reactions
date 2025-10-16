@@ -38,6 +38,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var \phpbb\template\template */
     protected $template;
 
+    /** @var \phpbb\notification\messenger_factory */
+    protected $messenger_factory;
+
     /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
 
@@ -60,6 +63,7 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\user_loader $user_loader,
         \phpbb\language\language $language,
         \phpbb\template\template $template,
+        \phpbb\notification\messenger_factory $messenger_factory,
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
@@ -71,6 +75,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->user_loader = $user_loader;
         $this->language = $language;
         $this->template = $template;
+        $this->messenger_factory = $messenger_factory;
         $this->post_reactions_table = $post_reactions_table;
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
@@ -412,7 +417,7 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $messenger = new \messenger(false, $this->template);
+            $messenger = $this->messenger_factory->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
@@ -457,6 +462,11 @@ class notification_task extends \phpbb\cron\task\base
         }
         catch (\Exception $e)
         {
+            // Log d'erreur détaillé pour le débogage
+            $error_details = "File: " . $e->getFile() . " Line: " . $e->getLine();
+            error_log('[Reactions Cron] Exception in send_digest_email for user_id ' . $author_id . ': ' . $e->getMessage());
+            error_log('[Reactions Cron] Exception details: ' . $error_details);
+
             return [
                 'status' => 'failed',
                 'error'  => $e->getMessage(),

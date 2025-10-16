@@ -94,6 +94,7 @@ services:
             - '@user_loader'
             - '@language'
             - '@template'
+            - '@messenger_factory'
             - '%tables.post_reactions%'
             - '%core.root_path%'
             - '%core.php_ext%'
