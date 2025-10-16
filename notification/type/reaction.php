@@ -111,15 +111,15 @@ class reaction extends base
         // Appeler le constructeur de la classe parente
         // CORRECTION : L'ordre des arguments doit être strictement celui attendu par la classe `base`.
         // L'ordre correct est : user, language, db, auth, root_path, php_ext, notifications_table
-        parent::__construct(
-            $user,
-            $language, // <- Doit être en 2ème position
-            $db,
-            $auth,
-            $phpbb_root_path,
-            $php_ext,
-            $notifications_table
-        );
+		parent::__construct(
+			$user,
+			$language,
+			$db,
+			$auth,
+			$phpbb_root_path,
+			$php_ext,
+			$notifications_table
+		);
 
         // Stocker les dépendances spécifiques à cette classe
         $this->notifications_table = $notifications_table;
