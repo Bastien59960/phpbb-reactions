@@ -97,12 +97,13 @@ class notification_task extends \phpbb\cron\task\base
     public function run()
     {
         // Détecter si on est en mode CLI pour afficher les logs dans la console
-        // On récupère le container global de phpBB
-        $container = \phpbb\di\container_builder::get_container();
+        // On récupère le container global de phpBB.
+        // Note : la meilleure pratique est d'injecter les services via le constructeur.
+        global $phpbb_container;
         $io = null;
-        if ($container->has('console.io'))
+        if ($phpbb_container->has('console.io'))
         {
-            $io = $container->get('console.io');
+            $io = $phpbb_container->get('console.io');
         }
 
         // Récupérer le délai anti-spam (en minutes, défaut : 45)
@@ -484,8 +485,8 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            $container = \phpbb\di\container_builder::get_container();
-            $messenger = $container->get('messenger_factory')->get_messenger('email');
+            global $phpbb_container;
+            $messenger = $phpbb_container->get('messenger_factory')->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
