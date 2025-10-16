@@ -423,7 +423,9 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->headers('Content-Transfer-Encoding: 8bit');
 
             // Charger la langue pour l'utilisateur cible
-            $this->language->add_lang('reactions', 'bastien59960/reactions', false, $author_lang);
+            // Ceci charge le fichier language/{$author_lang}/common.php de l'extension,
+            // qui contient L_HELLO et L_REACTIONS_DIGEST_INTRO.
+            $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
 
             // Variables globales pour le template
             $messenger->assign_vars([

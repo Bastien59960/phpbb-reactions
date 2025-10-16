@@ -1,10 +1,11 @@
 Subject: Résumé des réactions reçues sur vos messages
 
-Bonjour {USERNAME}, 
+Bonjour {USERNAME},
 
-{L_REACTIONS_DIGEST_INTRO}
+Voici un résumé des dernières réactions à vos messages sur le forum entre le {DIGEST_SINCE} et le {DIGEST_UNTIL} :
 
 <!-- BEGIN posts -->
+----------------------------------------------------------------
 Sujet : {posts.SUBJECT_PLAIN}
 URL : {posts.POST_URL_ABSOLUTE}
 <!-- BEGIN reactions -->
