@@ -1,10 +1,15 @@
-Subject: Résumé des réactions récentes
+Subject: Résumé des réactions sur vos messages
 
-Bonjour {USERNAME},
+{L_HELLO} {USERNAME},
+{L_REACTIONS_DIGEST_INTRO: {DIGEST_SINCE} | {DIGEST_UNTIL}}
 
-Voici un résumé des dernières réactions à vos messages sur le forum :
+<!-- BEGIN posts -->
+----------------------------------------------------------------
+Sujet : {posts.SUBJECT_PLAIN}
+URL : {posts.POST_URL_ABSOLUTE}
+<!-- BEGIN reactions -->
+  • {posts.reactions.EMOJI} par {posts.reactions.REACTER_NAME} le {posts.reactions.TIME_FORMATTED}
+<!-- END reactions -->
+<!-- END posts -->
 
-{REACTION_SUMMARY}
-
-À bientôt sur le forum !
-L'équipe {SITENAME}
+{DIGEST_SIGNATURE}
