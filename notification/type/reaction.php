@@ -60,6 +60,9 @@ class reaction extends base
     /** @var user_loader Chargeur d'utilisateurs */
     protected $user_loader;
 
+    /** @var language */
+    protected $language;
+
     /** @var string Nom de la table des notifications */
     protected $notifications_table;
 
@@ -105,12 +108,13 @@ class reaction extends base
         reactions_helper $reactions_helper
     ) {
         // Appeler le constructeur de la classe parente
-		parent::__construct($user, $auth, $db, $phpbb_root_path, $php_ext, $notifications_table);
+		parent::__construct($user, $auth, $db, $phpbb_root_path, $php_ext, $notifications_table, $language);
 
         // Stocker les dépendances spécifiques à cette classe
         $this->notifications_table = $notifications_table;
         $this->config = $config;
         $this->user_loader = $user_loader;
+		$this->language = $language;
 		$this->template = $template;
         $this->reactions_helper = $reactions_helper;
 

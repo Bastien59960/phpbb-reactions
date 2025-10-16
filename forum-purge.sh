@@ -42,13 +42,13 @@ echo -e "║   ⚙️  MAINTENANCE PHPBB — RESET CRON & EXTENSION RELOAD      
 echo -e "║      (Powered by Bastien – goth sysadmin edition 🦇)           ║"
 echo -e "╚══════════════════════════════════════════════════════════════╝"
 echo -e "🚀 Lancement du script de maintenance (ordre validé).\n"
-sleep 1
+sleep 0.45
 
 # ==============================================================================
 # 1️⃣ PURGE CACHE (AVANT)
 # ==============================================================================
 echo "───[ 1️⃣  PURGE DU CACHE (AVANT) ]────────────────────────────────"
-sleep 1
+sleep 0.45
 php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
 check_status "Cache initial purgé."
 
@@ -56,7 +56,7 @@ check_status "Cache initial purgé."
 # 2️⃣ DÉSACTIVATION DE L'EXTENSION
 # ==============================================================================
 echo "───[ 2️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
-sleep 1
+sleep 0.45
 php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv
 check_status "Extension désactivée."
 
@@ -64,7 +64,7 @@ check_status "Extension désactivée."
 # 3️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
 echo "───[ 3️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
-sleep 1
+sleep 0.45
 CRON_LOCK_FILE="$FORUM_ROOT/cache/cron.lock"
 if [ -f "$CRON_LOCK_FILE" ]; then
     rm -f "$CRON_LOCK_FILE"
@@ -78,7 +78,7 @@ fi
 # ==============================================================================
 echo "───[ 4️⃣  RÉINITIALISATION SQL (UN SEUL PROMPT) ]──────────────────"
 echo -e "⚠️  Le script va maintenant demander ${YELLOW}UNE SEULE FOIS${NC} le mot de passe MySQL..."
-sleep 1
+sleep 0.45
 
 mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
 UPDATE phpbb_post_reactions SET reaction_notified = 0;
@@ -91,7 +91,7 @@ check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
 # 5️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
 echo "───[ 5️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
-sleep 1
+sleep 0.45
 php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv
 check_status "Extension réactivée."
 
@@ -99,7 +99,7 @@ check_status "Extension réactivée."
 # 6️⃣ PURGE CACHE (APRÈS)
 # ==============================================================================
 echo "───[ 6️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
-sleep 1
+sleep 0.45
 php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
 check_status "Cache purgé et container reconstruit."
 
@@ -107,7 +107,7 @@ check_status "Cache purgé et container reconstruit."
 # 7️⃣ TEST FINAL DU CRON
 # ==============================================================================
 echo "───[ 7️⃣  TEST FINAL DU CRON ]──────────────────────────────────"
-sleep 1
+sleep 0.45
 php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv
 check_status "Cron exécuté."
 
@@ -116,7 +116,7 @@ check_status "Cron exécuté."
 # 8️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
 # ==============================================================================
 echo "───[ 8️⃣  RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
-sleep 1
+sleep 0.45
 
 # ⚠️ À ADAPTER ! Remplacez 'www-data' par l'utilisateur/groupe de votre serveur web (ex: 'apache', 'nginx', etc.)
 WEB_USER="www-data" 
@@ -140,7 +140,7 @@ check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 # ==============================================================================
 echo ""
 echo "───[ 🔍  VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]──────────────────────────────"
-sleep 1
+sleep 0.45
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
 EXT_STATUS=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:show | grep "bastien59960/reactions" || true)
@@ -163,7 +163,7 @@ fi
 # ==============================================================================
 echo ""
 echo "───[ 🔍  VÉRIFICATION FINALE DE LA TÂCHE CRON ]───────────────────────────────"
-sleep 1
+sleep 0.45
 
 CRON_TASK_NAME="bastien59960.reactions.notificationtask"
 CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
@@ -172,7 +172,30 @@ echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
 echo "$CRON_LIST_OUTPUT"
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
-    echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}"
+    echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
+    echo -e "${GREEN}"
+    echo "      _   "
+    echo "     ( \`> "
+    echo "     /`\\  "
+    echo "    /`\\ \`-. "
+    echo "   /`\\ \`-. \`."
+    echo "  /`\\ \`-. \`.\`."
+    echo " /`\\ \`-. \`.\`.\`."
+    echo "/`\\ \`-. \`.\`.\`.\`."
+    echo "\`-\`-\`-\`-\`-\`-\`-\`-\`"
+    echo -e "${NC}"
 else
-    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}"
+    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
+    echo -e "${WHITE_ON_RED}"
+    echo "         .                                            .       "
+    echo "        .n                   .                 .                  n.      "
+    echo "  .   .dP                  dP                   9b                 9b.    . "
+    echo " 4    qXb         .       dX                     Xb       .        dXp     t "
+    echo "dX.    9Xb      .d42b.   dXP                     TOb   .d24b.      dXP     .Xb "
+    echo "9XXb._       _.dXXXXb dXXXXXb    ...           dXXXXXb dXXXXb._       _.dXXP "
+    echo " 9XXXXXXXXXXXXXXXXXXXVXXXXXXXXOo.           .oOXXXXXXXXVXXXXXXXXXXXXXXXXXP  "
+    echo "  '9XXXXXXXXXXXXXXXXXXXXX'~   ~'OOO8b   d8OOO'~   ~'XXXXXXXXXXXXXXXXXXXXP'   "
+    echo "    '9XXXXXXXXXXXP' '9XX'   DIE    '98v8P'  HUMAN   'XXP' 'PXXXXXXXXXXXP'     "
+    echo "        '9XXP'    '98v8P'               'XXP'    'PXXP'         "
+    echo -e "${NC}"
 fi
