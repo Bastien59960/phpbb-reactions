@@ -93,14 +93,6 @@ class notification_task extends \phpbb\cron\task\base
     }
 
     /**
-     * Condition d'exécution
-     */
-    public function can_run()
-    {
-        return true;
-    }
-
-    /**
      * Méthode principale exécutée par le cron
      */
     public function run()
@@ -450,14 +442,6 @@ class notification_task extends \phpbb\cron\task\base
         $last_run = (int) ($this->config['bastien59960_reactions_cron_last_run'] ?? 0);
 
         return (time() - $last_run) >= $interval;
-    }
-
-    /**
-     * Définit le prochain moment d'exécution
-     */
-    public function is_runnable()
-    {
-        return true;
     }
 
     /**
