@@ -138,6 +138,7 @@ services:
             - '%core.php_ext%'
             - '%core.table_prefix%notifications'
             # Dépendance spécifique à notre classe
+            - '@user_loader'
             - '@template'
             - '@config'
         tags:
