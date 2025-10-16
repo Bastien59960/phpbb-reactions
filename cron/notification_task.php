@@ -92,7 +92,7 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function get_name()
     {
-        return 'cron.task.reactions.notification_task';
+        return 'bastien59960.reactions.notificationtask';
     }
 
     /**

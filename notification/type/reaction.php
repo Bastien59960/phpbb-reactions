@@ -92,36 +92,28 @@ class reaction extends base
      * @param config|null       $config              Configuration 
      * @param template|null     $template            Templates
      */
-    public function __construct(
-        driver_interface $db,
-        language $language,
-        user $user,
-        auth $auth,
-        string $phpbb_root_path,
-        string $php_ext,
-        $notifications_table,
-        ?config $config,
-        user_loader $user_loader,
-        ?template $template,
-        ?reactions_helper $reactions_helper
-    ) {
+	public function __construct(
+		driver_interface $db,
+		language $language,
+		user $user,
+		auth $auth,
+		string $phpbb_root_path,
+		string $php_ext,
+		$notifications_table,
+		config $config,
+		user_loader $user_loader,
+		template $template,
+		reactions_helper $reactions_helper
+	) {
         // Appeler le constructeur de la classe parente
-        parent::__construct(
-            $db,
-            $language,
-            $user,
-            $auth,
-            $phpbb_root_path,
-            $php_ext,
-            $notifications_table
-        );
+		parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
 
         // Stocker les dépendances spécifiques à cette classe
         $this->notifications_table = $notifications_table;
         $this->config = $config;
         $this->user_loader = $user_loader;
+		$this->template = $template;
         $this->reactions_helper = $reactions_helper;
-        $this->template = $template;
 
         try
         {
