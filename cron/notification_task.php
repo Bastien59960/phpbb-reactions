@@ -467,7 +467,9 @@ class notification_task extends \phpbb\cron\task\base
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
             // CORRECTION CRITIQUE : Charger aussi les fichiers de langue principaux de phpBB.
             $this->language->add_lang(['common', 'email'], false, false, $author_lang);
-
+            
+            // Définir le chemin absolu vers les templates pour une robustesse maximale
+            $messenger->set_template_path($this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template/email');
             // 2. Charger le template d'e-mail (HTML + TXT)
             $messenger->template('reaction_digest', $author_lang);
 
