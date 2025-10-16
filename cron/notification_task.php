@@ -60,18 +60,18 @@ class notification_task extends \phpbb\cron\task\base
      * Constructeur
      */
     public function __construct(
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\config\config $config,
-        \phpbb\notification\manager $notification_manager,
-        \phpbb\user_loader $user_loader,
-        \phpbb\language\language $language,
-        \phpbb\template\template $template,
-        $post_reactions_table,
-        $phpbb_root_path,
-        $php_ext,
-        $table_prefix,
-        \phpbb\notification\messenger_factory $messenger_factory,
-        \Symfony\Component\Console\Output\OutputInterface $io = null
+        \phpbb\db\driver\driver_interface $db,                   // 1. @dbal.conn
+        \phpbb\config\config $config,                           // 2. @config
+        \phpbb\notification\manager $notification_manager,       // 3. @notification_manager
+        \phpbb\user_loader $user_loader,                        // 4. @user_loader
+        \phpbb\language\language $language,                     // 5. @language
+        \phpbb\template\template $template,                     // 6. @template
+        $post_reactions_table,                                 // 7. %tables.post_reactions%
+        $phpbb_root_path,                                      // 8. %core.root_path%
+        $php_ext,                                              // 9. %core.php_ext%
+        $table_prefix,                                         // 10. %core.table_prefix%
+        \phpbb\notification\messenger_factory $messenger_factory, // 11. @messenger_factory
+        \Symfony\Component\Console\Output\OutputInterface $io = null // 12. @?console.io
     ) {
         $this->db                   = $db;
         $this->config               = $config;
@@ -485,11 +485,19 @@ class notification_task extends \phpbb\cron\task\base
             $messenger = $this->messenger_factory->get_messenger('email');
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
+            $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
+            if ($io) $io->writeln("<info>$lang_load_message</info>");
+            else error_log($lang_load_message);
+
             $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
             // CORRECTION CRITIQUE : Charger aussi les fichiers de langue principaux de phpBB.
             $this->language->add_lang(['common', 'email'], false, false, $author_lang);
             
             // 2. Charger le template d'e-mail en utilisant la syntaxe standard de phpBB.
+            $template_load_message = "$log_prefix Chargement du template '@bastien59960_reactions/email/reaction_digest' pour la langue '$author_lang'.";
+            if ($io) $io->writeln("<info>$template_load_message</info>");
+            else error_log($template_load_message);
+
             $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
 
             // 3. Définir le destinataire

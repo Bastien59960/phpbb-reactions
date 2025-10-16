@@ -25,6 +25,7 @@ use phpbb\user;
 use phpbb\request\request;
 use phpbb\db\driver\driver_interface;
 use phpbb\template\template;
+use phpbb\controller\helper as controller_helper;
 
 /**
  * Contrôleur pour la page de préférences des réactions dans l'UCP.
@@ -52,14 +53,24 @@ class ucp_reactions
 	 * @param request          $request      Service de requête de phpBB.
 	 * @param template         $template     Service de template de phpBB.
 	 * @param string           $table_prefix Préfixe des tables.
+	 * @param controller_helper $controller_helper Helper de contrôleur.
 	 */
-	public function __construct(user $user, driver_interface $db, request $request, template $template, $table_prefix)
-	{
+	public function __construct(
+		user $user,                         // 1. @user
+		driver_interface $db,               // 2. @dbal.conn
+		request $request,                   // 3. @request
+		template $template,                 // 4. @template
+		$table_prefix,                      // 5. %core.table_prefix%
+		controller_helper $controller_helper // 6. @controller.helper
+	) {
 		$this->user = $user;
 		$this->db = $db;
 		$this->request = $request;
 		$this->template = $template;
 		$this->table_prefix = $table_prefix;
+		// La propriété u_action est définie par le module, mais on a besoin du helper pour la construire.
+		// On peut le stocker si nécessaire, ou simplement l'accepter pour la compatibilité.
+		// $this->controller_helper = $controller_helper;
 	}
 
 	/**
