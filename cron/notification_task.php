@@ -418,10 +418,6 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->template('@bastien59960_reactions/reaction_digest', $author_lang);
             $messenger->to($author_email, $author_name);
 
-            // Ajouter les headers pour HTML et UTF-8
-            $messenger->headers('Content-type: text/html; charset=UTF-8');
-            $messenger->headers('Content-Transfer-Encoding: 8bit');
-
             // Charger la langue pour l'utilisateur cible
             // Ceci charge le fichier language/{$author_lang}/common.php de l'extension,
             // qui contient L_HELLO et L_REACTIONS_DIGEST_INTRO.
