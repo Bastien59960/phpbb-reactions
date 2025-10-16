@@ -409,16 +409,18 @@ class notification_task extends \phpbb\cron\task\base
         {
             // Utiliser le notification_manager pour envoyer l'e-mail.
             // C'est la méthode standard de phpBB qui gère correctement les templates HTML.
+            // L'ID de l'auteur doit être dans un tableau.
             $this->notification_manager->add_notifications('bastien59960.reactions.notification.cron_email', [
                 // Les données passées ici seront disponibles dans la classe reaction_email_digest
-                'author_id'             => $author_id,
+                'users'                 => [$author_id],
                 'author_name'           => $author_name,
                 'since_time_formatted'  => $since_time_formatted,
                 'posts'                 => $data['posts'],
             ]);
 
-            // Forcer l'envoi immédiat des notifications par e-mail
-            $this->notification_manager->send_notifications(NOTIFY_EMAIL);
+            // Forcer l'envoi immédiat des notifications par e-mail.
+            // La méthode correcte est process_notifications().
+            $this->notification_manager->process_notifications('email', [$author_id]);
 
             error_log('[Reactions Cron] E-mail digest préparé pour ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
             return [

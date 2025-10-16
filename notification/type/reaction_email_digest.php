@@ -85,8 +85,8 @@ class reaction_email_digest extends \phpbb\notification\type\base
      */
     public function find_users_for_notification($data, $options = [])
     {
-        // L'ID de l'utilisateur est passé directement par la tâche cron
-        return [(int) $data['author_id']];
+        // Le tableau d'utilisateurs est passé directement par la tâche cron via la clé 'users'
+        return $data['users'];
     }
 
     /**
