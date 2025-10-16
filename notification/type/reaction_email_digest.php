@@ -50,6 +50,16 @@ class reaction_email_digest extends \phpbb\notification\type\base
     }
 
     /**
+     * Retourne le nom unique du type de notification.
+     *
+     * @return string
+     */
+    public function get_type()
+    {
+        return 'notification.type.reaction_email_digest';
+    }
+
+    /**
      * Indique si ce type de notification est disponible.
      *
      * @return bool
@@ -119,4 +129,21 @@ class reaction_email_digest extends \phpbb\notification\type\base
      * Ces méthodes ne sont donc pas utilisées mais doivent exister.
      */
     public static function get_item_id($data) { return 0; }
+
+    /**
+     * Méthodes abstraites requises par l'interface, mais non utilisées pour ce type.
+     * Elles doivent exister et retourner une valeur par défaut valide.
+     */
+    public static function get_item_parent_id($data)
+    {
+        return 0;
+    }
+
+    public function users_to_query()
+    {
+        return [];
+    }
+
+    public function get_title() { return ''; }
+    public function get_url() { return ''; }
 }
