@@ -83,6 +83,15 @@ services:
             - '%tables.posts%'
 
     # =========================================================================
+    # TÂCHE CRON DE TEST (MINIMALISTE)
+    # =========================================================================
+    bastien59960.reactions.testtask:
+        class: bastien59960\reactions\cron\test_task
+        # Pas d'arguments, pas de dépendances.
+        tags:
+            - { name: cron.task }
+
+    # =========================================================================
     # TÂCHE CRON (DIGEST E-MAIL)
     # =========================================================================
     bastien59960.reactions.notificationtask:
