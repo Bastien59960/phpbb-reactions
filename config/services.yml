@@ -109,6 +109,7 @@ services:
             - '%core.php_ext%'              # 9. php_ext
             - '%core.table_prefix%'         # 10. table_prefix
             - '@messenger_factory'          # 11. messenger_factory (CORRIGÉ)
+            - '@notification.messenger_factory' # 11. messenger_factory (CORRIGÉ)
             - '@?console.io'                # 12. io (optionnel)
         tags:
             - { name: cron.task }
@@ -119,16 +120,18 @@ services:
     bastien59960.reactions.notification:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
-            - '@user'                           # 1. user
-            - '@auth'                           # 2. auth
-            - '@dbal.conn'                      # 3. driver_interface
-            - '@config'                         # 4. config
-            - '@user_loader'                    # 5. user_loader
-            - '@controller.helper'              # 6. helper (alias de @bastien59960.reactions.helper)
-            - '@request'                        # 7. request
-            - '@template'                       # 8. template
-            - '%core.root_path%'                # 9. phpbb_root_path
-            - '%core.php_ext%'                  # 10. php_ext
+            - '@dbal.conn'                      # 1. driver_interface
+            - '@language'                       # 2. language
+            - '@user'                           # 3. user
+            - '@auth'                           # 4. auth
+            - '%core.root_path%'                # 5. phpbb_root_path
+            - '%core.php_ext%'                  # 6. php_ext
+            - '%core.table_prefix%notifications' # 7. notifications_table
+            - '@config'                         # 8. config
+            - '@user_loader'                    # 9. user_loader
+            - '@bastien59960.reactions.helper'  # 10. reactions_helper
+            - '@request'                        # 11. request
+            - '@template'                       # 12. template
         tags:
             - { name: notification.type }
 
