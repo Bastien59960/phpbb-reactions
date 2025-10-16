@@ -35,6 +35,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var \phpbb\language\language */
     protected $language;
 
+    /** @var \phpbb\template\template */
+    protected $template;
+
     /** @var string Nom de la table des réactions */
     protected $post_reactions_table;
 
@@ -56,6 +59,7 @@ class notification_task extends \phpbb\cron\task\base
         \phpbb\notification\manager $notification_manager,
         \phpbb\user_loader $user_loader,
         \phpbb\language\language $language,
+        \phpbb\template\template $template,
         $post_reactions_table,
         $phpbb_root_path,
         $php_ext,
@@ -66,6 +70,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->notification_manager = $notification_manager;
         $this->user_loader = $user_loader;
         $this->language = $language;
+        $this->template = $template;
         $this->post_reactions_table = $post_reactions_table;
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
@@ -407,34 +412,49 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            // Utiliser le notification_manager pour envoyer l'e-mail.
-            // C'est la méthode standard de phpBB qui gère correctement les templates HTML.
-            // L'ID de l'auteur doit être dans un tableau.
-            $this->notification_manager->add_notifications('bastien59960.reactions.notification.cron_email', [
-                // Les données passées ici seront disponibles dans la classe reaction_email_digest
-                'users'                 => [$author_id],
-                'author_name'           => $author_name,
-                'since_time_formatted'  => $since_time_formatted,
-                'posts'                 => $data['posts'],
+            $messenger = new \messenger(false, $this->template);
+
+            // 1. Charger la langue de l'utilisateur AVANT de charger le template
+            $this->language->add_lang('common', 'bastien59960/reactions', false, $author_lang);
+
+            // 2. Charger le template d'e-mail (HTML + TXT)
+            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
+
+            // 3. Définir le destinataire
+            $messenger->to($author_email, $author_name);
+
+            // 4. Assigner les variables globales au template
+            $messenger->assign_vars([
+                'USERNAME'         => $author_name,
+                'DIGEST_SINCE'     => $since_time_formatted,
+                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
+                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
 
-            // Forcer l'envoi immédiat des notifications par e-mail.
-            // La méthode correcte est send(). Elle prend le type de média et un user_id unique.
-            $this->notification_manager->send('email', $author_id);
+            // 5. Itérer sur les posts et les réactions pour peupler les blocs du template
+            foreach ($data['posts'] as $post_data)
+            {
+                $messenger->assign_block_vars('posts', [
+                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                ]);
 
-            error_log('[Reactions Cron] E-mail digest préparé pour ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
+                foreach ($post_data['reactions'] as $reaction)
+                {
+                    $messenger->assign_block_vars('posts.reactions', $reaction);
+                }
+            }
+
+            // 6. Envoyer l'e-mail
+            $messenger->send(NOTIFY_EMAIL);
+
+            error_log('[Reactions Cron] E-mail digest envoyé à ' . $author_name . ' (' . $author_email . ') avec ' . count($data['mark_ids']) . ' réactions.');
             return [
                 'status' => 'sent',
             ];
         }
         catch (\Exception $e)
         {
-            $error_details = "File: " . $e->getFile() . "\n" .
-                             "Line: " . $e->getLine() . "\n" .
-                             "Trace: " . $e->getTraceAsString();
-            error_log('[Reactions Cron] Échec critique lors de l\'envoi de l\'e-mail pour user_id ' . $author_id . ' : ' . $e->getMessage());
-            error_log('[Reactions Cron] Détails de l\'erreur: ' . $error_details);
-
             return [
                 'status' => 'failed',
                 'error'  => $e->getMessage(),
