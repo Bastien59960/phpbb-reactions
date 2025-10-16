@@ -113,7 +113,7 @@ class reaction extends base
         // L'ordre correct est : user, language, db, auth, root_path, php_ext, notifications_table
 		parent::__construct(
 			$user,
-			$language, // <- Doit être en 2ème position
+			$language,
 			$db,
 			$auth,
 			$phpbb_root_path,
