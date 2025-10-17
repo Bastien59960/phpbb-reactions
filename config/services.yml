@@ -115,7 +115,7 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)
     # =========================================================================
-    bastien59960.reactions.notification:
+    bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
             - '@dbal.conn'                      # 1. driver_interface
@@ -136,7 +136,7 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION : DIGEST COURRIEL
     # =========================================================================
-    bastien59960.reactions.notification.cron_email:
+    bastien59960.reactions.notification.type.reaction_email_digest:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         arguments:
             - '@dbal.conn'                      # 1. driver_interface
@@ -149,14 +149,6 @@ services:
             - '@config'                         # 8. config
         tags:
             - { name: notification.type }
-
-    notification.type.reaction:
-        alias: bastien59960.reactions.notification
-        public: true
-
-    notification.type.reaction_email_digest:
-        alias: bastien59960.reactions.notification.cron_email
-        public: true
 
     # =========================================================================
     # CONTRÔLEUR UCP (PREFERENCES UTILISATEURS)
