@@ -11,9 +11,6 @@
  * donné. Ce HTML est ensuite renvoyé par le contrôleur AJAX pour mettre à jour
  * l'affichage sans recharger la page.
  *
- * Elle est injectée comme service dans d'autres composants (notamment le
- * contrôleur AJAX) pour éviter la duplication de code.
- *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -51,14 +48,17 @@ class helper
     /** @var string */
     protected $table_posts;
 
+    /**
+     * Constructeur - CORRECTION: suppression des type hints string
+     */
     public function __construct(
         driver_interface $db,
         user $user,
         template $template,
         language $language,
         controller_helper $controller_helper,
-        string $table_post_reactions,
-        string $table_posts
+        $table_post_reactions,  // ✅ SANS type hint string
+        $table_posts            // ✅ SANS type hint string
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -69,16 +69,13 @@ class helper
         $this->table_posts = $table_posts;
     }
 
-        // =============================================================================
-    // MÉTHODE : Génération du HTML des réactions pour un post
-    // =============================================================================
     /**
      * Génère le HTML complet du bloc de réactions pour un message donné
      *
      * @param int $post_id ID du message
      * @return string HTML prêt à injecter côté client (AJAX)
      */
-        public function get_reactions_html_for_post($post_id)
+    public function get_reactions_html_for_post($post_id)
     {
         $post_id = (int) $post_id;
 
@@ -180,9 +177,6 @@ class helper
         return $html;
     }
 
-    // =============================================================================
-    // MÉTHODE : Génération d'URL (proxy vers controller_helper)
-    // =============================================================================
     /**
      * Génère une URL via le contrôleur phpBB ou fallback append_sid
      *
