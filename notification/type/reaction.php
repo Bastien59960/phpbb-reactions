@@ -104,7 +104,7 @@ class reaction extends base
         config $config,                     // 8. @config
         user_loader $user_loader,           // 9. @user_loader
         reactions_helper $reactions_helper, // 10. @bastien59960.reactions.helper
-        request_interface $request,         // 11. @request
+        request_interface $request,         // 11. @request (non utilisé, mais requis par services.yml)
         template $template                  // 12. @template
     ) {
         // Appeler le constructeur de la classe parente
@@ -129,7 +129,7 @@ class reaction extends base
         $this->user_loader = $user_loader;
 		$this->template = $template;
         $this->reactions_helper = $reactions_helper;
-        // Note: $request is injected but not used in this class. We accept it to match services.yml.
+        // Note : $request est injecté mais non utilisé dans cette classe. Nous l'acceptons pour correspondre à services.yml.
 
         try
         {
