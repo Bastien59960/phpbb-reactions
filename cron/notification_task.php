@@ -21,6 +21,8 @@ if (!defined('IN_PHPBB'))
     exit;
 }
 
+use messenger;
+
 class notification_task extends \phpbb\cron\task\base
 {
     /** @var \phpbb\db\driver\driver_interface */
@@ -465,10 +467,14 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            // CORRECTION : Instancier manuellement la classe messenger.
-            // phpBB ne fournit pas ce service via DI.
-            // Le paramètre `false` désactive le chargement des templates par défaut.
-            $messenger = new \phpbb\messenger(false);
+            // S'assurer que la classe messenger est disponible avant de l'utiliser.
+            // Elle est définie dans un fichier qui n'est pas toujours chargé par défaut.
+            if (!class_exists('messenger'))
+            {
+                include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
+            }
+
+            $messenger = new messenger(false);
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
