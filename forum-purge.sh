@@ -51,17 +51,17 @@ echo "───[ 0️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]─────�
 sleep 0.2
 
 # Suppression des conteneurs compilés et fichiers de cache de production
-rm -rf "$FORUM_ROOT/cache/production/container_"*
-rm -rf "$FORUM_ROOT/cache/production/"*.php
+rm -vrf "$FORUM_ROOT/cache/production/container_"*
+rm -vrf "$FORUM_ROOT/cache/production/"*.php
 check_status "Nettoyage du cache de production."
 
 # Suppression des conteneurs compilés du store
-rm -rf "$FORUM_ROOT/store/container_"*
+rm -vrf "$FORUM_ROOT/store/container_"*
 check_status "Nettoyage du store."
 
 # Rétablissement des permissions pour éviter les erreurs d'écriture
-chmod -R 777 "$FORUM_ROOT/cache/"
-chmod -R 777 "$FORUM_ROOT/store/"
+chmod -vR 777 "$FORUM_ROOT/cache/"
+chmod -vR 777 "$FORUM_ROOT/store/"
 check_status "Permissions de cache/store rétablies (777)."
 
 # ==============================================================================
@@ -216,15 +216,13 @@ if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
-    echo "         .                                            .       "
-    echo "        .n                   .                 .                  n.      "
-    echo "  .   .dP                  dP                   9b                 9b.    . "
-    echo " 4    qXb         .       dX                     Xb       .        dXp     t "
-    echo "dX.    9Xb      .d42b.   dXP                     TOb   .d24b.      dXP     .Xb "
-    echo "9XXb._       _.dXXXXb dXXXXXb    ...           dXXXXXb dXXXXb._       _.dXXP "
-    echo " 9XXXXXXXXXXXXXXXXXXXVXXXXXXXXOo.           .oOXXXXXXXXVXXXXXXXXXXXXXXXXXP  "
-    echo "  '9XXXXXXXXXXXXXXXXXXXXX'~   ~'OOO8b   d8OOO'~   ~'XXXXXXXXXXXXXXXXXXXXP'   "
-    echo "    '9XXXXXXXXXXXP' '9XX'   DIE    '98v8P'  HUMAN   'XXP' 'PXXXXXXXXXXXP'     "
-    echo "        '9XXP'    '98v8P'               'XXP'    'PXXP'         "
+    echo "               ,___,"
+    echo "               )O O("
+    echo "              /|~'~|\\"
+    echo "              \"'\"'\""
+    echo "        AH ! UN BUG SAUVAGE !"
+    echo "  (\_/)  "
+    echo " (='.'=) "
+    echo "c(\")_(\") "
     echo -e "${NC}"
 fi
