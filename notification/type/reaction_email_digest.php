@@ -35,9 +35,9 @@ class reaction_email_digest extends \phpbb\notification\type\base
         \phpbb\language\language $language,
         \phpbb\user $user,
         \phpbb\auth\auth $auth,
-        $phpbb_root_path,
-        $php_ext,
-        $notifications_table,
+        $phpbb_root_path,                   // ✅ SANS type hint
+        $php_ext,                           // ✅ SANS type hint
+        $notifications_table,               // ✅ SANS type hint
         \phpbb\config\config $config // 8. Injection de @config
     ) {
         // Appel du constructeur parent avec le bon ordre
