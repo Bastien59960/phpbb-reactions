@@ -18,6 +18,3 @@ parameters:
 
     # Table des forums (référence)
     tables.forums: '%core.table_prefix%forums'
-
-    # Table des messages (référence)
-    tables.posts: '%core.table_prefix%posts'
