@@ -18,6 +18,7 @@ $debug = true;
 // @define('DEBUG_CONTAINER', true);
 @define('DEBUG', true);
 @define('DEBUG_CONTAINER', true);
+@define('DEBUG_EXTRA', true);
 $dbcharset = 'utf8mb4';
 
-$config['phpbb.dependency_injection.compile_container_on_load'] = true;
+
