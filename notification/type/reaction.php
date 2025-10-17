@@ -72,26 +72,20 @@ class reaction extends base
      * 
      * Les 7 premiers arguments sont requis par la classe parente (base) :
      * 1. db                  → Base de données
-     * 2. language            → Gestionnaire de langues
-     * 3. user                → Utilisateur courant
-     * 4. auth                → Autorisations
-     * 5. phpbb_root_path     → Chemin racine phpBB
-     * 6. php_ext             → Extension PHP
-     * 7. notifications_table → Table des notifications
+     * 2. language            → @language
+     * 3. user                → @user
+     * 4. auth                → @auth
+     * 5. phpbb_root_path     → %core.root_path%
+     * 6. php_ext             → %core.php_ext%
+     * 7. notifications_table → %core.table_prefix%notifications
      * 
-     * Les 5 suivants sont spécifiques à cette extension :
-     * 8. config            → Configuration
-     * 9. user_loader       → Chargeur d'utilisateurs
-     * 10. template         → Moteur de templates
-     * 11. reactions_helper → Helper personnalisé
+     * Les 5 suivants sont spécifiques à cette classe :
+     * 8. config            → @config
+     * 9. user_loader       → @user_loader
+     * 10. reactions_helper → @bastien59960.reactions.helper
+     * 11. request          → @request
+     * 12. template         → @template
      * 
-     * @param driver_interface  $db                  Base de données 
-     * @param language          $language            Gestionnaire de langues
-     * @param user|null         $user                Utilisateur courant
-     * @param auth              $auth                Autorisations
-     * @param string            $notifications_table Table notifications
-     * @param config|null       $config              Configuration 
-     * @param template|null     $template            Templates
      */
     public function __construct(
         driver_interface $db,               // 1. @dbal.conn
@@ -120,12 +114,8 @@ class reaction extends base
         );
 
         // Stocker les dépendances spécifiques à cette classe
-        $this->db = $db;
-        $this->user = $user;
-        $this->auth = $auth;
-        $this->notifications_table = $notifications_table;
         $this->config = $config;
-        // $this->language est déjà défini par le parent
+        $this->language = $language;
         $this->user_loader = $user_loader;
 		$this->template = $template;
         $this->reactions_helper = $reactions_helper;
