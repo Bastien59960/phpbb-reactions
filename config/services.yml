@@ -50,12 +50,13 @@ services:
             - '@auth'                           # 4. auth
             - '@language'                       # 5. language
             - '%tables.post_reactions%'         # 6. post_reactions_table
+            - '%tables.topics%'                 # 7. topics_table
             - '%tables.forums%'                 # 8. forums_table
-            - '%core.root_path%'                # 10. root_path
-            - '%core.php_ext%'                  # 11. php_ext
-            - '@config'                         # 12. config
-            - '@notification_manager'           # 13. notification_manager
-            - '@bastien59960.reactions.helper'  # 14. reactions_helper
+            - '%core.root_path%'                # 9. root_path
+            - '%core.php_ext%'                  # 10. php_ext
+            - '@config'                         # 11. config
+            - '@notification_manager'           # 12. notification_manager
+            - '@bastien59960.reactions.helper'  # 13. reactions_helper
 
     # =========================================================================
     # CONTRÔLEUR DE TEST
