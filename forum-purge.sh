@@ -216,13 +216,9 @@ if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
-    echo "               ,___,"
-    echo "               )O O("
-    echo "              /|~'~|\\"
-    echo "              \"'\"'\""
-    echo "        AH ! UN BUG SAUVAGE !"
-    echo "  (\_/)  "
-    echo " (='.'=) "
-    echo "c(\")_(\") "
+    echo "        AH ! UNE ARMÉE DE BUGS SAUVAGES !"
+    echo "  (\_/)    (\_/)    (\_/)    (\_/)    (\_/)    (\_/)    (\_/)    (\_/)    (\_/)    (\_/)"
+    echo " (='.'=)  (='.'=)  (='.'=)  (='.'=)  (='.'=)  (='.'=)  (='.'=)  (='.'=)  (='.'=)  (='.'=)"
+    echo "c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\") c(\")_(\")"
     echo -e "${NC}"
 fi

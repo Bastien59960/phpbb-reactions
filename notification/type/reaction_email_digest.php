@@ -39,7 +39,7 @@ class reaction_email_digest extends \phpbb\notification\type\base
         $php_ext,                           // ✅ SANS type hint
         $notifications_table,               // ✅ SANS type hint
         \phpbb\config\config $config // 8. Injection de @config
-    ) {
+    ) { // ✅ CONSTRUCTEUR CORRIGÉ
         // Appel du constructeur parent avec le bon ordre
         // L'ordre attendu est : db, language, user, auth, root_path, php_ext, notifications_table.
         // On passe toutes les dépendances requises.
@@ -52,7 +52,9 @@ class reaction_email_digest extends \phpbb\notification\type\base
             $php_ext,
             $notifications_table
         );
-        // Note : La classe parente assigne déjà la plupart des propriétés.
+        // On assigne manuellement les dépendances non gérées par le parent.
+        $this->config = $config;
+        $this->language = $language;
     }
 
     /**
