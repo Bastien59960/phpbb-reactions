@@ -57,8 +57,7 @@ class helper
         template $template,
         language $language,
         controller_helper $controller_helper,
-        $table_post_reactions,  // ✅ SANS type hint string
-        $table_posts            // ✅ SANS type hint string
+        $table_post_reactions  // ✅ SANS type hint string
     ) {
         $this->db = $db;
         $this->user = $user;
@@ -66,7 +65,6 @@ class helper
         $this->language = $language;
         $this->controller_helper = $controller_helper;
         $this->table_post_reactions = $table_post_reactions;
-        $this->table_posts = $table_posts;
     }
 
     /**

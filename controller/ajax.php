@@ -127,8 +127,6 @@ class ajax
         \phpbb\auth\auth $auth,
         \phpbb\language\language $language,
         $post_reactions_table,
-        $posts_table,
-        $topics_table,
         $forums_table,
         $root_path,
         $php_ext,
@@ -143,8 +141,6 @@ class ajax
         $this->auth = $auth;
         $this->language = $language;
         $this->post_reactions_table = $post_reactions_table;
-        $this->posts_table = $posts_table;
-        $this->topics_table = $topics_table;
         $this->forums_table = $forums_table;
         $this->root_path = $root_path;
         $this->php_ext = $php_ext;

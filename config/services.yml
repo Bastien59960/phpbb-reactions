@@ -19,7 +19,6 @@ services:
             - '@language'                   # 4. phpbb\language\language
             - '@controller.helper'          # 5. phpbb\controller\helper
             - '%tables.post_reactions%'     # 6. nom de la table des réactions
-            - '%tables.posts%'              # 7. nom de la table des messages
 
     # =========================================================================
     # LISTENER D'ÉVÉNEMENTS
@@ -30,7 +29,6 @@ services:
             - '@dbal.conn'                  # 1. Base de données
             - '@user'                       # 2. Utilisateur courant
             - '%tables.post_reactions%'     # 3. Table des réactions
-            - '%tables.posts%'              # 4. Table des messages
             - '@template'                   # 5. Moteur de templates
             - '@language'                   # 6. Langues
             - '@bastien59960.reactions.helper' # 7. Helper maison
@@ -52,9 +50,7 @@ services:
             - '@auth'                           # 4. auth
             - '@language'                       # 5. language
             - '%tables.post_reactions%'         # 6. post_reactions_table
-            - '%tables.posts%'                  # 7. posts_table
-            - '%tables.topics%'                 # 8. topics_table
-            - '%tables.forums%'                 # 9. forums_table
+            - '%tables.forums%'                 # 8. forums_table
             - '%core.root_path%'                # 10. root_path
             - '%core.php_ext%'                  # 11. php_ext
             - '@config'                         # 12. config
@@ -70,7 +66,6 @@ services:
             - '@dbal.conn'                  # 1. driver_interface
             - '@user'                       # 2. user
             - '%tables.post_reactions%'     # 3. reactions_table
-            - '%tables.posts%'              # 4. posts_table
 
     # =========================================================================
     # TÂCHE CRON DE TEST (MINIMALISTE) - ✅ NE PAS SUPPRIMER

@@ -203,24 +203,23 @@ echo "$CRON_LIST_OUTPUT"
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
     echo -e "${GREEN}"
-    echo "      _   "
-    echo "     ( \`> "
-    echo "     /`\\  "
-    echo "    /`\\ \`-. "
-    echo "   /`\\ \`-. \`."
-    echo "  /`\\ \`-. \`.\`."
-    echo " /`\\ \`-. \`.\`.\`."
-    echo "/`\\ \`-. \`.\`.\`.\`."
-    echo "\`-\`-\`-\`-\`-\`-\`-\`-\`"
+    echo "            .-\"\"\"-."
+    echo "           /       \\"
+    echo "           \\.---. ./"
+    echo "           ( ✓ ✓ )    👾 MISSION ACCOMPLISHED"
+    echo "    _..oooO--(_)--Oooo.._"
+    echo "    \`--. .--. .--. .--'\`"
+    echo "       SYSTEM READY"
     echo -e "${NC}"
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
-    echo "                   AH ! UNE HORDE D'INSECTES-BUGS SAUVAGES !"
-    echo '      /╲/\╱\                                     /╲/\╱\              '
-    echo '     /  \   \                                   /   /  \             '
-    echo '    /    \   \   ~(_o_o_)~   (ò.ó)   /█\   /   /    \   ( \ )    '
-    echo '   /______\   \             /::\           /   /______\         /^\ '
-    echo '                                                                 /ô\o/ô\'
+    echo "            .-\"\"\"-."
+    echo "           /       \\"
+    echo "           \\.---. ./"
+    echo "           ( ✗ ✗ )    👾 CRITICAL FAILURE"
+    echo "    _..oooO--(_)--Oooo.._"
+    echo "    \`--. .--. .--. .--'\`"
+    echo "       BUG INVASION DETECTED"
     echo -e "${NC}"
 fi
