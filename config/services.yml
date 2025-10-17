@@ -72,18 +72,11 @@ services:
             - '%tables.post_reactions%'
             - '%tables.posts%'
 
-    # =========================================================================
-    # TÂCHE CRON DE TEST (MINIMALISTE)
-    # =========================================================================
-    cron.task.bastien59960.reactions.test_task:
-        class: bastien59960\reactions\cron\test_task
-        tags:
-            - { name: cron.task }
 
     # =========================================================================
     # TÂCHE CRON (DIGEST E-MAIL)
     # =========================================================================
-    cron.task.bastien59960.reactions.notification_task:
+    bastien59960.reactions.cron.notification_task:
         class: bastien59960\reactions\cron\notification_task
         arguments:
             - '@dbal.conn'
