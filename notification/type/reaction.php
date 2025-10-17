@@ -108,11 +108,11 @@ class reaction extends base
         template $template                  // 12. @template
     ) {
         // Appeler le constructeur de la classe parente
-        // L'ordre attendu par \phpbb\notification\type\base est : user, language, db, auth, root_path, php_ext, notifications_table
-		parent::__construct(
-            $user,
-            $language,
+        // L'ordre attendu par \phpbb\notification\type\base est : db, language, user, auth, root_path, php_ext, notifications_table
+        parent::__construct(
             $db,
+            $language,
+            $user,
             $auth,
             $phpbb_root_path,
             $php_ext,
