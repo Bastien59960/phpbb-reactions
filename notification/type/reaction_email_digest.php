@@ -41,7 +41,8 @@ class reaction_email_digest extends \phpbb\notification\type\base
         \phpbb\config\config $config // 8. Injection de @config
     ) {
         // Appel du constructeur parent avec le bon ordre
-        // L'ordre attendu est : db, language, user, auth, root_path, php_ext, notifications_table
+        // L'ordre attendu est : db, language, user, auth, root_path, php_ext, notifications_table.
+        // On passe toutes les dépendances requises.
         parent::__construct(
             $db,
             $language,
@@ -51,9 +52,7 @@ class reaction_email_digest extends \phpbb\notification\type\base
             $php_ext,
             $notifications_table
         );
-
-        $this->language = $language;
-        $this->config = $config;
+        // Note : La classe parente assigne déjà la plupart des propriétés.
     }
 
     /**
