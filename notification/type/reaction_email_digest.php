@@ -38,7 +38,7 @@ class reaction_email_digest extends \phpbb\notification\type\base
         $phpbb_root_path,
         $php_ext,
         $notifications_table,
-        \phpbb\config\config $config // Injection de @config
+        \phpbb\config\config $config // 8. Injection de @config
     ) {
         // Appel du constructeur parent avec le bon ordre
         parent::__construct(
