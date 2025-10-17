@@ -1,16 +1,6 @@
 #
 # Fichier : config/parameters.yml — bastien59960/reactions/config/parameters.yml
 #
-# Fichier de paramètres pour l'extension Reactions.
-#
-# Ce fichier définit les paramètres personnalisés utilisés par l'extension, comme les valeurs par défaut ou les constantes de configuration.
-#
-# Points clés :
-#   - Centralisation des paramètres techniques
-#   - Utilisé lors de l'installation ou du développement
-#
-# Ce fichier est chargé automatiquement par phpBB lors de l'initialisation de l'extension.
-#
 
 parameters:
     # =============================================================================
@@ -18,21 +8,19 @@ parameters:
     # =============================================================================
 
     # Table principale des réactions
-    # Stocke toutes les réactions aux messages du forum
     tables.post_reactions: '%core.table_prefix%post_reactions'
 
     # Table des préférences utilisateur pour les notifications de réactions
-    # Contient les choix individuels (activer la cloche, activer le cron)
     tables.reactions_user_prefs: '%core.table_prefix%reactions_user_prefs'
 
+    # Table des notifications (référence phpBB core)
+    tables.notifications: '%core.table_prefix%notifications'
+
     # Table des sujets (référence)
-    # Utilisée pour les jointures et les vérifications d'autorisation
     tables.topics: '%core.table_prefix%topics'
 
     # Table des forums (référence)
-    # Utilisée pour les jointures et les vérifications d'autorisation
     tables.forums: '%core.table_prefix%forums'
 
     # Table des messages (référence)
-    # Utilisée pour les jointures et les vérifications d'autorisation
     tables.posts: '%core.table_prefix%posts'
