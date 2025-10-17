@@ -108,8 +108,8 @@ services:
             - '%core.root_path%'            # 8. phpbb_root_path
             - '%core.php_ext%'              # 9. php_ext
             - '%core.table_prefix%'         # 10. table_prefix
-            - '@messenger'                  # 11. messenger
-            - '@?console.io'                # 11. io (optionnel)
+            - '@notification.messenger'     # 11. messenger
+            - '@?console.io'                # 12. io (optionnel)
         tags:
             - { name: cron.task }
 

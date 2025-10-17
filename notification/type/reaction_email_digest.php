@@ -41,10 +41,11 @@ class reaction_email_digest extends \phpbb\notification\type\base
         \phpbb\config\config $config // 8. Injection de @config
     ) {
         // Appel du constructeur parent avec le bon ordre
+        // L'ordre attendu est : db, language, user, auth, root_path, php_ext, notifications_table
         parent::__construct(
-            $user,
-            $language,
             $db,
+            $language,
+            $user,
             $auth,
             $phpbb_root_path,
             $php_ext,
