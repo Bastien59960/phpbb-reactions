@@ -34,8 +34,9 @@ services:
             - '@template'                   # 5. Moteur de templates
             - '@language'                   # 6. Langues
             - '@bastien59960.reactions.helper' # 7. Helper maison
-            - '%core.root_path%'            # 8. Chemin racine phpBB
-            - '%core.php_ext%'              # 9. Extension PHP
+            - '@config'                     # 8. Configuration
+            - '%core.root_path%'            # 9. Chemin racine phpBB
+            - '%core.php_ext%'              # 10. Extension PHP
         tags:
             - { name: event.listener }
 
