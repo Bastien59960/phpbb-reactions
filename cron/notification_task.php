@@ -53,6 +53,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var string Préfixe des tables phpBB */
     protected $table_prefix;
 
+    /** @var \phpbb\notification\messenger */
+    protected $messenger;
+
     /** @var \Symfony\Component\Console\Output\OutputInterface|null */
     protected $io;
 
@@ -70,7 +73,8 @@ class notification_task extends \phpbb\cron\task\base
         $phpbb_root_path,                                      // 8. %core.root_path%
         $php_ext,                                              // 9. %core.php_ext%
         $table_prefix,                                         // 10. %core.table_prefix%
-        ?\Symfony\Component\Console\Output\OutputInterface $io = null // 11. @?console.io
+        \phpbb\notification\messenger $messenger,               // 11. @messenger
+        ?\Symfony\Component\Console\Output\OutputInterface $io = null // 12. @?console.io
     ) {
         // 2. Assignation de toutes les dépendances aux propriétés de la classe.
         $this->db = $db;
@@ -83,6 +87,7 @@ class notification_task extends \phpbb\cron\task\base
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
+        $this->messenger = $messenger;
         $this->io = $io;
     }
 
@@ -465,10 +470,8 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            // CORRECTION : Instancier manuellement la classe messenger
-            // Le paramètre `false` désactive le chargement des templates par défaut.
-            $messenger = new \messenger(false);
-
+            // Utiliser le service messenger injecté
+            $messenger = $this->messenger;
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
