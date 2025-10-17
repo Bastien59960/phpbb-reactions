@@ -13,9 +13,6 @@ parameters:
     # Table des préférences utilisateur pour les notifications de réactions
     tables.reactions_user_prefs: '%core.table_prefix%reactions_user_prefs'
 
-    # Table des notifications (référence phpBB core)
-    tables.notifications: '%core.table_prefix%notifications'
-
     # Table des sujets (référence)
     tables.topics: '%core.table_prefix%topics'
 
