@@ -170,6 +170,10 @@ echo ""
 echo "───[ 🔍  VÉRIFICATION FINALE DE LA TÂCHE CRON ]───────────────────────────────"
 sleep 0.45
 
+# Ajout d'une temporisation de 3 secondes pour laisser le temps au système de se stabiliser
+echo -e "${YELLOW}ℹ️  Attente de 3 secondes avant la vérification...${NC}"
+sleep 3
+
 CRON_TASK_NAME="bastien59960.reactions.notification_task"
 CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 

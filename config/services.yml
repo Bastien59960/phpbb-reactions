@@ -111,7 +111,7 @@ services:
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%tables.notifications%'
+            - '%core.table_prefix%notifications'
             - '@config'
             - '@user_loader'
             - '@bastien59960.reactions.helper'
@@ -132,7 +132,7 @@ services:
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%tables.notifications%'
+            - '%core.table_prefix%notifications'
             - '@config'
         tags:
             - { name: notification.type }
