@@ -63,7 +63,9 @@ services:
     # =========================================================================
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
-        # Ce contrôleur est simple et n'a pas besoin de dépendances injectées.
+        arguments:
+            - '@dbal.conn'
+            - '%tables.post_reactions%'
 
     # =========================================================================
     # TÂCHE CRON DE TEST (MINIMALISTE) - ✅ NE PAS SUPPRIMER
