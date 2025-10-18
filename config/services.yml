@@ -63,10 +63,7 @@ services:
     # =========================================================================
     bastien59960.reactions.test:
         class: bastien59960\reactions\controller\test
-        arguments:
-            - '@dbal.conn'                  # 1. driver_interface
-            - '@user'                       # 2. user
-            - '%tables.post_reactions%'     # 3. reactions_table
+        # Ce contrôleur est simple et n'a pas besoin de dépendances injectées.
 
     # =========================================================================
     # TÂCHE CRON DE TEST (MINIMALISTE) - ✅ NE PAS SUPPRIMER
