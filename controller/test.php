@@ -22,23 +22,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class test
 {
-    protected $db;
-    protected $user;
-    protected $reactions_table;
-    protected $posts_table;
-
-    public function __construct(
-        \phpbb\db\driver\driver_interface $db,
-        \phpbb\user $user,
-        $reactions_table,
-        $posts_table
-    ) {
-        $this->db = $db;
-        $this->user = $user;
-        $this->reactions_table = $reactions_table;
-        $this->posts_table = $posts_table;
-    }
-
     /**
      * Test the reactions functionality
      */
