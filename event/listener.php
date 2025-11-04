@@ -351,9 +351,14 @@ class listener implements EventSubscriberInterface
     public function load_language_for_cli($event)
     {
         $command = $event['command'];
+
         // On ne charge le fichier que pour les commandes liées au cron pour optimiser.
         if (strpos($command->getName(), 'cron:') === 0)
         {
+            // CORRECTION : Il faut s'assurer que la langue par défaut du forum est chargée
+            // avant d'ajouter le fichier de langue de notre extension.
+            $this->language->setup($this->config['default_lang']);
+
             $this->language->add_lang('common', 'bastien59960/reactions');
         }
     }
