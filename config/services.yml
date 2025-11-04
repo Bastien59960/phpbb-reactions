@@ -51,6 +51,7 @@ services:
             - '@auth'                           # 4. auth
             - '@language'                       # 5. language
             - '%tables.post_reactions%'         # 6. post_reactions_table
+            - '%tables.posts%'                  # NOUVEAU : posts_table
             - '%tables.topics%'                 # 7. topics_table
             - '%tables.forums%'                 # 8. forums_table
             - '%core.root_path%'                # 9. root_path
