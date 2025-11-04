@@ -125,6 +125,12 @@ try {
         $phpbb_container_builder->compile();
         echo "✅ Compilation du conteneur terminée.\n";
 
+        // Sauvegarde explicite du conteneur dans le cache
+        if (method_exists($phpbb_container_builder, 'dump_container')) {
+            $phpbb_container_builder->dump_container();
+            echo "💾 Conteneur sauvegardé dans le cache.\n";
+        }
+
         $phpbb_container = $phpbb_container_builder->get_container();
         echo "✅ Conteneur compilé avec succès\n\n";
     } catch (\Exception $e) {
