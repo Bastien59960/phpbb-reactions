@@ -121,21 +121,23 @@ try {
     }
     
     try {
-        echo "⚙️  Vérification / reconstruction automatique du conteneur...\n";
-        if (method_exists($phpbb_container_builder, 'compile')) {
+        echo "⚙️  Compilation du conteneur (peut prendre quelques secondes)...\n";
+        try {
+            echo "⚙️  Forçage de la compilation du conteneur (peut prendre quelques secondes)...\n";
             $phpbb_container_builder->compile();
-            echo "✅ Méthode compile() exécutée.\n";
-        } else {
-            echo "ℹ️  Méthode compile() non disponible — passage direct à get_container().\n";
+            echo "✅ Compilation du conteneur terminée.\n";
+    
+            // Sauvegarde explicite du conteneur dans le cache
+            if (method_exists($phpbb_container_builder, 'dump_container')) {
+                $phpbb_container_builder->dump_container();
+                echo "💾 Conteneur sauvegardé dans le cache.\n";
+            }
+    
+            $phpbb_container = $phpbb_container_builder->get_container();
+            echo "✅ Conteneur compilé avec succès\n\n";
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur lors de la compilation du conteneur : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());
         }
-
-        $phpbb_container = $phpbb_container_builder->get_container();
-
-        if (method_exists($phpbb_container_builder, 'dump_container')) {
-            echo "ℹ️  dump_container() est protégée, elle ne sera pas appelée directement.\n";
-        }
-
-        echo "✅ Conteneur chargé.\n\n";
     } catch (\Exception $e) {
         throw new \Exception("Erreur lors de la compilation du conteneur : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());
     }
