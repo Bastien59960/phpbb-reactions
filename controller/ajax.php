@@ -62,7 +62,7 @@ class ajax
     protected $post_reactions_table;
     
     /** @var string Nom de la table des messages */
-    protected $posts_table;
+    // protected $posts_table; // Cette propriété n'est pas utilisée par ce contrôleur
     
     /** @var string Nom de la table des sujets */
     protected $topics_table; 
@@ -119,7 +119,7 @@ class ajax
      * @param \phpbb\config\config $config Configuration du forum
      * @param \phpbb\notification\manager $notification_manager Gestionnaire de notifications
      * @param \bastien59960\reactions\controller\helper $reactions_helper Helper pour le HTML
-     */
+     */    
     public function __construct(
         \phpbb\db\driver\driver_interface $db,
         \phpbb\user $user,
@@ -127,7 +127,6 @@ class ajax
         \phpbb\auth\auth $auth,
         \phpbb\language\language $language,
         $post_reactions_table,
-        $posts_table,
         $topics_table,
         $forums_table,
         $root_path,
@@ -143,7 +142,6 @@ class ajax
         $this->auth = $auth;
         $this->language = $language;
         $this->post_reactions_table = $post_reactions_table;
-        $this->posts_table = $posts_table;
         $this->topics_table = $topics_table;
         $this->forums_table = $forums_table;
         $this->root_path = $root_path;
