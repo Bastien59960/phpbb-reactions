@@ -110,21 +110,21 @@ try {
     }
     
     try {
-        $phpbb_container_builder = new \phpbb\di\container_builder(
-            $phpbb_root_path,
-            $phpEx,
-            $phpbb_config_php_file
-        );
-        echo "✅ Container builder créé\n";
-
         // CORRECTION FINALE : Construire manuellement le tableau de configuration.
         // 1. On récupère toutes les valeurs de config.php
         $config_values = $phpbb_config_php_file->get_all();
         // 2. On y ajoute le paramètre manquant pour le cache
         $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
-        // 3. On passe ce tableau complet au container_builder
-        $phpbb_container_builder->set_phpbb_config_file_values($config_values);
-        echo "✅ Paramètres de config injectés dans le container_builder\n";
+
+        // 3. On passe ce tableau complet comme 4ème argument au constructeur.
+        $phpbb_container_builder = new \phpbb\di\container_builder(
+            $phpbb_root_path,
+            $phpEx,
+            $phpbb_config_php_file,
+            $config_values
+        );
+        echo "✅ Container builder créé\n";
+        echo "✅ Paramètres de config (y compris le cache) injectés dans le constructeur\n";
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
