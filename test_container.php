@@ -31,7 +31,7 @@ echo "Chemin racine phpBB détecté : " . $phpbb_root_path . "\n\n";
 try {
     echo "1. Initialisation de l'environnement de base (sans charger le conteneur en cache)...\n";
     // On charge uniquement les fichiers nécessaires pour construire un conteneur manuellement
-    require($phpbb_root_path . 'config/config.' . $phpEx);
+    require($phpbb_root_path . 'config.' . $phpEx);
     require($phpbb_root_path . 'vendor/autoload.' . $phpEx);
     require($phpbb_root_path . 'includes/constants.' . $phpEx);
     echo "   ✅ Environnement de base initialisé.\n\n";
