@@ -34,11 +34,22 @@ try {
     require($phpbb_root_path . 'config.' . $phpEx);
     require($phpbb_root_path . 'vendor/autoload.' . $phpEx);
     require($phpbb_root_path . 'includes/constants.' . $phpEx);
-    require($phpbb_root_path . 'phpbb/class_loader.' . $phpEx); // ✅ CORRECTION : Charger le configurateur de l'autoloader
-    require($phpbb_root_path . 'phpbb/di/extension/core.' . $phpEx); // ✅ CORRECTION : Charger la classe de base des extensions
+
+    echo "   - Chargement de phpbb/class_loader.php...\n";
+    require($phpbb_root_path . 'phpbb/class_loader.' . $phpEx);
+    echo "   - Instanciation et enregistrement de l'autoloader phpBB...\n";
+    $phpbb_class_loader = new \phpbb\class_loader('phpbb\\', "{$phpbb_root_path}phpbb/", $phpEx);
+    $phpbb_class_loader->register();
+    echo "   - Chargement de phpbb/di/extension/core.php...\n";
+    require($phpbb_root_path . 'phpbb/di/extension/core.' . $phpEx);
+
     echo "   ✅ Environnement de base initialisé.\n\n";
 
     echo "2. Construction manuelle d'un NOUVEAU conteneur de services...\n";
+    echo "   - Préparation du fichier de configuration PHP...\n";
+    $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
+    \phpbb\di\container_builder::set_config_php_file($phpbb_config_php_file);
+
     // On utilise le constructeur de conteneur de phpBB pour simuler une purge complète.
     // Le 'false' en 4ème argument force la reconstruction et ignore le cache.
     $builder = new \phpbb\di\container_builder(
