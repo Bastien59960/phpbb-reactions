@@ -7,11 +7,26 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
+// --- Détection robuste du chemin racine de phpBB ---
+$current_dir = __DIR__;
+$phpbb_root_path = '';
+for ($i = 0; $i < 5; $i++) { // Limite de 5 niveaux pour éviter une boucle infinie
+    if (file_exists($current_dir . '/common.php')) {
+        $phpbb_root_path = $current_dir . '/';
+        break;
+    }
+    $current_dir = dirname($current_dir);
+}
+
+if (empty($phpbb_root_path)) {
+    die("ERREUR FATALE: Impossible de trouver la racine du forum (common.php introuvable).\n");
+}
+
 define('IN_PHPBB', true);
-$phpbb_root_path = __DIR__ . '/';
 $phpEx = 'php';
 
 echo "=== DIAGNOSTIC DU CONTENEUR DE SERVICES ===\n\n";
+echo "Chemin racine phpBB détecté : " . $phpbb_root_path . "\n\n";
 
 try {
     echo "1. Chargement de common.php...\n";
