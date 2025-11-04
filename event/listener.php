@@ -361,7 +361,9 @@ class listener implements EventSubscriberInterface
             // avant d'ajouter le fichier de langue de notre extension.
             $this->language->setup($this->config['default_lang']);
 
-            $this->language->add_lang('common', 'bastien59960/reactions');
+            // CORRECTION FINALE : Il faut charger la langue dans les deux services,
+            // car `cron:list` utilise `$user->lang()` pour la traduction.
+            $this->user->add_lang_ext('bastien59960/reactions', 'common');
         }
     }
 }

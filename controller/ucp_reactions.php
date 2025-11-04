@@ -95,8 +95,8 @@ class ucp_reactions
 		if ($submit)
 		{
 			// Récupérer les nouvelles valeurs depuis le formulaire.
-			$new_notify = $this->request->variable('user_reactions_notify', 0);
-			$new_email = $this->request->variable('user_reactions_cron_email', 0);
+			$new_notify = $this->request->variable('ucp_reactions_notify', 0);
+			$new_email = $this->request->variable('ucp_reactions_cron_email', 0);
 
 			// Mettre à jour la base de données.
 			$sql = 'UPDATE ' . $this->table_prefix . 'users

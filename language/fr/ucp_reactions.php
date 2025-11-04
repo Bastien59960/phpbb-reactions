@@ -28,7 +28,7 @@ $lang = array_merge($lang, array(
     'UCP_REACTIONS_EXPLAIN'         => 'Choisissez comment être averti lorsque des membres réagissent à vos messages.',
     'UCP_REACTIONS_NOTIFY'          => 'M\'avertir des nouvelles réactions (notification)',
     'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification instantanée dans la cloche du forum.',
-    'UCP_REACTIONS_EMAIL'           => 'M\'avertir des nouvelles réactions (e-mail)',
-    'UCP_REACTIONS_EMAIL_EXPLAIN'   => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
+    'UCP_REACTIONS_CRON_EMAIL'           => 'M\'avertir des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_CRON_EMAIL_EXPLAIN'   => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
     'UCP_REACTIONS_SAVED'           => 'Vos préférences de réactions ont été enregistrées.',
 ));

@@ -22,7 +22,7 @@ $lang = array_merge($lang ?? [], [
     'UCP_REACTIONS_EXPLAIN'         => 'Choose how to be notified when members react to your posts.',
     'UCP_REACTIONS_NOTIFY'          => 'Notify me about new reactions (notification)',
     'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Receive an instant notification in the forum\'s notification bell.',
-    'UCP_REACTIONS_EMAIL'           => 'Notify me about new reactions (e-mail)',
-    'UCP_REACTIONS_EMAIL_EXPLAIN'   => 'Receive a periodic e-mail summary of new reactions.',
+    'UCP_REACTIONS_CRON_EMAIL'           => 'Notify me about new reactions (e-mail)',
+    'UCP_REACTIONS_CRON_EMAIL_EXPLAIN'   => 'Receive a periodic e-mail summary of new reactions.',
     'UCP_REACTIONS_SAVED'           => 'Your reaction preferences have been saved.',
 ]);
