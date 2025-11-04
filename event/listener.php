@@ -97,6 +97,7 @@ class listener implements EventSubscriberInterface
             'core.viewtopic_cache_user_data' => 'load_language_and_data',
             'core.viewtopic_post_row_after'  => 'display_reactions',
             'core.viewforum_modify_topicrow' => 'add_forum_data',
+            'core.console.command.configure' => 'load_language_for_cli',
         ];
     }
 
@@ -338,5 +339,22 @@ class listener implements EventSubscriberInterface
         }
 
         return (mb_strlen(trim($emoji)) > 0);
+    }
+
+    /**
+     * Charge le fichier de langue pour les commandes en ligne de commande (CLI).
+     * Cet événement est déclenché par phpbbcli.php, ce qui permet de traduire
+     * les noms des tâches cron dans des commandes comme `cron:list`.
+     *
+     * @param \phpbb\event\data $event L'événement console.
+     */
+    public function load_language_for_cli($event)
+    {
+        $command = $event['command'];
+        // On ne charge le fichier que pour les commandes liées au cron pour optimiser.
+        if (strpos($command->getName(), 'cron:') === 0)
+        {
+            $this->language->add_lang('common', 'bastien59960/reactions');
+        }
     }
 }

@@ -106,6 +106,10 @@ try {
         $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
         echo "✅ Config PHP créée\n";
         
+        // Charger le fichier de configuration global de phpBB
+        $config = new \phpbb\config\db($phpbb_container->get('dbal.conn'), $phpbb_container->get('cache.driver'), $phpbb_container->get('config')['table_prefix'] . 'config');
+        $phpbb_container->set('config', $config);
+
         // Récupérer toutes les valeurs de config.php
         $config_values = $phpbb_config_php_file->get_all();
         echo "✅ Configuration chargée\n";
@@ -146,13 +150,29 @@ try {
         
         echo "✅ Paramètres préparés : " . count($custom_parameters) . " paramètres\n";
         
+        // --- INJECTION CRITIQUE DE LA BASE DE DONNÉES ---
+        // C'est l'étape qui manquait et qui causait l'erreur "synthetic service".
+        // On crée manuellement la connexion à la base de données et on l'injecte
+        // dans le conteneur avant de le compiler.
+        $db_driver_class = '\phpbb\db\driver\\' . $config_values['dbms'];
+        $db_connection = new $db_driver_class();
+        $db_connection->sql_connect(
+            $config_values['dbhost'],
+            $config_values['dbuser'],
+            $config_values['dbpasswd'],
+            $config_values['dbname'],
+            $config_values['dbport'],
+            false,
+            false
+        );
+        echo "✅ Connexion à la base de données initialisée.\n";
+
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer config_php_file : " . $e->getMessage());
     }
     
     try {
-        // Créer le container builder avec les bons paramètres dans le bon ordre
-        $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_root_path, $phpEx);
+        $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_config_php_file, $phpbb_root_path, $phpEx);
         
         // IMPORTANT : Utiliser with_custom_parameters() pour injecter TOUS les paramètres
         $phpbb_container_builder->with_custom_parameters($custom_parameters);
@@ -170,6 +190,10 @@ try {
 
     try {
         echo "⚙️  Obtention du conteneur... (phpBB va compiler et mettre en cache si nécessaire)\n";
+        // On injecte le service de base de données "synthétique"
+        $phpbb_container_builder->get_container()->set('dbal.conn', $db_connection);
+        echo "✅ Service 'dbal.conn' injecté dans le conteneur.\n";
+
         $phpbb_container = $phpbb_container_builder->get_container();
         echo "✅ Conteneur chargé avec succès.\n\n";
     } catch (\Exception $e) {
