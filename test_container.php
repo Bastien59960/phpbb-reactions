@@ -113,8 +113,17 @@ try {
         // Vérifier que acm_type existe et préparer le paramètre cache
         if (isset($config_values['acm_type'])) {
             $acm_type = $config_values['acm_type'];
-            $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
-            echo "✅ Type de cache détecté : $acm_type\n";
+            
+            // Vérifier si acm_type contient déjà le chemin complet
+            if (strpos($acm_type, '\\') !== false) {
+                // C'est déjà un chemin complet de classe
+                $config_values['cache.driver.class'] = $acm_type;
+                echo "✅ Type de cache détecté (chemin complet) : $acm_type\n";
+            } else {
+                // C'est juste le nom simple (ex: 'file'), on construit le chemin
+                $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
+                echo "✅ Type de cache détecté (nom simple) : $acm_type\n";
+            }
         } else {
             // Fallback sur 'file' si acm_type n'existe pas
             $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\file';
