@@ -108,8 +108,11 @@ try {
     
     try {
         $phpbb_container_builder = new \phpbb\di\container_builder(
+            $phpbb_root_path,
+            $phpEx,
             $phpbb_config_php_file,
             $cache_dir,
+            false,
             $parameters_path
         );
         echo "✅ Container builder créé\n";
