@@ -28,7 +28,8 @@ services:
         arguments:
             - '@dbal.conn'                  # 1. Base de données
             - '@user'                       # 2. Utilisateur courant
-            - '%tables.post_reactions%'     # 3. Table des réactions
+            - '%tables.post_reactions%'     # 3. Table des réactions (post_reactions)
+            - '%tables.posts%'              # 4. Table des messages (posts)
             - '@template'                   # 5. Moteur de templates
             - '@language'                   # 6. Langues
             - '@bastien59960.reactions.helper' # 7. Helper maison

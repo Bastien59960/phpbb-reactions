@@ -61,6 +61,7 @@ class listener implements EventSubscriberInterface
         driver_interface $db,
         \phpbb\user $user,
         $post_reactions_table,
+        $posts_table,    // ✅ NOUVEAU PARAMÈTRE
         \phpbb\template\template $template,
         \phpbb\language\language $language,
         \bastien59960\reactions\controller\helper $helper, // ✅ Nouveau type-hint correspondant à votre service
@@ -71,6 +72,7 @@ class listener implements EventSubscriberInterface
         $this->db = $db;
         $this->user = $user;
         $this->post_reactions_table = $post_reactions_table;
+        $this->posts_table = $posts_table; // ✅ STOCKAGE
         $this->template = $template;
         $this->language = $language;
         $this->helper = $helper;
