@@ -67,12 +67,16 @@ try {
     $cache_dir = $phpbb_root_path . 'cache/production/';
     
     if (!is_dir($cache_dir)) {
-        echo "⚠️  Répertoire cache inexistant : $cache_dir\n";
+        echo "⚠️  Répertoire cache inexistant, tentative de création : $cache_dir\n";
+        if (!mkdir($cache_dir, 0777, true)) {
+            throw new \Exception("Impossible de créer le répertoire de cache. Vérifiez les permissions.");
+        }
+        echo "✅ Répertoire de cache créé.\n";
     } else {
         $cache_files = glob($cache_dir . 'container_*.php');
         if ($cache_files === false) {
             echo "⚠️  Impossible de lister les fichiers de cache\n";
-        } elseif (count($cache_files) > 0) {
+        } else if (count($cache_files) > 0) {
             foreach ($cache_files as $file) {
                 if (is_file($file) && is_writable($file)) {
                     if (unlink($file)) {
@@ -85,6 +89,11 @@ try {
         } else {
             echo "ℹ️  Aucun fichier de cache à supprimer\n";
         }
+    }
+
+    if (!is_writable($cache_dir)) {
+        echo "❌ ERREUR : Le répertoire de cache n'est pas accessible en écriture : $cache_dir\n";
+        echo "💡 Exécutez : chmod -R 777 $cache_dir\n";
     }
     echo "\n";
 
@@ -100,44 +109,21 @@ try {
         throw new \Exception("Impossible de créer config_php_file : " . $e->getMessage());
     }
     
-    $parameters_path = $phpbb_root_path . 'config/parameters.yml';
-    if (!file_exists($parameters_path)) {
-        echo "⚠️  Fichier parameters.yml introuvable, utilisation sans paramètres\n";
-        $parameters_path = null;
-    }
-    
     try {
         $phpbb_container_builder = new \phpbb\di\container_builder(
             $phpbb_root_path,
             $phpEx,
-            $phpbb_config_php_file,
-            $cache_dir,
-            false,
-            $parameters_path
+            $phpbb_config_php_file
         );
         echo "✅ Container builder créé\n";
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
-    
+
     try {
-        echo "⚙️  Compilation du conteneur (peut prendre quelques secondes)...\n";
-        try {
-            echo "⚙️  Forçage de la compilation du conteneur (peut prendre quelques secondes)...\n";
-            $phpbb_container_builder->compile();
-            echo "✅ Compilation du conteneur terminée.\n";
-    
-            // Sauvegarde explicite du conteneur dans le cache
-            if (method_exists($phpbb_container_builder, 'dump_container')) {
-                $phpbb_container_builder->dump_container();
-                echo "💾 Conteneur sauvegardé dans le cache.\n";
-            }
-    
-            $phpbb_container = $phpbb_container_builder->get_container();
-            echo "✅ Conteneur compilé avec succès\n\n";
-        } catch (\Exception $e) {
-            throw new \Exception("Erreur lors de la compilation du conteneur : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());
-        }
+        echo "⚙️  Obtention du conteneur... (phpBB va compiler et mettre en cache si nécessaire)\n";
+        $phpbb_container = $phpbb_container_builder->get_container();
+        echo "✅ Conteneur chargé avec succès.\n\n";
     } catch (\Exception $e) {
         throw new \Exception("Erreur lors de la compilation du conteneur : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());
     }
