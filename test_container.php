@@ -106,7 +106,7 @@ try {
         $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
         echo "✅ Config PHP créée\n";
         
-        // Récupérer le type de cache depuis config.php
+        // Récupérer toutes les valeurs de config.php
         $config_values = $phpbb_config_php_file->get_all();
         echo "✅ Configuration chargée\n";
         
@@ -130,22 +130,35 @@ try {
             echo "⚠️  acm_type non défini, utilisation de 'file' par défaut\n";
         }
         
+        // Préparer TOUS les paramètres nécessaires pour le conteneur
+        $custom_parameters = [
+            'cache.driver.class' => $cache_driver_class,
+            'core.table_prefix' => isset($config_values['table_prefix']) ? $config_values['table_prefix'] : 'phpbb_',
+            'core.adm_relative_path' => isset($config_values['acm_type']) ? 'adm/' : 'adm/',
+            'core.php_ext' => $phpEx,
+            'core.environment' => 'production',
+        ];
+        
+        // Ajouter tous les autres paramètres de config.php qui pourraient être nécessaires
+        if (isset($config_values['dbms'])) {
+            $custom_parameters['dbal.driver.class'] = $config_values['dbms'];
+        }
+        
+        echo "✅ Paramètres préparés : " . count($custom_parameters) . " paramètres\n";
+        
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer config_php_file : " . $e->getMessage());
     }
     
     try {
         // Créer le container builder avec les bons paramètres dans le bon ordre
-        // Signature : __construct($phpbb_root_path, $php_ext)
         $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_root_path, $phpEx);
         
-        // IMPORTANT : Utiliser with_custom_parameters() pour injecter cache.driver.class
-        $phpbb_container_builder->with_custom_parameters([
-            'cache.driver.class' => $cache_driver_class
-        ]);
+        // IMPORTANT : Utiliser with_custom_parameters() pour injecter TOUS les paramètres
+        $phpbb_container_builder->with_custom_parameters($custom_parameters);
         
         echo "✅ Container builder créé\n";
-        echo "✅ Paramètre cache.driver.class injecté : $cache_driver_class\n";
+        echo "✅ Paramètres injectés dans le container builder\n";
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
