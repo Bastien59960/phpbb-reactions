@@ -120,8 +120,11 @@ try {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
     
-    echo "⚙️  Compilation du conteneur (peut prendre quelques secondes)...\n";
     try {
+        echo "⚙️  Forçage de la compilation du conteneur (peut prendre quelques secondes)...\n";
+        $phpbb_container_builder->compile();
+        echo "✅ Compilation du conteneur terminée.\n";
+
         $phpbb_container = $phpbb_container_builder->get_container();
         echo "✅ Conteneur compilé avec succès\n\n";
     } catch (\Exception $e) {
