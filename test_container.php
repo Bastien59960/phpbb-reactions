@@ -73,7 +73,7 @@ try {
         }
         echo "✅ Répertoire de cache créé.\n";
     } else {
-        $cache_files = glob($cache_dir . 'container_*.php');
+        $cache_files = glob($cache_dir . '{container_*,data_container_*,autoload_*}.php', GLOB_BRACE);
         if ($cache_files === false) {
             echo "⚠️  Impossible de lister les fichiers de cache\n";
         } else if (count($cache_files) > 0) {
@@ -119,6 +119,9 @@ try {
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
+
+    $phpbb_container_builder = $phpbb_container_builder->without_cache();
+    echo "⚠️ Mode sans cache activé pour forcer la reconstruction complète\n";
 
     try {
         echo "⚙️  Obtention du conteneur... (phpBB va compiler et mettre en cache si nécessaire)\n";
