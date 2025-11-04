@@ -122,9 +122,8 @@ try {
 
     // Utiliser la méthode officielle de phpBB pour charger les services des extensions.
     // Elle charge à la fois les services du cœur et ceux de toutes les extensions activées.
-    echo "⚙️  Chargement des services du cœur et des extensions via load_extensions()...\n";
-    $phpbb_container_builder->load_extensions();
-    echo "✅ Services chargés.\n";
+    echo "⚙️  Le container builder va maintenant charger les services du cœur et des extensions...\n";
+    // NOTE : L'appel à load_extensions() est interne à get_container() et ne doit pas être fait manuellement.
 
     // Ajout ici pour forcer la reconstruction complète
     $phpbb_container_builder = $phpbb_container_builder->without_cache();
