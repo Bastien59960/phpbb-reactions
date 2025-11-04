@@ -47,9 +47,6 @@ try {
 
     echo "2. Construction manuelle d'un NOUVEAU conteneur de services...\n";
     echo "   - Préparation du fichier de configuration PHP...\n";
-    $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
-    \phpbb\di\container_builder::set_config_php_file($phpbb_config_php_file);
-
     // On utilise le constructeur de conteneur de phpBB pour simuler une purge complète.
     // Le 'false' en 4ème argument force la reconstruction et ignore le cache.
     $builder = new \phpbb\di\container_builder(
@@ -60,6 +57,11 @@ try {
     );
     // On récupère le conteneur non compilé (le ContainerBuilder)
     $phpbb_container = $builder->get_container_builder();
+
+    // ✅ CORRECTION : On enregistre l'objet de configuration comme un service
+    $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
+    $phpbb_container->set('config.php', $phpbb_config_php_file);
+
     echo "   ✅ Nouveau ContainerBuilder créé.\n\n";
 
     echo "3. Compilation du nouveau conteneur...\n";
