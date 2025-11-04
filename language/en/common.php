@@ -105,4 +105,12 @@ $lang = array_merge($lang, [
 	'NOTIFICATION_TYPE_REACTION'            => '%1$s reacted to your post with %2$s',
 	'NOTIFICATION_TYPE_REACTION_TITLE'      => 'Reactions to your posts',
 	'NOTIFICATION_TYPE_REACTION_DESC'       => 'Receive a notification when someone reacts to one of your posts.',
+
+	// =============================================================================
+	// CRON TASKS (ACP)
+	// =============================================================================
+	'CRON_TASK_BASTIEN_REACTIONS_TEST'				=> 'Reactions: System Test',
+	'CRON_TASK_BASTIEN_REACTIONS_TEST_DESCRIPTION'	=> 'A periodic test to verify that the reactions extension\'s cron system is working correctly.',
+	'LOG_REACTIONS_CRON_TEST_RUN'					=> '<strong>Reactions Test Cron Executed</strong><br>» The test cron task for the Reactions extension has run successfully.',
+
 ]);

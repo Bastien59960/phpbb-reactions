@@ -72,6 +72,9 @@ services:
     # =========================================================================
     cron.task.bastien59960.reactions.test_task:
         class: bastien59960\reactions\cron\test_task
+        arguments:
+            - '@config'
+            - '@log'
         tags:
             - { name: cron.task }
 
