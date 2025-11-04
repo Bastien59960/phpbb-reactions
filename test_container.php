@@ -124,7 +124,7 @@ try {
         $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
         // 3. On passe ce tableau complet au container_builder
         $phpbb_container_builder->set_phpbb_config_file_values($config_values);
-        echo "✅ Paramètres de configuration injectés dans le container_builder\n";
+        echo "✅ Paramètres de config injectés dans le container_builder\n";
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
