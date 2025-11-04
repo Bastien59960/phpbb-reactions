@@ -40,40 +40,44 @@ try {
     echo "   - Instanciation et enregistrement de l'autoloader phpBB...\n";
     $phpbb_class_loader = new \phpbb\class_loader('phpbb\\', "{$phpbb_root_path}phpbb/", $phpEx);
     $phpbb_class_loader->register();
-    echo "   - Chargement de phpbb/di/extension/core.php...\n";
-    require($phpbb_root_path . 'phpbb/di/extension/core.' . $phpEx);
-
+    
     echo "   ✅ Environnement de base initialisé.\n\n";
 
     echo "2. Construction manuelle d'un NOUVEAU conteneur de services...\n";
+    echo "   - Suppression du cache du conteneur...\n";
+    
+    // Suppression des fichiers de cache du conteneur
+    $cache_dir = $phpbb_root_path . 'cache/production/';
+    $cache_files = glob($cache_dir . 'container_*.php');
+    foreach ($cache_files as $file) {
+        if (is_file($file)) {
+            unlink($file);
+            echo "     Supprimé: " . basename($file) . "\n";
+        }
+    }
+    
     echo "   - Préparation du fichier de configuration PHP...\n";
-    // On utilise le constructeur de conteneur de phpBB pour simuler une purge complète.
-    // Le 'false' en 4ème argument force la reconstruction et ignore le cache.
-    $builder = new \phpbb\di\container_builder(
-        $phpbb_root_path . 'config/services.yml',
-        $phpbb_root_path . 'cache/production',
-        $phpbb_root_path . 'config/parameters.yml',
-        false // <-- C'est la clé : on force la reconstruction !
-    );
-    // On récupère le conteneur non compilé (le ContainerBuilder)
-    $phpbb_container = $builder->get_container_builder();
-
-    // ✅ CORRECTION : On enregistre l'objet de configuration comme un service
     $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
-    $phpbb_container->set('config.php', $phpbb_config_php_file);
+    
+    // Construction du conteneur avec le paramètre use_extensions = true
+    $phpbb_container_builder = new \phpbb\di\container_builder(
+        $phpbb_config_php_file,
+        new \phpbb\filesystem\filesystem(),
+        $phpbb_root_path,
+        $phpEx
+    );
+    
+    // Récupération du conteneur (cela va le compiler)
+    echo "   - Compilation du conteneur...\n";
+    $phpbb_container = $phpbb_container_builder->get_container();
 
-    echo "   ✅ Nouveau ContainerBuilder créé.\n\n";
+    echo "   ✅ Nouveau conteneur créé et compilé.\n\n";
 
-    echo "3. Compilation du nouveau conteneur...\n";
-    try {
-        // C'est ici que les erreurs de syntaxe YAML ou de dépendances seront trouvées.
-        $phpbb_container->compile();
+    echo "3. Vérification de la compilation...\n";
+    if ($phpbb_container instanceof \Symfony\Component\DependencyInjection\ContainerInterface) {
         echo "   ✅ Conteneur compilé avec succès\n\n";
-    } catch (\Exception $e) {
-        echo "   ❌ ERREUR DE COMPILATION:\n";
-        echo "   Message: " . htmlspecialchars($e->getMessage()) . "\n";
-        echo "   Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
-        echo "   Trace:\n" . $e->getTraceAsString() . "\n\n";
+    } else {
+        echo "   ❌ Le conteneur n'est pas du bon type\n\n";
         die();
     }
 
@@ -108,8 +112,24 @@ try {
         return strpos($id, 'cron.task') === 0;
     });
     
-    foreach ($cron_services as $cron_id) {
-        echo "   - $cron_id\n";
+    if (count($cron_services) > 0) {
+        foreach ($cron_services as $cron_id) {
+            echo "   - $cron_id\n";
+        }
+    } else {
+        echo "   ⚠️ Aucun service cron trouvé\n";
+    }
+
+    echo "\n6. Informations sur les extensions chargées...\n";
+    if ($phpbb_container->has('ext.manager')) {
+        $ext_manager = $phpbb_container->get('ext.manager');
+        $enabled_extensions = $ext_manager->all_enabled();
+        echo "   Extensions activées:\n";
+        foreach ($enabled_extensions as $ext_name) {
+            echo "     - $ext_name\n";
+        }
+    } else {
+        echo "   ⚠️ Extension manager non disponible\n";
     }
 
     echo "\n=== FIN DU DIAGNOSTIC ===\n";
