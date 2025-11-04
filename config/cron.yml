@@ -6,9 +6,3 @@
 #
 # IMPORTANT : Le nom À GAUCHE est l'ID interne, le champ `task:` À DROITE
 # doit pointer vers l'identifiant du service défini dans services.yml.
-
-#cron.task.bastien59960.reactions.notification_task:
-#    task: cron.task.bastien59960.reactions.notification_task
-
-cron.task.bastien59960.reactions.test_task:
-    task: cron.task.bastien59960.reactions.test_task
