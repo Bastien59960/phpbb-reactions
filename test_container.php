@@ -135,8 +135,9 @@ try {
     }
     
     try {
-        // Créer le container builder et injecter le paramètre cache avec with_custom_parameters()
-        $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_config_php_file, $phpbb_root_path, $phpEx);
+        // Créer le container builder avec les bons paramètres dans le bon ordre
+        // Signature : __construct($phpbb_root_path, $php_ext)
+        $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_root_path, $phpEx);
         
         // IMPORTANT : Utiliser with_custom_parameters() pour injecter cache.driver.class
         $phpbb_container_builder->with_custom_parameters([
