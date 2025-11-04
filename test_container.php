@@ -123,9 +123,10 @@ try {
     // CORRECTION : Définir manuellement le paramètre du pilote de cache.
     // Cette étape est cruciale car notre script ne charge pas l'intégralité de l'application phpBB.
     // On lit la valeur depuis config.php (chargé au début) et on l'injecte dans le conteneur.
-    $cache_driver_class = '\\phpbb\\cache\\driver\\' . $acm_type;
-    $phpbb_container_builder->setParameter('cache.driver.class', $cache_driver_class);
-    echo "✅ Paramètre 'cache.driver.class' défini à : $cache_driver_class\n";
+    $phpbb_container_builder->set_phpbb_config_file_values([
+        'cache.driver.class' => '\\phpbb\\cache\\driver\\' . $acm_type,
+    ]);
+    echo "✅ Paramètre 'cache.driver.class' injecté via set_phpbb_config_file_values()\n";
 
     // Utiliser la méthode officielle de phpBB pour charger les services des extensions.
     // Elle charge à la fois les services du cœur et ceux de toutes les extensions activées.
