@@ -105,6 +105,14 @@ try {
     try {
         $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
         echo "✅ Config PHP créée\n";
+
+        // CORRECTION : Injecter le paramètre manquant directement dans l'objet de configuration.
+        // C'est cet objet qui sera lu par le container_builder.
+        // On lit la valeur de $acm_type depuis config.php (chargé au début).
+        $cache_driver_class = '\\phpbb\\cache\\driver\\' . $acm_type;
+        $phpbb_config_php_file->set('cache.driver.class', $cache_driver_class);
+        echo "✅ Paramètre 'cache.driver.class' injecté dans l'objet config_php_file\n";
+
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer config_php_file : " . $e->getMessage());
     }
@@ -119,14 +127,6 @@ try {
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
-
-    // CORRECTION : Définir manuellement le paramètre du pilote de cache.
-    // Cette étape est cruciale car notre script ne charge pas l'intégralité de l'application phpBB.
-    // On lit la valeur depuis config.php (chargé au début) et on l'injecte dans le conteneur.
-    $phpbb_container_builder->set_phpbb_config_file_values([
-        'cache.driver.class' => '\\phpbb\\cache\\driver\\' . $acm_type,
-    ]);
-    echo "✅ Paramètre 'cache.driver.class' injecté via set_phpbb_config_file_values()\n";
 
     // Utiliser la méthode officielle de phpBB pour charger les services des extensions.
     // Elle charge à la fois les services du cœur et ceux de toutes les extensions activées.
