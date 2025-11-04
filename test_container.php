@@ -59,7 +59,7 @@ try {
         'bastien59960.reactions.listener',
         'bastien59960.reactions.ajax',
         'cron.task.bastien59960.reactions.test_task',
-        'cron.task.bastien59960.reactions.notification_task',
+        // 'cron.task.bastien59960.reactions.notification_task', // Commenté car désactivé dans services.yml pour le moment
         'bastien59960.reactions.notification.type.reaction',
         'bastien59960.reactions.notification.type.reaction_email_digest',
     ];

@@ -31,6 +31,7 @@ use phpbb\template\template;
 use bastien59960\reactions\controller\helper as reactions_helper;
 use phpbb\user_loader;
 use phpbb\request\request_interface;
+use phpbb\notification\type\type_interface;
 use phpbb\language\language;
 
 
@@ -41,7 +42,7 @@ use phpbb\language\language;
  * et implémente toutes les méthodes nécessaires pour gérer les
  * notifications de réactions.
  */
-class reaction extends base
+class reaction extends base implements type_interface
 {
     // =========================================================================
     // PROPRIÉTÉS DE LA CLASSE

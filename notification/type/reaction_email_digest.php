@@ -21,7 +21,9 @@ if (!defined('IN_PHPBB'))
     exit;
 }
 
-class reaction_email_digest extends \phpbb\notification\type\base
+use phpbb\notification\type\type_interface;
+
+class reaction_email_digest extends \phpbb\notification\type\base implements type_interface
 {
     /** @var \phpbb\language\language */
     protected $language;
