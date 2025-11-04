@@ -105,18 +105,28 @@ try {
     try {
         $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
         echo "✅ Config PHP créée\n";
+        
+        // CORRECTION : Récupérer d'abord les valeurs de config pour avoir $acm_type
+        $config_values = $phpbb_config_php_file->get_all();
+        echo "✅ Configuration chargée\n";
+        
+        // Vérifier que acm_type existe et préparer le paramètre cache
+        if (isset($config_values['acm_type'])) {
+            $acm_type = $config_values['acm_type'];
+            $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
+            echo "✅ Type de cache détecté : $acm_type\n";
+        } else {
+            // Fallback sur 'file' si acm_type n'existe pas
+            $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\file';
+            echo "⚠️  acm_type non défini, utilisation de 'file' par défaut\n";
+        }
+        
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer config_php_file : " . $e->getMessage());
     }
     
     try {
-        // CORRECTION FINALE : Préparer les paramètres AVANT de créer le builder.
-        // 1. On récupère toutes les valeurs de config.php
-        $config_values = $phpbb_config_php_file->get_all();
-        // 2. On y ajoute le paramètre manquant pour le cache
-        $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
-
-        // 3. On passe ce tableau complet comme 4ème argument au constructeur.
+        // Créer le container builder avec les paramètres corrigés
         $phpbb_container_builder = new \phpbb\di\container_builder(
             $phpbb_root_path,
             $phpEx,
