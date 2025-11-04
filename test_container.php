@@ -120,6 +120,17 @@ try {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
 
+    // --- CORRECTION ---
+    // Charger manuellement la configuration des services de base de phpBB.
+    // C'est cette étape qui définit les paramètres manquants comme 'cache.driver.class'.
+    echo "⚙️  Chargement de la configuration des services de base (config/services.yml)...\n";
+    $loader = new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader(
+        $phpbb_container_builder,
+        new \Symfony\Component\Config\FileLocator($phpbb_root_path . 'config')
+    );
+    $loader->load('services.yml');
+    echo "✅ Configuration des services de base chargée.\n";
+
     $phpbb_container_builder = $phpbb_container_builder->without_cache();
     echo "⚠️ Mode sans cache activé pour forcer la reconstruction complète\n";
 
