@@ -110,33 +110,28 @@ try {
     }
     
     try {
-        // CORRECTION FINALE : Construire manuellement le tableau de configuration.
-        // 1. On récupère toutes les valeurs de config.php
-        $config_values = $phpbb_config_php_file->get_all();
-        // 2. On y ajoute le paramètre manquant pour le cache
-        $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
-
-        // 3. On passe ce tableau complet comme 4ème argument au constructeur.
         $phpbb_container_builder = new \phpbb\di\container_builder(
             $phpbb_root_path,
             $phpEx,
-            $phpbb_config_php_file,
-            $config_values
+            $phpbb_config_php_file
         );
         echo "✅ Container builder créé\n";
-        echo "✅ Paramètres de config (y compris le cache) injectés dans le constructeur\n";
     } catch (\Exception $e) {
         throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
     }
 
-    // Utiliser la méthode officielle de phpBB pour charger les services des extensions.
-    // Elle charge à la fois les services du cœur et ceux de toutes les extensions activées.
     echo "⚙️  Le container builder va maintenant charger les services du cœur et des extensions...\n";
-    // NOTE : L'appel à load_extensions() est interne à get_container() et ne doit pas être fait manuellement.
 
-    // Ajout ici pour forcer la reconstruction complète
+    // CORRECTION FINALE : L'ordre est crucial.
+    // 1. Forcer le mode sans cache pour obtenir l'instance finale du builder.
     $phpbb_container_builder = $phpbb_container_builder->without_cache();
     echo "⚠️ Mode sans cache activé pour forcer la reconstruction complète\n";
+
+    // 2. Injecter les paramètres de configuration DANS CETTE INSTANCE FINALE.
+    $config_values = $phpbb_config_php_file->get_all();
+    $config_values['cache.driver.class'] = '\\phpbb\\cache\\driver\\' . $acm_type;
+    $phpbb_container_builder->set_phpbb_config_file_values($config_values);
+    echo "✅ Paramètres de config (y compris le cache) injectés dans le builder final\n";
 
     try {
         echo "⚙️  Obtention du conteneur... (phpBB va compiler et mettre en cache si nécessaire)\n";
