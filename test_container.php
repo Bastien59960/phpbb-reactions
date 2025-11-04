@@ -129,11 +129,12 @@ try {
             echo "ℹ️  Méthode compile() non disponible — passage direct à get_container().\n";
         }
 
-        if (method_exists($phpbb_container_builder, 'dump_container')) {
-            $phpbb_container_builder->dump_container();
-            echo "💾 Conteneur sauvegardé dans le cache.\n";
-        }
         $phpbb_container = $phpbb_container_builder->get_container();
+
+        if (method_exists($phpbb_container_builder, 'dump_container')) {
+            echo "ℹ️  dump_container() est protégée, elle ne sera pas appelée directement.\n";
+        }
+
         echo "✅ Conteneur chargé.\n\n";
     } catch (\Exception $e) {
         throw new \Exception("Erreur lors de la compilation du conteneur : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());
