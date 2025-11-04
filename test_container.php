@@ -106,10 +106,6 @@ try {
         $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
         echo "✅ Config PHP créée\n";
         
-        // Charger le fichier de configuration global de phpBB
-        $config = new \phpbb\config\db($phpbb_container->get('dbal.conn'), $phpbb_container->get('cache.driver'), $phpbb_container->get('config')['table_prefix'] . 'config');
-        $phpbb_container->set('config', $config);
-
         // Récupérer toutes les valeurs de config.php
         $config_values = $phpbb_config_php_file->get_all();
         echo "✅ Configuration chargée\n";
@@ -190,11 +186,17 @@ try {
 
     try {
         echo "⚙️  Obtention du conteneur... (phpBB va compiler et mettre en cache si nécessaire)\n";
+        $phpbb_container = $phpbb_container_builder->get_container();
+
         // On injecte le service de base de données "synthétique"
-        $phpbb_container_builder->get_container()->set('dbal.conn', $db_connection);
+        $phpbb_container->set('dbal.conn', $db_connection);
         echo "✅ Service 'dbal.conn' injecté dans le conteneur.\n";
 
-        $phpbb_container = $phpbb_container_builder->get_container();
+        // Maintenant que dbal.conn existe, on peut initialiser la config de la base de données
+        $config = new \phpbb\config\db($phpbb_container->get('dbal.conn'), $phpbb_container->get('cache.driver'), $phpbb_container->get('config')['table_prefix'] . 'config');
+        $phpbb_container->set('config', $config);
+        echo "✅ Service 'config' (base de données) injecté dans le conteneur.\n";
+
         echo "✅ Conteneur chargé avec succès.\n\n";
     } catch (\Exception $e) {
         throw new \Exception("Erreur lors de la compilation du conteneur : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());

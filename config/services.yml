@@ -81,21 +81,21 @@ services:
     # =========================================================================
     # TÂCHE CRON (DIGEST E-MAIL) - TEMPORAIREMENT DÉSACTIVÉE POUR TEST
     # =========================================================================
-    #cron.task.bastien59960.reactions.notification_task:
-    #    class: bastien59960\reactions\cron\notification_task
-    #    arguments:
-    #        - '@dbal.conn'                  # 1. driver_interface
-    #        - '@config'                     # 2. config
-    #        - '@notification_manager'       # 3. notification_manager
-    #        - '@user_loader'                # 4. user_loader
-    #        - '@language'                   # 5. language
-    #        - '@template'                   # 6. template
-    #        - '%tables.post_reactions%'     # 7. post_reactions_table
-    #        - '%core.root_path%'            # 8. phpbb_root_path
-    #        - '%core.php_ext%'              # 9. php_ext
-    #        - '%core.table_prefix%'         # 10. table_prefix
-    #    tags:
-    #        - { name: cron.task }
+    cron.task.bastien59960.reactions.notification_task:
+        class: bastien59960\reactions\cron\notification_task
+        arguments:
+            - '@dbal.conn'                  # 1. driver_interface
+            - '@config'                     # 2. config
+            - '@notification_manager'       # 3. notification_manager
+            - '@user_loader'                # 4. user_loader
+            - '@language'                   # 5. language
+            - '@template'                   # 6. template
+            - '%tables.post_reactions%'     # 7. post_reactions_table
+            - '%core.root_path%'            # 8. phpbb_root_path
+            - '%core.php_ext%'              # 9. php_ext
+            - '%core.table_prefix%'         # 10. table_prefix
+        tags:
+            - { name: cron.task }
 
     # =========================================================================
     # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)

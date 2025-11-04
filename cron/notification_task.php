@@ -488,4 +488,27 @@ class notification_task extends \phpbb\cron\task\base
             ];
         }
     }
+
+    /**
+     * Retourne le nom de la tâche (clé de langue) pour l'afficher dans l'ACP.
+     *
+     * @return string
+     */
+    public function get_name()
+    {
+        return 'CRON_TASK_BASTIEN_REACTIONS_NOTIFICATION';
+    }
+
+    /**
+     * Détermine si la tâche peut s'exécuter (conditions de base).
+     *
+     * @return bool
+     */
+    public function is_runnable()
+    {
+        // La tâche peut s'exécuter si l'envoi d'e-mails est activé sur le forum
+        // et si l'extension elle-même est activée (implicite).
+        // On pourrait ajouter une vérification sur une config ACP de l'extension.
+        return (bool) $this->config['email_enable'];
+    }
 }
