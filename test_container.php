@@ -29,25 +29,34 @@ echo "=== DIAGNOSTIC DU CONTENEUR DE SERVICES ===\n\n";
 echo "Chemin racine phpBB détecté : " . $phpbb_root_path . "\n\n";
 
 try {
-    echo "1. Chargement de common.php...\n";
-    require($phpbb_root_path . 'common.' . $phpEx);
-    echo "   ✅ common.php chargé\n\n";
+    echo "1. Initialisation de l'environnement de base (sans charger le conteneur en cache)...\n";
+    // On charge uniquement les fichiers nécessaires pour construire un conteneur manuellement
+    require($phpbb_root_path . 'config/config.' . $phpEx);
+    require($phpbb_root_path . 'vendor/autoload.' . $phpEx);
+    require($phpbb_root_path . 'includes/constants.' . $phpEx);
+    echo "   ✅ Environnement de base initialisé.\n\n";
 
-    echo "2. Récupération du conteneur...\n";
-    global $phpbb_container;
-    
-    if (!$phpbb_container) {
-        die("   ❌ ERREUR: Le conteneur est NULL!\n");
-    }
-    echo "   ✅ Conteneur récupéré\n\n";
+    echo "2. Construction manuelle d'un NOUVEAU conteneur de services...\n";
+    // On utilise le constructeur de conteneur de phpBB pour simuler une purge complète.
+    // Le 'false' en 4ème argument force la reconstruction et ignore le cache.
+    $builder = new \phpbb\di\container_builder(
+        $phpbb_root_path . 'config/services.yml',
+        $phpbb_root_path . 'cache/production',
+        $phpbb_root_path . 'config/parameters.yml',
+        false // <-- C'est la clé : on force la reconstruction !
+    );
+    // On récupère le conteneur non compilé (le ContainerBuilder)
+    $phpbb_container = $builder->get_container_builder();
+    echo "   ✅ Nouveau ContainerBuilder créé.\n\n";
 
-    echo "3. Test de compilation forcée...\n";
+    echo "3. Compilation du nouveau conteneur...\n";
     try {
+        // C'est ici que les erreurs de syntaxe YAML ou de dépendances seront trouvées.
         $phpbb_container->compile();
         echo "   ✅ Conteneur compilé avec succès\n\n";
     } catch (\Exception $e) {
         echo "   ❌ ERREUR DE COMPILATION:\n";
-        echo "   Message: " . $e->getMessage() . "\n";
+        echo "   Message: " . htmlspecialchars($e->getMessage()) . "\n";
         echo "   Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
         echo "   Trace:\n" . $e->getTraceAsString() . "\n\n";
         die();
