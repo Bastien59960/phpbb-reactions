@@ -34,6 +34,7 @@ try {
     require($phpbb_root_path . 'config.' . $phpEx);
     require($phpbb_root_path . 'vendor/autoload.' . $phpEx);
     require($phpbb_root_path . 'includes/constants.' . $phpEx);
+    require($phpbb_root_path . 'phpbb/di/extension/core.' . $phpEx); // ✅ CORRECTION : Charger la classe de base des extensions
     echo "   ✅ Environnement de base initialisé.\n\n";
 
     echo "2. Construction manuelle d'un NOUVEAU conteneur de services...\n";
