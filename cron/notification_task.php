@@ -436,24 +436,25 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->to($author_email, $author_name);
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
 
-            // 3. Indiquer à messenger où trouver les templates de notre extension.
-            // C'est l'étape qui résout l'erreur "no registered paths".
-			// CORRECTION : On doit passer le nom du template relatif au dossier `template` d'un style.
-			// Le format est `@nom_extension/nom_du_fichier_sans_extension`.
-			// phpBB se chargera de trouver le fichier dans `ext/bastien59960/reactions/styles/*/template/email/reaction_digest.html`.
+            // 3. Indiquer à messenger où trouver les templates de notre extension (méthode la plus robuste).
+            // ÉTAPE A : On définit le chemin racine des templates de l'extension.
+            // Le messenger cherchera dans ce dossier.
+            $template_root_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template';
+            $messenger->set_template_path($template_root_path);
+
+            // ÉTAPE B : On passe uniquement le nom du fichier relatif à ce chemin.
             $template_file = 'email/reaction_digest.html';
-			$template_name = '@bastien59960_reactions/' . $template_file;
 
             // =====================================================================
             // GARDE-FOU DE DIAGNOSTIC : Vérifier si le fichier de template existe
             // =====================================================================
-			$full_template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template/' . $template_file;
+			$full_template_path = $template_root_path . '/' . $template_file;
             if (!file_exists($full_template_path))
             {
                 throw new \Exception("Template d'e-mail INTROUVABLE. Chemin vérifié : " . $full_template_path);
             }
 
-            $messenger->template($template_name, $author_lang);
+            $messenger->template($template_file, $author_lang);
 
 			// 4. Assigner les variables globales au template.
             $messenger->assign_vars([
