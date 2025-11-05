@@ -431,7 +431,7 @@ class notification_task extends \phpbb\cron\task\base
             // =====================================================================
             // Force le messenger à ne pas traiter le contenu comme du HTML.
             // Cela empêche la double-conversion des entités qui corrompt les emojis.
-            $messenger->set_mail_html(false);
+            $messenger->set_mail_body_html(false);
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
