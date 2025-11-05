@@ -30,22 +30,24 @@ NC='\033[0m'
 # Fonction de vérification améliorée
 check_status() {
     local exit_code=$?
-    local success_message=$1
-    local output=$2
+    local step_description=$1 # e.g., "Nettoyage du cache de production."
+    local output=$2           # Full output of the command
 
     # Vérifie si la sortie contient une erreur fatale PHP
     if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error"; then
-        echo -e "${WHITE_ON_RED}❌ ERREUR DÉTECTÉE (FATAL ERROR) : $success_message${NC}"
-        # Affiche la ligne de l'erreur pour un débogage rapide
-        echo "$output" | grep -E "PHP Fatal error|PHP Parse error"
+        echo -e "${WHITE_ON_RED}❌ ERREUR FATALE DÉTECTÉE lors de l'étape : $step_description${NC}"
+        echo -e "${WHITE_ON_RED}   Détails de l'erreur :${NC}"
+        echo "$output" | grep -E "PHP Fatal error|PHP Parse error" | sed 's/^/   /' # Indent error line
+        echo -e "${NC}" # Réinitialise la couleur après l'erreur
         exit 1
-    # Vérifie le code de sortie de la commande
+    # Puis vérifie le code de sortie
     elif [ $exit_code -ne 0 ]; then
-        echo -e "${WHITE_ON_RED}❌ ERREUR (CODE DE SORTIE NON NUL) : $success_message${NC}"
+        echo -e "${WHITE_ON_RED}❌ ERREUR (CODE DE SORTIE NON NUL) lors de l'étape : $step_description${NC}"
+        echo -e "${NC}" # Réinitialise la couleur
         exit 1
     # Si tout va bien
     else
-        echo -e "${GREEN}✅ SUCCÈS : $success_message${NC}"
+        echo -e "${GREEN}✅ SUCCÈS : $step_description${NC}"
     fi
 }
 
@@ -107,6 +109,7 @@ sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé après désactivation." "$output"
 
+
 # ==============================================================================
 # 3️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
@@ -156,7 +159,7 @@ check_status "Cache purgé et container reconstruit." "$output"
 echo "───[ 7️⃣  TEST FINAL DU CRON ]──────────────────────────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
-check_status "Cron exécuté." "$output"
+check_status "Exécution de la tâche cron" "$output"
 
 
 # ==============================================================================

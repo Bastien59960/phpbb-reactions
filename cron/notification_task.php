@@ -424,10 +424,9 @@ class notification_task extends \phpbb\cron\task\base
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
-            // =====================================================================
-            // SOLUTION DÉFINITIVE : Utiliser la méthode standard de phpBB
-            // =====================================================================
-            $messenger = new messenger(false);
+            // Instancier le messenger pour envoyer un e-mail HTML.
+            // Le messenger a besoin du chemin racine et de l'extension PHP pour trouver les templates.
+            $messenger = new messenger(true);
 
             // 1. Charger les fichiers de langue nécessaires pour le template.
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
@@ -436,10 +435,9 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->to($author_email, $author_name);
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
 
-            // 3. Indiquer à messenger où trouver les templates de notre extension
-            // et quel template utiliser. Le messenger cherchera .html et .txt.
-            $messenger->set_template_path($this->phpbb_root_path . 'ext/bastien59960/reactions/styles/prosilver/template');
-            $messenger->template('email/reaction_digest', $author_lang);
+            // 3. Utiliser le template de l'extension. Le messenger cherchera dans les chemins enregistrés.
+            // Le chemin doit être relatif à la racine de l'extension, et le messenger gérera le style/langue.
+            $messenger->template('ext/bastien59960/reactions/email/reaction_digest', $author_lang);
 
             // 4. Assigner les variables globales au template
             $messenger->assign_vars([
