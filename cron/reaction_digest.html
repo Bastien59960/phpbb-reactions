@@ -1,21 +1,20 @@
 <!--
     Fichier : reaction_digest.html
-    Chemin : styles/prosilver/template/email/reaction_digest.html
+    Chemin : language/fr/email/reaction_digest.html
     
     Rôle :
     Template HTML pour l'e-mail de résumé des réactions.
-    Ce format est plus robuste pour l'affichage des emojis et des liens.
 -->
 
-<p>{L_REACTIONS_DIGEST_GREETING}</p>
+<p>{L_REACTIONS_DIGEST_GREETING|sprintf:USERNAME}</p>
 
 <p>{L_REACTIONS_DIGEST_INTRO}</p>
 
 <!-- BEGIN posts -->
 <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #cccccc;">
     <p>
-        <strong>{L_REACTIONS_DIGEST_POST_SUBJECT}:</strong> {posts.SUBJECT_PLAIN}<br>
-        <strong>{L_REACTIONS_DIGEST_POST_LINK}:</strong> <a href="{posts.POST_URL_ABSOLUTE}">{posts.POST_URL_ABSOLUTE}</a>
+        <strong>{L_REACTIONS_DIGEST_POST_SUBJECT} :</strong> {posts.SUBJECT_PLAIN}<br>
+        <strong>{L_REACTIONS_DIGEST_POST_LINK} :</strong> <a href="{posts.POST_URL_ABSOLUTE}">{posts.POST_URL_ABSOLUTE}</a>
     </p>
     <ul style="margin-left: 20px; padding-left: 0; list-style-type: none;">
         <!-- BEGIN reactions -->
