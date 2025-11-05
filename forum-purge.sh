@@ -194,7 +194,10 @@ sleep 0.2
 echo -e "${YELLOW}ℹ️  Attente de 3 secondes avant la vérification...${NC}"
 sleep 3
 
-CRON_TASK_NAME="bastien59960.reactions.notification_task"
+# Le nom à rechercher est le nom logique retourné par get_name(), et non le nom du service.
+# C'est ce nom qui est affiché par `cron:list` si la traduction échoue.
+CRON_TASK_NAME="bastien59960.reactions.notification"
+
 CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 
 echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
