@@ -37,4 +37,9 @@ $lang = array_merge($lang, array(
 
 	'REACTIONS_DIGEST_FOOTER'		=> 'Vous recevez cet e-mail car vous avez choisi de recevoir les résumés de réactions.',
 	'REACTIONS_DIGEST_UNSUBSCRIBE'	=> 'Pour gérer vos préférences de notification, veuillez visiter votre Panneau de Contrôle de l’Utilisateur.',
+
+	// Chaînes pour le template
+	'REACTIONS_DIGEST_REACTION_FROM' => 'Réaction de',
+	'REACTIONS_DIGEST_ON_DATE'       => 'le', // Comme dans "le 25/12/2025"
+	'REACTIONS_DIGEST_VIEW_POST'     => 'Voir le message',
 ));

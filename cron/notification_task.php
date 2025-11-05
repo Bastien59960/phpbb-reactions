@@ -458,6 +458,9 @@ protected function send_digest_email(array $data, string $since_time_formatted)
             'SITENAME'         => $this->config['sitename'],
             'BOARD_URL'        => generate_board_url(),
             'UNSUBSCRIBE_TEXT' => $this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE'),
+            'L_REACTION_FROM'  => $this->language->lang('REACTIONS_DIGEST_REACTION_FROM'),
+            'L_ON_DATE'        => $this->language->lang('REACTIONS_DIGEST_ON_DATE'),
+            'L_VIEW_POST'      => $this->language->lang('REACTIONS_DIGEST_VIEW_POST'),
         ]);
 
         // CORRECTION CRITIQUE 4 : Assigner les blocs AVANT send()

@@ -21,14 +21,14 @@
 			<div style="margin-bottom: 10px; padding-left: 15px; border-left: 3px solid #eee;">
 				<span style="font-size: 20px; vertical-align: middle; margin-right: 8px;">{posts.reactions.EMOJI}</span>
 				<span style="font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 15px; color: #555;">
-					Réaction de <strong><a href="{posts.reactions.PROFILE_URL_ABSOLUTE}" style="color: #365899; text-decoration: none;">{posts.reactions.REACTER_NAME}</a></strong>
-					<span style="color: #999; font-size: 13px;">(le {posts.reactions.TIME_FORMATTED})</span>
+					{L_REACTION_FROM} <strong><a href="{posts.reactions.PROFILE_URL_ABSOLUTE}" style="color: #365899; text-decoration: none;">{posts.reactions.REACTER_NAME}</a></strong>
+					<span style="color: #999; font-size: 13px;">({L_ON_DATE} {posts.reactions.TIME_FORMATTED})</span>
 				</span>
 			</div>
 			<!-- END reactions -->
 
 			<p style="margin-top: 20px; margin-bottom: 0; text-align: right;">
-				<a href="{posts.POST_URL_ABSOLUTE}" style="font-family: 'Helvetica Neue', 'Arial', sans-serif; display: inline-block; padding: 8px 16px; background-color: #4A90E2; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px;">Voir le message</a>
+				<a href="{posts.POST_URL_ABSOLUTE}" style="font-family: 'Helvetica Neue', 'Arial', sans-serif; display: inline-block; padding: 8px 16px; background-color: #4A90E2; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px;">{L_VIEW_POST}</a>
 			</p>
 		</td>
 	</tr>
