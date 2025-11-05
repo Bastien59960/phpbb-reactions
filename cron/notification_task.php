@@ -55,6 +55,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var string Préfixe des tables phpBB */
     protected $table_prefix;
 
+    /** @var bool Flag pour vérifier si le namespace Twig a été enregistré */
+    protected $twig_namespace_registered = false;
+
     /**
      * Constructeur
      */
@@ -393,6 +396,68 @@ class notification_task extends \phpbb\cron\task\base
     }
 
     /**
+     * Enregistre le namespace Twig pour l'extension (phpBB 3.3 compatible)
+     */
+    protected function register_twig_namespace()
+    {
+        if ($this->twig_namespace_registered)
+        {
+            return; // Déjà enregistré
+        }
+
+        $log_prefix = '[Reactions Cron]';
+
+        try
+        {
+            // Pour phpBB 3.3, on doit accéder directement à la propriété protégée
+            // du template pour récupérer l'environnement Twig
+            $reflection = new \ReflectionClass($this->template);
+            
+            // Chercher la propriété 'twig' (phpBB 3.3)
+            if ($reflection->hasProperty('twig'))
+            {
+                $twig_property = $reflection->getProperty('twig');
+                $twig_property->setAccessible(true);
+                $twig = $twig_property->getValue($this->template);
+                
+                if ($twig instanceof \Twig\Environment || $twig instanceof \Twig_Environment)
+                {
+                    $twig_loader = $twig->getLoader();
+                    $extension_template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template';
+                    
+                    // Vérifier que le chemin existe
+                    if (!is_dir($extension_template_path))
+                    {
+                        error_log("$log_prefix ERREUR: Le chemin du template n'existe pas: $extension_template_path");
+                        return;
+                    }
+                    
+                    $twig_loader->addPath($extension_template_path, 'bastien59960_reactions');
+                    $this->twig_namespace_registered = true;
+                    
+                    error_log("$log_prefix Namespace Twig 'bastien59960_reactions' enregistré vers: $extension_template_path");
+                }
+                else
+                {
+                    error_log("$log_prefix ERREUR: L'objet Twig n'est pas une instance valide");
+                }
+            }
+            else
+            {
+                error_log("$log_prefix ERREUR: Propriété 'twig' non trouvée dans la classe template");
+            }
+        }
+        catch (\ReflectionException $e)
+        {
+            error_log("$log_prefix ERREUR Reflection: " . $e->getMessage());
+        }
+        catch (\Exception $e)
+        {
+            error_log("$log_prefix ERREUR lors de l'enregistrement du namespace Twig: " . $e->getMessage());
+        }
+    }
+
+    /**
      * Construit et envoie un e-mail récapitulatif à un utilisateur.
      *
      * @param array $data Données groupées pour l'auteur
@@ -432,22 +497,9 @@ class notification_task extends \phpbb\cron\task\base
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
 
             // =====================================================================
-            // CORRECTION CRITIQUE : Enregistrer le namespace Twig pour l'extension
+            // CORRECTION CRITIQUE : Enregistrer le namespace Twig pour phpBB 3.3
             // =====================================================================
-            // Le moteur de template de phpBB doit connaître le chemin des templates
-            // de l'extension. Dans le contexte du cron, ce namespace n'est pas 
-            // automatiquement enregistré, il faut le faire manuellement.
-            
-            // Récupérer le loader Twig
-            $twig_loader = $this->template->get_twig_environment()->getLoader();
-            
-            // Définir le chemin vers les templates de l'extension
-            $extension_template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template';
-            
-            // Enregistrer le namespace pour l'extension
-            $twig_loader->addPath($extension_template_path, 'bastien59960_reactions');
-            
-            error_log("$log_prefix Namespace Twig 'bastien59960_reactions' enregistré vers: $extension_template_path");
+            $this->register_twig_namespace();
 
             // =====================================================================
             // Génération du corps de l'e-mail à partir du template
