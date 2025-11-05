@@ -424,41 +424,44 @@ class notification_task extends \phpbb\cron\task\base
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
-            // =====================================================================
-            // SOLUTION : Générer manuellement le corps de l'email en texte brut
-            // =====================================================================
-            // On construit le corps de l'email manuellement pour préserver l'encodage UTF-8 des emojis.
-            
-            $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
-
-            $email_body  = sprintf($this->language->lang('REACTIONS_DIGEST_GREETING'), $author_name) . "\n\n";
-            $email_body .= $this->language->lang('REACTIONS_DIGEST_INTRO') . "\n\n";
-
-            foreach ($data['posts'] as $post_data) {
-                $email_body .= "----------------------------------------------------------------\n";
-                $email_body .= sprintf('%s: %s', $this->language->lang('REACTIONS_DIGEST_POST_SUBJECT'), $post_data['SUBJECT_PLAIN']) . "\n";
-                $email_body .= sprintf('%s: %s', $this->language->lang('REACTIONS_DIGEST_POST_LINK'), $post_data['POST_URL_ABSOLUTE']) . "\n";
-                
-                foreach ($post_data['reactions'] as $reaction) {
-                    $email_body .= sprintf("  • %s %s %s %s (%s: %s)\n",
-                        $reaction['EMOJI'],
-                        $this->language->lang('REACTIONS_DIGEST_BY'),
-                        $reaction['REACTER_NAME'],
-                        $this->language->lang('REACTIONS_DIGEST_ON'),
-                        $reaction['TIME_FORMATTED'],
-                        $reaction['PROFILE_URL_ABSOLUTE']
-                    );
-                }
-            }
-
-            $email_body .= "----------------------------------------------------------------\n";
-            $email_body .= "\n" . sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']) . "\n";
-            $email_body .= $this->language->lang('REACTIONS_PREFERENCES_HINT') . "\n";
-
             $messenger = new messenger(false);
             $messenger->to($author_email, $author_name);
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
-            $messenger->set_mail_body($email_body);
+
+            // =====================================================================
+            // SOLUTION DÉFINITIVE : Contourner le moteur de template
+            // =====================================================================
+            // 1. On charge le contenu du template manuellement.
+            $template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/language/' . $author_lang . '/email/reaction_digest.txt';
+            if (!file_exists($template_path)) {
+                // Fallback sur l'anglais si la langue de l'utilisateur n'a pas de template.
+                $template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/language/en/email/reaction_digest.txt';
+            }
+            $email_body = file_get_contents($template_path);
+
+            // 2. On assigne les variables globales au template manuellement.
+            $messenger->assign_vars([
+                'USERNAME'         => $author_name,
+                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
+            ]);
+
+            // 3. On peuple les blocs de données pour les boucles.
+            foreach ($data['posts'] as $post_data) {
+                $messenger->assign_block_vars('posts', [
+                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                ]);
+
+                foreach ($post_data['reactions'] as $reaction) {
+                    $messenger->assign_block_vars('posts.reactions', $reaction);
+                }
+            }
+
+            // 4. On utilise msg_body() pour injecter notre template lu manuellement.
+            //    Cela court-circuite le chargement de fichier par Twig et préserve l'encodage.
+            $messenger->msg_body($email_body);
+
+            // 5. On envoie l'e-mail.
             $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
