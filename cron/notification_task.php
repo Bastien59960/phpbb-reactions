@@ -430,7 +430,7 @@ class notification_task extends \phpbb\cron\task\base
             $messenger = new messenger(true);
 
             // 1. Charger les fichiers de langue nécessaires pour le template.
-            $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
+            $this->language->add_lang('email', 'bastien59960/reactions');
 
             // 2. Définir le destinataire et le sujet.
             $messenger->to($author_email, $author_name);
