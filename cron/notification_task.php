@@ -426,41 +426,12 @@ class notification_task extends \phpbb\cron\task\base
 
             $messenger = new messenger(false);
 
-            // =====================================================================
-            // CORRECTION : Enregistrer le chemin des templates de l'extension
-            // =====================================================================
-            // Dans un contexte CLI (cron), le moteur de template ne connaît pas
-            // par défaut les chemins des extensions. On doit le lui indiquer.
-            $this->template->get_twig_loader()->addPath($this->phpbb_root_path . 'ext/bastien59960/reactions/styles', 'bastien59960_reactions');
-
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
             error_log($lang_load_message);
 
             // CORRECTION : Chargement simplifié - phpBB gère automatiquement la langue
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
-
-            // 4. Assigner les variables globales au template
-            $messenger->assign_vars([
-                'USERNAME'         => $author_name,
-                'DIGEST_SINCE'     => $since_time_formatted,
-                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
-                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
-            ]);
-
-            // 5. Itérer sur les posts et les réactions pour peupler les blocs du template
-            foreach ($data['posts'] as $post_data)
-            {
-                $messenger->assign_block_vars('posts', [
-                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
-                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
-                ]);
-
-                foreach ($post_data['reactions'] as $reaction)
-                {
-                    $messenger->assign_block_vars('posts.reactions', $reaction);
-                }
-            }
 
             // =====================================================================
             // CORRECTION DÉFINITIVE POUR L'ENCODAGE DES EMOJIS
@@ -469,12 +440,37 @@ class notification_task extends \phpbb\cron\task\base
             // puis on l'injecte directement dans le messenger pour court-circuiter
             // son traitement interne qui corrompt les emojis.
             $this->template->set_filenames(['reaction_digest_body' => '@bastien59960_reactions/email/reaction_digest.txt']);
+
+            // Assigner les variables globales au template
+            $this->template->assign_vars([
+                'USERNAME'         => $author_name,
+                'DIGEST_SINCE'     => $since_time_formatted,
+                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
+                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
+            ]);
+
+            // Itérer sur les posts et les réactions pour peupler les blocs du template
+            foreach ($data['posts'] as $post_data)
+            {
+                $this->template->assign_block_vars('posts', [
+                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                ]);
+
+                foreach ($post_data['reactions'] as $reaction)
+                {
+                    $this->template->assign_block_vars('posts.reactions', $reaction);
+                }
+            }
+
             $email_body = $this->template->assign_display('reaction_digest_body');
-            $messenger->set_mail_body($email_body);
 
             // 3. Définir le destinataire et le sujet
             $messenger->to($author_email, $author_name);
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
+
+            // Injecter le corps de l'e-mail que nous avons construit manuellement.
+            $messenger->set_mail_body($email_body);
 
             // 6. Envoyer l'e-mail avec le corps que nous avons construit.
             $messenger->send(NOTIFY_EMAIL);
