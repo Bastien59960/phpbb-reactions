@@ -116,9 +116,9 @@ $lang = array_merge($lang, array(
     // =============================================================================
     // TÂCHES CRON (ACP)
     // =============================================================================
-    'CRON_TASK_BASTIEN_REACTIONS_TEST'              => 'Réactions : Test du système',
-    'CRON_TASK_BASTIEN_REACTIONS_TEST_DESCRIPTION'  => 'Test périodique pour vérifier que le système de cron de l\'extension Réactions fonctionne correctement.',
-    'CRON_TASK_BASTIEN_REACTIONS_NOTIFICATION'          => 'Réactions : Envoi des résumés e-mail',
-    'CRON_TASK_BASTIEN_REACTIONS_NOTIFICATION_DESCRIPTION' => 'Regroupe les nouvelles réactions et envoie des e-mails de résumé périodiques aux utilisateurs.',
+    'cron_task_bastien_reactions_test'              => 'Réactions : Test du système',
+    'cron_task_bastien_reactions_test_description'  => 'Test périodique pour vérifier que le système de cron de l\'extension Réactions fonctionne correctement.',
+    'cron_task_bastien_reactions_notification'          => 'Réactions : Envoi des résumés e-mail',
+    'cron_task_bastien_reactions_notification_description' => 'Regroupe les nouvelles réactions et envoie des e-mails de résumé périodiques aux utilisateurs.',
     'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Cron de test des Réactions exécuté</strong><br>» La tâche de test pour l\'extension Réactions s\'est exécutée avec succès.',
 ));

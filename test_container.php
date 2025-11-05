@@ -482,10 +482,10 @@ try {
             
             // Vérification de la clé CRON
             $content = file_get_contents($lang_file);
-            if (strpos($content, 'CRON_TASK_BASTIEN_REACTIONS_TEST') !== false) {
-                echo "   ✅ Contient la clé CRON_TASK_BASTIEN_REACTIONS_TEST\n";
+            if (strpos($content, 'cron_task_bastien_reactions_test') !== false) {
+                echo "   ✅ Contient la clé cron_task_bastien_reactions_test\n";
             } else {
-                echo "   ⚠️  Ne contient PAS la clé CRON_TASK_BASTIEN_REACTIONS_TEST\n";
+                echo "   ⚠️  Ne contient PAS la clé cron_task_bastien_reactions_test\n";
             }
         } else {
             echo "⚠️  Manquant : " . basename(dirname($lang_file)) . "/common.php\n";
