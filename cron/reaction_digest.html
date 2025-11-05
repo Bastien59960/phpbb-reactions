@@ -1,0 +1,39 @@
+<!--
+    Fichier : reaction_digest.html
+    Chemin : styles/prosilver/template/email/reaction_digest.html
+    
+    Rôle :
+    Template HTML pour l'e-mail de résumé des réactions.
+    Ce format est plus robuste pour l'affichage des emojis et des liens.
+-->
+
+<p>{L_REACTIONS_DIGEST_GREETING}</p>
+
+<p>{L_REACTIONS_DIGEST_INTRO}</p>
+
+<!-- BEGIN posts -->
+<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #cccccc;">
+    <p>
+        <strong>{L_REACTIONS_DIGEST_POST_SUBJECT}:</strong> {posts.SUBJECT_PLAIN}<br>
+        <strong>{L_REACTIONS_DIGEST_POST_LINK}:</strong> <a href="{posts.POST_URL_ABSOLUTE}">{posts.POST_URL_ABSOLUTE}</a>
+    </p>
+    <ul style="margin-left: 20px; padding-left: 0; list-style-type: none;">
+        <!-- BEGIN reactions -->
+        <li style="margin-bottom: 5px;">
+            <span style="font-size: 1.2em;">{posts.reactions.EMOJI}</span>
+            {L_REACTIONS_DIGEST_BY} <strong>{posts.reactions.REACTER_NAME}</strong>
+            {L_REACTIONS_DIGEST_ON} {posts.reactions.TIME_FORMATTED}
+            (<a href="{posts.reactions.PROFILE_URL_ABSOLUTE}">{L_REACTIONS_DIGEST_PROFILE}</a>)
+        </li>
+        <!-- END reactions -->
+    </ul>
+</div>
+<!-- END posts -->
+
+<p style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #cccccc;">
+    {DIGEST_SIGNATURE}
+</p>
+
+<p style="font-size: 0.9em; color: #888888;">
+    {L_REACTIONS_PREFERENCES_HINT}
+</p>
