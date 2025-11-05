@@ -193,8 +193,7 @@ try {
     // On doit enregistrer et charger l'extension "core" de phpBB pour que le
     // builder sache où trouver les fichiers de config d'environnement (ex: production/config.yml)
     $core_extension = new \phpbb\di\extension\core($phpbb_root_path . 'config'); // Le chemin est correct
-	$phpbb_container_builder->registerExtension($core_extension); // CORRECTION : La méthode est registerExtension()
-    $phpbb_container_builder->loadFromExtension('core');
+    $phpbb_container_builder->load_from_extension('core', $core_extension);
 
     $phpbb_container_builder = $phpbb_container_builder->without_cache();
     echo "⚠️ Mode sans cache activé pour forcer la reconstruction complète\n";
