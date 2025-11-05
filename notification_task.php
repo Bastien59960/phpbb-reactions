@@ -424,47 +424,42 @@ class notification_task extends \phpbb\cron\task\base
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
-            $messenger = new messenger(false);
+            // =====================================================================
+            // SOLUTION DÉFINITIVE : Utiliser la méthode standard de phpBB
+            // =====================================================================
+            $messenger = new messenger(true); // true pour activer le mode HTML
 
-            // 1. Charger la langue de l'utilisateur AVANT de charger le template
-            $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
-            error_log($lang_load_message);
-
-            // CORRECTION : Chargement simplifié - phpBB gère automatiquement la langue
+            // 1. Charger les fichiers de langue nécessaires pour le template.
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
 
-            // 2. Charger le template d'e-mail en utilisant la syntaxe standard de phpBB.
-            $template_load_message = "$log_prefix Chargement du template '@bastien59960_reactions/email/reaction_digest' pour la langue '$author_lang'.";
-            error_log($template_load_message);
-
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
-
-            // 3. Définir le destinataire
+            // 2. Définir le destinataire et le sujet.
             $messenger->to($author_email, $author_name);
+            $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
 
-            // 4. Assigner les variables globales au template
+            // 3. Construire le chemin absolu vers le dossier des templates et le fournir à messenger.
+            // C'est la méthode la plus robuste dans un contexte CLI (cron).
+            $template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/prosilver/template/';
+            $messenger->template($template_path . 'email/reaction_digest', $author_lang);
+
+            // 4. Assigner les variables au template.
             $messenger->assign_vars([
                 'USERNAME'         => $author_name,
-                'DIGEST_SINCE'     => $since_time_formatted,
-                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
 
-            // 5. Itérer sur les posts et les réactions pour peupler les blocs du template
-            foreach ($data['posts'] as $post_data)
-            {
+            // 5. Peuple les blocs de données pour les boucles dans le template.
+            foreach ($data['posts'] as $post_data) {
                 $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
                     'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
                 ]);
 
-                foreach ($post_data['reactions'] as $reaction)
-                {
+                foreach ($post_data['reactions'] as $reaction) {
                     $messenger->assign_block_vars('posts.reactions', $reaction);
                 }
             }
 
-            // 6. Envoyer l'e-mail
+            // 6. Envoyer l'e-mail. Le messenger gère l'encodage car il sait qu'il envoie du HTML.
             $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';

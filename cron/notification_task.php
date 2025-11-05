@@ -425,29 +425,29 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             // =====================================================================
-            // SOLUTION DÉFINITIVE : Fournir le chemin absolu du template
+            // SOLUTION DÉFINITIVE : Utiliser la méthode standard de phpBB
             // =====================================================================
-            $messenger = new messenger(true); // true pour activer le mode HTML
+            $messenger = new messenger(true);
 
             // 1. Charger les fichiers de langue nécessaires pour le template.
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
 
-            // 2. Définir le destinataire et le sujet
+            // 2. Définir le destinataire et le sujet.
             $messenger->to($author_email, $author_name);
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
 
-            // 3. Construire le chemin absolu vers le template et le fournir à messenger.
-            // C'est la méthode la plus robuste dans un contexte CLI (cron).
-            $template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/prosilver/template/';
-            $messenger->template($template_path . 'email/reaction_digest', $author_lang);
+            // 3. Indiquer à messenger où trouver les templates de notre extension.
+            // C'est l'étape qui résout l'erreur "no registered paths".
+            $messenger->set_template_path($this->phpbb_root_path . 'ext/bastien59960/reactions/language');
+            $messenger->template('email/reaction_digest', $author_lang);
 
-            // 4. Assigner les variables globales au template
+            // 4. Assigner les variables au template.
             $messenger->assign_vars([
                 'USERNAME'         => $author_name,
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
 
-            // 5. Peuple les blocs de données pour les boucles dans le template
+            // 5. Peuple les blocs de données pour les boucles dans le template.
             foreach ($data['posts'] as $post_data) {
                 $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
@@ -459,7 +459,7 @@ class notification_task extends \phpbb\cron\task\base
                 }
             }
 
-            // 6. Envoyer l'e-mail. Le messenger gère l'encodage car il sait qu'il envoie du HTML
+            // 6. Envoyer l'e-mail. Le messenger gère l'encodage car il sait qu'il envoie du HTML.
             $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
