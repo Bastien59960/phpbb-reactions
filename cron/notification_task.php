@@ -443,7 +443,17 @@ class notification_task extends \phpbb\cron\task\base
             // C'est la meilleure pratique pour les templates d'e-mail.
             $template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template/';
             $template_file = 'email/reaction_digest.html';
-            $messenger->template($template_path . $template_file, $author_lang);
+            $full_template_path = $template_path . $template_file;
+
+            // =====================================================================
+            // GARDE-FOU DE DIAGNOSTIC : Vérifier si le fichier de template existe
+            // =====================================================================
+            if (!file_exists($full_template_path))
+            {
+                throw new \Exception("Template d'e-mail INTROUVABLE. Chemin vérifié : " . $full_template_path);
+            }
+
+            $messenger->template($full_template_path, $author_lang);
 
             // 4. Assigner les variables au template.
             $messenger->assign_vars([
