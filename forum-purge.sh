@@ -26,12 +26,26 @@ NC='\033[0m'
 # ==============================================================================
 # FUNCTION
 # ==============================================================================
+
+# Fonction de vérification améliorée
 check_status() {
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ SUCCÈS : $1${NC}"
-    else
-        echo -e "${WHITE_ON_RED}❌ ERREUR : $1${NC}"
+    local exit_code=$?
+    local success_message=$1
+    local output=$2
+
+    # Vérifie si la sortie contient une erreur fatale PHP
+    if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error"; then
+        echo -e "${WHITE_ON_RED}❌ ERREUR DÉTECTÉE (FATAL ERROR) : $success_message${NC}"
+        # Affiche la ligne de l'erreur pour un débogage rapide
+        echo "$output" | grep -E "PHP Fatal error|PHP Parse error"
         exit 1
+    # Vérifie le code de sortie de la commande
+    elif [ $exit_code -ne 0 ]; then
+        echo -e "${WHITE_ON_RED}❌ ERREUR (CODE DE SORTIE NON NUL) : $success_message${NC}"
+        exit 1
+    # Si tout va bien
+    else
+        echo -e "${GREEN}✅ SUCCÈS : $success_message${NC}"
     fi
 }
 
@@ -82,17 +96,16 @@ sleep 0.2
 # On tente de désactiver l'extension. On ajoute `|| true` pour que le script ne
 # s'arrête pas si l'extension est déjà désactivée (ce qui produit une erreur).
 # Le script devient ainsi "ré-exécutable" même après un échec.
-php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv || true
-
-check_status "Tentative de désactivation de l'extension terminée."
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv 2>&1 || true)
+check_status "Tentative de désactivation de l'extension terminée." "$output"
 
 # ==============================================================================
 # 2️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
 # ==============================================================================
 echo "───[ 2️⃣  PURGE DU CACHE (APRÈS DÉSACTIVATION) ]────────────────────"
 sleep 0.2
-php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
-check_status "Cache purgé après désactivation."
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+check_status "Cache purgé après désactivation." "$output"
 
 # ==============================================================================
 # 3️⃣ SUPPRESSION FICHIER cron.lock
@@ -126,24 +139,24 @@ check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
 # ==============================================================================
 echo "───[ 5️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
 sleep 0.2
-php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv
-check_status "Extension réactivée."
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
+check_status "Extension réactivée." "$output"
 
 # ==============================================================================
 # 6️⃣ PURGE CACHE (APRÈS)
 # ==============================================================================
 echo "───[ 6️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
 sleep 0.2
-php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv
-check_status "Cache purgé et container reconstruit."
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
 # 7️⃣ TEST FINAL DU CRON
 # ==============================================================================
 echo "───[ 7️⃣  TEST FINAL DU CRON ]──────────────────────────────────"
 sleep 0.2
-php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv
-check_status "Cron exécuté."
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
+check_status "Cron exécuté." "$output"
 
 
 # ==============================================================================
