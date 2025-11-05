@@ -24,16 +24,9 @@ $lang = array_merge($lang ?? [], [
     // --- Notification instantanée (cloche & UCP) ---
     'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s.',
     'NOTIFICATION_TYPE_REACTION_TITLE' => 'Quelqu\'un a réagi à l\'un de vos messages',
-    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification lorsqu\'un utilisateur réagit à l\'un de vos messages.',
+    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification instantanée dans la cloche du forum lorsqu\'un utilisateur réagit à l\'un de vos messages.',
 
     // --- Résumé par e-mail (UCP) ---
     'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
-    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir périodiquement un résumé par e-mail des nouvelles réactions sur vos messages.',
-
-    // --- Aides pour les résumés ---
-    'L_HELLO'                    => 'Bonjour',
-    'REACTIONS_DIGEST_INTRO'     => 'Entre %1$s et %2$s, vous avez reçu de nouvelles réactions sur vos messages :',
-    'REACTIONS_DIGEST_SIGNATURE' => 'À bientôt sur les forums de %s.',
-    'REACTIONS_DIGEST_VIEW_POST' => 'Voir le message', // Gardé pour cohérence
-    // 'REACTIONS_DIGEST_SIGNATURE' => 'Merci de votre participation, L\'équipe de %s', // Clé dupliquée, nous utilisons la première
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
 ]);

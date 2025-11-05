@@ -40,6 +40,7 @@ class reactions_module
 
 		// Charger le fichier de langue spécifique à ce module UCP
 		$user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
+		$user->add_lang_ext('bastien59960/reactions', 'reactions');
 
 		// Récupérer le contrôleur depuis le conteneur de services et lui passer la main.
 		$controller = $phpbb_container->get('bastien59960.reactions.controller.ucp_reactions');
