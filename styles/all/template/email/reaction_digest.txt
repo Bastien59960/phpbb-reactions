@@ -1,0 +1,28 @@
+Subject: Résumé des réactions sur vos messages
+
+Bonjour {USERNAME},
+
+Voici un résumé des nouvelles réactions que vos messages ont reçues récemment.
+
+<!-- BEGIN posts -->
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sujet de votre message : {posts.SUBJECT_PLAIN}
+Lien vers votre message : {posts.POST_URL_ABSOLUTE}
+
+Réactions reçues :
+<!-- BEGIN reactions -->
+  • {posts.reactions.EMOJI} par {posts.reactions.REACTER_NAME} le {posts.reactions.TIME_FORMATTED}
+    Profil : {posts.reactions.PROFILE_URL_ABSOLUTE}
+<!-- END reactions -->
+
+<!-- END posts -->
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{DIGEST_SIGNATURE}
+
+Vous pouvez gérer vos préférences de notification dans votre Panneau de l'utilisateur.
+
+{EMAIL_SIG}

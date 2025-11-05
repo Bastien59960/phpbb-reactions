@@ -405,90 +405,75 @@ class notification_task extends \phpbb\cron\task\base
         $author_email = $data['author_email'];
         $author_name  = $data['author_name'] ?: 'Utilisateur';
         $author_lang  = $data['author_lang'] ?: 'en';
-
+    
         $log_prefix = '[Reactions Cron]';
-
+    
         if (empty($data['posts']))
         {
-            $message = "$log_prefix Aucun contenu à envoyer pour user_id $author_id (récapitulatif vide).";
+            $message = "$log_prefix Aucun contenu a envoyer pour user_id $author_id (recapitulatif vide).";
             error_log($message);
             return ['status' => 'skipped_empty'];
         }
-
+    
         try
         {
-            // S'assurer que la classe messenger est disponible avant de l'utiliser.
-            // Elle est définie dans un fichier qui n'est pas toujours chargé par défaut.
+            // Inclure messenger si necessaire
             if (!class_exists('messenger'))
             {
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
-
-            // =====================================================================
-            // SOLUTION DÉFINITIVE : Utiliser la méthode standard de phpBB
-            // =====================================================================
-            $messenger = new messenger(true);
-
-            // 1. Charger les fichiers de langue nécessaires pour le template.
+    
+            // Creer l'instance messenger
+            $messenger = new \messenger(false);
+    
+            // Charger les fichiers de langue pour l'utilisateur
+            $this->language->set_user_language($author_lang);
             $this->language->add_lang('email', 'bastien59960/reactions');
-
-            // 2. Définir le destinataire et le sujet.
+    
+            // Definir le destinataire
             $messenger->to($author_email, $author_name);
+            
+            // Definir le sujet
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
-
-            // 3. Indiquer à messenger où trouver le template de notre extension.
-            // CORRECTION : On utilise la syntaxe standard de phpBB avec le namespace de l'extension.
-            // Le messenger saura trouver le fichier dans `ext/bastien59960/reactions/styles/*/template/email/reaction_digest.html`.
-            $template_file = 'email/reaction_digest.html';
-            $template_name = '@bastien59960_reactions/' . $template_file;
-
-            // =====================================================================
-            // GARDE-FOU DE DIAGNOSTIC : Vérifier si le fichier de template existe
-            // =====================================================================
-			$full_template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template/' . $template_file;
-            if (!file_exists($full_template_path))
-            {
-                throw new \Exception("Template d'e-mail INTROUVABLE. Chemin vérifié : " . $full_template_path);
-            }
-
-            $messenger->template($template_name, $author_lang);
-
-			// 4. Assigner les variables globales au template.
+    
+            // CORRECTION CRITIQUE : Utiliser le bon chemin de template
+            // phpBB cherche dans ext/{vendor}/{extension}/styles/all/template/email/
+            $messenger->template('email/reaction_digest', $author_lang);
+    
+            // Assigner les variables globales
             $messenger->assign_vars([
                 'USERNAME'         => $author_name,
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
             ]);
-
-            // 5. Peuple les blocs de données pour les boucles dans le template.
-            foreach ($data['posts'] as $post_data) {
+    
+            // Assigner les blocs de posts et reactions
+            foreach ($data['posts'] as $post_data)
+            {
                 $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
                     'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
                 ]);
-
-                foreach ($post_data['reactions'] as $reaction) {
+    
+                foreach ($post_data['reactions'] as $reaction)
+                {
                     $messenger->assign_block_vars('posts.reactions', $reaction);
                 }
             }
-
-            // 6. Envoyer l'e-mail. Le messenger gère l'encodage car il sait qu'il envoie du HTML.
+    
+            // Envoyer l'email
             $messenger->send(NOTIFY_EMAIL);
-
-            $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
+    
+            $message = "$log_prefix E-mail digest envoye a $author_name ($author_email) avec " . count($data['mark_ids']) . ' reactions.';
             error_log($message);
-
-            return [
-                'status' => 'sent',
-            ];
+    
+            return ['status' => 'sent'];
         }
         catch (\Exception $e)
         {
             $error_message = "$log_prefix Exception in send_digest_email for user_id $author_id: " . $e->getMessage();
-            $error_details = "$log_prefix Exception details: File: " . $e->getFile() . " Line: " . $e->getLine();
-
             error_log($error_message);
-            error_log($error_details);
-
+            error_log("$log_prefix File: " . $e->getFile() . " Line: " . $e->getLine());
+    
             return [
                 'status' => 'failed',
                 'error'  => $e->getMessage(),
