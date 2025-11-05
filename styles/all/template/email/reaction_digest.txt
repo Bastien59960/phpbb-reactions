@@ -1,17 +1,22 @@
-Subject: {L_REACTIONS_DIGEST_SUBJECT}
-
-{L_HELLO} {USERNAME},
+{L_REACTIONS_DIGEST_GREETING}
 
 {L_REACTIONS_DIGEST_INTRO}
 
 <!-- BEGIN posts -->
-----------------------------------------------------------------
-Subject: {posts.SUBJECT_PLAIN}
-URL : {posts.POST_URL_ABSOLUTE}
-<!-- BEGIN reactions -->
-  • {posts.reactions.EMOJI} by {posts.reactions.REACTER_NAME} on {posts.reactions.TIME_FORMATTED} (Profile: {posts.reactions.PROFILE_URL_ABSOLUTE})
-<!-- END reactions -->
-<!-- END posts -->
+================================================================
+{L_REACTIONS_DIGEST_POST_SUBJECT} : {posts.SUBJECT_PLAIN}
+{L_REACTIONS_DIGEST_POST_LINK}    : {posts.POST_URL_ABSOLUTE}
 
-{DIGEST_SIGNATURE}
+{L_REACTIONS_DIGEST_REACTIONS}
+<!-- BEGIN reactions -->
+  - {posts.reactions.EMOJI} {L_REACTIONS_DIGEST_BY} {posts.reactions.REACTER_NAME} {L_REACTIONS_DIGEST_ON} {posts.reactions.TIME_FORMATTED}
+    {L_REACTIONS_DIGEST_PROFILE} : {posts.reactions.PROFILE_URL_ABSOLUTE}
+<!-- END reactions -->
+
+<!-- END posts -->
+================================================================
+
 {L_REACTIONS_PREFERENCES_HINT}
+
+--
+{DIGEST_SIGNATURE}

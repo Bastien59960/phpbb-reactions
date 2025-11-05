@@ -88,13 +88,6 @@ $lang = array_merge($lang, [
 	'REACTION_LIMIT_USER'       => 'Reaction limit per user reached',
 	'REACTIONS_LIMIT_REACHED'   => 'Reaction limit reached',
 
-	// =============================================================================
-	// EMAIL NOTIFICATIONS (CRON DIGEST)
-	// =============================================================================
-	'REACTIONS_DIGEST_SUBJECT'      => 'Summary of reactions to your posts',
-	'REACTIONS_DIGEST_INTRO'        => 'Here is a summary of the new reactions your posts have recently received.',
-	'REACTIONS_DIGEST_SIGNATURE'    => 'Thank you for your participation on %s.', // %s will be replaced by the site name
-	'REACTIONS_PREFERENCES_HINT'    => 'You can manage your notification preferences in your User Control Panel.',
 	'REACTIONS_BY'                  => 'by',
 	'REACTIONS_ON'                  => 'on',
 	'NO_SUBJECT'                    => '(No subject)',

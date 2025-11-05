@@ -19,6 +19,15 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-    'REACTIONS_DIGEST_SUBJECT'      => 'New reactions to your posts',
-    'REACTIONS_DIGEST_SIGNATURE'    => 'Thank you for your participation on %s.',
+	'REACTIONS_DIGEST_SUBJECT'      => 'New reactions to your posts',
+	'REACTIONS_DIGEST_GREETING'     => 'Hello %s,',
+	'REACTIONS_DIGEST_INTRO'        => 'Here is a summary of the new reactions your posts have recently received.',
+	'REACTIONS_DIGEST_SIGNATURE'    => 'Thank you for your participation on %s.',
+	'REACTIONS_DIGEST_POST_SUBJECT' => 'Subject',
+	'REACTIONS_DIGEST_POST_LINK'    => 'Link',
+	'REACTIONS_DIGEST_REACTIONS'    => 'Reactions received:',
+	'REACTIONS_DIGEST_BY'           => 'by',
+	'REACTIONS_DIGEST_ON'           => 'on',
+	'REACTIONS_DIGEST_PROFILE'      => 'Profile',
+	'REACTIONS_PREFERENCES_HINT'    => 'Tip: You can change or disable these notifications from your User Control Panel > Reactions Preferences.',
 ));

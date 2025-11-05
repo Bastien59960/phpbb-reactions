@@ -418,7 +418,6 @@ class notification_task extends \phpbb\cron\task\base
         try
         {
             // S'assurer que la classe messenger est disponible avant de l'utiliser.
-            // Elle est définie dans un fichier qui n'est pas toujours chargé par défaut.
             if (!class_exists('messenger'))
             {
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
@@ -426,19 +425,33 @@ class notification_task extends \phpbb\cron\task\base
 
             $messenger = new messenger(false);
 
-            // 1. Charger la langue de l'utilisateur AVANT de charger le template
+            // 1. Charger la langue de l'utilisateur
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
             error_log($lang_load_message);
 
-            // CORRECTION : Chargement simplifié - phpBB gère automatiquement la langue
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
 
             // =====================================================================
-            // CORRECTION DÉFINITIVE POUR L'ENCODAGE DES EMOJIS
+            // CORRECTION CRITIQUE : Enregistrer le namespace Twig pour l'extension
             // =====================================================================
-            // On génère le corps de l'e-mail nous-mêmes à partir du template,
-            // puis on l'injecte directement dans le messenger pour court-circuiter
-            // son traitement interne qui corrompt les emojis.
+            // Le moteur de template de phpBB doit connaître le chemin des templates
+            // de l'extension. Dans le contexte du cron, ce namespace n'est pas 
+            // automatiquement enregistré, il faut le faire manuellement.
+            
+            // Récupérer le loader Twig
+            $twig_loader = $this->template->get_twig_environment()->getLoader();
+            
+            // Définir le chemin vers les templates de l'extension
+            $extension_template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template';
+            
+            // Enregistrer le namespace pour l'extension
+            $twig_loader->addPath($extension_template_path, 'bastien59960_reactions');
+            
+            error_log("$log_prefix Namespace Twig 'bastien59960_reactions' enregistré vers: $extension_template_path");
+
+            // =====================================================================
+            // Génération du corps de l'e-mail à partir du template
+            // =====================================================================
             $this->template->set_filenames(['reaction_digest_body' => '@bastien59960_reactions/email/reaction_digest.txt']);
 
             // Assigner les variables globales au template
@@ -469,10 +482,10 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->to($author_email, $author_name);
             $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
 
-            // Injecter le corps de l'e-mail que nous avons construit manuellement.
+            // Injecter le corps de l'e-mail que nous avons construit manuellement
             $messenger->set_mail_body($email_body);
 
-            // 6. Envoyer l'e-mail avec le corps que nous avons construit.
+            // 6. Envoyer l'e-mail
             $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
@@ -515,8 +528,6 @@ class notification_task extends \phpbb\cron\task\base
     public function is_runnable()
     {
         // La tâche peut s'exécuter si l'envoi d'e-mails est activé sur le forum
-        // et si l'extension elle-même est activée (implicite).
-        // On pourrait ajouter une vérification sur une config ACP de l'extension.
         return (bool) $this->config['email_enable'];
     }
 }
