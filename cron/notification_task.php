@@ -502,12 +502,20 @@ class notification_task extends \phpbb\cron\task\base
             $this->register_twig_namespace();
 
             // =====================================================================
-            // Génération du corps de l'e-mail à partir du template
+            // Configuration du messenger avec le template
             // =====================================================================
-            $this->template->set_filenames(['reaction_digest_body' => '@bastien59960_reactions/email/reaction_digest.txt']);
-
+            
+            // Définir le destinataire
+            $messenger->to($author_email, $author_name);
+            
+            // Définir le sujet
+            $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
+            
+            // Assigner le template (phpBB gère automatiquement le namespace)
+            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
+            
             // Assigner les variables globales au template
-            $this->template->assign_vars([
+            $messenger->assign_vars([
                 'USERNAME'         => $author_name,
                 'DIGEST_SINCE'     => $since_time_formatted,
                 'DIGEST_UNTIL'     => date('d/m/Y H:i'),
@@ -517,27 +525,18 @@ class notification_task extends \phpbb\cron\task\base
             // Itérer sur les posts et les réactions pour peupler les blocs du template
             foreach ($data['posts'] as $post_data)
             {
-                $this->template->assign_block_vars('posts', [
+                $messenger->assign_block_vars('posts', [
                     'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
                     'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
                 ]);
 
                 foreach ($post_data['reactions'] as $reaction)
                 {
-                    $this->template->assign_block_vars('posts.reactions', $reaction);
+                    $messenger->assign_block_vars('posts.reactions', $reaction);
                 }
             }
 
-            $email_body = $this->template->assign_display('reaction_digest_body');
-
-            // 3. Définir le destinataire et le sujet
-            $messenger->to($author_email, $author_name);
-            $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
-
-            // Injecter le corps de l'e-mail que nous avons construit manuellement
-            $messenger->set_mail_body($email_body);
-
-            // 6. Envoyer l'e-mail
+            // Envoyer l'e-mail
             $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
