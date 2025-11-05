@@ -176,11 +176,11 @@ try {
     }
     
     try {
-        $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_config_php_file, $phpbb_root_path, $phpEx);
+        // CORRECTION: The container builder expects the config *path*, not the config_php_file object.
+        $phpbb_container_builder = new \phpbb\di\container_builder($phpbb_root_path . 'config', $phpbb_root_path, $phpEx);
         
         // IMPORTANT : Utiliser with_custom_parameters() pour injecter TOUS les paramètres
         $phpbb_container_builder->with_custom_parameters($custom_parameters);
-        
         echo "✅ Container builder créé\n";
         echo "✅ Paramètres injectés dans le container builder\n";
     } catch (\Exception $e) {
