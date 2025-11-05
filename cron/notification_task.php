@@ -426,6 +426,13 @@ class notification_task extends \phpbb\cron\task\base
 
             $messenger = new messenger(false);
 
+            // =====================================================================
+            // CORRECTION : Enregistrer le chemin des templates de l'extension
+            // =====================================================================
+            // Dans un contexte CLI (cron), le moteur de template ne connaît pas
+            // par défaut les chemins des extensions. On doit le lui indiquer.
+            $this->template->get_twig_loader()->addPath($this->phpbb_root_path . 'ext/bastien59960/reactions/styles', 'bastien59960_reactions');
+
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
             error_log($lang_load_message);
