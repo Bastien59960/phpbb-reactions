@@ -150,7 +150,15 @@ try {
         // C'est l'étape qui manquait et qui causait l'erreur "synthetic service".
         // On crée manuellement la connexion à la base de données et on l'injecte
         // dans le conteneur avant de le compiler.
-        $db_driver_class = '\phpbb\db\driver\\' . $config_values['dbms'];
+        $dbms = $config_values['dbms'];
+        if (strpos($dbms, '\\') !== false) {
+            // Le nom contient déjà le namespace complet
+            $db_driver_class = $dbms;
+        } else {
+            // C'est un nom simple, on préfixe le namespace
+            $db_driver_class = '\phpbb\db\driver\\' . $dbms;
+        }
+
         $db_connection = new $db_driver_class();
         $db_connection->sql_connect(
             $config_values['dbhost'],
