@@ -223,13 +223,9 @@ class listener implements EventSubscriberInterface
     public function load_language_files($event)
     {
         $language_sets = [
-            'common',
-            'reactions',
-            'notification/reaction',
-            'notification/notification.type.reaction',
-            'notification/notification.type.reaction_email_digest',
-            'ucp_reactions',
-            'acp/common',
+            'common',     // Pour l'UI générale
+            'acp/common', // Pour le panneau d'administration
+            'email',      // Pour les templates d'e-mail
         ];
 
         foreach ($language_sets as $lang_set) {
