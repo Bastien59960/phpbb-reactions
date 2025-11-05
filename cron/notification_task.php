@@ -426,28 +426,12 @@ class notification_task extends \phpbb\cron\task\base
 
             $messenger = new messenger(false);
 
-            // =====================================================================
-            // CORRECTION CRITIQUE POUR L'ENCODAGE DES EMOJIS
-            // =====================================================================
-            // Force le messenger à ne pas traiter le contenu comme du HTML.
-            // Cela empêche la double-conversion des entités qui corrompt les emojis.
-            $messenger->set_mail_body_html(false);
-
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
             error_log($lang_load_message);
 
             // CORRECTION : Chargement simplifié - phpBB gère automatiquement la langue
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
-
-            // 2. Charger le template d'e-mail en utilisant la syntaxe standard de phpBB.
-            $template_load_message = "$log_prefix Chargement du template '@bastien59960_reactions/email/reaction_digest' pour la langue '$author_lang'.";
-            error_log($template_load_message);
-
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
-
-            // 3. Définir le destinataire
-            $messenger->to($author_email, $author_name);
 
             // 4. Assigner les variables globales au template
             $messenger->assign_vars([
@@ -471,7 +455,21 @@ class notification_task extends \phpbb\cron\task\base
                 }
             }
 
-            // 6. Envoyer l'e-mail
+            // =====================================================================
+            // CORRECTION DÉFINITIVE POUR L'ENCODAGE DES EMOJIS
+            // =====================================================================
+            // On génère le corps de l'e-mail nous-mêmes à partir du template,
+            // puis on l'injecte directement dans le messenger pour court-circuiter
+            // son traitement interne qui corrompt les emojis.
+            $this->template->set_filenames(['reaction_digest_body' => '@bastien59960_reactions/email/reaction_digest.txt']);
+            $email_body = $this->template->assign_display('reaction_digest_body');
+            $messenger->set_mail_body($email_body);
+
+            // 3. Définir le destinataire et le sujet
+            $messenger->to($author_email, $author_name);
+            $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
+
+            // 6. Envoyer l'e-mail avec le corps que nous avons construit.
             $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
