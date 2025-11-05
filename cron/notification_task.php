@@ -55,9 +55,6 @@ class notification_task extends \phpbb\cron\task\base
     /** @var string Préfixe des tables phpBB */
     protected $table_prefix;
 
-    /** @var bool Flag pour vérifier si le namespace Twig a été enregistré */
-    protected $twig_namespace_registered = false;
-
     /**
      * Constructeur
      */
@@ -396,68 +393,6 @@ class notification_task extends \phpbb\cron\task\base
     }
 
     /**
-     * Enregistre le namespace Twig pour l'extension (phpBB 3.3 compatible)
-     */
-    protected function register_twig_namespace()
-    {
-        if ($this->twig_namespace_registered)
-        {
-            return; // Déjà enregistré
-        }
-
-        $log_prefix = '[Reactions Cron]';
-
-        try
-        {
-            // Pour phpBB 3.3, on doit accéder directement à la propriété protégée
-            // du template pour récupérer l'environnement Twig
-            $reflection = new \ReflectionClass($this->template);
-            
-            // Chercher la propriété 'twig' (phpBB 3.3)
-            if ($reflection->hasProperty('twig'))
-            {
-                $twig_property = $reflection->getProperty('twig');
-                $twig_property->setAccessible(true);
-                $twig = $twig_property->getValue($this->template);
-                
-                if ($twig instanceof \Twig\Environment || $twig instanceof \Twig_Environment)
-                {
-                    $twig_loader = $twig->getLoader();
-                    $extension_template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template';
-                    
-                    // Vérifier que le chemin existe
-                    if (!is_dir($extension_template_path))
-                    {
-                        error_log("$log_prefix ERREUR: Le chemin du template n'existe pas: $extension_template_path");
-                        return;
-                    }
-                    
-                    $twig_loader->addPath($extension_template_path, 'bastien59960_reactions');
-                    $this->twig_namespace_registered = true;
-                    
-                    error_log("$log_prefix Namespace Twig 'bastien59960_reactions' enregistré vers: $extension_template_path");
-                }
-                else
-                {
-                    error_log("$log_prefix ERREUR: L'objet Twig n'est pas une instance valide");
-                }
-            }
-            else
-            {
-                error_log("$log_prefix ERREUR: Propriété 'twig' non trouvée dans la classe template");
-            }
-        }
-        catch (\ReflectionException $e)
-        {
-            error_log("$log_prefix ERREUR Reflection: " . $e->getMessage());
-        }
-        catch (\Exception $e)
-        {
-            error_log("$log_prefix ERREUR lors de l'enregistrement du namespace Twig: " . $e->getMessage());
-        }
-    }
-
-    /**
      * Construit et envoie un e-mail récapitulatif à un utilisateur.
      *
      * @param array $data Données groupées pour l'auteur
@@ -482,70 +417,49 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            // Charger la langue de l'utilisateur
-            $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
-            error_log($lang_load_message);
-
-            $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
-
-            // =====================================================================
-            // SOLUTION : Générer manuellement le corps de l'email avec les emojis
-            // =====================================================================
-            // Le messenger phpBB échappe automatiquement les caractères spéciaux,
-            // ce qui corrompt les emojis. On doit donc construire le corps de l'email
-            // manuellement en texte brut avec les emojis natifs.
-            
-            // Construire le corps de l'email manuellement
-            $email_body = "Bonjour {$author_name},\n\n";
-            $email_body .= "Entre {$since_time_formatted} et " . date('d/m/Y H:i') . ", vous avez reçu de nouvelles réactions sur vos messages :\n\n";
-            
-            foreach ($data['posts'] as $post_data)
-            {
-                $email_body .= "================================================================\n";
-                $email_body .= "Sujet : {$post_data['SUBJECT_PLAIN']}\n";
-                $email_body .= "Lien  : {$post_data['POST_URL_ABSOLUTE']}\n\n";
-                $email_body .= "Réactions reçues :\n";
-                
-                foreach ($post_data['reactions'] as $reaction)
-                {
-                    $emoji = $reaction['EMOJI'];
-                    $email_body .= "  - {$emoji} par {$reaction['REACTER_NAME']} le {$reaction['TIME_FORMATTED']}\n";
-                    $email_body .= "    Profil : {$reaction['PROFILE_URL_ABSOLUTE']}\n";
-                }
-                
-                $email_body .= "\n";
-            }
-            
-            $email_body .= "================================================================\n\n";
-            $email_body .= "Astuce : Vous pouvez modifier ou désactiver ces notifications depuis votre Panneau de Contrôle Utilisateur > Préférences des réactions.\n\n";
-            $email_body .= "--\n";
-            $email_body .= sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']);
-            
-            // Utiliser la fonction mail() directement pour éviter l'encodage phpBB
-            if (!function_exists('phpbb_mail'))
+            // S'assurer que la classe messenger est disponible avant de l'utiliser.
+            // Elle est définie dans un fichier qui n'est pas toujours chargé par défaut.
+            if (!class_exists('messenger'))
             {
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
+
+            // =====================================================================
+            // SOLUTION : Générer manuellement le corps de l'email en texte brut
+            // =====================================================================
+            // On construit le corps de l'email manuellement pour préserver l'encodage UTF-8 des emojis.
             
-            // Créer les headers pour forcer UTF-8
-            $headers = "MIME-Version: 1.0\r\n";
-            $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-            $headers .= "Content-Transfer-Encoding: 8bit\r\n";
-            $headers .= "From: {$this->config['board_email']}\r\n";
-            $headers .= "Reply-To: {$this->config['board_email']}\r\n";
-            $headers .= "X-Mailer: phpBB3\r\n";
-            $headers .= "X-Priority: 3\r\n";
-            
-            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
-            
-            // Envoyer directement via mail() pour garder les emojis intacts
-            $mail_sent = mail($author_email, $subject, $email_body, $headers);
-            
-            if (!$mail_sent)
-            {
-                error_log("$log_prefix Erreur lors de l'envoi de l'email à {$author_email}");
-                return ['status' => 'failed', 'error' => 'mail() returned false'];
+            $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
+
+            $email_body  = sprintf($this->language->lang('REACTIONS_DIGEST_GREETING'), $author_name) . "\n\n";
+            $email_body .= $this->language->lang('REACTIONS_DIGEST_INTRO') . "\n\n";
+
+            foreach ($data['posts'] as $post_data) {
+                $email_body .= "----------------------------------------------------------------\n";
+                $email_body .= sprintf('%s: %s', $this->language->lang('REACTIONS_DIGEST_POST_SUBJECT'), $post_data['SUBJECT_PLAIN']) . "\n";
+                $email_body .= sprintf('%s: %s', $this->language->lang('REACTIONS_DIGEST_POST_LINK'), $post_data['POST_URL_ABSOLUTE']) . "\n";
+                
+                foreach ($post_data['reactions'] as $reaction) {
+                    $email_body .= sprintf("  • %s %s %s %s (%s: %s)\n",
+                        $reaction['EMOJI'],
+                        $this->language->lang('REACTIONS_DIGEST_BY'),
+                        $reaction['REACTER_NAME'],
+                        $this->language->lang('REACTIONS_DIGEST_ON'),
+                        $reaction['TIME_FORMATTED'],
+                        $reaction['PROFILE_URL_ABSOLUTE']
+                    );
+                }
             }
+
+            $email_body .= "----------------------------------------------------------------\n";
+            $email_body .= "\n" . sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']) . "\n";
+            $email_body .= $this->language->lang('REACTIONS_PREFERENCES_HINT') . "\n";
+
+            $messenger = new messenger(false);
+            $messenger->to($author_email, $author_name);
+            $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
+            $messenger->set_mail_body($email_body);
+            $messenger->send(NOTIFY_EMAIL);
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
             error_log($message);
@@ -587,6 +501,8 @@ class notification_task extends \phpbb\cron\task\base
     public function is_runnable()
     {
         // La tâche peut s'exécuter si l'envoi d'e-mails est activé sur le forum
+        // et si l'extension elle-même est activée (implicite).
+        // On pourrait ajouter une vérification sur une config ACP de l'extension.
         return (bool) $this->config['email_enable'];
     }
 }
