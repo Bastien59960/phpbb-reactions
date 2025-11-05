@@ -10,9 +10,6 @@
  * responsable de la création des notifications instantanées (dans la cloche)
  * lorsqu'un utilisateur réagit au message d'un autre.
  *
- * Cette classe implémente les méthodes requises par l'interface de notification
- * de phpBB pour trouver les destinataires, générer le texte et le lien de la
- * notification, et la stocker en base de données.
  * Elle implémente les méthodes requises par phpBB pour trouver les destinataires,
  * générer le texte et le lien de la notification, et la stocker en base de données.
  *
@@ -177,9 +174,9 @@ class reaction extends base implements type_interface
     // ========================================================================= 
     // Ces méthodes sont statiques car elles sont appelées AVANT
     // la création d'une instance de la classe
-    // Note : Certaines pourraient devenir non-statiques dans les futures versions de phpBB.
     /**
      * Extrait l'ID du message depuis les données de notification
+     * Cette méthode est statique car phpBB peut avoir besoin de cet ID sans instancier l'objet.
      * 
      * @param array $data Données de la notification (contient post_id)
      * @return int L'ID du message réagi
@@ -191,6 +188,7 @@ class reaction extends base implements type_interface
 
     /**
      * Extrait l'ID du sujet parent depuis les données
+     * Utile pour regrouper ou filtrer les notifications par sujet.
      * 
      * @param array $data Données de la notification (contient topic_id)
      * @return int L'ID du sujet contenant le message
@@ -203,8 +201,7 @@ class reaction extends base implements type_interface
     /**
      * Extrait l'ID de l'auteur du message depuis les données
      * 
-     * Cet utilisateur sera le destinataire de la notification
-     * (celui qui a écrit le message réagi)
+     * Cet utilisateur sera le destinataire principal de la notification.
      * 
      * @param array $data Données de la notification (contient post_author)
      * @return int L'ID de l'auteur du message
@@ -223,8 +220,7 @@ class reaction extends base implements type_interface
      * 
      * Cette URL sera utilisée dans la notification pour que
      * l'utilisateur puisse cliquer et accéder directement au message.
-     * 
-     * Format : viewtopic.php?p=123#p123
+     * Le format est `viewtopic.php?p=123#p123`.
      * 
      * @return string L'URL complète vers le message
      */
@@ -245,7 +241,7 @@ class reaction extends base implements type_interface
     /**
      * Génère l'URL vers le message réagi (méthode statique)
      * 
-     * Version statique de get_url(), utilisée par phpBB dans certains contextes
+     * Version statique de get_url(), utilisée par phpBB dans des contextes où l'objet n'est pas instancié.
      * 
      * @param array $data Données de la notification
      * @return string L'URL complète vers le message
@@ -274,11 +270,8 @@ class reaction extends base implements type_interface
      * Retourne la clé de langue pour le titre de la notification
      * 
      * CORRECTION IMPORTANTE : Cette clé DOIT correspondre exactement
-     * à celle définie dans notification/notification.type.reaction.php
-     * 
-     * Format du message : "%s a réagi à votre message avec %s"
-     * - %s = nom de l'utilisateur qui a réagi
-     * - %s = emoji utilisé
+     * à celle définie dans le fichier de langue de la notification.
+     * Le message attendu est du type : "%1$s a réagi à votre message avec %2$s".
      * 
      * @return string La clé de langue (SANS le préfixe L_).
      */
@@ -308,7 +301,7 @@ class reaction extends base implements type_interface
     /**
      * Retourne le nom du type affiché dans l'UCP
      * 
-     * Doit correspondre à une clé dans le fichier de langue de la notification.
+     * Doit correspondre à une clé dans le fichier de langue de la notification (ex: 'Réactions à vos messages').
      * 
      * @return string La clé de langue pour le nom
      */
@@ -320,7 +313,7 @@ class reaction extends base implements type_interface
     /**
      * Retourne la description du type affichée dans l'UCP
      * 
-     * Doit correspondre à une clé dans le fichier de langue de la notification
+     * Doit correspondre à une clé dans le fichier de langue de la notification.
      * 
      * @return string La clé de langue pour la description
      */
@@ -360,10 +353,10 @@ class reaction extends base implements type_interface
     }
 
     /**
-     * Retourne les utilisateurs dont il faut charger les donn├®es
+     * Retourne les utilisateurs dont il faut charger les données
      * 
-     * Dans notre cas, on n'a pas besoin de charger de donn├®es
-     * utilisateur supplémentaires (le nom est déjà dans les données de la notification)
+     * Dans notre cas, on n'a pas besoin de charger de données
+     * utilisateur supplémentaires car le nom est déjà dans les données de la notification.
      * 
      * @return array Liste vide (pas de chargement nécessaire)
      */
@@ -380,8 +373,8 @@ class reaction extends base implements type_interface
     /**
      * Désactive l'envoi immédiat d'e-mails
      * 
-     * Les e-mails sont gérés par la tâche CRON notification_task
-     * qui regroupe les réactions sur une période (anti-spam)
+     * Les e-mails sont gérés par la tâche CRON `notification_task`
+     * qui regroupe les réactions sur une période pour éviter le spam.
      * 
      * @return bool|string False = pas d'e-mail immédiat
      */
@@ -424,8 +417,8 @@ class reaction extends base implements type_interface
         return [
             $this->get_title(), // Clé : NOTIFICATION_TYPE_REACTION
             [
-                $this->notification_data['reacter_username'] ?? 'Quelqu\'un', // Param 1 : Nom du réacteur
-                $this->notification_data['emoji'] ?? '?',             // Param 2 : Emoji
+                $this->notification_data['reacter_username'] ?? 'Quelqu\'un', // %1$s : Nom du réacteur
+                $this->notification_data['emoji'] ?? '?',             // %2$s : Emoji
             ],
         ];
     }
@@ -455,8 +448,8 @@ class reaction extends base implements type_interface
     /**
      * Définit les colonnes supplémentaires pour cette notification
      * 
-     * phpBB va AUTOMATIQUEMENT créer une colonne "reaction_emoji"
-     * dans la table phpbb_notifications si elle n'existe pas
+     * phpBB va AUTOMATIQUEMENT créer une colonne `reaction_emoji`
+     * dans la table `phpbb_notifications` si elle n'existe pas.
      * 
      * @return array Définition des colonnes personnalisées
      */

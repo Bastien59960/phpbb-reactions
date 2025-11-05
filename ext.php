@@ -2,15 +2,15 @@
 /**
  * Fichier : ext.php
  * Chemin : bastien59960/reactions/ext.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Ce fichier est la classe principale et le point d'entrée de l'extension pour phpBB.
  * Il gère le cycle de vie de l'extension : activation, désactivation, et purge des
- * données. Il est responsable de l'enregistrement des types de notifications
- * personnalisés auprès du système phpBB.
+ * données. Il est responsable de la vérification de la version de phpBB et de la
+ * gestion des étapes du cycle de vie de l'extension.
  *
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -87,23 +87,24 @@ class ext extends \phpbb\extension\base
 	}
 
 
-	/**
-	public function disable_step($old_state)
-	{
-		
-		if ($old_state === false)
+	/*
+		public function disable_step($old_state)
 		{
-			// Récupérer le gestionnaire de notifications phpBB
-			$notification_manager = $this->container->get('notification_manager');
 			
-			// Désactiver la notification cloche
-			$notification_manager->disable_notifications('notification.type.reaction');
-		
-			// Désactiver la notification email digest
-			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
+			if ($old_state === false)
+			{
+				// Récupérer le gestionnaire de notifications phpBB
+				$notification_manager = $this->container->get('notification_manager');
+				
+				// Désactiver la notification cloche
+				$notification_manager->disable_notifications('notification.type.reaction');
+			
+				// Désactiver la notification email digest
+				$notification_manager->disable_notifications('notification.type.reaction_email_digest');
+			}
+			
+			return parent::disable_step($old_state);
 		}
-		
-		return parent::disable_step($old_state);
-	}
+	*/
 
 }

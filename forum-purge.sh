@@ -1,5 +1,14 @@
 #!/bin/bash
-# forum-purge.sh - Script de maintenance complet pour le forum phpBB (Goth & Space Invader Edition)
+# ==============================================================================
+# Fichier : forum-purge.sh
+# Auteur : Bastien (bastien59960)
+# GitHub : https://github.com/bastien59960/reactions
+#
+# Rôle :
+# Script de maintenance complet pour le forum phpBB. Il effectue un cycle
+# complet de nettoyage du cache, de réinitialisation de l'extension "Reactions"
+# et de vérification de l'état final. Conçu pour accélérer le débogage.
+# ==============================================================================
 
 # ==============================================================================
 # CONFIGURATION

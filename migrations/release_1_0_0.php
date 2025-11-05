@@ -26,7 +26,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
      *
      * Cette méthode est une sécurité pour empêcher phpBB de ré-exécuter une migration
      * qui a déjà été installée. Elle vérifie la présence de la table principale
-     * et d'une colonne clé pour déterminer si l'installation est complète.
+     * et d'un type de notification pour déterminer si l'installation est complète.
      *
      * @return bool True si l'extension semble déjà installée, False sinon.
      */
@@ -65,7 +65,7 @@ public function effectively_installed()
      * Définit les modifications à apporter au schéma de la base de données.
      *
      * Cette méthode est déclarative. Elle retourne un tableau décrivant les tables
-     * et les colonnes à créer.
+     * et les colonnes à créer, que phpBB exécutera.
      */
     public function update_schema()
     {
@@ -133,7 +133,7 @@ public function effectively_installed()
     public function update_data()
     {
         return array(
-            // Options de configuration générales
+            // Options de configuration générales avec leurs valeurs par défaut.
             array('config.add', array('bastien59960_reactions_max_per_post', 20)),
             array('config.add', array('bastien59960_reactions_max_per_user', 10)),
             array('config.add', array('bastien59960_reactions_enabled', 1)),
@@ -149,7 +149,7 @@ public function effectively_installed()
 			['config.add', ['bastien59960_reactions_picker_emoji_size', 24]],
 			['config.add', ['bastien59960_reactions_sync_interval', 5000]],
 
-            // Fonctions personnalisées à exécuter
+            // Fonctions personnalisées à exécuter après la mise à jour du schéma.
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
             array('custom', array(array($this, 'create_notification_type'))),
             array('custom', array(array($this, 'enable_notification_types'))),
@@ -190,7 +190,7 @@ public function effectively_installed()
      * [CUSTOM] Force le jeu de caractères `utf8mb4` pour la colonne des emojis.
      *
      * C'est une étape CRUCIALE pour garantir que les emojis modernes (qui peuvent
-     * utiliser 4 octets) sont stockés et comparés correctement.
+     * utiliser 4 octets) sont stockés et comparés correctement dans la base de données.
      */
     public function set_utf8mb4_bin()
     {
@@ -257,7 +257,9 @@ public function create_notification_type()
 }
 
     /**
-     * [CUSTOM] Active les types de notification lors de l'installation.
+     * [CUSTOM] Active les types de notification via le manager.
+     * C'est la méthode recommandée pour s'assurer que les notifications
+     * sont correctement enregistrées et activées pour les utilisateurs.
      */
     public function enable_notification_types()
     {

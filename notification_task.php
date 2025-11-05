@@ -2,14 +2,14 @@
 /**
  * Fichier : notification_task.php
  * Chemin : bastien59960/reactions/cron/notification_task.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Définit la tâche cron pour l'envoi groupé des notifications de réactions par
  * e-mail (digest). Elle se déclenche périodiquement pour regrouper les nouvelles
  * réactions et envoyer un résumé aux utilisateurs concernés, évitant ainsi le spam.
  *
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -425,13 +425,6 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             $messenger = new messenger(false);
-
-            // =====================================================================
-            // CORRECTION CRITIQUE POUR L'ENCODAGE DES EMOJIS
-            // =====================================================================
-            // Force le messenger à ne pas traiter le contenu comme du HTML.
-            // Cela empêche la double-conversion des entités qui corrompt les emojis.
-            $messenger->set_mail_html(false);
 
             // 1. Charger la langue de l'utilisateur AVANT de charger le template
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";

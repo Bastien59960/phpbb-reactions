@@ -2,21 +2,15 @@
 /**
  * Fichier : ajax.php
  * Chemin : bastien59960/reactions/controller/ajax.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
  * Ce fichier est le cœur de l'interactivité de l'extension. Il reçoit et traite
  * toutes les requêtes AJAX envoyées par le client (reactions.js) pour ajouter ou
- * supprimer une réaction, et obtenir la liste des utilisateurs ayant réagi.
- * Il renvoie systématiquement une réponse au format JSON.
+ * supprimer une réaction, et synchroniser l'affichage. Il renvoie systématiquement
+ * une réponse au format JSON et gère la logique de notification instantanée.
  *
- * Informations reçues (Payload JSON) :
- * - `post_id` : ID du message concerné
- * - `emoji` : L'emoji de la réaction (Unicode)
- * - `action` : L'action à effectuer ('add', 'remove', 'get_users')
- * - `sid` : Le jeton de session pour la protection CSRF
- *
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
@@ -182,13 +176,13 @@ class ajax
         // =========================================================================
         // CORRECTION CRITIQUE : Nettoyer TOUTE sortie parasite AVANT le JSON
         // =========================================================================
-
-        // 1. Supprimer tous les buffers de sortie existants (ex: warnings PHP)
+        
+        // 1. Supprimer tous les buffers de sortie existants
         while (ob_get_level()) {
             ob_end_clean();
         }
-
-        // 2. Démarrer un nouveau buffer pour capturer toute sortie inattendue
+        
+        // 2. Démarrer un nouveau buffer propre
         ob_start();
         
         // 3. Forcer les headers JSON immédiatement
@@ -197,7 +191,7 @@ class ajax
             header('X-Content-Type-Options: nosniff');
             header('Cache-Control: no-cache, must-revalidate');
         }
-
+        
         // Génération d'un identifiant unique pour le debug et le chronométrage
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
@@ -207,7 +201,7 @@ class ajax
             // 1. VÉRIFICATIONS PRÉLIMINAIRES
             // =====================================================================
             
-            // Seuls les utilisateurs connectés peuvent interagir.
+            // Vérifier que l'utilisateur est connecté
             if ($this->user->data['user_id'] == ANONYMOUS) { // ANONYMOUS est une constante de phpBB
                 throw new HttpException(403, 'User not logged in.');
             }
@@ -215,7 +209,7 @@ class ajax
             // =====================================================================
             // 2. PARSING DE LA REQUÊTE JSON
             // =====================================================================
-
+            
             // Récupérer le corps brut de la requête POST.
             $raw = file_get_contents('php://input');
             if (defined('DEBUG') && DEBUG) {
@@ -228,7 +222,7 @@ class ajax
             } catch (\Throwable $jsonEx) {
                 error_log("[Reactions RID=$rid] json_decode first attempt failed: " . $jsonEx->getMessage());
 
-                // Tentative de correction UTF-8, un problème courant avec les emojis.
+                // Tentative de correction UTF-8
                 try {
                     if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
                         $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -239,7 +233,7 @@ class ajax
                 } catch (\Throwable $jsonEx2) {
                     error_log("[Reactions RID=$rid] json_decode second attempt failed: " . $jsonEx2->getMessage());
 
-                    // Dernier recours : essayer de parser comme une requête form-encoded.
+                    // Dernier recours : form-encoded
                     parse_str($raw, $parsed);
                     if (!empty($parsed)) {
                         $data = $parsed;
@@ -315,7 +309,7 @@ class ajax
                 }
             }
 
-            // Pour les actions non-sync, un post_id valide est requis.
+            // Vérifier que le post_id est valide et que le message existe.
             if ($action !== 'sync' && (!$post_id || !$this->is_valid_post($post_id))) {
                 ob_end_clean();
                 return new JsonResponse([
@@ -325,7 +319,7 @@ class ajax
                 ], 400);
             }
 
-            // Un emoji valide est requis pour ajouter ou supprimer une réaction.
+            // Vérifier que l'emoji est valide (sauf pour les actions qui n'en ont pas besoin).
             if (!in_array($action, ['get', 'sync'], true) && (!$emoji || !$this->is_valid_emoji($emoji))) {
                 ob_end_clean();
                 return new JsonResponse([
@@ -339,7 +333,7 @@ class ajax
             // =====================================================================
             // 5. VÉRIFICATION DES AUTORISATIONS
             // =====================================================================
-
+            
             // Vérifier si l'utilisateur a le droit de réagir à ce message (forum non verrouillé, etc.).
             if (!$this->can_react_to_post($post_id)) {
                 ob_end_clean();
@@ -353,7 +347,7 @@ class ajax
             // =====================================================================
             // 6. VÉRIFICATION DES LIMITES (pour l'action 'add')
             // =====================================================================
-
+            
             $user_id = (int)$this->user->data['user_id'];
 
             if ($action === 'add') {
@@ -387,7 +381,7 @@ class ajax
             // =====================================================================
             // 7. EXÉCUTION DE L'ACTION
             // =====================================================================
-
+            
             // Appeler la méthode correspondante en fonction de l'action demandée.
             switch ($action) {
                 case 'add':
@@ -422,7 +416,7 @@ class ajax
             // =====================================================================
             // 8. FINALISATION DE LA RÉPONSE
             // =====================================================================
-
+            
             // Ajouter l'identifiant de requête (RID) à la réponse pour le débogage.
             if ($resp instanceof \Symfony\Component\HttpFoundation\JsonResponse) {
                 $payload = json_decode($resp->getContent(), true);
@@ -432,7 +426,7 @@ class ajax
                 }
             }
 
-            // CRITIQUE : Nettoyer le buffer de sortie avant d'envoyer la réponse JSON finale.
+            // CRITIQUE : Nettoyer le buffer avant d'envoyer la réponse
             ob_end_clean();
             
             return $resp;
@@ -448,7 +442,7 @@ class ajax
             ], $httpEx->get_status_code());
 
         } catch (\Throwable $e) {
-            // Gérer toutes les autres erreurs serveur (500) pour éviter une réponse non-JSON.
+            // Gérer toutes les autres erreurs serveur (500).
             error_log("[Reactions RID=$rid] Exception attrapée: " . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             ob_end_clean();
             return new JsonResponse([
@@ -501,7 +495,7 @@ class ajax
             $post_id = (int) $post_id;
             $user_id = (int) $this->user->data['user_id'];
 
-            // Récupérer le topic_id est nécessaire pour l'insertion en base.
+            // Topic lookup
             $sql = 'SELECT topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . $post_id;
             if (defined('DEBUG') && DEBUG) {
                 error_log("[Reactions RID=$rid] topic lookup SQL: $sql");
@@ -524,7 +518,7 @@ class ajax
             }
             $topic_id = (int) $row['topic_id'];
 
-            // Vérifier si l'utilisateur a déjà ajouté cet emoji spécifique à ce message.
+            // Duplicate check
             $dupSql = 'SELECT reaction_id FROM ' . $this->post_reactions_table . '
             WHERE post_id = ' . $post_id . '
               AND user_id = ' . $user_id . "
@@ -550,7 +544,7 @@ class ajax
                 ], 400);
             }
 
-            // Préparer le tableau de données pour l'insertion SQL.
+            // Build insert
             $sql_ary = [
                 'post_id'           => $post_id,
                 'topic_id'          => $topic_id,
@@ -611,7 +605,7 @@ class ajax
             $reactions = $this->get_reactions_array($post_id);
             $count = isset($reactions[$emoji]) ? $reactions[$emoji] : 1;
 
-            // Déclencher immédiatement la notification "cloche" pour l'auteur du message.
+            // Déclencher immédiatement la notification par cloche
             $this->trigger_immediate_notification($post_id, $user_id, $emoji);
 
             // Génération du HTML mis à jour
@@ -835,7 +829,7 @@ class ajax
             return false;
         }
 
-        // Récupérer les statuts du message, du sujet et du forum en une seule requête.
+        // Récupérer les informations du message, sujet et forum
         $sql = 'SELECT p.post_id, p.forum_id, p.poster_id, t.topic_status, f.forum_status
                 FROM ' . $this->posts_table . ' p
                 JOIN ' . $this->topics_table . ' t ON p.topic_id = t.topic_id
@@ -844,7 +838,7 @@ class ajax
         $result = $this->db->sql_query($sql);
         $post_data = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
-
+        
         // Vérifier que le message existe
         if (!$post_data) {
             return false;
@@ -854,7 +848,7 @@ class ajax
         if (!$this->auth->acl_get('f_reply', $post_data['forum_id'])) {
             return false;
         }
-
+        
         // OPTIONNEL : Interdire de réagir à ses propres messages (à décommenter si besoin)
         // if ($post_data['poster_id'] == $this->user->data['user_id']) {
         //     return false;
