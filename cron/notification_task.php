@@ -482,66 +482,70 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
-            // S'assurer que la classe messenger est disponible avant de l'utiliser.
-            if (!class_exists('messenger'))
-            {
-                include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
-            }
-
-            // Initialiser le messenger en mode UTF-8
-            $messenger = new messenger(false);
-            
-            // Forcer l'encodage UTF-8 pour les emojis
-            $messenger->use_queue = false;
-
-            // 1. Charger la langue de l'utilisateur
+            // Charger la langue de l'utilisateur
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
             error_log($lang_load_message);
 
             $this->language->add_lang(['common', 'email'], 'bastien59960/reactions');
 
             // =====================================================================
-            // CORRECTION CRITIQUE : Enregistrer le namespace Twig pour phpBB 3.3
+            // SOLUTION : Générer manuellement le corps de l'email avec les emojis
             // =====================================================================
-            $this->register_twig_namespace();
-
-            // =====================================================================
-            // Configuration du messenger avec le template
-            // =====================================================================
+            // Le messenger phpBB échappe automatiquement les caractères spéciaux,
+            // ce qui corrompt les emojis. On doit donc construire le corps de l'email
+            // manuellement en texte brut avec les emojis natifs.
             
-            // Définir le destinataire
-            $messenger->to($author_email, $author_name);
+            // Construire le corps de l'email manuellement
+            $email_body = "Bonjour {$author_name},\n\n";
+            $email_body .= "Entre {$since_time_formatted} et " . date('d/m/Y H:i') . ", vous avez reçu de nouvelles réactions sur vos messages :\n\n";
             
-            // Définir le sujet
-            $messenger->subject($this->language->lang('REACTIONS_DIGEST_SUBJECT'));
-            
-            // Assigner le template (phpBB gère automatiquement le namespace)
-            $messenger->template('@bastien59960_reactions/email/reaction_digest', $author_lang);
-            
-            // Assigner les variables globales au template
-            $messenger->assign_vars([
-                'USERNAME'         => $author_name,
-                'DIGEST_SINCE'     => $since_time_formatted,
-                'DIGEST_UNTIL'     => date('d/m/Y H:i'),
-                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
-            ]);
-
-            // Itérer sur les posts et les réactions pour peupler les blocs du template
             foreach ($data['posts'] as $post_data)
             {
-                $messenger->assign_block_vars('posts', [
-                    'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
-                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
-                ]);
-
+                $email_body .= "================================================================\n";
+                $email_body .= "Sujet : {$post_data['SUBJECT_PLAIN']}\n";
+                $email_body .= "Lien  : {$post_data['POST_URL_ABSOLUTE']}\n\n";
+                $email_body .= "Réactions reçues :\n";
+                
                 foreach ($post_data['reactions'] as $reaction)
                 {
-                    $messenger->assign_block_vars('posts.reactions', $reaction);
+                    $emoji = $reaction['EMOJI'];
+                    $email_body .= "  - {$emoji} par {$reaction['REACTER_NAME']} le {$reaction['TIME_FORMATTED']}\n";
+                    $email_body .= "    Profil : {$reaction['PROFILE_URL_ABSOLUTE']}\n";
                 }
+                
+                $email_body .= "\n";
             }
-
-            // Envoyer l'e-mail
-            $messenger->send(NOTIFY_EMAIL);
+            
+            $email_body .= "================================================================\n\n";
+            $email_body .= "Astuce : Vous pouvez modifier ou désactiver ces notifications depuis votre Panneau de Contrôle Utilisateur > Préférences des réactions.\n\n";
+            $email_body .= "--\n";
+            $email_body .= sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']);
+            
+            // Utiliser la fonction mail() directement pour éviter l'encodage phpBB
+            if (!function_exists('phpbb_mail'))
+            {
+                include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
+            }
+            
+            // Créer les headers pour forcer UTF-8
+            $headers = "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+            $headers .= "Content-Transfer-Encoding: 8bit\r\n";
+            $headers .= "From: {$this->config['board_email']}\r\n";
+            $headers .= "Reply-To: {$this->config['board_email']}\r\n";
+            $headers .= "X-Mailer: phpBB3\r\n";
+            $headers .= "X-Priority: 3\r\n";
+            
+            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
+            
+            // Envoyer directement via mail() pour garder les emojis intacts
+            $mail_sent = mail($author_email, $subject, $email_body, $headers);
+            
+            if (!$mail_sent)
+            {
+                error_log("$log_prefix Erreur lors de l'envoi de l'email à {$author_email}");
+                return ['status' => 'failed', 'error' => 'mail() returned false'];
+            }
 
             $message = "$log_prefix E-mail digest envoyé à $author_name ($author_email) avec " . count($data['mark_ids']) . ' réactions.';
             error_log($message);
