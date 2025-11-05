@@ -26,10 +26,6 @@ $lang = array_merge($lang, array(
 	'REACTIONS_DIGEST_ON'            => 'le',
 	'REACTIONS_DIGEST_PROFILE'       => 'Voir le profil',
 
-	// --- Clés déplacées depuis common.php ---
-	'REACTIONS_BY'                   => 'par',
-	'REACTIONS_ON'                   => 'le',
-
 	// --- Clés pour le contenu de l'e-mail ---
 	'REACTIONS_DIGEST_SUBJECT'       => 'Résumé des réactions sur vos messages',
 	'REACTIONS_DIGEST_INTRO'         => 'Voici un résumé des nouvelles réactions que vos messages ont reçues récemment.',

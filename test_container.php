@@ -190,12 +190,11 @@ try {
     echo "⚙️  Le container builder va maintenant charger les services du cœur et des extensions...\n";
 
     // --- INJECTION CRITIQUE DE L'EXTENSION CORE ---
-    // On doit appeler la méthode protégée load_core_extension() pour que le
+    // On doit enregistrer et charger l'extension "core" de phpBB pour que le
     // builder sache où trouver les fichiers de config d'environnement (ex: production/config.yml)
-    $reflection = new \ReflectionClass($phpbb_container_builder);
-    $method = $reflection->getMethod('load_core_extension');
-    $method->setAccessible(true);
-    $method->invoke($phpbb_container_builder);
+    $core_extension = new \phpbb\di\extension\core($phpbb_root_path . 'config');
+    $phpbb_container_builder->registerExtension($core_extension);
+    $phpbb_container_builder->loadFromExtension('core');
 
     $phpbb_container_builder = $phpbb_container_builder->without_cache();
     echo "⚠️ Mode sans cache activé pour forcer la reconstruction complète\n";
