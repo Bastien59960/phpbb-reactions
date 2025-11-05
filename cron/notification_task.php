@@ -439,15 +439,15 @@ class notification_task extends \phpbb\cron\task\base
             // 3. Indiquer à messenger où trouver les templates de notre extension.
             // C'est l'étape qui résout l'erreur "no registered paths".
             // On construit le chemin absolu vers le template et on le passe directement.
-            // Le template est maintenant dans styles/all/template/email/ pour être indépendant de la langue.
-            // C'est la meilleure pratique pour les templates d'e-mail.
-            $template_path = $this->phpbb_root_path . 'ext/bastien59960/reactions/styles/all/template/';
+			// CORRECTION : Le messenger attend un chemin relatif depuis la racine du forum.
+			// On ne spécifie pas le style (ex: 'all' ou 'prosilver'), phpBB le trouvera.
+			$template_path = 'ext/bastien59960/reactions/styles/';
             $template_file = 'email/reaction_digest.html';
-            $full_template_path = $template_path . $template_file;
 
             // =====================================================================
             // GARDE-FOU DE DIAGNOSTIC : Vérifier si le fichier de template existe
             // =====================================================================
+			$full_template_path = $this->phpbb_root_path . $template_path . 'all/template/' . $template_file;
             if (!file_exists($full_template_path))
             {
                 throw new \Exception("Template d'e-mail INTROUVABLE. Chemin vérifié : " . $full_template_path);
@@ -455,7 +455,7 @@ class notification_task extends \phpbb\cron\task\base
 
             $messenger->template($full_template_path, $author_lang);
 
-            // 4. Assigner les variables au template.
+			// 4. Assigner les variables globales au template.
             $messenger->assign_vars([
                 'USERNAME'         => $author_name,
                 'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
