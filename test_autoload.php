@@ -1,7 +1,14 @@
 <?php
 /**
- * Script de diagnostic pour tester le chargement des classes de l'extension
- * À placer à la racine de phpBB et exécuter via CLI
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ *
+ * Fichier : /test_autoload.php
+ * Rôle : Script de diagnostic pour tester le chargement automatique (autoload)
+ * des classes de l'extension. Il vérifie que l'autoloader de phpBB peut
+ * trouver et charger correctement les classes principales de l'extension.
  */
 
 define('IN_PHPBB', true);

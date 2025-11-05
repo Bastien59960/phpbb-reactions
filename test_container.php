@@ -1,7 +1,14 @@
 <?php
 /**
- * Script de diagnostic avancé pour déboguer les extensions phpBB
- * Version corrigée - Suppression de load_from_extension() qui n'existe pas
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ *
+ * Fichier : /test_container.php
+ * Rôle : Script de diagnostic avancé pour déboguer le conteneur de services
+ * de phpBB et vérifier que les services de l'extension (cron, notifications, etc.)
+ * sont correctement enregistrés et instanciables.
  */
 
 error_reporting(E_ALL);

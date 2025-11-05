@@ -1,25 +1,17 @@
 <?php
 /**
- * Fichier : event/listener.php — bastien59960/reactions/event/listener.php
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Listener d'événements pour l'extension Reactions.
- *
- * Ce fichier permet d'intercepter et de traiter les événements du cycle de vie phpBB (affichage, envoi de message, etc.) pour intégrer la logique des réactions dans le forum.
- *
- * Points clés de la logique métier :
- *   - Ajout des scripts et templates nécessaires à l'affichage des réactions
- *   - Intégration avec les hooks phpBB pour enrichir l'expérience utilisateur
- *   - Possibilité d'étendre ou de modifier le comportement natif du forum via les événements
- *
- * Ce listener est enregistré dans services.yml et agit en complément des contrôleurs principaux.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
- */
-
-/**
- * Fichier : event/listener.php — bastien59960/reactions/event/listener.php
- * CORRECTION : Ajout de $root_path manquant
+ * Fichier : /event/listener.php
+ * Rôle : Listener d'événements pour l'extension Reactions.
+ * Ce fichier permet d'intercepter et de traiter les événements du cycle de vie
+ * de phpBB (affichage, envoi de message, etc.) pour intégrer la logique des
+ * réactions dans le forum. Il est responsable de l'injection des assets (CSS, JS),
+ * des variables de template et de l'affichage des réactions sur les pages
+ * concernées.
  */
 
 namespace bastien59960\reactions\event;

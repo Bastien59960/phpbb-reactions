@@ -1,34 +1,18 @@
 /**
- * Fichier : styles/prosilver/template/js/reactions.js — bastien59960/reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  * 
- * JavaScript pour l'extension Reactions phpBB 3.3.15
+ * Fichier : /styles/prosilver/template/js/reactions.js
+ * Rôle : Gère toute l'interactivité côté client pour les réactions aux messages.
  *
- * Ce fichier gère toute l'interactivité côté client pour les réactions aux messages du forum.
- * Il est le pendant client du contrôleur AJAX et du helper PHP.
- *
- * Points clés de la logique métier :
- *   - Gestion des clics sur les réactions existantes (ajout/suppression)
- *   - Affichage de la palette d'emojis (picker) avec recherche et catégories
- *   - Requêtes AJAX vers le serveur (add, remove, get, get_users)
- *   - Mise à jour dynamique du DOM après réponse serveur (sans rechargement)
- *   - Tooltips affichant la liste des utilisateurs ayant réagi
- *   - Support complet des emojis Unicode (utf8mb4)
- *   - Recherche d'emojis avec support français via EMOJI_KEYWORDS_FR
- *
- * ARCHITECTURE :
- * - Module IIFE (Immediately Invoked Function Expression) pour isolation du scope
- * - Pas de dépendances externes (vanilla JavaScript)
- * - Compatible tous navigateurs modernes (ES6+)
- *
- * SÉCURITÉ :
- * - Nettoyage des emojis avant envoi (safeEmoji) pour éviter erreurs 400
- * - Échappement HTML pour prévenir XSS
- * - Validation côté client (doublée côté serveur)
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Ce fichier est le pendant client du contrôleur AJAX. Il gère :
+ * - L'affichage de la palette d'emojis (picker) avec recherche et catégories.
+ * - Les requêtes AJAX pour ajouter, supprimer ou synchroniser les réactions.
+ * - La mise à jour dynamique du DOM sans rechargement de page.
+ * - L'affichage des tooltips listant les utilisateurs qui ont réagi.
+ * - La synchronisation en temps réel des réactions sur la page.
  */
 
 /* ========================================================================== */

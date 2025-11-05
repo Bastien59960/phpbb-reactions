@@ -1,14 +1,13 @@
 <?php
 /**
- * Fichier : language/en/common.php — bastien59960/reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Rôle :
- * English language strings for the Reactions extension.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Fichier : /language/en/common.php
+ * Rôle : Contient les chaînes de langue anglaises communes pour l'extension
+ * Reactions, utilisées dans l'interface utilisateur générale du forum.
  */
 
 if (!defined('IN_PHPBB'))

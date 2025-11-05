@@ -1,10 +1,11 @@
 <?php
 /**
- * Fichier : release_1_0_0.php
- * Chemin : bastien59960/reactions/migrations/release_1_0_0.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
+ * Fichier : /migrations/release_1_0_0.php
  * Rôle :
  * Ce fichier est la migration d'installation initiale de l'extension. Il est
  * exécuté une seule fois lors de la première activation pour mettre en place la
@@ -12,9 +13,6 @@
  * colonnes pour les préférences utilisateur, insertion des configurations par
  * défaut et enregistrement des nouveaux types de notification. Il gère aussi
  * l'importation des données d'une ancienne extension si détectée.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;

@@ -1,20 +1,17 @@
 <?php
 /**
- * Fichier : reaction.php
- * Chemin : ext/bastien59960/reactions/notification/type/reaction.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
+ * Fichier : /notification/type/reaction.php
  * Rôle :
  * Définit le type de notification "Réaction à un message". Cette classe est
  * responsable de la création des notifications instantanées (dans la cloche)
  * lorsqu'un utilisateur réagit au message d'un autre.
- *
  * Elle implémente les méthodes requises par phpBB pour trouver les destinataires,
  * générer le texte et le lien de la notification, et la stocker en base de données.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
  */
 namespace bastien59960\reactions\notification\type;
 

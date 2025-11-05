@@ -1,16 +1,13 @@
 <?php
 /**
- * File: ucp_reactions.php
- * Path: bastien59960/reactions/language/en/ucp_reactions.php
- * Author: Bastien (bastien59960)
- * GitHub: https://github.com/bastien59960/reactions
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Role:
- * This file contains the English language strings for the reactions preferences
- * page in the User Control Panel (UCP).
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Fichier : /language/en/ucp_reactions.php
+ * Rôle : Contient les chaînes de langue anglaises pour la page de préférences
+ * des réactions dans le Panneau de Contrôle de l'Utilisateur (UCP).
  */
 
 if (!defined('IN_PHPBB')) {

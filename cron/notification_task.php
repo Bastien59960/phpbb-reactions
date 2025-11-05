@@ -1,17 +1,15 @@
 <?php
 /**
- * Fichier : notification_task.php
- * Chemin : bastien59960/reactions/cron/notification_task.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Rôle :
- * Définit la tâche cron pour l'envoi groupé des notifications de réactions par
- * e-mail (digest). Elle se déclenche périodiquement pour regrouper les nouvelles
- * réactions et envoyer un résumé aux utilisateurs concernés, évitant ainsi le spam.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Fichier : /cron/notification_task.php
+ * Rôle : Définit la tâche cron pour l'envoi groupé des notifications de réactions
+ * par e-mail (digest). Elle se déclenche périodiquement pour regrouper les
+ * nouvelles réactions et envoyer un résumé aux utilisateurs concernés, évitant
+ * ainsi le spam d'e-mails.
  */
 
 namespace bastien59960\reactions\cron;

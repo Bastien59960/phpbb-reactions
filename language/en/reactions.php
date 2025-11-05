@@ -1,16 +1,13 @@
 <?php
 /**
- * ============================================================================
- * File: language/en/reactions.php
- * Extension: bastien59960/reactions
- * ============================================================================
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * 📘 Description:
- * This file centralizes all English language strings for the notifications
- * of the Reactions extension.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Fichier : /language/en/reactions.php
+ * Rôle : Contient les chaînes de langue anglaises pour les notifications
+ * (instantanées et par e-mail) de l'extension Reactions.
  */
 
 if (!defined('IN_PHPBB')) {
