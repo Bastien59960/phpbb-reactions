@@ -488,7 +488,11 @@ class notification_task extends \phpbb\cron\task\base
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
+            // Initialiser le messenger en mode UTF-8
             $messenger = new messenger(false);
+            
+            // Forcer l'encodage UTF-8 pour les emojis
+            $messenger->use_queue = false;
 
             // 1. Charger la langue de l'utilisateur
             $lang_load_message = "$log_prefix Chargement de la langue '$author_lang' pour user_id $author_id.";
