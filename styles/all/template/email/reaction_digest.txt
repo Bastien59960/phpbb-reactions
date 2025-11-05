@@ -1,28 +1,26 @@
-Subject: Résumé des réactions sur vos messages
+Subject: {REACTIONS_DIGEST_SUBJECT}
 
-Bonjour {USERNAME},
+{HELLO_USERNAME}
 
-Voici un résumé des nouvelles réactions que vos messages ont reçues récemment.
+{DIGEST_INTRO}
 
 <!-- BEGIN posts -->
+-------------------------------------------------
+{posts.POST_TITLE}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Sujet de votre message : {posts.SUBJECT_PLAIN}
-Lien vers votre message : {posts.POST_URL_ABSOLUTE}
-
-Réactions reçues :
 <!-- BEGIN reactions -->
-  • {posts.reactions.EMOJI} par {posts.reactions.REACTER_NAME} le {posts.reactions.TIME_FORMATTED}
-    Profil : {posts.reactions.PROFILE_URL_ABSOLUTE}
+- {posts.reactions.EMOJI} par {posts.reactions.REACTER_NAME} (le {posts.reactions.TIME_FORMATTED})
 <!-- END reactions -->
 
+Voir le message : {posts.POST_URL_ABSOLUTE}
 <!-- END posts -->
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-------------------------------------------------
+
+{DIGEST_FOOTER}
+{UNSUBSCRIBE_TEXT}
+
+Lien vers votre profil : {U_USER_PROFILE}
+Lien vers vos préférences : {U_UCP}
 
 {DIGEST_SIGNATURE}
-
-Vous pouvez gérer vos préférences de notification dans votre Panneau de l'utilisateur.
-
-{EMAIL_SIG}

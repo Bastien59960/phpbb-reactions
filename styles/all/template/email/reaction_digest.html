@@ -1,39 +1,49 @@
-<!--
-    Fichier : reaction_digest.html
-    Chemin : language/{en,fr}/email/reaction_digest.html
-    
-    Rôle :
-    Template HTML pour l'e-mail de résumé des réactions.
-    Ce format est plus robuste pour l'affichage des emojis et des liens.
--->
+<!-- INCLUDE email_header.html -->
 
-<p>{L_REACTIONS_DIGEST_GREETING|sprintf:USERNAME}</p>
-
-<p>{L_REACTIONS_DIGEST_INTRO}</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+	<tr>
+		<td align="left" valign="top">
+			<p style="font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 20px; padding: 0;">{HELLO_USERNAME}</p>
+			<p style="font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 20px; padding: 0;">{DIGEST_INTRO}</p>
+		</td>
+	</tr>
+</table>
 
 <!-- BEGIN posts -->
-<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #cccccc;">
-    <p>
-        <strong>{L_REACTIONS_DIGEST_POST_SUBJECT} :</strong> {posts.SUBJECT_PLAIN}<br>
-        <strong>{L_REACTIONS_DIGEST_POST_LINK} :</strong> <a href="{posts.POST_URL_ABSOLUTE}">{posts.POST_URL_ABSOLUTE}</a>
-    </p>
-    <ul style="margin-left: 20px; padding-left: 0; list-style-type: none;">
-        <!-- BEGIN reactions -->
-        <li style="margin-bottom: 5px;">
-            <span style="font-size: 1.2em;">{posts.reactions.EMOJI}</span>
-            {L_REACTIONS_DIGEST_BY} <strong>{posts.reactions.REACTER_NAME}</strong>
-            {L_REACTIONS_DIGEST_ON} {posts.reactions.TIME_FORMATTED}
-            (<a href="{posts.reactions.PROFILE_URL_ABSOLUTE}">{L_REACTIONS_DIGEST_PROFILE}</a>)
-        </li>
-        <!-- END reactions -->
-    </ul>
-</div>
+<table width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse; border: 1px solid #ddd; margin-bottom: 20px; background-color: #f9f9f9;">
+	<tr>
+		<td style="padding: 15px;">
+			<h2 style="font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 18px; margin: 0 0 15px; padding: 0; color: #333;">
+				<a href="{posts.POST_URL_ABSOLUTE}" style="color: #365899; text-decoration: none;">{posts.POST_TITLE}</a>
+			</h2>
+
+			<!-- BEGIN reactions -->
+			<div style="margin-bottom: 10px; padding-left: 15px; border-left: 3px solid #eee;">
+				<span style="font-size: 20px; vertical-align: middle; margin-right: 8px;">{posts.reactions.EMOJI}</span>
+				<span style="font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 15px; color: #555;">
+					Réaction de <strong><a href="{posts.reactions.PROFILE_URL_ABSOLUTE}" style="color: #365899; text-decoration: none;">{posts.reactions.REACTER_NAME}</a></strong>
+					<span style="color: #999; font-size: 13px;">(le {posts.reactions.TIME_FORMATTED})</span>
+				</span>
+			</div>
+			<!-- END reactions -->
+
+			<p style="margin-top: 20px; margin-bottom: 0; text-align: right;">
+				<a href="{posts.POST_URL_ABSOLUTE}" style="font-family: 'Helvetica Neue', 'Arial', sans-serif; display: inline-block; padding: 8px 16px; background-color: #4A90E2; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px;">Voir le message</a>
+			</p>
+		</td>
+	</tr>
+</table>
 <!-- END posts -->
 
-<p style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #cccccc;">
-    {DIGEST_SIGNATURE}
-</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+	<tr>
+		<td align="left" valign="top">
+			<p style="font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 13px; line-height: 1.5; color: #888; margin: 20px 0; padding: 0;">
+				{DIGEST_FOOTER}<br />
+				{UNSUBSCRIBE_TEXT}
+			</p>
+		</td>
+	</tr>
+</table>
 
-<p style="font-size: 0.9em; color: #888888;">
-    {L_REACTIONS_PREFERENCES_HINT}
-</p>
+<!-- INCLUDE email_footer.html -->

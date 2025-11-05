@@ -446,11 +446,18 @@ protected function send_digest_email(array $data, string $since_time_formatted)
 
         // Assigner les variables globales
         $messenger->assign_vars([
-            'USERNAME'         => $author_name,
+            'HELLO_USERNAME'   => sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name),
+            'DIGEST_INTRO'     => sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $this->config['sitename']),
             'DIGEST_SIGNATURE' => sprintf(
                 $this->language->lang('REACTIONS_DIGEST_SIGNATURE'),
                 $this->config['sitename']
             ),
+            'DIGEST_FOOTER'    => $this->language->lang('REACTIONS_DIGEST_FOOTER'),
+            'U_USER_PROFILE'   => generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$author_id}",
+            'U_UCP'            => generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications&mode=notification_options",
+            'SITENAME'         => $this->config['sitename'],
+            'BOARD_URL'        => generate_board_url(),
+            'UNSUBSCRIBE_TEXT' => $this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE'),
         ]);
 
         // CORRECTION CRITIQUE 4 : Assigner les blocs AVANT send()
@@ -458,7 +465,7 @@ protected function send_digest_email(array $data, string $since_time_formatted)
         {
             // Assigner le bloc du post
             $messenger->assign_block_vars('posts', [
-                'SUBJECT_PLAIN'     => $post_data['SUBJECT_PLAIN'],
+                'POST_TITLE'        => sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']),
                 'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
             ]);
 
