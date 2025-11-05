@@ -83,50 +83,11 @@ class ext extends \phpbb\extension\base
 	 */
 	public function enable_step($old_state)
 	{
-		
-		if ($old_state === false)
-		{
-		    // Récupérer le gestionnaire de notifications phpBB
-		    $notification_manager = $this->container->get('notification_manager');
-		
-		    // ✅ Utiliser uniquement les NOMS DE TYPES (get_type())
-		    // Activation du type "cloche" (instantané)
-		    try {
-		        $notification_manager->enable_notifications('notification.type.reaction');
-		    } catch (\phpbb\notification\exception $e) {
-		        if (defined('DEBUG')) {
-		            trigger_error('[Reactions] enable_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-		        }
-		    }
-		
-		    // Activation du type "email digest" (cron)
-		    try {
-		        $notification_manager->enable_notifications('notification.type.reaction_email_digest');
-		    } catch (\phpbb\notification\exception $e) {
-		        if (defined('DEBUG')) {
-		            trigger_error('[Reactions] enable_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
-		        }
-		    }
-		
-		    return 'notification';
-		}
-
 		return parent::enable_step($old_state);
 	}
 
 
 	/**
-	 * Étape de désactivation de l'extension
-	 * 
-	 * Cette méthode est appelée par phpBB lors de la désactivation de l'extension.
-	 * Elle désactive les types de notifications (mais ne les supprime PAS de la base).
-	 * 
-	 * Les notifications existantes restent en base mais ne sont plus actives.
-	 * L'utilisateur peut réactiver l'extension sans perdre les notifications passées.
-	 * 
-	 * @param mixed $old_state État précédent de l'extension (false = première désactivation)
-	 * @return string|mixed 'notification' si première désactivation, sinon résultat parent
-	 */
 	public function disable_step($old_state)
 	{
 		
@@ -135,69 +96,14 @@ class ext extends \phpbb\extension\base
 			// Récupérer le gestionnaire de notifications phpBB
 			$notification_manager = $this->container->get('notification_manager');
 			
-			// ✅ CORRECTION : Utiliser les NOMS DE TYPES (get_type())
-			
 			// Désactiver la notification cloche
 			$notification_manager->disable_notifications('notification.type.reaction');
 		
 			// Désactiver la notification email digest
 			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
-			
-			return 'notification';
 		}
 		
 		return parent::disable_step($old_state);
-	}
-
-	/**
-	 * Étape de purge de l'extension
-	 * 
-	 * Cette méthode est appelée par phpBB lors de la SUPPRESSION DÉFINITIVE de l'extension.
-	 * Elle supprime TOUTES les notifications de l'extension de la base de données.
-	 * 
-	 * ⚠️  ATTENTION : Cette action est IRRÉVERSIBLE
-	 * Toutes les notifications existantes seront définitivement supprimées.
-	 * 
-	 * La purge est différente de la désactivation :
-	 * - Désactivation : Les données restent, mais l'extension est inactive
-	 * - Purge : Les données sont supprimées définitivement
-	 * 
-	 * Lors de la purge, phpBB va également :
-	 * 1. Exécuter les méthodes revert_data() et revert_schema() des migrations
-	 * 2. Supprimer les tables créées par l'extension
-	 * 3. Supprimer les colonnes ajoutées par l'extension
-	 * 4. Supprimer les configurations de l'extension
-	 * 
-	 * @param mixed $old_state État précédent de l'extension (false = première purge)
-	 * @return string|mixed 'notification' si première purge, sinon résultat parent
-	 */
-	public function purge_step($old_state)
-	{
-		
-		if ($old_state === false)
-		{
-		    $notification_manager = $this->container->get('notification_manager');
-		
-		    try {
-		        $notification_manager->purge_notifications('notification.type.reaction');
-		    } catch (\phpbb\notification\exception $e) {
-		        if (defined('DEBUG')) {
-		            trigger_error('[Reactions] purge_notifications(reaction) failed: ' . $e->getMessage(), E_USER_NOTICE);
-		        }
-		    }
-		
-		    try {
-		        $notification_manager->purge_notifications('notification.type.reaction_email_digest');
-		    } catch (\phpbb\notification\exception $e) {
-		        if (defined('DEBUG')) {
-		            trigger_error('[Reactions] purge_notifications(reaction_email_digest) failed: ' . $e->getMessage(), E_USER_NOTICE);
-		        }
-		    }
-		
-		    return 'notification';
-		}
-
-		return parent::purge_step($old_state);
 	}
 
 }

@@ -107,13 +107,6 @@ $lang = array_merge($lang, array(
     'NO_SUBJECT'                    => '(Sans sujet)',
 
     // =============================================================================
-    // NOTIFICATIONS INSTANTANÉES (CLOCHE)
-    // =============================================================================
-    'NOTIFICATION_TYPE_REACTION'            => '%1$s a réagi à votre message avec %2$s',
-    'NOTIFICATION_TYPE_REACTION_TITLE'      => 'Réactions à vos messages',
-    'NOTIFICATION_TYPE_REACTION_DESC'       => 'Recevoir une notification lorsqu\'un utilisateur réagit à l\'un de vos messages.',
-
-    // =============================================================================
     // TÂCHES CRON (ACP)
     // =============================================================================
     'BASTIEN59960_REACTIONS_TEST'              => 'Réactions : Test du système',

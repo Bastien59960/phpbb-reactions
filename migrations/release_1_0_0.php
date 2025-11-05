@@ -152,6 +152,7 @@ public function effectively_installed()
             // Fonctions personnalisées à exécuter
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
             array('custom', array(array($this, 'create_notification_type'))),
+            array('custom', array(array($this, 'enable_notification_types'))),
             array('custom', array(array($this, 'clean_orphan_notifications'))),
             array('custom', array(array($this, 'import_old_reactions'))),
         );
@@ -181,7 +182,7 @@ public function effectively_installed()
 			['config.remove', ['bastien59960_reactions_picker_emoji_size']],
 			['config.remove', ['bastien59960_reactions_sync_interval']],
 
-            array('custom', array(array($this, 'remove_notification_type'))),
+            array('custom', array(array($this, 'purge_notification_types'))),
         );
     }
 
@@ -255,6 +256,28 @@ public function create_notification_type()
     trigger_error('[DEBUG] create_notification_type() exécutée');
 }
 
+    /**
+     * [CUSTOM] Active les types de notification lors de l'installation.
+     */
+    public function enable_notification_types()
+    {
+        $notification_manager = $this->container->get('notification_manager');
+        $notification_types = [
+            'notification.type.reaction',
+            'notification.type.reaction_email_digest',
+        ];
+
+        foreach ($notification_types as $type)
+        {
+            try {
+                $notification_manager->enable_notifications($type);
+            } catch (\phpbb\notification\exception $e) {
+                if (defined('DEBUG')) {
+                    trigger_error('[Reactions Migration] enable_notifications(' . $type . ') failed: ' . $e->getMessage(), E_USER_NOTICE);
+                }
+            }
+        }
+    }
 
     /**
      * [CUSTOM] Nettoie les notifications orphelines.
@@ -288,7 +311,7 @@ public function create_notification_type()
      * C'est l'opération inverse de `create_notification_type`, appelée lors de la
      * désinstallation complète de l'extension.
      */
-public function remove_notification_type()
+public function purge_notification_types()
 {
     $types_table = $this->table_prefix . 'notification_types';
     $names = array(
@@ -296,7 +319,17 @@ public function remove_notification_type()
         'notification.type.reaction_email_digest',
     );
 
+    $notification_manager = $this->container->get('notification_manager');
+
     foreach ($names as $canonical_name) {
+        // 1. Purger toutes les notifications existantes de ce type
+        try {
+            $notification_manager->purge_notifications($canonical_name);
+        } catch (\phpbb\notification\exception $e) {
+            // Ignorer l'erreur si le type n'existe pas
+        }
+
+        // 2. Supprimer le type de notification lui-même
         $sql = 'DELETE FROM ' . $types_table . "
             WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
         $this->db->sql_query($sql);

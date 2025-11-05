@@ -100,13 +100,6 @@ $lang = array_merge($lang, [
 	'NO_SUBJECT'                    => '(No subject)',
 
 	// =============================================================================
-	// INSTANT NOTIFICATIONS (BELL)
-	// =============================================================================
-	'NOTIFICATION_TYPE_REACTION'            => '%1$s reacted to your post with %2$s',
-	'NOTIFICATION_TYPE_REACTION_TITLE'      => 'Reactions to your posts',
-	'NOTIFICATION_TYPE_REACTION_DESC'       => 'Receive a notification when someone reacts to one of your posts.',
-
-	// =============================================================================
 	// CRON TASKS (ACP)
 	// =============================================================================
 	'BASTIEN59960_REACTIONS_TEST'				=> 'Reactions: System Test',
