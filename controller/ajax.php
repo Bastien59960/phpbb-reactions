@@ -940,7 +940,7 @@ class ajax
             ];
 
             $notification_ids = $this->notification_manager->add_notifications(
-                'notification.type.reaction',
+                'bastien59960.reactions.notification.type.reaction',
                 $notification_data
             );
 
