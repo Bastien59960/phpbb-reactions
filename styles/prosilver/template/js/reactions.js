@@ -907,16 +907,18 @@ function toggle_visible(id) {
             body: JSON.stringify(payload)
         })
         .then(response => {
-            // Gestion des codes HTTP d'erreur
+            // Si la réponse n'est pas OK (ex: 400, 403, 500), on veut quand même lire le JSON
+            // pour récupérer le message d'erreur du serveur.
             if (!response.ok) {
-                if (response.status === 403) {
-                    // Utilisateur non authentifié ou session expirée
-                    showLoginMessage();
-                    throw new Error('User not logged in (403)');
-                }
-                // Autres erreurs HTTP (400, 500, etc.)
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                return response.json().then(errorData => {
+                    // On propage une erreur enrichie avec les données du serveur.
+                    const error = new Error(errorData.error || `HTTP ${response.status}`);
+                    error.response = response;
+                    error.data = errorData;
+                    throw error;
+                });
             }
+            // Si la réponse est OK (200), on continue normalement.
             return response.json();
         })
         .then(data => {
@@ -980,10 +982,18 @@ function toggle_visible(id) {
             // =====================================================================
             
             console.error('[Reactions] Erreur lors de l\'envoi:', error);
-            
-            // Afficher un message utilisateur sympathique
-            // (Ne pas exposer les détails techniques aux utilisateurs finaux)
-            alert('Une erreur est survenue lors de l\'ajout de la réaction. Veuillez réessayer.');
+
+            // Si l'erreur contient des données du serveur, on les utilise.
+            if (error.data && error.data.error) {
+                // C'est ici qu'on affiche le message d'erreur spécifique !
+                alert(error.data.error);
+            } else if (error.response && error.response.status === 403) {
+                // Cas spécifique d'une erreur 403 sans JSON (rare)
+                showLoginMessage();
+            } else {
+                // Fallback pour les erreurs réseau ou les erreurs 500 sans JSON.
+                alert('Une erreur est survenue lors de l\'ajout de la réaction. Veuillez réessayer.');
+            }
         });
     }
 
