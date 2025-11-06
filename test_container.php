@@ -1,21 +1,13 @@
 <?php
 /**
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
- * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
- *
- * Fichier : /test_container.php
- * Rôle : Script de diagnostic avancé pour déboguer le conteneur de services
- * de phpBB et vérifier que les services de l'extension (cron, notifications, etc.)
- * sont correctement enregistrés et instanciables.
+ * Script de diagnostic simplifié pour phpBB 3.3.x
+ * Compatible avec la structure de configuration de phpBB 3.3
  */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 
-// --- Détection robuste du chemin racine de phpBB ---
+// Détection du chemin racine
 $current_dir = __DIR__;
 $phpbb_root_path = '';
 for ($i = 0; $i < 5; $i++) {
@@ -27,312 +19,225 @@ for ($i = 0; $i < 5; $i++) {
 }
 
 if (empty($phpbb_root_path)) {
-    die("❌ ERREUR FATALE: Impossible de trouver la racine du forum (common.php introuvable).\n");
+    die("❌ ERREUR: Impossible de trouver common.php\n");
 }
 
 define('IN_PHPBB', true);
 $phpEx = 'php';
 
 echo "╔═══════════════════════════════════════════════════════════════╗\n";
-echo "║  DIAGNOSTIC AVANCÉ DU CONTENEUR DE SERVICES phpBB             ║\n";
+echo "║  DIAGNOSTIC EXTENSION REACTIONS - phpBB 3.3                   ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
-echo "📁 Chemin racine phpBB : " . $phpbb_root_path . "\n\n";
+echo "📁 Racine phpBB : " . $phpbb_root_path . "\n\n";
 
 try {
-    // ========== PHASE 1 : Initialisation ==========
+    // ========== PHASE 1 : Initialisation simplifiée ==========
     echo "┌─────────────────────────────────────────────────────────────┐\n";
-    echo "│ PHASE 1 : Initialisation de l'environnement                │\n";
+    echo "│ PHASE 1 : Chargement de l'environnement phpBB              │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
-    $required_files = [
-        'config.' . $phpEx,
-        'vendor/autoload.' . $phpEx,
-        'includes/constants.' . $phpEx,
-        'phpbb/class_loader.' . $phpEx,
+    // Charger common.php qui initialise TOUT phpBB
+    require($phpbb_root_path . 'common.' . $phpEx);
+    echo "✅ common.php chargé (DB + Config + User + Cache initialisés)\n\n";
+
+    // Récupérer le conteneur depuis $phpbb_container (variable globale)
+    global $phpbb_container;
+    
+    if (!isset($phpbb_container)) {
+        throw new \Exception("Le conteneur phpBB n'est pas disponible");
+    }
+    
+    echo "✅ Conteneur récupéré depuis common.php\n\n";
+
+    // ========== PHASE 2 : Vérification de l'extension ==========
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ PHASE 2 : État de l'extension bastien59960/reactions       │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    if ($phpbb_container->has('ext.manager')) {
+        $ext_manager = $phpbb_container->get('ext.manager');
+        $enabled = $ext_manager->all_enabled();
+        
+        $found = false;
+        foreach ($enabled as $ext_name) {
+            if (strpos($ext_name, 'bastien59960/reactions') !== false) {
+                echo "✅ Extension ACTIVÉE : $ext_name\n";
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            echo "❌ Extension NON activée ou introuvable\n";
+            echo "💡 Activez via : php bin/phpbbcli.php extension:enable bastien59960/reactions\n";
+        }
+    }
+    echo "\n";
+
+    // ========== PHASE 3 : Services cron ==========
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ PHASE 3 : Vérification des services cron                   │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    $cron_services = [
+        'cron.task.bastien59960.reactions.test_task',
+        'cron.task.bastien59960.reactions.notification_task',
     ];
     
-    foreach ($required_files as $file) {
-        $filepath = $phpbb_root_path . $file;
-        if (!file_exists($filepath)) {
-            throw new \Exception("Fichier requis manquant : $filepath");
-        }
-        require($filepath);
-        echo "✅ Chargé : $file\n";
-    }
-    
-    $phpbb_class_loader = new \phpbb\class_loader('phpbb\\', "{$phpbb_root_path}phpbb/", $phpEx);
-    $phpbb_class_loader->register();
-    
-    echo "✅ Autoloader enregistré\n\n";
-
-    // ========== PHASE 2 : Nettoyage du cache ==========
-    echo "┌─────────────────────────────────────────────────────────────┐\n";
-    echo "│ PHASE 2 : Nettoyage du cache du conteneur                  │\n";
-    echo "└─────────────────────────────────────────────────────────────┘\n";
-    
-    $cache_dir = $phpbb_root_path . 'cache/production/';
-    
-    if (!is_dir($cache_dir)) {
-        echo "⚠️  Répertoire cache inexistant, tentative de création : $cache_dir\n";
-        if (!mkdir($cache_dir, 0777, true)) {
-            throw new \Exception("Impossible de créer le répertoire de cache.");
-        }
-        echo "✅ Répertoire de cache créé.\n";
-    } else {
-        $cache_files = glob($cache_dir . '{container_*,data_container_*,autoload_*}.php', GLOB_BRACE);
-        if ($cache_files === false) {
-            echo "⚠️  Impossible de lister les fichiers de cache\n";
-        } else if (count($cache_files) > 0) {
-            foreach ($cache_files as $file) {
-                if (is_file($file) && is_writable($file)) {
-                    if (unlink($file)) {
-                        echo "🗑️  Supprimé: " . basename($file) . "\n";
-                    } else {
-                        echo "⚠️  Impossible de supprimer: " . basename($file) . "\n";
-                    }
-                }
-            }
-        } else {
-            echo "ℹ️  Aucun fichier de cache à supprimer\n";
-        }
-    }
-
-    if (!is_writable($cache_dir)) {
-        echo "❌ ERREUR : Le répertoire de cache n'est pas accessible en écriture : $cache_dir\n";
-        echo "💡 Exécutez : chmod -R 777 $cache_dir\n";
-    }
-    echo "\n";
-
-    // ========== PHASE 3 : Construction du conteneur ==========
-    echo "┌─────────────────────────────────────────────────────────────┐\n";
-    echo "│ PHASE 3 : Construction du conteneur                        │\n";
-    echo "└─────────────────────────────────────────────────────────────┘\n";
-    
-    try {
-        $phpbb_config_php_file = new \phpbb\config_php_file($phpbb_root_path, $phpEx);
-        echo "✅ Config PHP créée\n";
+    foreach ($cron_services as $service_id) {
+        echo "🔍 Test de : $service_id\n";
         
-        $config_values = $phpbb_config_php_file->get_all();
-        echo "✅ Configuration chargée\n";
-        
-        $cache_driver_class = 'phpbb\\cache\\driver\\file';
-        
-        if (isset($config_values['acm_type'])) {
-            $acm_type = $config_values['acm_type'];
-            if (strpos($acm_type, '\\') !== false) {
-                $cache_driver_class = $acm_type;
-                echo "✅ Type de cache détecté (chemin complet) : $acm_type\n";
-            } else {
-                $cache_driver_class = 'phpbb\\cache\\driver\\' . $acm_type;
-                echo "✅ Type de cache détecté (nom simple) : $acm_type\n";
-            }
-        } else {
-            echo "⚠️  acm_type non défini, utilisation de 'file' par défaut\n";
+        if (!$phpbb_container->has($service_id)) {
+            echo "   ❌ Service NON enregistré\n\n";
+            continue;
         }
         
-        $custom_parameters = [
-            'cache.driver.class' => $cache_driver_class,
-            'core.table_prefix' => isset($config_values['table_prefix']) ? $config_values['table_prefix'] : 'phpbb_',
-            'core.adm_relative_path' => 'adm/',
-            'core.php_ext' => $phpEx,
-            'core.environment' => 'production',
-        ];
-        
-        if (isset($config_values['dbms'])) {
-            $custom_parameters['dbal.driver.class'] = $config_values['dbms'];
-        }
-        
-        echo "✅ Paramètres préparés : " . count($custom_parameters) . " paramètres\n";
-        
-        // Connexion base de données
-        $dbms = $config_values['dbms'];
-        if (strpos($dbms, '\\') !== false) {
-            $db_driver_class = $dbms;
-        } else {
-            $db_driver_class = '\phpbb\db\driver\\' . $dbms;
-        }
-
-        $db_connection = new $db_driver_class();
-        $db_connection->sql_connect(
-            $config_values['dbhost'],
-            $config_values['dbuser'],
-            $config_values['dbpasswd'],
-            $config_values['dbname'],
-            $config_values['dbport'],
-            false,
-            false
-        );
-        echo "✅ Connexion à la base de données initialisée.\n";
-
-    } catch (\Exception $e) {
-        throw new \Exception("Impossible de créer config_php_file : " . $e->getMessage());
-    }
-    
-    try {
-        // CORRECTION CRITIQUE : On passe le chemin CONFIG, pas l'objet
-        $phpbb_container_builder = new \phpbb\di\container_builder(
-            $phpbb_root_path . 'config',
-            $phpbb_root_path,
-            $phpEx
-        );
-        
-        $phpbb_container_builder->with_custom_parameters($custom_parameters);
-        echo "✅ Container builder créé\n";
-        echo "✅ Paramètres injectés dans le container builder\n";
-    } catch (\Exception $e) {
-        throw new \Exception("Impossible de créer container_builder : " . $e->getMessage());
-    }
-
-    echo "⚙️  Compilation du conteneur (sans cache)...\n";
-
-    // CORRECTION : On supprime l'appel à load_from_extension() qui n'existe pas
-    // phpBB charge automatiquement les extensions via le container builder
-    
-    $phpbb_container_builder = $phpbb_container_builder->without_cache();
-    echo "⚠️ Mode sans cache activé\n";
-
-    try {
-        echo "⚙️  Obtention du conteneur...\n";
-        $phpbb_container = $phpbb_container_builder->get_container();
-
-        // Injection des services synthétiques
-        $phpbb_container->set('dbal.conn', $db_connection);
-        echo "✅ Service 'dbal.conn' injecté.\n";
-
-        $config = new \phpbb\config\db(
-            $phpbb_container->get('dbal.conn'),
-            $phpbb_container->get('cache.driver'),
-            $phpbb_container->getParameter('core.table_prefix') . 'config'
-        );
-        $phpbb_container->set('config', $config);
-        echo "✅ Service 'config' injecté.\n";
-
-        echo "✅ Conteneur chargé avec succès.\n\n";
-    } catch (\Exception $e) {
-        throw new \Exception("Erreur lors de la compilation : " . $e->getMessage() . "\n   Fichier: " . $e->getFile() . ":" . $e->getLine());
-    }
-
-    // ========== PHASE 4 : Vérification des extensions ==========
-    echo "┌─────────────────────────────────────────────────────────────┐\n";
-    echo "│ PHASE 4 : Extensions activées                               │\n";
-    echo "└─────────────────────────────────────────────────────────────┘\n";
-    
-    $reactions_found = false;
-    try {
-        if ($phpbb_container->has('ext.manager')) {
-            $ext_manager = $phpbb_container->get('ext.manager');
-            $enabled_extensions = $ext_manager->all_enabled();
+        try {
+            $service = $phpbb_container->get($service_id);
+            $class = get_class($service);
+            echo "   ✅ Classe : $class\n";
             
-            if (empty($enabled_extensions)) {
-                echo "⚠️  Aucune extension activée\n";
-            } else {
-                foreach ($enabled_extensions as $ext_name) {
-                    $is_target = (strpos($ext_name, 'bastien59960/reactions') !== false);
-                    if ($is_target) {
-                        $reactions_found = true;
-                    }
-                    echo ($is_target ? "🎯 " : "   ") . $ext_name . "\n";
+            if (method_exists($service, 'get_name')) {
+                $name = $service->get_name();
+                if (empty($name)) {
+                    echo "   ❌ get_name() retourne VIDE (c'est le problème !)\n";
+                } else {
+                    echo "   ✅ get_name() : '$name'\n";
                 }
+            } else {
+                echo "   ❌ Méthode get_name() MANQUANTE\n";
             }
             
-            if (!$reactions_found) {
-                echo "\n⚠️  Extension bastien59960/reactions NON TROUVÉE\n";
+            if (method_exists($service, 'is_runnable')) {
+                $runnable = $service->is_runnable();
+                echo "   " . ($runnable ? "✅" : "⚠️") . " is_runnable() : " . ($runnable ? "true" : "false") . "\n";
             }
-        } else {
-            echo "⚠️  Extension manager non disponible\n";
+            
+            if (method_exists($service, 'should_run')) {
+                $should_run = $service->should_run();
+                echo "   " . ($should_run ? "✅" : "ℹ️") . " should_run() : " . ($should_run ? "true" : "false") . "\n";
+            }
+            
+        } catch (\Exception $e) {
+            echo "   ❌ ERREUR : " . $e->getMessage() . "\n";
         }
-    } catch (\Exception $e) {
-        echo "❌ Erreur : " . $e->getMessage() . "\n";
+        
+        echo "\n";
     }
-    echo "\n";
 
-    // ========== PHASE 5 : Analyse des services cron ==========
+    // ========== PHASE 4 : Templates email ==========
     echo "┌─────────────────────────────────────────────────────────────┐\n";
-    echo "│ PHASE 5 : Analyse des services cron                        │\n";
+    echo "│ PHASE 4 : Vérification des templates email                 │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
-    try {
-        $all_services = $phpbb_container->getServiceIds();
-        $cron_services = array_filter($all_services, function($id) {
-            return strpos($id, 'cron.task') === 0;
-        });
-        
-        echo "📊 Services cron trouvés : " . count($cron_services) . "\n\n";
-        
-        if (empty($cron_services)) {
-            echo "⚠️  Aucun service cron\n";
-        } else {
-            foreach ($cron_services as $cron_id) {
-                $is_target = (strpos($cron_id, 'bastien59960') !== false);
-                echo ($is_target ? "🔍 " : "   ") . $cron_id;
-                
-                try {
-                    if (!$phpbb_container->has($cron_id)) {
-                        echo " ❌ Non disponible\n";
-                        continue;
-                    }
-                    
-                    $service = $phpbb_container->get($cron_id);
-                    $class = get_class($service);
-                    echo " → " . $class;
-                    
-                    if (method_exists($service, 'get_name')) {
-                        try {
-                            $name = $service->get_name();
-                            echo empty($name) ? " [❌ VIDE]" : " [✅ '$name']";
-                        } catch (\Exception $e) {
-                            echo " [❌ Erreur]";
-                        }
-                    } else {
-                        echo " [⚠️ PAS DE get_name()]";
-                    }
-                    
-                    echo "\n";
-                } catch (\Exception $e) {
-                    echo " ❌ " . $e->getMessage() . "\n";
-                }
-            }
-        }
-    } catch (\Exception $e) {
-        echo "❌ Erreur : " . $e->getMessage() . "\n";
-    }
-    echo "\n";
-
-    // ========== PHASE 6 : Test email digest ==========
-    echo "┌─────────────────────────────────────────────────────────────┐\n";
-    echo "│ PHASE 6 : Vérification templates email                     │\n";
-    echo "└─────────────────────────────────────────────────────────────┘\n";
-    
-    $templates = [
+    $files_to_check = [
         'ext/bastien59960/reactions/styles/all/template/email/reaction_digest.html',
         'ext/bastien59960/reactions/styles/all/template/email/reaction_digest.txt',
         'ext/bastien59960/reactions/language/fr/email.php',
+        'ext/bastien59960/reactions/language/fr/common.php',
     ];
     
-    foreach ($templates as $template) {
-        $path = $phpbb_root_path . $template;
+    foreach ($files_to_check as $file) {
+        $path = $phpbb_root_path . $file;
         if (file_exists($path)) {
             $size = filesize($path);
+            $status = $size > 0 ? "✅" : "⚠️";
+            echo "$status " . basename($file) . " ($size bytes)\n";
+            
             if ($size === 0) {
-                echo "⚠️  VIDE : " . basename($template) . "\n";
-            } else {
-                echo "✅ OK (" . $size . " bytes) : " . basename($template) . "\n";
+                echo "   💡 Ce fichier est VIDE, c'est un problème !\n";
             }
         } else {
-            echo "❌ MANQUANT : " . basename($template) . "\n";
+            echo "❌ MANQUANT : " . basename($file) . "\n";
         }
     }
+    echo "\n";
 
-    echo "\n╔═══════════════════════════════════════════════════════════════╗\n";
+    // ========== PHASE 5 : Configuration email ==========
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ PHASE 5 : Configuration email du forum                     │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    global $config;
+    
+    echo "Email activé : " . ($config['email_enable'] ? "✅ OUI" : "❌ NON") . "\n";
+    echo "Fonction email : " . ($config['email_function_name'] ?? 'mail') . "\n";
+    
+    if (isset($config['smtp_delivery'])) {
+        echo "Méthode : " . ($config['smtp_delivery'] ? "SMTP" : "PHP mail()") . "\n";
+    }
+    
+    if (isset($config['bastien59960_reactions_spam_time'])) {
+        echo "Délai anti-spam reactions : " . $config['bastien59960_reactions_spam_time'] . " minutes\n";
+    } else {
+        echo "⚠️ Config anti-spam non trouvée (défaut : 45 min)\n";
+    }
+    
+    if (isset($config['bastien59960_reactions_cron_last_run'])) {
+        $last = $config['bastien59960_reactions_cron_last_run'];
+        echo "Dernier run cron : " . ($last > 0 ? date('Y-m-d H:i:s', $last) : "jamais") . "\n";
+    }
+    echo "\n";
+
+    // ========== PHASE 6 : Test base de données ==========
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ PHASE 6 : Réactions en attente de notification             │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    global $db, $table_prefix;
+    
+    $sql = 'SELECT COUNT(*) as total
+            FROM ' . $table_prefix . 'post_reactions
+            WHERE reaction_notified = 0';
+    $result = $db->sql_query($sql);
+    $row = $db->sql_fetchrow($result);
+    $db->sql_freeresult($result);
+    
+    $count = (int) $row['total'];
+    echo "Réactions non notifiées : " . $count . "\n";
+    
+    if ($count === 0) {
+        echo "💡 Aucune réaction en attente → testez en ajoutant une réaction sur un post\n";
+    } else {
+        echo "✅ Des réactions attendent d'être envoyées par email\n";
+        
+        // Afficher les 5 premières
+        $sql = 'SELECT r.reaction_id, r.post_id, r.reaction_emoji, r.reaction_time,
+                       u.username
+                FROM ' . $table_prefix . 'post_reactions r
+                LEFT JOIN ' . USERS_TABLE . ' u ON r.user_id = u.user_id
+                WHERE r.reaction_notified = 0
+                ORDER BY r.reaction_time DESC
+                LIMIT 5';
+        $result = $db->sql_query($sql);
+        
+        echo "\nExemples (max 5) :\n";
+        while ($row = $db->sql_fetchrow($result)) {
+            echo "  • Post #{$row['post_id']} : {$row['reaction_emoji']} par {$row['username']} (" . date('Y-m-d H:i:s', $row['reaction_time']) . ")\n";
+        }
+        $db->sql_freeresult($result);
+    }
+    echo "\n";
+
+    // ========== RÉSUMÉ ==========
+    echo "╔═══════════════════════════════════════════════════════════════╗\n";
     echo "║  DIAGNOSTIC TERMINÉ                                           ║\n";
-    echo "╚═══════════════════════════════════════════════════════════════╝\n";
+    echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
+    
+    echo "💡 PROCHAINES ÉTAPES :\n";
+    echo "   1. Vérifiez que tous les fichiers ci-dessus existent et ne sont PAS vides\n";
+    echo "   2. Si des réactions sont en attente, lancez manuellement le cron :\n";
+    echo "      php bin/phpbbcli.php cron:run bastien59960.reactions.notification -vvv\n";
+    echo "   3. Surveillez les logs : tail -f /var/log/apache2/error.log\n";
+    echo "   4. Si get_name() retourne vide, corrigez cron/notification_task.php\n\n";
 
 } catch (\Throwable $e) {
     echo "\n╔═══════════════════════════════════════════════════════════════╗\n";
     echo "║  ❌ ERREUR FATALE                                             ║\n";
     echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
-    echo "Type: " . get_class($e) . "\n";
-    echo "Message: " . $e->getMessage() . "\n";
-    echo "Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n\n";
-    echo "Trace:\n" . $e->getTraceAsString() . "\n";
+    echo "Type : " . get_class($e) . "\n";
+    echo "Message : " . $e->getMessage() . "\n";
+    echo "Fichier : " . $e->getFile() . ":" . $e->getLine() . "\n\n";
+    echo "Trace :\n" . $e->getTraceAsString() . "\n\n";
+    echo "💡 Si l'erreur concerne common.php, vérifiez les permissions et config.php\n";
 }
