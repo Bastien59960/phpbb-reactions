@@ -448,7 +448,7 @@ class ajax
                 'success' => false,
                 'error'   => $httpEx->getMessage(),
                 'rid'     => $rid,
-            ], $httpEx->get_status_code());
+            ], $httpEx->getStatusCode());
 
         } catch (\Throwable $e) {
             // Gérer toutes les autres erreurs serveur (500) pour éviter une réponse non-JSON.
