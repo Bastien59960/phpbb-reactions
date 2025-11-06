@@ -258,7 +258,7 @@ class notification_task extends \phpbb\cron\task\base
 
             if (empty($data['posts']))
             {
-                $empty_posts_message = '[Reactions Cron] Skip user_id ' . $author_id . ' (no valid posts).');
+                $empty_posts_message = '[Reactions Cron] Skip user_id ' . $author_id . ' (no valid posts).';
                 error_log($empty_posts_message);
                 $this->mark_reactions_as_handled($data['mark_ids']);
                 continue;
