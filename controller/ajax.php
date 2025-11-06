@@ -339,15 +339,19 @@ class ajax
             // =====================================================================
             // 5. VÉRIFICATION DES AUTORISATIONS
             // =====================================================================
-
-            // Vérifier si l'utilisateur a le droit de réagir à ce message (forum non verrouillé, etc.).
-            if (!$this->can_react_to_post($post_id)) {
-                ob_end_clean();
-                return new JsonResponse([
-                    'success' => false,
-                    'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED'),
-                    'rid'     => $rid,
-                ], 403);
+            
+            // La vérification des permissions ne s'applique pas à 'sync' qui gère plusieurs posts.
+            // Pour les autres actions, on vérifie si l'utilisateur peut interagir avec le post.
+            if ($action !== 'sync')
+            {
+                if (!$this->can_react_to_post($post_id)) {
+                    ob_end_clean();
+                    return new JsonResponse([
+                        'success' => false,
+                        'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED'),
+                        'rid'     => $rid,
+                    ], 403);
+                }
             }
 
             // =====================================================================
