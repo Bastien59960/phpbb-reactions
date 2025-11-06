@@ -1,47 +1,58 @@
 <?php
 /**
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
- * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
- *
+ * =============================================================================
  * Fichier : /language/en/email.php
- * Rôle : Contient les chaînes de langue anglaises pour les e-mails envoyés par l'extension.
+ * Extension : bastien59960/reactions
+ * =============================================================================
+ *
+ * @package   bastien59960/reactions
+ * @author    Bastien (bastien59960)
+ * @copyright (c) 2025 Bastien59960
+ * @license   http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ *
+ * @description
+ * Contains the English language strings for the emails sent by the extension.
+ * This file is used by the cron task to build the reaction digest email.
  */
 
 if (!defined('IN_PHPBB'))
 {
-	exit;
+    exit;
 }
 
 if (empty($lang) || !is_array($lang))
 {
-	$lang = array();
+    $lang = array();
 }
 
-//
-// Email language keys
-//
 $lang = array_merge($lang, array(
-	// Subject for the digest email
-	'REACTIONS_DIGEST_SUBJECT'	=> 'New reactions to your posts',
+    // =========================================================================
+    // EMAIL SUBJECT
+    // =========================================================================
+    'REACTIONS_DIGEST_SUBJECT' => 'New reactions to your posts',
 
-	// Email body
-	'REACTIONS_DIGEST_HELLO'	=> 'Hello %1$s,',
-	'REACTIONS_DIGEST_INTRO'	=> 'Here is a summary of new reactions to your posts on "%1$s":',
+    // =========================================================================
+    // HEADER AND INTRODUCTION
+    // =========================================================================
+    'REACTIONS_DIGEST_HELLO' => 'Hello %1$s,',
+    'REACTIONS_DIGEST_INTRO' => 'Here is a summary of new reactions to your posts on "%1$s":',
 
-	'REACTIONS_DIGEST_POST_TITLE'	=> 'Reactions on your post “%1$s”',
+    // =========================================================================
+    // POSTS CONTENT
+    // =========================================================================
+    'REACTIONS_DIGEST_POST_TITLE' => 'Reactions on your post “%1$s”',
 
-	// Signature and footer
-	'REACTIONS_DIGEST_SIGNATURE'	=> "Thank you,\nThe %s Team", // The %s is replaced by the board name
+    // =========================================================================
+    // REACTION LABELS
+    // =========================================================================
+    'REACTIONS_DIGEST_REACTION_FROM' => 'Reaction from',
+    'REACTIONS_DIGEST_ON_DATE'       => 'on',
+    'REACTIONS_DIGEST_VIEW_POST'     => 'View post',
 
-	'REACTIONS_DIGEST_FOOTER'		=> 'You are receiving this email because you have chosen to receive reaction summaries.',
-	'REACTIONS_DIGEST_UNSUBSCRIBE'	=> 'To manage your notification preferences, please visit your User Control Panel.',
-
-	// Strings for the template
-	'REACTIONS_DIGEST_REACTION_FROM' => 'Reaction from',
-	'REACTIONS_DIGEST_ON_DATE'       => 'on', // As in "on 12/25/2025"
-	'REACTIONS_DIGEST_VIEW_POST'     => 'View post',
+    // =========================================================================
+    // FOOTER AND SIGNATURE
+    // =========================================================================
+    'REACTIONS_DIGEST_SIGNATURE'   => "Best regards,\nThe %s Team",
+    'REACTIONS_DIGEST_FOOTER'      => 'You are receiving this email because you have chosen to receive reaction summaries.',
+    'REACTIONS_DIGEST_UNSUBSCRIBE' => 'To manage your notification preferences, please visit your User Control Panel.',
 ));
-
-?>
