@@ -38,10 +38,9 @@
             "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
         },
         "version-check": {
-            "host": "api.github.com",
-            "user": "Bastien59960",
-            "repository": "phpbb-reactions",
-            "filename": "composer.json"
+            "host": "raw.githubusercontent.com",
+            "directory": "/Bastien59960/phpbb-reactions/master",
+            "filename": "version.json"
         }
     },
     "autoload": {
