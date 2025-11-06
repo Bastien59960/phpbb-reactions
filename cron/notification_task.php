@@ -461,14 +461,12 @@ class notification_task extends \phpbb\cron\task\base
                 if (isset($post_data['reactions']) && is_array($post_data['reactions']))
                 {
                     foreach ($post_data['reactions'] as $reaction)
-                    {
-                        $messenger->assign_block_vars('posts.reactions', [
-                            'EMOJI'                => $reaction['EMOJI'],
-                            'REACTER_NAME'         => $reaction['REACTER_NAME'],
-                            'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
-                            'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
-                        ]);
-                    }
+                    $messenger->assign_block_vars('posts.reactions', [
+                        'EMOJI'                => $reaction['EMOJI'],
+                        'REACTER_NAME'         => $reaction['REACTER_NAME'],
+                        'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
+                        'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
+                    ]);
                 }
             }
 
