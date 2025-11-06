@@ -24,7 +24,6 @@
 namespace bastien59960\reactions\controller;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 // Définir la constante ANONYMOUS si elle n'est pas définie
 if (!defined('ANONYMOUS')) {
@@ -209,7 +208,7 @@ class ajax
             
             // Seuls les utilisateurs connectés peuvent interagir.
             if ($this->user->data['user_id'] == ANONYMOUS) { // ANONYMOUS est une constante de phpBB
-                throw new HttpException(403, 'User not logged in.');
+                throw new \phpbb\exception\http_exception(403, 'User not logged in.');
             }
 
             // =====================================================================
@@ -270,7 +269,7 @@ class ajax
 
             // Vérification du jeton de session pour la protection CSRF.
             if ($sid !== $this->user->data['session_id']) {
-                throw new HttpException(403, 'Jeton CSRF invalide.');
+                throw new \phpbb\exception\http_exception(403, 'Jeton CSRF invalide.');
             }
 
             // Valider que l'action demandée est l'une des actions autorisées.
@@ -378,10 +377,10 @@ class ajax
                 $this->db->sql_freeresult($result);
                 
                 if ($current_types >= $max_per_post) {
-                    throw new HttpException(400, sprintf($this->language->lang('REACTIONS_LIMIT_POST'), $max_per_post));
+                    throw new \phpbb\exception\http_exception(400, sprintf($this->language->lang('REACTIONS_LIMIT_POST'), $max_per_post));
                 }
                 if ($user_reactions >= $max_per_user) {
-                    throw new HttpException(400, sprintf($this->language->lang('REACTIONS_LIMIT_USER'), $max_per_user));
+                    throw new \phpbb\exception\http_exception(400, sprintf($this->language->lang('REACTIONS_LIMIT_USER'), $max_per_user));
                 }
 
                 error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
