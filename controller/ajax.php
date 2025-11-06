@@ -900,39 +900,39 @@ class ajax
     private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
     {
         try {
-            // Récupérer l'auteur du post pour le notifier
-            $sql = 'SELECT poster_id, topic_id FROM ' . $this->posts_table . ' WHERE post_id = ' . (int) $post_id;
+            // Optimisation : Récupérer les informations du post et les préférences de l'auteur en une seule requête.
+            $sql = 'SELECT p.poster_id, p.topic_id, u.user_reactions_notify
+                    FROM ' . $this->posts_table . ' p
+                    LEFT JOIN ' . USERS_TABLE . ' u ON (p.poster_id = u.user_id)
+                    WHERE p.post_id = ' . (int) $post_id;
+
             $result = $this->db->sql_query($sql);
             $post_data = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
 
             if (!$post_data || !$post_data['poster_id']) {
-                error_log('[Reactions AJAX] Post introuvable pour notification, post_id=' . $post_id);
+                error_log('[Reactions] Notification: Post introuvable pour post_id=' . $post_id);
                 return;
             }
 
             $post_author_id = (int) $post_data['poster_id'];
             $topic_id = (int) $post_data['topic_id'];
+            $notify_pref = isset($post_data['user_reactions_notify']) ? (int) $post_data['user_reactions_notify'] : 1;
 
             // On ne s'envoie pas de notification à soi-même
             if ($post_author_id === $reacter_id) {
                 return;
             }
 
-            // Respecter la préférence de notification instantanée de l'auteur
-            $author_sql = 'SELECT user_reactions_notify, username FROM ' . USERS_TABLE . ' WHERE user_id = ' . $post_author_id;
-            $author_result = $this->db->sql_query($author_sql);
-            $author_row = $this->db->sql_fetchrow($author_result);
-            $this->db->sql_freeresult($author_result);
-
-            $notify_pref = ($author_row !== false && array_key_exists('user_reactions_notify', $author_row))
-                ? (int) $author_row['user_reactions_notify']
-                : 1;
-
-            if (!$author_row || $notify_pref !== 1) {
+            // Respecter la préférence de notification de l'auteur
+            if ($notify_pref !== 1) {
+                if (defined('DEBUG') && DEBUG) {
+                    error_log('[Reactions] Notification: Auteur ' . $post_author_id . ' a désactivé les notifications.');
+                }
                 return;
             }
 
+            // Préparer les données pour le gestionnaire de notifications
             $notification_data = [
                 'post_id'          => (int) $post_id,
                 'topic_id'         => $topic_id,
@@ -943,6 +943,7 @@ class ajax
                 'emoji'            => $emoji,
             ];
 
+            // Envoyer la notification via le manager de phpBB
             $notification_ids = $this->notification_manager->add_notifications(
                 'bastien59960.reactions.notification.type.reaction',
                 $notification_data
@@ -954,7 +955,9 @@ class ajax
                 $log_suffix = 'none';
             }
 
-            error_log('[Reactions AJAX] Notification envoyée OK pour post_id=' . $post_id . ', emoji=' . $emoji . ', auteur=' . $post_author_id . ', ids=' . $log_suffix);
+            if (defined('DEBUG') && DEBUG) {
+                error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id . ', ids=' . $log_suffix);
+            }
         } catch (\Exception $e) {
             error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());
             error_log('[Reactions] Stack trace: ' . $e->getTraceAsString());
