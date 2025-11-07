@@ -377,10 +377,10 @@ class ajax
                 $this->db->sql_freeresult($result);
                 
                 if ($current_types >= $max_per_post) {
-                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_POST', 0, null, [$max_per_post]);
+                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_POST', null, [$max_per_post]);
                 }
                 if ($user_reactions >= $max_per_user) {
-                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_USER', 0, null, [$max_per_user]);
+                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_USER', null, [$max_per_user]);
                 }
 
                 error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
@@ -450,8 +450,8 @@ class ajax
                 // On vérifie si le message est une clé de langue (contient des majuscules/underscores)
                 // ou un message simple.
                 'error'   => (preg_match('/^[A-Z0-9_]+$/', $httpEx->getMessage()))
-                               ? ($httpEx->getPrevious()
-                                   ? vsprintf($this->language->lang($httpEx->getMessage()), $httpEx->getPrevious()->getTrace())
+                               ? ($httpEx->getParameters()
+                                   ? vsprintf($this->language->lang($httpEx->getMessage()), $httpEx->getParameters())
                                    : $this->language->lang($httpEx->getMessage()))
                                : $httpEx->getMessage(),
                 'rid'     => $rid,
