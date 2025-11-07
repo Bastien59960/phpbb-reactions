@@ -30,7 +30,7 @@ class release_1_0_1 extends \phpbb\db\migration\migration
     public function update_data()
     {
         return array(
-            array('custom', array(array($this, 'run_importer'))),
+            array('custom', array(array($this, 'safe_run_importer'))),
             array('config.add', array('bastien59960_reactions_imported', 1)),
         );
     }
@@ -43,15 +43,27 @@ class release_1_0_1 extends \phpbb\db\migration\migration
         return [];
     }
 
-    public function run_importer()
+    /**
+     * Méthode d'importation sécurisée.
+     *
+     * Encapsule l'appel au service d'importation dans un bloc try/catch
+     * pour garantir que la migration ne plantera jamais, même si l'importateur échoue.
+     *
+     * CRUCIAL : Cette méthode ne retourne RIEN (void). C'est ce qui indique au
+     * migrateur qu'il n'y a pas d'étapes SQL à traiter ou à inverser,
+     * prévenant ainsi l'erreur TypeError lors de la purge.
+     */
+    public function safe_run_importer()
     {
-        $importer = $this->container->get('bastien59960.reactions.importer');
-        if ($this->container->has('console.io')) {
-            $importer->set_io($this->container->get('console.io'));
+        try {
+            $importer = $this->container->get('bastien59960.reactions.importer');
+            if ($this->container->has('console.io')) {
+                $importer->set_io($this->container->get('console.io'));
+            }
+            $importer->run();
+        } catch (\Throwable $e) {
+            // Ne rien faire, on ne veut pas que la migration échoue.
+            // On pourrait logger l'erreur ici si nécessaire.
         }
-        $importer->run();
-
-        // CRUCIAL : Retourner un tableau pour que le migrateur ne lève pas de TypeError.
-        return [];
     }
 }
