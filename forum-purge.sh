@@ -70,9 +70,9 @@ echo -e "🚀 Lancement du script de maintenance (ordre validé).\n"
 sleep 0.2
 
 # ==============================================================================
-# 0️⃣ NETTOYAGE AGRESSIF DU CACHE (NOUVEAU)
+# 1️⃣ NETTOYAGE AGRESSIF DU CACHE
 # ==============================================================================
-echo "───[ 0️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
+echo "───[ 1️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
 sleep 0.2
 
 # Suppression de TOUT le contenu du cache de production pour forcer une reconstruction complète
@@ -89,9 +89,24 @@ chmod -vR 777 "$FORUM_ROOT/store/"
 check_status "Permissions de cache/store rétablies (777)."
 
 # ==============================================================================
-# 1️⃣ DÉSACTIVATION DE L'EXTENSION
+# 2️⃣ FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION
 # ==============================================================================
-echo "───[ 1️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
+echo "───[ 2️⃣  FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION ]──────────"
+sleep 0.2
+echo -e "⚠️  Le script va maintenant demander ${YELLOW}UNE SEULE FOIS${NC} le mot de passe MySQL..."
+
+mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
+DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
+DELETE FROM phpbb_migrations WHERE migration_name LIKE '%\bastien59960\reactions%';
+EOF
+
+check_status "État de l'extension réinitialisé dans la base de données."
+
+
+# ==============================================================================
+# 3️⃣ DÉSACTIVATION DE L'EXTENSION
+# ==============================================================================
+echo "───[ 3️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
 sleep 0.2
 
 # On tente de désactiver l'extension. On ajoute `|| true` pour que le script ne
@@ -101,27 +116,27 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/react
 check_status "Tentative de désactivation de l'extension terminée." "$output"
 
 # ==============================================================================
-# 1.5️⃣ PURGE DES DONNÉES DE L'EXTENSION (NOUVEAU - CRUCIAL)
+# 4️⃣ PURGE DES DONNÉES DE L'EXTENSION
 # ==============================================================================
-echo "───[ 1.5 PURGE DES DONNÉES DE L'EXTENSION (bastien59960/reactions) ]──────"
+echo "───[ 4️⃣  PURGE DES DONNÉES DE L'EXTENSION (bastien59960/reactions) ]──────"
 sleep 0.2
 
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1 || true)
 check_status "Purge des données de l'extension (tables, config, modules)." "$output"
 
 # ==============================================================================
-# 2️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
+# 5️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
 # ==============================================================================
-echo "───[ 2️⃣  PURGE DU CACHE (APRÈS DÉSACTIVATION) ]────────────────────"
+echo "───[ 5️⃣  PURGE DU CACHE (APRÈS DÉSACTIVATION) ]────────────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé après désactivation." "$output"
 
 
 # ==============================================================================
-# 3️⃣ SUPPRESSION FICHIER cron.lock
+# 6️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
-echo "───[ 3️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
+echo "───[ 6️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
 sleep 0.2
 CRON_LOCK_FILE="$FORUM_ROOT/cache/cron.lock"
 if [ -f "$CRON_LOCK_FILE" ]; then
@@ -132,10 +147,9 @@ else
 fi
 
 # ==============================================================================
-# 4️⃣ SQL RESET – UN SEUL PROMPT
+# 7️⃣ SQL RESET – UN SEUL PROMPT
 # ==============================================================================
-echo "───[ 4️⃣  RÉINITIALISATION SQL (UN SEUL PROMPT) ]──────────────────"
-echo -e "⚠️  Le script va maintenant demander ${YELLOW}UNE SEULE FOIS${NC} le mot de passe MySQL..."
+echo "───[ 7️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
 sleep 0.2
 
 mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
@@ -146,25 +160,25 @@ EOF
 check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
 
 # ==============================================================================
-# 5️⃣ RÉACTIVATION EXTENSION
+# 8️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
-echo "───[ 5️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
+echo "───[ 8️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Extension réactivée." "$output"
 
 # ==============================================================================
-# 6️⃣ PURGE CACHE (APRÈS)
+# 9️⃣ PURGE CACHE (APRÈS)
 # ==============================================================================
-echo "───[ 6️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
+echo "───[ 9️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
-# 7️⃣ TEST FINAL DU CRON
+# 🔟 TEST FINAL DU CRON
 # ==============================================================================
-echo "───[ 7️⃣  TEST FINAL DU CRON ]──────────────────────────────────"
+echo "───[ 🔟 TEST FINAL DU CRON ]──────────────────────────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
 check_status "Exécution de la tâche cron" "$output"
@@ -172,8 +186,9 @@ check_status "Exécution de la tâche cron" "$output"
 
 # ==============================================================================
 # 8️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
+# 1️⃣1️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
 # ==============================================================================
-echo "───[ 8️⃣  RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
+echo "───[ 1️⃣1️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 sleep 0.2
 
 # ⚠️ À ADAPTER ! Remplacez 'www-data' par l'utilisateur/groupe de votre serveur web (ex: 'apache', 'nginx', etc.)
