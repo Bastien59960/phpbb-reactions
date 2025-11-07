@@ -93,9 +93,9 @@ php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
 check_status "Purge du cache après désactivation."
 
 # ==============================================================================
-# 1️⃣ NETTOYAGE AGRESSIF DU CACHE
+# 2️⃣ NETTOYAGE AGRESSIF DU CACHE
 # ==============================================================================
-echo "───[ 1️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
+echo "───[ 2️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
 sleep 0.2
 
 # Suppression de TOUT le contenu du cache de production pour forcer une reconstruction complète
@@ -112,9 +112,9 @@ chmod -vR 777 "$FORUM_ROOT/store/"
 check_status "Permissions de cache/store rétablies (777)."
 
 # ==============================================================================
-# 2️⃣ FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION
+# 3️⃣ FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION
 # ==============================================================================
-echo "───[ 2️⃣  HARD RESET MANUEL DE LA BASE DE DONNÉES ]──────────────────────"
+echo "───[ 3️⃣  HARD RESET MANUEL DE LA BASE DE DONNÉES ]──────────────────────"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 
@@ -169,9 +169,9 @@ echo ""
 
 
 # ==============================================================================
-# 4️⃣ PURGE DES DONNÉES DE L'EXTENSION
+# 4️⃣ PURGE DES DONNÉES DE L'EXTENSION (CONFIGS, MODULES, NOTIFS)
 # ==============================================================================
-echo "───[ 4️⃣  PURGE MANUELLE DES DONNÉES (SANS SUPPRIMER LA TABLE) ]──────"
+echo "───[ 4️⃣  PURGE DES DONNÉES (CONFIGS, MODULES, NOTIFS) ]────────────"
 sleep 0.2
 echo "   (Le mot de passe a été demandé au début du script.)"
 
@@ -197,9 +197,9 @@ MANUAL_PURGE_EOF
 check_status "Purge des données de l'extension (configs, modules, notifs)."
 
 # ==============================================================================
-# 4.5️⃣ PURGE AGRESSIVE DES SCHÉMAS (TABLES & COLONNES)
+# 5️⃣ PURGE AGRESSIVE DU SCHÉMA (COLONNES)
 # ==============================================================================
-echo "───[ 4.5️⃣ PURGE AGRESSIVE DU SCHÉMA (TABLES & COLONNES) ]─────────"
+echo "───[ 5️⃣  PURGE AGRESSIVE DU SCHÉMA (COLONNES) ]───────────────────"
 sleep 0.2
 echo "   (Le mot de passe a été demandé au début du script.)"
 
@@ -216,9 +216,9 @@ SCHEMA_PURGE_EOF
 check_status "Purge agressive du schéma (tables et colonnes)."
 
 # ==============================================================================
-# 5️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
+# 6️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
-echo "───[ 5️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
+echo "───[ 6️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
@@ -226,9 +226,9 @@ echo ""
 # ==============================================================================
 # 6️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
-echo "───[ 6️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
+echo "───[ 7️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
 sleep 0.2
-CRON_LOCK_FILE="$FORUM_ROOT/cache/cron.lock"
+CRON_LOCK_FILE="$FORUM_ROOT/store/cron.lock"
 if [ -f "$CRON_LOCK_FILE" ]; then
     rm -f "$CRON_LOCK_FILE"
     check_status "Fichier cron.lock supprimé."
@@ -279,8 +279,9 @@ CLEANUP_EOF
 check_status "Nettoyage des migrations problématiques terminé."
 
 # ==============================================================================
-# 8️⃣ SQL RESET – UN SEUL PROMPT
-echo "───[ 7️⃣  NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
+# 8️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES
+# ==============================================================================
+echo "───[ 8️⃣  NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
 sleep 0.2
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'FINAL_CLEANUP_EOF'
@@ -296,21 +297,19 @@ FINAL_CLEANUP_EOF
 check_status "Nettoyage final de la BDD (cron_lock, notifs orphelines)."
 
 # ==============================================================================
-# 8️⃣ PURGE CACHE (AVANT RÉACTIVATION)
+# 9️⃣ PURGE CACHE (AVANT RÉACTIVATION)
 # ==============================================================================
-echo "───[ 8️⃣  PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
+echo "───[ 9️⃣  PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
-# ==============================================================================
-# 9️⃣ DIAGNOSTIC SQL AVANT RÉACTIVATION
-# ==============================================================================
-echo "───[ 9️⃣  DIAGNOSTIC SQL (AVANT RÉACTIVATION) ]──────────────────────"
-sleep 0.2
-echo -e "   (Le mot de passe a été demandé au début du script.)"
-echo ""
 
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'DIAGNOSTIC_EOF'
+# ==============================================================================
+# DÉFINITION DU BLOC DE DIAGNOSTIC (HEREDOC)
+# ==============================================================================
+# Ce bloc est défini une seule fois et redirigé vers le descripteur de fichier 3.
+# Il sera réutilisé par les étapes 10 et 12.
+exec 3<<'DIAGNOSTIC_EOF'
 -- ============================================================================
 -- DIAGNOSTIC COMPLET DE L'ÉTAT DE LA BASE DE DONNÉES
 -- ============================================================================
@@ -471,38 +470,48 @@ SELECT '✅ DIAGNOSTIC TERMINÉ' AS '';
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 DIAGNOSTIC_EOF
 
+# ==============================================================================
+# 🔟 DIAGNOSTIC SQL AVANT RÉACTIVATION
+# ==============================================================================
+echo "───[ 🔟 DIAGNOSTIC SQL (AVANT RÉACTIVATION) ]───────────────────────"
+sleep 0.2
+echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo ""
-echo -e "${GREEN}✅ Diagnostic SQL terminé.${NC}"
+
+# Exécution du diagnostic depuis le descripteur de fichier 3
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <&3
+
+echo ""
+echo -e "${GREEN}✅ Diagnostic pré-réactivation terminé.${NC}"
 echo ""
 
 # ==============================================================================
-# 🔟 RÉACTIVATION EXTENSION
+# 1️⃣1️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
-echo "───[ 🔟  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
+echo "───[ 1️⃣1️⃣ RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Extension réactivée." "$output"
 
 # ==============================================================================
-# 1️⃣1️⃣ RESET DES NOTIFICATIONS (POST-RÉACTIVATION)
+# 1️⃣2️⃣ DIAGNOSTIC SQL POST-RÉACTIVATION (SI SUCCÈS)
 # ==============================================================================
-echo "───[ 1️⃣1️⃣  RESET DES NOTIFICATIONS (POST-RÉACTIVATION) ]──────────"
-sleep 0.2
-
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
--- Cette commande est maintenant exécutée après la création de la table par la migration.
--- Elle peut échouer si l'importation n'a pas eu lieu, c'est pourquoi on ajoute '|| true'
-UPDATE phpbb_post_reactions SET reaction_notified = 0;
-EOF
-
-check_status "Statut 'reaction_notified' réinitialisé (si la table contient des données)."
+# On ne lance ce diagnostic que si l'étape précédente a réussi (code de sortie 0)
+if [ $? -eq 0 ]; then
+    echo "───[ 1️⃣2️⃣ DIAGNOSTIC SQL POST-RÉACTIVATION (SUCCÈS) ]────────────"
+    sleep 0.2
+    echo -e "${GREEN}ℹ️  Vérification que les migrations ont correctement recréé les structures.${NC}"
+    echo ""
+    # On ré-exécute le même bloc de diagnostic depuis le descripteur de fichier 3
+    MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <&3
+fi
 
 # ==============================================================================
-# 1️⃣2️⃣ DIAGNOSTIC POST-ERREUR
+# 1️⃣3️⃣ DIAGNOSTIC POST-ERREUR
 # ==============================================================================
 if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
-    echo "───[ 1️⃣2️⃣  DIAGNOSTIC APPROFONDI APRÈS ERREUR ]──────────────────────────────"
+    echo "───[ 1️⃣3️⃣ DIAGNOSTIC APPROFONDI APRÈS ERREUR ]───────────────────────"
     sleep 0.2
     echo -e "${YELLOW}⚠️  Une erreur a été détectée. Diagnostic approfondi...${NC}"
     echo ""
@@ -693,26 +702,26 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 1️⃣3️⃣ PURGE CACHE FINALE
+# 1️⃣4️⃣ PURGE CACHE FINALE
 # ==============================================================================
-echo "───[ 1️⃣3️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
+echo "───[ 1️⃣4️⃣ PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
-# 1️⃣4️⃣ TEST FINAL DU CRON
+# 1️⃣5️⃣ TEST FINAL DU CRON
 # ==============================================================================
-echo "───[ 1️⃣4️⃣ TEST FINAL DU CRON ]──────────────────────────────────"
+echo "───[ 1️⃣5️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
 check_status "Exécution de la tâche cron" "$output"
 
 
 # ==============================================================================
-# 1️⃣5️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE)
+# 1️⃣6️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
-echo "───[ 1️⃣5️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
+echo "───[ 1️⃣6️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 sleep 0.2
 
 # ⚠️ À ADAPTER ! Remplacez 'www-data' par l'utilisateur/groupe de votre serveur web (ex: 'apache', 'nginx', etc.)
@@ -736,7 +745,7 @@ check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 # 🔍 CHECK FINAL EXTENSION STATUS (Version corrigée avec l'astérisque)
 # ==============================================================================
 echo ""
-echo "───[ 🔍  VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]──────────────────────────────"
+echo "───[ 1️⃣7️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
 sleep 0.2
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
@@ -759,7 +768,7 @@ fi
 # 🔍 CHECK FINAL CRON TASK STATUS
 # ==============================================================================
 echo ""
-echo "───[ 🔍  VÉRIFICATION FINALE DE LA TÂCHE CRON ]───────────────────────────────"
+echo "───[ 1️⃣8️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
 sleep 0.2
 
 # Ajout d'une temporisation de 3 secondes pour laisser le temps au système de se stabiliser
