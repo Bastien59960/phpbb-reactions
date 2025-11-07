@@ -170,12 +170,281 @@ EOF
 check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
 
 # ==============================================================================
+# 7️⃣.5️⃣ DIAGNOSTIC SQL AVANT RÉACTIVATION
+# ==============================================================================
+echo "───[ 7️⃣.5️⃣  DIAGNOSTIC SQL (AVANT RÉACTIVATION) ]──────────────────────"
+sleep 0.2
+echo -e "   (Le mot de passe a été demandé au début du script.)"
+echo ""
+
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'DIAGNOSTIC_EOF'
+-- ============================================================================
+-- DIAGNOSTIC COMPLET DE L'ÉTAT DE LA BASE DE DONNÉES
+-- ============================================================================
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '📊 ÉTAT DES TYPES DE NOTIFICATIONS' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    notification_type_id,
+    notification_type_name,
+    notification_type_enabled,
+    CASE 
+        WHEN notification_type_name LIKE '%reaction%' THEN '🔴 REACTION'
+        ELSE '⚪ AUTRE'
+    END AS type_category
+FROM phpbb_notification_types
+WHERE notification_type_name LIKE '%reaction%'
+ORDER BY notification_type_name;
+
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+SELECT '📋 TOUS LES TYPES DE NOTIFICATIONS (pour référence)' AS '';
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+
+SELECT 
+    notification_type_id,
+    notification_type_name,
+    notification_type_enabled
+FROM phpbb_notification_types
+ORDER BY notification_type_name
+LIMIT 20;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🗂️  ÉTAT DES TABLES CRÉÉES PAR LA MIGRATION' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    TABLE_NAME,
+    TABLE_ROWS,
+    CREATE_TIME,
+    UPDATE_TIME,
+    CASE 
+        WHEN TABLE_NAME = 'phpbb_post_reactions' THEN '✅ Table principale des réactions'
+        ELSE '⚪ Autre table'
+    END AS description
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME IN ('phpbb_post_reactions')
+ORDER BY TABLE_NAME;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '📝 COLONNES AJOUTÉES DANS phpbb_users' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    COLUMN_NAME,
+    COLUMN_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT,
+    CASE 
+        WHEN COLUMN_NAME LIKE '%reaction%' THEN '🔴 COLONNE REACTION'
+        ELSE '⚪ Autre'
+    END AS category
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'phpbb_users'
+  AND COLUMN_NAME LIKE '%reaction%'
+ORDER BY COLUMN_NAME;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '⚙️  CONFIGURATIONS DE L''EXTENSION' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    config_name,
+    config_value,
+    CASE 
+        WHEN config_name LIKE 'bastien59960_reactions%' THEN '🔴 CONFIG REACTION'
+        ELSE '⚪ Autre'
+    END AS category
+FROM phpbb_config
+WHERE config_name LIKE 'bastien59960_reactions%'
+   OR config_name LIKE 'reactions_ucp%'
+ORDER BY config_name;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '📦 MODULES UCP CRÉÉS' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    module_id,
+    module_basename,
+    module_enabled,
+    module_display,
+    parent_id
+FROM phpbb_modules
+WHERE module_basename LIKE '%reactions%'
+   OR module_langname LIKE '%reactions%'
+ORDER BY module_id;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔄 ÉTAT DES MIGRATIONS' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    migration_name,
+    migration_depends_on,
+    CASE 
+        WHEN migration_name LIKE '%bastien59960%reactions%' THEN '🔴 MIGRATION REACTION'
+        ELSE '⚪ Autre'
+    END AS category
+FROM phpbb_migrations
+WHERE migration_name LIKE '%bastien59960%'
+   OR migration_name LIKE '%reactions%'
+ORDER BY migration_name;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔌 ÉTAT DE L''EXTENSION DANS phpbb_ext' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    ext_name,
+    ext_active,
+    ext_state,
+    ext_version
+FROM phpbb_ext
+WHERE ext_name LIKE '%reactions%'
+ORDER BY ext_name;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '📊 STATISTIQUES DES RÉACTIONS' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    COUNT(*) AS total_reactions,
+    SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS reactions_non_notifiees,
+    SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS reactions_notifiees,
+    MIN(reaction_time) AS premiere_reaction,
+    MAX(reaction_time) AS derniere_reaction
+FROM phpbb_post_reactions;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔍 VÉRIFICATION DES NOTIFICATIONS ORPHELINES' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    COUNT(*) AS notifications_orphelines
+FROM phpbb_notifications n
+LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
+WHERE t.notification_type_id IS NULL;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '✅ DIAGNOSTIC TERMINÉ' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+DIAGNOSTIC_EOF
+
+echo ""
+echo -e "${GREEN}✅ Diagnostic SQL terminé.${NC}"
+echo ""
+
+# ==============================================================================
 # 8️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
 echo "───[ 8️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Extension réactivée." "$output"
+
+# ==============================================================================
+# 8️⃣.5️⃣ DIAGNOSTIC SQL APRÈS RÉACTIVATION (si erreur)
+# ==============================================================================
+if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
+    echo ""
+    echo "───[ 8️⃣.5️⃣  DIAGNOSTIC SQL APRÈS ERREUR ]──────────────────────────────"
+    sleep 0.2
+    echo -e "${YELLOW}⚠️  Une erreur a été détectée. Diagnostic approfondi...${NC}"
+    echo ""
+    
+    MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'ERROR_DIAGNOSTIC_EOF'
+-- ============================================================================
+-- DIAGNOSTIC APPROFONDI APRÈS ERREUR
+-- ============================================================================
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔴 DIAGNOSTIC D''ERREUR - ÉTAT ACTUEL' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT '📋 Types de notifications (détail complet)' AS '';
+SELECT 
+    notification_type_id,
+    notification_type_name,
+    notification_type_enabled,
+    LENGTH(notification_type_name) AS name_length,
+    HEX(notification_type_name) AS name_hex
+FROM phpbb_notification_types
+WHERE notification_type_name LIKE '%reaction%'
+ORDER BY notification_type_id;
+
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+SELECT '🔍 Vérification des noms de types problématiques' AS '';
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+
+SELECT 
+    notification_type_id,
+    notification_type_name,
+    CASE 
+        WHEN notification_type_name LIKE 'bastien59960%' THEN '⚠️  NOM INCORRECT (contient namespace)'
+        WHEN notification_type_name NOT LIKE 'notification.type.%' THEN '⚠️  FORMAT INATTENDU'
+        ELSE '✅ Format correct'
+    END AS status
+FROM phpbb_notification_types
+WHERE notification_type_name LIKE '%reaction%';
+
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+SELECT '📊 État des migrations (dernières exécutées)' AS '';
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+
+SELECT 
+    migration_name,
+    migration_depends_on
+FROM phpbb_migrations
+WHERE migration_name LIKE '%bastien59960%'
+ORDER BY migration_name DESC
+LIMIT 5;
+
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+SELECT '🔌 État exact de l''extension' AS '';
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+
+SELECT 
+    ext_name,
+    ext_active,
+    ext_state,
+    ext_version,
+    CASE 
+        WHEN ext_state = '' THEN '⚠️  État vide'
+        WHEN ext_state IS NULL THEN '⚠️  État NULL'
+        ELSE '✅ État défini'
+    END AS state_status
+FROM phpbb_ext
+WHERE ext_name LIKE '%reactions%';
+
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+SELECT '📝 Vérification de la structure de la table post_reactions' AS '';
+SELECT '───────────────────────────────────────────────────────────────' AS '';
+
+SELECT 
+    COLUMN_NAME,
+    COLUMN_TYPE,
+    IS_NULLABLE,
+    COLUMN_DEFAULT,
+    COLUMN_KEY
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'phpbb_post_reactions'
+ORDER BY ORDINAL_POSITION;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '✅ DIAGNOSTIC D''ERREUR TERMINÉ' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+ERROR_DIAGNOSTIC_EOF
+
+    echo ""
+    echo -e "${YELLOW}💡 CONSEIL : Vérifiez les noms de types de notifications ci-dessus.${NC}"
+    echo -e "${YELLOW}   Ils doivent être au format 'notification.type.xxx' et non 'bastien59960.reactions.xxx'${NC}"
+    echo ""
+fi
 
 # ==============================================================================
 # 9️⃣ PURGE CACHE (APRÈS)
