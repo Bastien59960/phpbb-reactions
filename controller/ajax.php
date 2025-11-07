@@ -377,10 +377,10 @@ class ajax
                 $this->db->sql_freeresult($result);
                 
                 if ($current_types >= $max_per_post) {
-                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_POST', null, [$max_per_post]);
+                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_POST', [$max_per_post]);
                 }
                 if ($user_reactions >= $max_per_user) {
-                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_USER', null, [$max_per_user]);
+                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_USER', [$max_per_user]);
                 }
 
                 error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
