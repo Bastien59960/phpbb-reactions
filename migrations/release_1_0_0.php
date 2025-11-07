@@ -13,13 +13,13 @@
  * --------------------------------------------------------------
  */
 
+namespace bastien59960\reactions\migrations;
+
 // Sécurité : interdire l'accès direct au fichier
 if (!defined('IN_PHPBB'))
 {
 	exit;
 }
-
-namespace bastien59960\reactions\migrations;
 
 class release_1_0_0 extends \phpbb\db\migration\migration
 {
