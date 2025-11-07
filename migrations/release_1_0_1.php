@@ -39,10 +39,8 @@ class release_1_0_1 extends \phpbb\db\migration\migration
     {
         // L'importation est une opération à sens unique.
         // Il n'y a rien à faire lors de la purge, mais il est CRUCIAL
-        // de retourner un tableau pour éviter une erreur fatale.
-        return [
-            ['config.remove', ['bastien59960_reactions_imported', true]],
-        ];
+        // de retourner un tableau vide pour éviter une erreur fatale.
+        return [];
     }
 
     public function run_importer()

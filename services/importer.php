@@ -196,6 +196,8 @@ class importer
             $this->db_tools->sql_table_drop($old_likes_table);
         }
         */
+
+        return [];
     }
 }
 
