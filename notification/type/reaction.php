@@ -149,7 +149,7 @@ class reaction extends base implements type_interface
      */
     public function get_type()
     {
-        return 'notification.type.reaction';
+        return 'reaction';
     }
 
     /**
