@@ -28,7 +28,10 @@ class release_1_0_1 extends \phpbb\db\migration\migration
     public function update_data()
     {
         return array(
-            array('custom', array(array($this, 'import_old_reactions'))),
+            // CORRECTION : On doit explicitement passer le conteneur à la méthode custom.
+            // Le premier argument est la méthode, le second est un tableau de ses paramètres.
+            // Ici, on passe le conteneur de services (@service_container) à notre méthode.
+            array('custom', array(array($this, 'import_old_reactions'), array('@service_container'))),
             array('config.add', array('bastien59960_reactions_imported', 1)),
         );
     }
@@ -40,15 +43,22 @@ class release_1_0_1 extends \phpbb\db\migration\migration
         );
     }
 
-    public function import_old_reactions()
+    /**
+     * Importe les anciennes réactions.
+     *
+     * @param \phpbb\di\container $container Le conteneur de services, injecté par le migrateur.
+     * @return void
+     */
+    public function import_old_reactions(\phpbb\di\container $container)
     {
-        $log = $this->container->get('log');
-        $user = $this->container->get('user');
+        // On utilise le conteneur passé en paramètre, et non plus $this->container.
+        $log = $container->get('log');
+        $user = $container->get('user');
         $user->add_lang_ext('bastien59960/reactions', 'acp/common');
 
         $io = null;
-        if ($this->container->has('console.io')) {
-            $io = $this->container->get('console.io');
+        if ($container->has('console.io')) {
+            $io = $container->get('console.io');
         }
 
         $old_reactions_table = $this->table_prefix . 'reactions';

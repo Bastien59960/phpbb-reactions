@@ -70,6 +70,15 @@ echo -e "🚀 Lancement du script de maintenance (ordre validé).\n"
 sleep 0.2
 
 # ==============================================================================
+# DEMANDE DU MOT DE PASSE MYSQL (UNE SEULE FOIS)
+# ==============================================================================
+echo -e "🔑 Veuillez entrer le mot de passe MySQL pour l'utilisateur ${YELLOW}$DB_USER${NC} :"
+read -s MYSQL_PASSWORD # -s pour masquer l'entrée
+echo "" # Nouvelle ligne après l'entrée masquée
+
+
+
+# ==============================================================================
 # 1️⃣ NETTOYAGE AGRESSIF DU CACHE
 # ==============================================================================
 echo "───[ 1️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
@@ -93,9 +102,9 @@ check_status "Permissions de cache/store rétablies (777)."
 # ==============================================================================
 echo "───[ 2️⃣  FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION ]──────────"
 sleep 0.2
-echo -e "⚠️  Le script va maintenant demander ${YELLOW}UNE SEULE FOIS${NC} le mot de passe MySQL..."
+echo -e "   (Le mot de passe a été demandé au début du script.)"
 
-mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
 DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
 DELETE FROM phpbb_migrations WHERE migration_name LIKE '%\bastien59960\reactions%';
 EOF
@@ -151,8 +160,9 @@ fi
 # ==============================================================================
 echo "───[ 7️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
 sleep 0.2
+echo -e "   (Le mot de passe a été demandé au début du script.)"
 
-mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
 UPDATE phpbb_post_reactions SET reaction_notified = 0;
 EOF
