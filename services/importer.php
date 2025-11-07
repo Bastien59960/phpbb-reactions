@@ -14,7 +14,7 @@
  * Il est conçu pour être appelé via une migration de base de données.
  */
 
-namespace bastien59960\reactions\service;
+namespace bastien59960\reactions\services;
 
 use phpbb\db\driver\driver_interface;
 use phpbb\log\log_interface;

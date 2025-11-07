@@ -24,12 +24,12 @@ services:
     # SERVICE D'IMPORTATION
     # =========================================================================
     bastien59960.reactions.importer:
-        class: bastien59960\reactions\service\importer
+        class: bastien59960\reactions\services\importer
         arguments:
             - '@dbal.conn'
             - '@log'
             - '@user'
-            - '@dbal.tools'
+            - '@db.tools'
             - '%core.table_prefix%'
 
     # =========================================================================
