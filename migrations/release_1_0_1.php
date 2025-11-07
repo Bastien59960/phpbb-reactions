@@ -28,10 +28,10 @@ class release_1_0_1 extends \phpbb\db\migration\migration
     public function update_data()
     {
         return array(
-            // CORRECTION : On doit explicitement passer le conteneur à la méthode custom.
-            // Le premier argument est la méthode, le second est un tableau de ses paramètres.
-            // Ici, on passe le conteneur de services (@service_container) à notre méthode.
-            array('custom', array(array($this, 'import_old_reactions'), array('@service_container'))),
+            // CORRECTION FINALE : La syntaxe correcte pour une étape custom avec arguments
+            // est un tableau plat : [callable, arg1, arg2, ...].
+            // Le tableau ne doit pas être imbriqué.
+            array('custom', array(array($this, 'import_old_reactions'), '@service_container')),
             array('config.add', array('bastien59960_reactions_imported', 1)),
         );
     }

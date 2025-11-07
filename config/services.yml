@@ -83,7 +83,7 @@ services:
     # =========================================================================
     # TÂCHE CRON (DIGEST E-MAIL) - TEMPORAIREMENT DÉSACTIVÉE POUR TEST
     # =========================================================================
-    cron.task.bastien59960.reactions.notification_task:
+    cron.task.bastien59960.reactions.notification:
         class: bastien59960\reactions\cron\notification_task
         arguments:
             - '@dbal.conn'                  # 1. driver_interface
