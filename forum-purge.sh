@@ -157,17 +157,10 @@ echo ""
 # ==============================================================================
 # 3️⃣ DÉSACTIVATION DE L'EXTENSION (Étape ignorée)
 # ==============================================================================
-echo "───[ 3️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
 echo "───[ 3️⃣  DÉSACTIVATION DE L'EXTENSION (Étape ignorée) ]────────────"
 sleep 0.2
 echo -e "${YELLOW}ℹ️  L'étape 'extension:disable' est ignorée car elle est redondante avec la purge manuelle.${NC}"
 echo ""
-
-# On tente de désactiver l'extension. On ajoute `|| true` pour que le script ne
-# s'arrête pas si l'extension est déjà désactivée (ce qui produit une erreur).
-# Le script devient ainsi "ré-exécutable" même après un échec.
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv 2>&1 || true)
-check_status "Tentative de désactivation de l'extension terminée." "$output"
 
 # ==============================================================================
 # 4️⃣ PURGE DES DONNÉES DE L'EXTENSION
@@ -418,13 +411,18 @@ SELECT '════════════════════════
 SELECT '📊 STATISTIQUES DES RÉACTIONS' AS '';
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 
-SELECT 
-    COUNT(*) AS total_reactions,
-    SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS reactions_non_notifiees,
-    SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS reactions_notifiees,
-    MIN(reaction_time) AS premiere_reaction,
-    MAX(reaction_time) AS derniere_reaction
-FROM phpbb_post_reactions;
+-- CORRECTION : Vérifier si la table existe avant de la requêter
+SET @table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
+
+-- Utiliser une condition pour exécuter la requête uniquement si la table existe
+SET @sql = IF(@table_exists > 0, 
+    'SELECT COUNT(*) AS total_reactions, SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS non_notifiees, SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS notifiees FROM phpbb_post_reactions;',
+    'SELECT "La table phpbb_post_reactions n''existe pas encore." AS status;'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 SELECT '🔍 VÉRIFICATION DES NOTIFICATIONS ORPHELINES' AS '';
