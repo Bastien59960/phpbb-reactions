@@ -45,10 +45,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     {
         $schema_updates = [];
 
-        // Ne tente de créer la table que si elle n'existe pas déjà.
-        if (!$this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions'))
-        {
-            $schema_updates['add_tables'] = [
+        return [
+            'add_tables' => [
                 $this->table_prefix . 'post_reactions' => [
                     'COLUMNS'       => [
                         'reaction_id'       => ['UINT', null, 'auto_increment'],
@@ -67,19 +65,15 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                         'post_notified_idx' => ['INDEX', ['post_id', 'reaction_notified']],
                     ],
                 ],
-            ];
-        }
-
-        $schema_updates['add_columns'] = [
-            $this->table_prefix . 'users' => [
-                'user_reactions_notify'     => ['BOOL', 1],
-                'user_reactions_cron_email' => ['BOOL', 1],
+            ],
+            'add_columns' => [
+                $this->table_prefix . 'users' => [
+                    'user_reactions_notify'     => ['BOOL', 1],
+                    'user_reactions_cron_email' => ['BOOL', 1],
+                ],
             ],
         ];
-
-        return $schema_updates;
     }
-
     public function revert_schema()
     {
         return array(

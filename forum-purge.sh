@@ -211,10 +211,9 @@ echo "   (Le mot de passe a été demandé au début du script.)"
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'SCHEMA_PURGE_EOF'
 -- Suppression des tables de l'extension
 -- La suppression de la table des réactions est commentée pour conserver les données.
--- DROP TABLE IF EXISTS phpbb_post_reactions;
 
 -- Suppression des colonnes ajoutées par l'extension
-ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
+-- ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
 
 SELECT '✅ Purge du schéma (tables et colonnes) terminée.' AS status;
 SCHEMA_PURGE_EOF
