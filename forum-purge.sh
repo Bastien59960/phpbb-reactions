@@ -140,7 +140,6 @@ echo -e "⚠️  Le script va maintenant demander ${YELLOW}UNE SEULE FOIS${NC} l
 sleep 0.2
 
 mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
-UPDATE phpbb_post_reactions SET reaction_notified = 0;
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
 EOF
 
