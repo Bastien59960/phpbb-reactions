@@ -70,6 +70,14 @@ function toggle_visible(id) {
         useJson: true,
         syncInterval: 5000,
     };
+    
+    const L = (typeof window.REACTIONS_LANG === 'object') ? window.REACTIONS_LANG : {
+        SEARCH: 'Rechercher...',
+        CLOSE: 'Fermer',
+        FREQUENTLY_USED: 'Utilisé fréquemment',
+        NO_EMOJI_FOUND: 'Aucun emoji trouvé',
+        LOGIN_REQUIRED: 'Vous devez être connecté pour réagir aux messages.',
+    };
 
     const options = (typeof window !== 'undefined' && typeof window.REACTIONS_OPTIONS === 'object')
         ? Object.assign({}, DEFAULT_OPTIONS, window.REACTIONS_OPTIONS)
@@ -254,7 +262,7 @@ function toggle_visible(id) {
 
         // Vérification authentification
         if (!isUserLoggedIn()) {
-            showLoginMessage();
+            showLoginMessage(L.LOGIN_REQUIRED);
             return;
         }
 
@@ -276,7 +284,7 @@ function toggle_visible(id) {
      */
     function handleMoreButtonClick(event) {
         event.preventDefault();
-        event.stopPropagation();
+        event.stopPropagation(); // Empêche la fermeture immédiate par le listener global
 
         if (!isUserLoggedIn()) {
             showLoginMessage();
@@ -396,7 +404,7 @@ function toggle_visible(id) {
             searchInput = document.createElement('input');
             searchInput.type = 'text';
             searchInput.className = 'emoji-search-input';
-            searchInput.placeholder = 'Rechercher...';
+            searchInput.placeholder = L.SEARCH;
             searchInput.autocomplete = 'off';
             header.appendChild(searchInput);
         }
@@ -404,7 +412,7 @@ function toggle_visible(id) {
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'emoji-picker-close';
-        closeBtn.title = 'Fermer';
+        closeBtn.title = L.CLOSE;
         closeBtn.setAttribute('aria-label', 'Fermer');
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -422,7 +430,7 @@ function toggle_visible(id) {
 
         const frequentTitle = document.createElement('div');
         frequentTitle.className = 'emoji-category-title';
-        frequentTitle.textContent = 'Utilisé fréquemment';
+        frequentTitle.textContent = L.FREQUENTLY_USED;
 
         const frequentGrid = document.createElement('div');
         frequentGrid.className = 'emoji-grid';
@@ -681,7 +689,7 @@ function toggle_visible(id) {
         if (results.length === 0) {
             const noResults = document.createElement('div');
             noResults.classList.add('emoji-no-results');
-            noResults.textContent = 'Aucun emoji trouvé';
+            noResults.textContent = L.NO_EMOJI_FOUND;
             container.appendChild(noResults);
             return;
         }
@@ -713,7 +721,7 @@ function toggle_visible(id) {
 
         const commonTitle = document.createElement('div');
         commonTitle.classList.add('common-section-title');
-        commonTitle.textContent = 'Utilisé fréquemment';
+        commonTitle.textContent = L.FREQUENTLY_USED;
         commonSection.appendChild(commonTitle);
 
         const commonGrid = document.createElement('div');
@@ -784,7 +792,7 @@ function toggle_visible(id) {
      * - Fermeture au clic sur bouton OK
      * - Auto-fermeture après 5 secondes
      */
-    function showLoginMessage() {
+    function showLoginMessage(text) {
         // Vérifier qu'il n'y a pas déjà un message affiché
         if (document.querySelector('.reactions-login-message')) {
             return;
@@ -806,7 +814,7 @@ function toggle_visible(id) {
             text-align: center;
         `;
         message.innerHTML = `
-            <p>Vous devez être connecté pour réagir aux messages.</p>
+            <p>${escapeHtml(text)}</p>
             <button class="reactions-login-dismiss" style="margin-top: 10px; padding: 5px 15px; cursor: pointer;">OK</button>
         `;
         document.body.appendChild(message);

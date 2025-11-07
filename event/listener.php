@@ -140,6 +140,15 @@ class listener implements EventSubscriberInterface
             'REACTIONS_PICKER_USE_JSON'        => $picker_use_json,
             'REACTIONS_SYNC_INTERVAL'          => $sync_interval,
         ]);
+        
+        // Traductions pour JavaScript
+        $js_lang = [
+            'SEARCH'            => $this->language->lang('SEARCH'), // Clé phpBB standard
+            'CLOSE'             => $this->language->lang('CLOSE'), // Clé phpBB standard
+            'FREQUENTLY_USED'   => $this->language->lang('REACTIONS_COMMON_EMOJIS'),
+            'NO_EMOJI_FOUND'    => $this->language->lang('NO_RESULTS'), // Clé phpBB standard
+            'LOGIN_REQUIRED'    => $this->language->lang('REACTIONS_LOGIN_REQUIRED'),
+        ];
 
         $debug_mode = (defined('DEBUG') && DEBUG) ? 'true' : 'false';
 
@@ -157,8 +166,9 @@ class listener implements EventSubscriberInterface
                 'showCategories:' . ($picker_show_categories ? 'true' : 'false') . ',' .
                 'showSearch:' . ($picker_show_search ? 'true' : 'false') . ',' .
                 'useJson:' . ($picker_use_json ? 'true' : 'false') . ',' .
-                'syncInterval:' . (int) $sync_interval .
-            '};'
+                'syncInterval:' . (int) $sync_interval . ',' .
+            '};' .
+            'window.REACTIONS_LANG = ' . json_encode($js_lang, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS) . ';'
         );
     }
 

@@ -1,11 +1,13 @@
 <?php
 /**
- * File: language/fr/acp/common.php
- * Extension: bastien59960/reactions
+ * File: language/fr/common.php — bastien59960/reactions
+ * @author Bastien (bastien59960)
+ * @github https://github.com/bastien59960/reactions
  *
- * Description:
- * Chaînes de langue françaises pour le Panneau de Contrôle Administration (ACP)
- * de l'extension Reactions.
+ * Rôle:
+ * Ce fichier contient les chaînes de langue françaises générales pour l'interface
+ * utilisateur (UI), les messages d'erreur, les info-bulles et les options de l'extension.
+ * Il est chargé sur la plupart des pages où l'extension est active.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -16,40 +18,78 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
-    // --- Titres des modules ---
-    'ACP_REACTIONS_TITLE'                => 'Réactions aux messages',
-    'ACP_REACTIONS_SETTINGS'             => 'Paramètres',
-    'ACP_REACTIONS_IMPORT'               => 'Importer les réactions',
-    'ACP_REACTIONS_SETTINGS_EXPLAIN'     => 'Configure le comportement et les limites appliquées aux réactions.',
+    // =============================================================================
+    // MESSAGES DE L'INTERFACE UTILISATEUR
+    // =============================================================================
+    'REACTION_ADD'              => 'Ajouter une réaction',
+    'REACTION_REMOVE'           => 'Retirer votre réaction',
+    'REACTION_MORE'             => 'Plus de réactions',
+    'REACTION_LOADING'          => 'Chargement...',
+    'REACTION_ERROR'            => 'Erreur lors de la réaction',
+    'REACTION_SUCCESS_ADD'      => 'Réaction ajoutée avec succès',
+    'REACTION_SUCCESS_REMOVE'   => 'Réaction retirée avec succès',
+    
+    // =============================================================================
+    // MESSAGES D'ERREUR ET DE VALIDATION
+    // =============================================================================
+    'REACTION_NOT_AUTHORIZED'   => 'Vous n\'êtes pas autorisé à réagir',
+    'REACTION_INVALID_POST'     => 'Message invalide',
+    'REACTION_INVALID_EMOJI'    => 'Emoji invalide',
+    'REACTION_ALREADY_ADDED'    => 'Vous avez déjà réagi avec cet emoji',
+    'REACTION_ALREADY_EXISTS'   => 'Vous avez déjà réagi avec cet emoji', // Compatibilité
+    'REACTION_NOT_FOUND'        => 'Réaction introuvable',
+    
+    // =============================================================================
+    // COMPTEURS ET AFFICHAGE
+    // =============================================================================
+    'REACTION_COUNT_SINGULAR'   => '%d réaction',
+    'REACTION_COUNT_PLURAL'     => '%d réactions',
+    'REACTIONS_TITLE'           => 'Réactions',
+    'NO_REACTIONS'              => 'Aucune réaction pour le moment',
+    'REACTIONS_BY_USERS'        => 'Réactions des utilisateurs',
+    'REACTION_BY_USER'          => 'Réaction de %s',
+    'REACTIONS_SEPARATOR'       => ', ',
+    'REACTION_AND'              => ' et ',
+    
+    // =============================================================================
+    // EMOJIS ET INTERFACE
+    // =============================================================================
+    'REACTIONS_COMMON_EMOJIS'   => 'Emojis courants',
+    'REACTIONS_LOGIN_REQUIRED'  => 'Vous devez être connecté pour réagir aux messages',
+    'REACTIONS_JSON_ERROR'      => 'Erreur de chargement des emojis',
+    'REACTIONS_FALLBACK_INFO'   => 'Fichier JSON non accessible. Seuls les emojis courants sont disponibles.',
+    
+    // =============================================================================
+    // INFO-BULLES ET AIDE CONTEXTUELLE
+    // =============================================================================
+    'REACTIONS_ADD_TOOLTIP'     => 'Ajouter une réaction',
+    'REACTIONS_MORE_TOOLTIP'    => 'Plus d\'emojis',
+    'REACTIONS_COUNT_TOOLTIP'   => '%d réaction(s)',
+    
+    // =============================================================================
+    // MESSAGES TECHNIQUES ET DE DÉBOGAGE
+    // =============================================================================
+    'REACTIONS_DEBUG_ENABLED'   => 'Mode débogage des réactions activé',
+    'REACTIONS_CSRF_ERROR'      => 'Jeton CSRF invalide',
+    'REACTIONS_SERVER_ERROR'    => 'Erreur serveur lors de la réaction',
+    
+    // =============================================================================
+    // LIMITES ET RESTRICTIONS
+    // =============================================================================
+    'REACTIONS_LIMIT_POST'      => 'Maximum %d types de réactions par message',
+    'REACTIONS_LIMIT_USER'      => 'Maximum %d types de réactions par utilisateur et par message',
+    'REACTION_LIMIT_POST'       => 'Limite de types de réactions pour ce message atteinte',
+    'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
+    'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
 
-    // --- Descriptions des paramètres ---
-    'REACTIONS_SPAM_TIME'                => 'Délai entre les résumés par e-mail',
-    'REACTIONS_SPAM_TIME_EXPLAIN'        => 'Délai minimum (en minutes) entre l\'envoi de deux résumés par e-mail au même utilisateur.',
-    'REACTIONS_MAX_PER_POST'             => 'Maximum de types par message',
-    'REACTIONS_MAX_PER_POST_EXPLAIN'     => 'Nombre maximum de types de réactions différents autorisés sur un seul message.',
-    'REACTIONS_MAX_PER_USER'             => 'Maximum par utilisateur',
-    'REACTIONS_MAX_PER_USER_EXPLAIN'     => 'Nombre maximum de réactions qu\'un utilisateur peut ajouter à un seul message.',
+    'NO_SUBJECT'                    => '(Pas de sujet)',
 
-    'REACTIONS_DISPLAY_SETTINGS'         => 'Paramètres d\'affichage et du sélecteur',
-    'REACTIONS_POST_EMOJI_SIZE'          => 'Taille des emojis sous les messages',
-    'REACTIONS_POST_EMOJI_SIZE_EXPLAIN'  => 'Définit la taille (en pixels) des réactions affichées sous chaque message.',
-    'REACTIONS_PICKER_EMOJI_SIZE'        => 'Taille des icônes du sélecteur',
-    'REACTIONS_PICKER_EMOJI_SIZE_EXPLAIN'=> 'Taille (en pixels) des emojis du sélecteur ainsi que des icônes d\'onglet/catégorie.',
-    'REACTIONS_PICKER_WIDTH'             => 'Largeur du sélecteur',
-    'REACTIONS_PICKER_WIDTH_EXPLAIN'     => 'Largeur (en pixels) de la palette d\'emojis.',
-    'REACTIONS_PICKER_HEIGHT'            => 'Hauteur du sélecteur',
-    'REACTIONS_PICKER_HEIGHT_EXPLAIN'    => 'Hauteur (en pixels) de la palette d\'emojis.',
-    'REACTIONS_PICKER_SHOW_CATEGORIES'   => 'Afficher les catégories',
-    'REACTIONS_PICKER_SHOW_CATEGORIES_EXPLAIN' => 'Décochez pour masquer les onglets de catégories et n\'afficher que les emojis rapides.',
-    'REACTIONS_PICKER_SHOW_SEARCH'       => 'Afficher la recherche',
-    'REACTIONS_PICKER_SHOW_SEARCH_EXPLAIN' => 'Décochez pour supprimer le champ de recherche de la palette.',
-    'REACTIONS_PICKER_USE_JSON'          => 'Charger le jeu complet d\'emojis',
-    'REACTIONS_PICKER_USE_JSON_EXPLAIN'  => 'Décochez pour ne pas charger le fichier JSON externe et n\'afficher que les 10 emojis fréquents.',
-    'REACTIONS_SYNC_INTERVAL'            => 'Intervalle de rafraîchissement',
-    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Temps (en millisecondes) entre les mises à jour automatiques des réactions.',
-
-    // --- Messages du journal d'administration ---
-    'LOG_REACTIONS_IMPORT_START'         => '<strong>Tentative d\'importation des réactions</strong><br>• Recherche de données d\'une ancienne extension de réactions.',
-    'LOG_REACTIONS_IMPORT_EMPTY'         => '<strong>Importation des réactions ignorée</strong><br>• D\'anciennes tables ont été trouvées mais étaient vides.',
-    'LOG_REACTIONS_IMPORT_SUCCESS'       => '<strong>Importation des réactions terminée</strong><br>• %1$d réactions importées (%2$d ignorées).<br>• %3$d utilisateurs et %4$d messages affectés.',
+    // =============================================================================
+    // TÂCHES CRON (ACP)
+    // =============================================================================
+    'BASTIEN59960_REACTIONS_TEST'              => 'Réactions : Test système',
+    'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Test périodique pour vérifier que le système de cron de l\'extension Reactions fonctionne correctement.',
+    'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Réactions : Envoyer les résumés par e-mail',
+    'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Regroupe les nouvelles réactions et envoie des résumés périodiques par e-mail aux utilisateurs.',
+    'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Cron de test des réactions exécuté</strong><br>» La tâche de test pour l\'extension Reactions s\'est exécutée avec succès.',
 ]);
