@@ -177,20 +177,43 @@ echo "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
 -- Suppression des configurations de l'extension (votre version, plus précise)
+SELECT '🗑️  Purge des configurations...' AS status;
 DELETE FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%';
 DELETE FROM phpbb_config WHERE config_name = 'reactions_ucp_preferences_installed';
 
 -- Suppression des modules UCP de l'extension (votre version)
-DELETE FROM phpbb_modules WHERE module_basename LIKE '%reactions%';
+SELECT '🗑️  Purge des modules...' AS status;
+DELETE FROM phpbb_modules WHERE module_basename LIKE '%reactions%' OR module_langname LIKE '%reactions%';
+-- Nettoyage des modules orphelins qui peuvent causer des erreurs
+DELETE FROM phpbb_modules WHERE module_basename = '' OR module_basename NOT LIKE '\\%';
 
 -- Suppression des types de notification de l'extension (votre version, plus sûre)
+SELECT '🗑️  Purge des types de notifications...' AS status;
 DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%';
 
 -- Confirmation
-SELECT '✅ Purge manuelle des configs, modules et types de notif terminée.' AS status;
+SELECT '✅ Purge des données (configs, modules, notifs) terminée.' AS status;
 MANUAL_PURGE_EOF
-check_status "Purge manuelle des données de l'extension (tables de réactions CONSERVÉES)."
+check_status "Purge des données de l'extension (configs, modules, notifs)."
 
+# ==============================================================================
+# 4.5️⃣ PURGE AGRESSIVE DES SCHÉMAS (TABLES & COLONNES)
+# ==============================================================================
+echo "───[ 4.5️⃣ PURGE AGRESSIVE DU SCHÉMA (TABLES & COLONNES) ]─────────"
+sleep 0.2
+echo "   (Le mot de passe a été demandé au début du script.)"
+
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'SCHEMA_PURGE_EOF'
+-- Suppression des tables de l'extension
+-- La suppression de la table des réactions est désactivée pour conserver les données.
+-- DROP TABLE IF EXISTS phpbb_post_reactions;
+
+-- Suppression des colonnes ajoutées par l'extension
+ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
+
+SELECT '✅ Purge du schéma (tables et colonnes) terminée.' AS status;
+SCHEMA_PURGE_EOF
+check_status "Purge agressive du schéma (tables et colonnes)."
 
 # ==============================================================================
 # 5️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)

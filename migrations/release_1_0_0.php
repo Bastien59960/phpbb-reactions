@@ -43,34 +43,41 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 
     public function update_schema()
     {
-        return array(
-            'add_tables' => array(
-                $this->table_prefix . 'post_reactions' => array(
-                    'COLUMNS' => array(
-                        'reaction_id'       => array('UINT', null, 'auto_increment'),
-                        'post_id'           => array('UINT', 0),
-                        'topic_id'          => array('UINT', 0),
-                        'user_id'           => array('UINT', 0),
-                        'reaction_emoji'    => array('VCHAR:191', ''),
-                        'reaction_time'     => array('UINT:11', 0),
-                        'reaction_notified' => array('BOOL', 0),
-                    ),
-                    'PRIMARY_KEY' => 'reaction_id',
-                    'KEYS' => array(
-                        'post_id'           => array('INDEX', 'post_id'),
-                        'topic_id'          => array('INDEX', 'topic_id'),
-                        'user_id'           => array('INDEX', 'user_id'),
-                        'post_notified_idx' => array('INDEX', array('post_id', 'reaction_notified')),
-                    ),
-                ),
-            ),
-            'add_columns' => array(
-                $this->table_prefix . 'users' => array(
-                    'user_reactions_notify'     => array('BOOL', 1),
-                    'user_reactions_cron_email' => array('BOOL', 1),
-                ),
-            ),
-        );
+        $schema_updates = [];
+
+        // Ne tente de créer la table que si elle n'existe pas déjà.
+        if (!$this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions'))
+        {
+            $schema_updates['add_tables'] = [
+                $this->table_prefix . 'post_reactions' => [
+                    'COLUMNS'       => [
+                        'reaction_id'       => ['UINT', null, 'auto_increment'],
+                        'post_id'           => ['UINT', 0],
+                        'topic_id'          => ['UINT', 0],
+                        'user_id'           => ['UINT', 0],
+                        'reaction_emoji'    => ['VCHAR:191', ''],
+                        'reaction_time'     => ['UINT:11', 0],
+                        'reaction_notified' => ['BOOL', 0],
+                    ],
+                    'PRIMARY_KEY'   => 'reaction_id',
+                    'KEYS'          => [
+                        'post_id'           => ['INDEX', 'post_id'],
+                        'topic_id'          => ['INDEX', 'topic_id'],
+                        'user_id'           => ['INDEX', 'user_id'],
+                        'post_notified_idx' => ['INDEX', ['post_id', 'reaction_notified']],
+                    ],
+                ],
+            ];
+        }
+
+        $schema_updates['add_columns'] = [
+            $this->table_prefix . 'users' => [
+                'user_reactions_notify'     => ['BOOL', 1],
+                'user_reactions_cron_email' => ['BOOL', 1],
+            ],
+        ];
+
+        return $schema_updates;
     }
 
     public function revert_schema()
