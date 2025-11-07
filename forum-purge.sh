@@ -75,13 +75,12 @@ sleep 0.2
 echo "───[ 0️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
 sleep 0.2
 
-# Suppression des conteneurs compilés et fichiers de cache de production
-rm -vrf "$FORUM_ROOT/cache/production/container_"*
-rm -vrf "$FORUM_ROOT/cache/production/"*.php
+# Suppression de TOUT le contenu du cache de production pour forcer une reconstruction complète
+rm -vrf "$FORUM_ROOT/cache/production/"*
 check_status "Nettoyage du cache de production."
 
-# Suppression des conteneurs compilés du store
-rm -vrf "$FORUM_ROOT/store/container_"*
+# Suppression de TOUT le contenu du store (sauf .htaccess et index.htm)
+find "$FORUM_ROOT/store" -mindepth 1 -not -name ".htaccess" -not -name "index.htm" -exec rm -vrf {} +
 check_status "Nettoyage du store."
 
 # Rétablissement des permissions pour éviter les erreurs d'écriture
