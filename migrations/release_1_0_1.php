@@ -35,6 +35,16 @@ class release_1_0_1 extends \phpbb\db\migration\migration
         );
     }
 
+    public function revert_data()
+    {
+        // L'importation est une opération à sens unique.
+        // Il n'y a rien à faire lors de la purge, mais il est CRUCIAL
+        // de retourner un tableau pour éviter une erreur fatale.
+        return [
+            ['config.remove', ['bastien59960_reactions_imported', true]],
+        ];
+    }
+
     public function run_importer()
     {
         $importer = $this->container->get('bastien59960.reactions.importer');
@@ -42,5 +52,8 @@ class release_1_0_1 extends \phpbb\db\migration\migration
             $importer->set_io($this->container->get('console.io'));
         }
         $importer->run();
+
+        // CRUCIAL : Retourner un tableau pour que le migrateur ne lève pas de TypeError.
+        return [];
     }
 }

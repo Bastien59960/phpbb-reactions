@@ -21,8 +21,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     {
         $types_table = $this->table_prefix . 'notification_types';
         $sql = 'SELECT notification_type_id
-                FROM ' . $types_table . "
-                WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'";
+                FROM ' . $types_table . " 
+                WHERE notification_type_name = 'notification.type.reaction'";
         $result = $this->db->sql_query($sql);
         $exists = (bool) $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
@@ -105,6 +105,20 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
             array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
+            // Ajout du module UCP
+            array('module.add', array(
+                'ucp',
+                'UCP_PREFS',
+                array(
+                    'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
+                    'modes'             => array('settings'),
+                ),
+            )),
+
+            // Ajout des types de notifications
+            array('notification.type.add', array('notification.type.reaction')),
+            array('notification.type.add', array('notification.type.reaction_email_digest')),
+
             // Étapes personnalisées
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
             array('custom', array(array($this, 'clean_orphan_notifications'))), // Keep this for cleanup
@@ -128,6 +142,17 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('bastien59960_reactions_picker_use_json')),
             array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
             array('config.remove', array('bastien59960_reactions_sync_interval')),
+
+            // Suppression du module UCP
+            array('module.remove', array(
+                'ucp',
+                'UCP_PREFS',
+                array('module_basename' => '\bastien59960\reactions\ucp\reactions_module'),
+            )),
+
+            // Suppression des types de notifications
+            array('notification.type.remove', array('notification.type.reaction')),
+            array('notification.type.remove', array('notification.type.reaction_email_digest')),
         );
     }
 
@@ -138,6 +163,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 MODIFY `reaction_emoji` VARCHAR(191)
                 CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
         $this->db->sql_query($sql);
+
+        return [];
     }
 
     public function clean_orphan_notifications()
@@ -150,5 +177,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 SELECT notification_type_id FROM {$types}
             )";
         $this->db->sql_query($sql);
+
+        return [];
     }
 }

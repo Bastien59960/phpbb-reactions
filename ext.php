@@ -101,7 +101,7 @@ class ext extends \phpbb\extension\base
 			$notification_manager = $this->container->get('notification_manager');
 			
 			// Désactiver la notification cloche
-			$notification_manager->disable_notifications('bastien59960.reactions.reaction');
+			$notification_manager->disable_notifications('notification.type.reaction');
 		
 			// Désactiver la notification email digest
 			$notification_manager->disable_notifications('notification.type.reaction_email_digest');

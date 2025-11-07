@@ -141,6 +141,7 @@ sleep 0.2
 
 mysql -u "$DB_USER" -p "$DB_NAME" <<EOF
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
+UPDATE phpbb_post_reactions SET reaction_notified = 0;
 EOF
 
 check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
