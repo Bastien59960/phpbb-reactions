@@ -21,6 +21,18 @@ services:
             - '%tables.post_reactions%'     # 6. nom de la table des réactions
 
     # =========================================================================
+    # SERVICE D'IMPORTATION
+    # =========================================================================
+    bastien59960.reactions.importer:
+        class: bastien59960\reactions\service\importer
+        arguments:
+            - '@dbal.conn'
+            - '@log'
+            - '@user'
+            - '@dbal.tools'
+            - '%core.table_prefix%'
+
+    # =========================================================================
     # LISTENER D'ÉVÉNEMENTS
     # =========================================================================
     bastien59960.reactions.listener:
