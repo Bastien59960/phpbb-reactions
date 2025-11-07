@@ -446,7 +446,7 @@ class ajax
             ob_end_clean();
             return new JsonResponse([
                 'success' => false,
-                'error'   => $httpEx->getMessage(),
+                'error'   => $this->language->get($httpEx->getMessage(), ...$httpEx->getPrevious() ? $httpEx->getPrevious()->getTrace() : []),
                 'rid'     => $rid,
             ], $httpEx->getStatusCode());
 
@@ -456,7 +456,7 @@ class ajax
             ob_end_clean();
             return new JsonResponse([
                 'success' => false,
-                'error'   => 'Erreur serveur',
+                'error'   => (defined('DEBUG') && DEBUG) ? $e->getMessage() : 'Erreur serveur',
                 'rid'     => $rid,
             ], 500);
 

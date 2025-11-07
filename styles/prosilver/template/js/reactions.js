@@ -333,6 +333,18 @@ function toggle_visible(id) {
         picker.style.left = `${rect.left + window.scrollX}px`;
         picker.style.zIndex = '10000';
     }
+    
+    /**
+     * Gère le clic sur un emoji dans le picker (via délégation)
+     * @param {MouseEvent} event 
+     */
+    function handlePickerEmojiClick(event) {
+        const target = event.target.closest('.emoji-cell');
+        if (target && target.dataset.emoji && target.dataset.postId) {
+            sendReaction(target.dataset.postId, target.dataset.emoji);
+            closeAllPickers();
+        }
+    }
 
 
     /* ---------------------------------------------------------------------- */
@@ -362,6 +374,9 @@ function toggle_visible(id) {
         const hasEmojiData = emojiData && typeof emojiData === 'object' && emojiData.emojis && Object.keys(emojiData.emojis).length > 0;
         const enableCategories = options.showCategories !== false && hasEmojiData;
         const enableSearch = options.showSearch !== false;
+
+        // Attacher le listener pour les clics sur les emojis via délégation
+        picker.addEventListener('click', handlePickerEmojiClick);
 
         picker.classList.toggle('emoji-picker--no-categories', !enableCategories);
         picker.classList.toggle('emoji-picker--no-search', !enableSearch);
@@ -583,12 +598,7 @@ function toggle_visible(id) {
         cell.textContent = cleanEmoji;
         cell.setAttribute('data-emoji', cleanEmoji);
         cell.title = name;
-        
-        cell.addEventListener('click', () => {
-            sendReaction(postId, cleanEmoji);
-            closeAllPickers();
-        });
-        
+        cell.setAttribute('data-post-id', postId); // Ajout du post-id pour la délégation
         return cell;
     }
 
@@ -895,6 +905,16 @@ function toggle_visible(id) {
             console.debug('[Reactions] Envoi payload:', payload);
         }
         // =====================================================================
+        // AJOUT D'UN INDICATEUR DE CHARGEMENT
+        // =====================================================================
+        const clickedElement = document.querySelector(
+            `.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${cleanEmoji}"]`
+        );
+        if (clickedElement) {
+            clickedElement.classList.add('loading');
+        }
+
+        // =====================================================================
         // ÉTAPE 4 : ENVOI DE LA REQUÊTE AJAX
         // =====================================================================
         
@@ -966,6 +986,11 @@ function toggle_visible(id) {
                 // Ce bloc est intentionnellement laissé vide.
                 // Toutes les erreurs (4xx, 5xx) sont maintenant gérées par le bloc .catch()
                 // pour une gestion centralisée et plus claire.
+            }
+        })
+        .finally(() => {
+            if (clickedElement) {
+                clickedElement.classList.remove('loading');
             }
         })
         .catch(error => {
