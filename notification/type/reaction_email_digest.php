@@ -66,7 +66,7 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
      */
     public function get_type()
     {
-        return 'reaction_email_digest';
+        return 'bastien59960.reactions.reaction_email_digest';
     }
 
     /**

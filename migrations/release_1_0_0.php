@@ -34,7 +34,7 @@ public function effectively_installed()
     $types_table = $this->table_prefix . 'notification_types';
     $sql = 'SELECT notification_type_id
             FROM ' . $types_table . "
-            WHERE notification_type_name = 'notification.type.reaction'";
+            WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'";
     $result = $this->db->sql_query($sql);
     $type_exists = (bool) $this->db->sql_fetchrow($result);
     $this->db->sql_freeresult($result);
@@ -218,7 +218,7 @@ public function create_notification_type()
 
     // === TYPE 1 : notification.type.reaction (instantané, cloche) ===
     // Ce type gère les notifications immédiates dans la "cloche" du forum.
-    $canonical_name = 'notification.type.reaction';
+    $canonical_name = 'bastien59960.reactions.notification.type.reaction';
     $sql = 'SELECT notification_type_id FROM ' . $types_table . "
         WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
         LIMIT 1";
@@ -230,13 +230,13 @@ public function create_notification_type()
         $insert_data = array(
             'notification_type_name'    => $canonical_name,
             'notification_type_enabled' => 1,
-        );
+        ];
         $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
     }
 
     // === TYPE 2 : notification.type.reaction_email_digest (résumé e-mail) ===
     // Ce type est utilisé par la tâche CRON pour envoyer des résumés périodiques par e-mail.
-    $digest_name = 'notification.type.reaction_email_digest';
+    $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest';
     $sql = 'SELECT notification_type_id FROM ' . $types_table . "
         WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
         LIMIT 1";
@@ -263,8 +263,8 @@ public function create_notification_type()
     {
         $notification_manager = $this->container->get('notification_manager');
         $notification_types = [
-            'notification.type.reaction',
-            'notification.type.reaction_email_digest',
+            'bastien59960.reactions.notification.type.reaction', // Nom complet du service
+            'bastien59960.reactions.notification.type.reaction_email_digest', // Nom complet du service
         ];
 
         foreach ($notification_types as $type)
@@ -315,8 +315,8 @@ public function purge_notification_types()
 {
     $types_table = $this->table_prefix . 'notification_types';
     $names = array(
-        'notification.type.reaction',
-        'notification.type.reaction_email_digest',
+        'bastien59960.reactions.notification.type.reaction',
+        'bastien59960.reactions.notification.type.reaction_email_digest',
     );
 
     $notification_manager = $this->container->get('notification_manager');
