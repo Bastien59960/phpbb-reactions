@@ -242,23 +242,47 @@ try {
     $db->sql_freeresult($result);
     
     if (!empty($migrations_in_db)) {
+        echo "⚠️  ATTENTION : Des migrations sont encore en base de données !\n";
+        echo "   Cela pourrait causer le problème array_merge()\n\n";
+        
         foreach ($migrations_in_db as $migration) {
             $name = $migration['migration_name'];
+            $depends_on_serialized = $migration['migration_depends_on'];
+            
             // Extraire le nom de classe depuis le nom de migration
             $parts = explode('\\', $name);
             $class_name_from_db = end($parts);
             $file_path = $migrations_path . '/' . $class_name_from_db . '.php';
             
             echo "📋 Migration en DB : $name\n";
+            
+            // Tester la désérialisation des dépendances
+            $depends_on_unserialized = @unserialize($depends_on_serialized);
+            if ($depends_on_unserialized === false && $depends_on_serialized !== serialize(false)) {
+                echo "   ❌ PROBLÈME : Impossible de désérialiser migration_depends_on !\n";
+                echo "      Valeur sérialisée : $depends_on_serialized\n";
+                echo "      💡 C'est probablement la cause de l'erreur array_merge() !\n";
+            } else {
+                $type = gettype($depends_on_unserialized);
+                if ($type === 'array') {
+                    echo "   ✅ Dépendances désérialisées : array (" . count($depends_on_unserialized) . " éléments)\n";
+                } else {
+                    echo "   ❌ PROBLÈME : Dépendances désérialisées en $type au lieu d'un array !\n";
+                    echo "      Valeur : " . var_export($depends_on_unserialized, true) . "\n";
+                    echo "      💡 C'est la cause de l'erreur array_merge() !\n";
+                }
+            }
+            
             if (file_exists($file_path)) {
                 echo "   ✅ Fichier existe : " . basename($file_path) . "\n";
             } else {
                 echo "   ❌ Fichier MANQUANT : " . basename($file_path) . "\n";
                 echo "   💡 Cette migration orpheline pourrait causer le problème !\n";
             }
+            echo "\n";
         }
     } else {
-        echo "ℹ️  Aucune migration enregistrée en base de données\n";
+        echo "✅ Aucune migration enregistrée en base de données (état propre)\n";
     }
     echo "\n";
     
@@ -332,6 +356,130 @@ try {
         echo "❌ ERREUR lors du test avec migrator : " . $e->getMessage() . "\n";
         echo "   Fichier : " . $e->getFile() . ":" . $e->getLine() . "\n";
         echo "   Trace :\n" . $e->getTraceAsString() . "\n";
+    }
+    
+    // TEST FINAL : Simuler exactement ce que fait phpBB lors de l'activation
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ TEST FINAL : Simulation activation réelle par phpBB         │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    echo "🔍 Tentative de récupération des migrations depuis la base de données...\n";
+    
+    // Récupérer toutes les migrations de cette extension depuis la DB
+    $sql = "SELECT migration_name, migration_depends_on 
+            FROM {$table_prefix}migrations 
+            WHERE migration_name LIKE '%bastien59960%reactions%'
+            ORDER BY migration_name";
+    $result = $db->sql_query($sql);
+    $db_migrations = $db->sql_fetchrowset($result);
+    $db->sql_freeresult($result);
+    
+    if (!empty($db_migrations)) {
+        echo "📋 Migrations trouvées en base de données : " . count($db_migrations) . "\n\n";
+        
+        $all_deps_from_db = array();
+        
+        foreach ($db_migrations as $db_migration) {
+            $migration_name = $db_migration['migration_name'];
+            $depends_on_serialized = $db_migration['migration_depends_on'];
+            
+            echo "🔍 Traitement de la migration depuis DB : $migration_name\n";
+            
+            // Désérialiser les dépendances comme le fait phpBB
+            $depends_on = @unserialize($depends_on_serialized);
+            
+            if ($depends_on === false && $depends_on_serialized !== serialize(false)) {
+                echo "   ❌ ERREUR : Impossible de désérialiser migration_depends_on !\n";
+                echo "      Valeur sérialisée : $depends_on_serialized\n";
+                echo "      💡 C'est probablement la cause de l'erreur array_merge() !\n\n";
+                continue;
+            }
+            
+            $type = gettype($depends_on);
+            echo "   Type après désérialisation : $type\n";
+            
+            if (!is_array($depends_on)) {
+                echo "   ❌ PROBLÈME CRITIQUE : depends_on n'est PAS un array !\n";
+                echo "      Type : $type\n";
+                echo "      Valeur : " . var_export($depends_on, true) . "\n";
+                echo "      💡 C'est la cause exacte de l'erreur array_merge() ligne 788 !\n\n";
+                
+                // Tenter array_merge pour confirmer l'erreur
+                try {
+                    $all_deps_from_db = array_merge($all_deps_from_db, $depends_on);
+                } catch (\TypeError $e) {
+                    echo "   ❌ ERREUR array_merge() confirmée : " . $e->getMessage() . "\n";
+                    echo "      💡 C'est exactement l'erreur que vous voyez !\n\n";
+                }
+                continue;
+            }
+            
+            echo "   ✅ depends_on est un array (" . count($depends_on) . " éléments)\n";
+            
+            // Tenter array_merge() comme à la ligne 788 de migrator.php
+            try {
+                $all_deps_from_db = array_merge($all_deps_from_db, $depends_on);
+                echo "   ✅ array_merge() réussi\n";
+            } catch (\TypeError $e) {
+                echo "   ❌ ERREUR array_merge() : " . $e->getMessage() . "\n";
+                echo "      💡 C'est la cause exacte du problème !\n";
+            }
+            echo "\n";
+        }
+        
+        echo "✅ Test terminé. Total dépendances depuis DB : " . count($all_deps_from_db) . "\n";
+    } else {
+        echo "ℹ️  Aucune migration en base de données (état propre pour activation)\n";
+        echo "   💡 Si l'erreur persiste, elle vient peut-être d'une autre extension\n\n";
+        
+        // Vérifier s'il y a d'autres migrations problématiques
+        echo "🔍 Recherche de migrations problématiques dans TOUTES les extensions...\n";
+        
+        $sql = "SELECT migration_name, migration_depends_on 
+                FROM {$table_prefix}migrations 
+                ORDER BY migration_name";
+        $result = $db->sql_query($sql);
+        $all_migrations = $db->sql_fetchrowset($result);
+        $db->sql_freeresult($result);
+        
+        $problematic_migrations = array();
+        
+        foreach ($all_migrations as $migration) {
+            $depends_on_serialized = $migration['migration_depends_on'];
+            $depends_on = @unserialize($depends_on_serialized);
+            
+            if ($depends_on === false && $depends_on_serialized !== serialize(false)) {
+                $problematic_migrations[] = array(
+                    'name' => $migration['migration_name'],
+                    'issue' => 'impossible_to_unserialize',
+                    'value' => $depends_on_serialized
+                );
+            } elseif (!is_array($depends_on) && $depends_on !== false) {
+                $problematic_migrations[] = array(
+                    'name' => $migration['migration_name'],
+                    'issue' => 'not_an_array',
+                    'type' => gettype($depends_on),
+                    'value' => $depends_on
+                );
+            }
+        }
+        
+        if (!empty($problematic_migrations)) {
+            echo "⚠️  Migrations problématiques trouvées : " . count($problematic_migrations) . "\n\n";
+            foreach ($problematic_migrations as $problem) {
+                echo "❌ Migration : " . $problem['name'] . "\n";
+                if ($problem['issue'] === 'impossible_to_unserialize') {
+                    echo "   Problème : Impossible de désérialiser migration_depends_on\n";
+                    echo "   Valeur : " . $problem['value'] . "\n";
+                } elseif ($problem['issue'] === 'not_an_array') {
+                    echo "   Problème : depends_on n'est pas un array (type: " . $problem['type'] . ")\n";
+                    echo "   Valeur : " . var_export($problem['value'], true) . "\n";
+                }
+                echo "   💡 Cette migration pourrait causer l'erreur array_merge() !\n\n";
+            }
+        } else {
+            echo "✅ Aucune migration problématique trouvée dans toutes les extensions\n";
+        }
     }
     
 } catch (\Throwable $e) {
