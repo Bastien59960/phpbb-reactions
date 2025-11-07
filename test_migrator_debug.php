@@ -184,6 +184,55 @@ try {
     echo "✅ Tous les tests de chargement terminés\n";
     echo "   Total dépendances collectées : " . count($all_dependencies) . "\n\n";
     
+    // AFFICHAGE SQL : Toutes les migrations en base de données
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ REQUÊTE SQL : Toutes les migrations en base de données      │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    $sql = "SELECT migration_name, migration_depends_on, 
+                   LENGTH(migration_depends_on) as depends_length,
+                   HEX(LEFT(migration_depends_on, 50)) as depends_hex_start
+            FROM {$table_prefix}migrations 
+            WHERE migration_name LIKE '%bastien59960%reactions%'
+            ORDER BY migration_name";
+    $result = $db->sql_query($sql);
+    $all_migrations_sql = $db->sql_fetchrowset($result);
+    $db->sql_freeresult($result);
+    
+    echo "📊 Résultat de la requête SQL :\n";
+    echo "   Nombre de migrations trouvées : " . count($all_migrations_sql) . "\n\n";
+    
+    if (!empty($all_migrations_sql)) {
+        echo "Détails de chaque migration :\n";
+        echo str_repeat("─", 80) . "\n";
+        foreach ($all_migrations_sql as $row) {
+            echo "Migration : " . $row['migration_name'] . "\n";
+            echo "  - migration_depends_on (longueur) : " . $row['depends_length'] . " bytes\n";
+            echo "  - Début (hex) : " . $row['depends_hex_start'] . "\n";
+            echo "  - Valeur complète : " . $row['migration_depends_on'] . "\n";
+            
+            // Tester la désérialisation
+            $unserialized = @unserialize($row['migration_depends_on']);
+            if ($unserialized === false && $row['migration_depends_on'] !== serialize(false)) {
+                echo "  ❌ ERREUR : Impossible de désérialiser !\n";
+            } else {
+                $type = gettype($unserialized);
+                echo "  - Type après désérialisation : $type\n";
+                if (is_array($unserialized)) {
+                    echo "  - Nombre d'éléments : " . count($unserialized) . "\n";
+                    foreach ($unserialized as $dep) {
+                        echo "    → $dep\n";
+                    }
+                } else {
+                    echo "  ❌ PROBLÈME : Type = $type (devrait être array)\n";
+                    echo "  - Valeur : " . var_export($unserialized, true) . "\n";
+                }
+            }
+            echo str_repeat("─", 80) . "\n";
+        }
+    }
+    echo "\n";
+    
     // Vérifier si la migration de phpBB core référencée existe
     echo "┌─────────────────────────────────────────────────────────────┐\n";
     echo "│ VÉRIFICATION : Migration phpBB core référencée               │\n";
@@ -480,6 +529,74 @@ try {
         } else {
             echo "✅ Aucune migration problématique trouvée dans toutes les extensions\n";
         }
+        
+        // AFFICHAGE SQL : Statistiques sur toutes les migrations
+        echo "\n┌─────────────────────────────────────────────────────────────┐\n";
+        echo "│ REQUÊTE SQL : Statistiques sur TOUTES les migrations         │\n";
+        echo "└─────────────────────────────────────────────────────────────┘\n";
+        
+        $sql = "SELECT 
+                    COUNT(*) as total_migrations,
+                    COUNT(CASE WHEN migration_depends_on IS NULL THEN 1 END) as null_depends,
+                    COUNT(CASE WHEN migration_depends_on = '' THEN 1 END) as empty_depends,
+                    COUNT(CASE WHEN migration_depends_on LIKE 'a:%' THEN 1 END) as serialized_arrays,
+                    COUNT(CASE WHEN migration_depends_on NOT LIKE 'a:%' AND migration_depends_on IS NOT NULL AND migration_depends_on != '' THEN 1 END) as non_array_depends
+                FROM {$table_prefix}migrations";
+        $result = $db->sql_query($sql);
+        $stats = $db->sql_fetchrow($result);
+        $db->sql_freeresult($result);
+        
+        echo "📊 Statistiques globales :\n";
+        echo "   - Total migrations : " . $stats['total_migrations'] . "\n";
+        echo "   - Dépendances NULL : " . $stats['null_depends'] . "\n";
+        echo "   - Dépendances vides : " . $stats['empty_depends'] . "\n";
+        echo "   - Dépendances sérialisées (array) : " . $stats['serialized_arrays'] . "\n";
+        echo "   - Dépendances non-array : " . $stats['non_array_depends'] . "\n";
+        
+        if ($stats['non_array_depends'] > 0) {
+            echo "\n⚠️  ATTENTION : Il y a " . $stats['non_array_depends'] . " migration(s) avec des dépendances non-array !\n";
+            echo "   Affichage des migrations problématiques :\n\n";
+            
+            $sql = "SELECT migration_name, migration_depends_on 
+                    FROM {$table_prefix}migrations 
+                    WHERE migration_depends_on NOT LIKE 'a:%' 
+                      AND migration_depends_on IS NOT NULL 
+                      AND migration_depends_on != ''
+                    LIMIT 10";
+            $result = $db->sql_query($sql);
+            $problematic = $db->sql_fetchrowset($result);
+            $db->sql_freeresult($result);
+            
+            foreach ($problematic as $prob) {
+                echo "❌ Migration : " . $prob['migration_name'] . "\n";
+                echo "   Dépendances : " . $prob['migration_depends_on'] . "\n";
+                echo "   Type (détecté) : " . (substr($prob['migration_depends_on'], 0, 2) === 's:' ? 'string' : 'autre') . "\n";
+                echo "\n";
+            }
+        }
+        echo "\n";
+        
+        // AFFICHAGE SQL : Migrations par extension
+        echo "┌─────────────────────────────────────────────────────────────┐\n";
+        echo "│ REQUÊTE SQL : Migrations groupées par extension             │\n";
+        echo "└─────────────────────────────────────────────────────────────┘\n";
+        
+        $sql = "SELECT 
+                    SUBSTRING_INDEX(migration_name, '\\\\', 2) as extension_prefix,
+                    COUNT(*) as migration_count
+                FROM {$table_prefix}migrations 
+                GROUP BY extension_prefix
+                ORDER BY migration_count DESC
+                LIMIT 20";
+        $result = $db->sql_query($sql);
+        $by_extension = $db->sql_fetchrowset($result);
+        $db->sql_freeresult($result);
+        
+        echo "📊 Migrations par extension (top 20) :\n";
+        foreach ($by_extension as $ext) {
+            echo "   - " . $ext['extension_prefix'] . " : " . $ext['migration_count'] . " migration(s)\n";
+        }
+        echo "\n";
     }
     
 } catch (\Throwable $e) {
