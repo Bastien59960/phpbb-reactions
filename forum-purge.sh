@@ -120,6 +120,19 @@ EOF
 
 check_status "État de l'extension réinitialisé dans la base de données."
 
+# Vérifier que les migrations ont bien été supprimées
+echo ""
+echo "🔍 Vérification de la suppression des migrations..."
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT COUNT(*) as count FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';" | tail -1 | while read count; do
+    if [ "$count" = "0" ]; then
+        echo "✅ Toutes les migrations ont été supprimées (count: $count)"
+    else
+        echo "⚠️  Il reste $count migration(s) en base de données"
+        echo "   Affichage des migrations restantes :"
+        MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT migration_name FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';"
+    fi
+done
+
 # Vérifier les fichiers de migration manquants
 echo ""
 echo "🔍 Vérification des fichiers de migration..."
@@ -381,7 +394,13 @@ if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; th
     
     # Afficher l'erreur complète
     echo "📋 Sortie complète de l'erreur :"
-    echo "$output" | grep -A 10 -B 5 "array_merge\|Fatal error" | head -30
+    echo "$output" | grep -A 20 -B 5 "array_merge\|Fatal error" | head -50
+    echo ""
+    
+    # Sauvegarder la sortie complète dans un fichier pour analyse
+    ERROR_LOG="$FORUM_ROOT/ext/bastien59960/reactions/error_output.log"
+    echo "$output" > "$ERROR_LOG"
+    echo "💾 Sortie complète sauvegardée dans : $ERROR_LOG"
     echo ""
     
     # Vérifier les fichiers de migration
