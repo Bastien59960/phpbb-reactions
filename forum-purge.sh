@@ -116,6 +116,10 @@ SELECT migration_name, migration_depends_on FROM phpbb_migrations WHERE migratio
 -- Supprimer l'extension et ses migrations
 DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
 DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+
+-- Vérifier que les suppressions ont bien eu lieu
+SELECT 'Vérification après suppression:' AS info;
+SELECT COUNT(*) as remaining_count FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
 EOF
 
 check_status "État de l'extension réinitialisé dans la base de données."
@@ -401,6 +405,52 @@ if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; th
     ERROR_LOG="$FORUM_ROOT/ext/bastien59960/reactions/error_output.log"
     echo "$output" > "$ERROR_LOG"
     echo "💾 Sortie complète sauvegardée dans : $ERROR_LOG"
+    echo ""
+    
+    # DIAGNOSTIC SQL : Vérifier l'état de la base de données après l'erreur
+    echo "🔍 Diagnostic SQL après erreur..."
+    MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'ERROR_SQL_EOF'
+-- Vérifier toutes les migrations problématiques
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔴 MIGRATIONS PROBLÉMATIQUES (non-array)' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    migration_name,
+    LEFT(migration_depends_on, 50) as depends_preview,
+    LENGTH(migration_depends_on) as length,
+    CASE 
+        WHEN migration_depends_on LIKE 'a:%' THEN '✅ ARRAY'
+        WHEN migration_depends_on LIKE 's:%' THEN '❌ STRING'
+        WHEN migration_depends_on IS NULL THEN 'NULL'
+        WHEN migration_depends_on = '' THEN 'EMPTY'
+        ELSE '❓ OTHER'
+    END as type_detected
+FROM phpbb_migrations
+WHERE (migration_depends_on NOT LIKE 'a:%' 
+       AND migration_depends_on IS NOT NULL 
+       AND migration_depends_on != '')
+   OR migration_name LIKE '%bastien59960%reactions%'
+ORDER BY 
+    CASE 
+        WHEN migration_depends_on LIKE 's:%' THEN 1
+        WHEN migration_name LIKE '%bastien59960%reactions%' THEN 2
+        ELSE 3
+    END,
+    migration_name;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '📊 STATISTIQUES GLOBALES' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    COUNT(*) as total,
+    SUM(CASE WHEN migration_depends_on LIKE 'a:%' THEN 1 ELSE 0 END) as arrays,
+    SUM(CASE WHEN migration_depends_on LIKE 's:%' THEN 1 ELSE 0 END) as strings,
+    SUM(CASE WHEN migration_depends_on IS NULL THEN 1 ELSE 0 END) as nulls,
+    SUM(CASE WHEN migration_depends_on = '' THEN 1 ELSE 0 END) as empty
+FROM phpbb_migrations;
+ERROR_SQL_EOF
     echo ""
     
     # Vérifier les fichiers de migration
