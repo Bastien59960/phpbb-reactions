@@ -2,17 +2,16 @@
 /**
  * =============================================================================
  * File: /language/en/email.php
- * Extension: bastien59960/reactions
+ * Fichier : /language/fr/email.php
  * =============================================================================
  *
  * @package   bastien59960/reactions
  * @author    Bastien (bastien59960)
  * @copyright (c) 2025 Bastien59960
  * @license   http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
- *
  * @description
- * Contains the English language strings for emails sent by the extension.
- * This file is used by the cron task to build the reaction summary email.
+ * Contient les chaînes de langue françaises pour les e-mails envoyés par l'extension.
+ * Ce fichier est utilisé par la tâche cron pour construire l'e-mail de résumé des réactions.
  */
 
 if (!defined('IN_PHPBB'))
@@ -27,32 +26,32 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
     // =========================================================================
-    // EMAIL SUBJECT
+    // SUJET DE L'E-MAIL
     // =========================================================================
-    'REACTIONS_DIGEST_SUBJECT' => 'New reactions to your posts',
+    'REACTIONS_DIGEST_SUBJECT' => 'Nouvelles réactions à vos messages',
 
     // =========================================================================
-    // HEADER AND INTRODUCTION
+    // EN-TÊTE ET INTRODUCTION
     // =========================================================================
-    'REACTIONS_DIGEST_HELLO' => 'Hello %1$s,',
-    'REACTIONS_DIGEST_INTRO' => 'Here is a summary of new reactions to your posts on "%1$s":',
+    'REACTIONS_DIGEST_HELLO' => 'Bonjour %1$s,',
+    'REACTIONS_DIGEST_INTRO' => 'Voici un résumé des nouvelles réactions à vos messages sur "%1$s" :',
 
     // =========================================================================
-    // POSTS CONTENT
+    // CONTENU DES MESSAGES
     // =========================================================================
-    'REACTIONS_DIGEST_POST_TITLE' => 'Reactions on your post "%1$s"',
+    'REACTIONS_DIGEST_POST_TITLE' => 'Réactions sur votre message "%1$s"',
 
     // =========================================================================
-    // REACTION LABELS
+    // LIBELLÉS DES RÉACTIONS
     // =========================================================================
-    'REACTIONS_DIGEST_REACTION_FROM' => 'Reaction from',
-    'REACTIONS_DIGEST_ON_DATE'       => 'on',
-    'REACTIONS_DIGEST_VIEW_POST'     => 'View post',
+    'REACTIONS_DIGEST_REACTION_FROM' => 'Réaction de',
+    'REACTIONS_DIGEST_ON_DATE'       => 'le',
+    'REACTIONS_DIGEST_VIEW_POST'     => 'Voir le message',
 
     // =========================================================================
-    // FOOTER AND SIGNATURE
+    // PIED DE PAGE ET SIGNATURE
     // =========================================================================
-    'REACTIONS_DIGEST_SIGNATURE' => "Sincerely,\nThe %s Team", // %s is replaced by the forum name
-    'REACTIONS_DIGEST_FOOTER'    => 'You are receiving this email because you have chosen to receive reaction summaries.',
-    'REACTIONS_DIGEST_UNSUBSCRIBE' => 'To manage your notification preferences, please visit your User Control Panel.',
+    'REACTIONS_DIGEST_SIGNATURE' => "Cordialement,\nL'équipe %s", // %s est remplacé par le nom du forum
+    'REACTIONS_DIGEST_FOOTER'    => 'Vous recevez cet e-mail car vous avez choisi de recevoir des résumés de réactions.',
+    'REACTIONS_DIGEST_UNSUBSCRIBE' => 'Pour gérer vos préférences de notification, veuillez visiter votre Panneau de Contrôle Utilisateur.',
 ));

@@ -1,13 +1,13 @@
 <?php
 /**
  * File: ucp_reactions.php
- * Path: bastien59960/reactions/language/en/ucp_reactions.php
+ * Path: bastien59960/reactions/language/fr/ucp_reactions.php
  * Author: Bastien (bastien59960)
  * GitHub: https://github.com/bastien59960/reactions/blob/main/language/en/ucp_reactions.php
  *
- * Role:
- * This file contains the English language strings for the reaction preferences
- * page in the User Control Panel (UCP).
+ * Rôle:
+ * Ce fichier contient les chaînes de langue françaises pour la page de préférences
+ * des réactions dans le Panneau de Contrôle Utilisateur (UCP).
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -24,11 +24,11 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-    'UCP_REACTIONS_TITLE'           => 'Reaction Preferences',
-    'UCP_REACTIONS_EXPLAIN'         => 'Choose how to be notified when members react to your posts.',
-    'UCP_REACTIONS_NOTIFY'          => 'Notify me of new reactions (notification)',
-    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Receive a notification when a user reacts to one of your posts.',
-    'UCP_REACTIONS_CRON_EMAIL'           => 'Notify me of new reactions (email)',
-    'UCP_REACTIONS_CRON_EMAIL_EXPLAIN'   => 'Receive a periodic email summary of new reactions on your posts.',
-    'UCP_REACTIONS_SAVED'           => 'Your reaction preferences have been saved.',
+    'UCP_REACTIONS_TITLE'           => 'Préférences des réactions',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choisissez comment être notifié lorsque des membres réagissent à vos messages.',
+    'UCP_REACTIONS_NOTIFY'          => 'Me notifier des nouvelles réactions (notification)',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification lorsque un utilisateur réagit à l\'un de vos messages.',
+    'UCP_REACTIONS_CRON_EMAIL'      => 'Me notifier des nouvelles réactions (e-mail)',
+    'UCP_REACTIONS_CRON_EMAIL_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
+    'UCP_REACTIONS_SAVED'           => 'Vos préférences de réactions ont été sauvegardées.',
 ));

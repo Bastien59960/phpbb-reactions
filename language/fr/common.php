@@ -1,11 +1,11 @@
 <?php
 /**
- * File: language/en/acp/common.php
+ * File: language/fr/acp/common.php
  * Extension: bastien59960/reactions
  *
  * Description:
- * English language strings for the Administration Control Panel (ACP)
- * of the Reactions extension.
+ * Chaînes de langue françaises pour le Panneau de Contrôle Administration (ACP)
+ * de l'extension Reactions.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -16,40 +16,40 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
-    // --- Module Titles ---
-    'ACP_REACTIONS_TITLE'                => 'Post Reactions',
-    'ACP_REACTIONS_SETTINGS'             => 'Settings',
-    'ACP_REACTIONS_IMPORT'               => 'Import Reactions',
-    'ACP_REACTIONS_SETTINGS_EXPLAIN'     => 'Configure the behavior and limits applied to reactions.',
+    // --- Titres des modules ---
+    'ACP_REACTIONS_TITLE'                => 'Réactions aux messages',
+    'ACP_REACTIONS_SETTINGS'             => 'Paramètres',
+    'ACP_REACTIONS_IMPORT'               => 'Importer les réactions',
+    'ACP_REACTIONS_SETTINGS_EXPLAIN'     => 'Configure le comportement et les limites appliquées aux réactions.',
 
-    // --- Setting Descriptions ---
-    'REACTIONS_SPAM_TIME'                => 'Delay between email summaries',
-    'REACTIONS_SPAM_TIME_EXPLAIN'        => 'Minimum delay (in minutes) between sending two email summaries to the same user.',
-    'REACTIONS_MAX_PER_POST'             => 'Maximum types per post',
-    'REACTIONS_MAX_PER_POST_EXPLAIN'     => 'Maximum number of different reaction types allowed on a single post.',
-    'REACTIONS_MAX_PER_USER'             => 'Maximum per user',
-    'REACTIONS_MAX_PER_USER_EXPLAIN'     => 'Maximum number of reactions a user can add to a single post.',
+    // --- Descriptions des paramètres ---
+    'REACTIONS_SPAM_TIME'                => 'Délai entre les résumés par e-mail',
+    'REACTIONS_SPAM_TIME_EXPLAIN'        => 'Délai minimum (en minutes) entre l\'envoi de deux résumés par e-mail au même utilisateur.',
+    'REACTIONS_MAX_PER_POST'             => 'Maximum de types par message',
+    'REACTIONS_MAX_PER_POST_EXPLAIN'     => 'Nombre maximum de types de réactions différents autorisés sur un seul message.',
+    'REACTIONS_MAX_PER_USER'             => 'Maximum par utilisateur',
+    'REACTIONS_MAX_PER_USER_EXPLAIN'     => 'Nombre maximum de réactions qu\'un utilisateur peut ajouter à un seul message.',
 
-    'REACTIONS_DISPLAY_SETTINGS'         => 'Display and Picker Settings',
-    'REACTIONS_POST_EMOJI_SIZE'          => 'Emoji size under posts',
-    'REACTIONS_POST_EMOJI_SIZE_EXPLAIN'  => 'Defines the size (in pixels) of reactions displayed under each post.',
-    'REACTIONS_PICKER_EMOJI_SIZE'        => 'Picker icon size',
-    'REACTIONS_PICKER_EMOJI_SIZE_EXPLAIN'=> 'Size (in pixels) of the picker emojis as well as the tab/category icons.',
-    'REACTIONS_PICKER_WIDTH'             => 'Picker width',
-    'REACTIONS_PICKER_WIDTH_EXPLAIN'     => 'Width (in pixels) of the emoji picker.',
-    'REACTIONS_PICKER_HEIGHT'            => 'Picker height',
-    'REACTIONS_PICKER_HEIGHT_EXPLAIN'    => 'Height (in pixels) of the emoji picker.',
-    'REACTIONS_PICKER_SHOW_CATEGORIES'   => 'Show categories',
-    'REACTIONS_PICKER_SHOW_CATEGORIES_EXPLAIN' => 'Uncheck to hide the category tabs and only show quick emojis.',
-    'REACTIONS_PICKER_SHOW_SEARCH'       => 'Show search',
-    'REACTIONS_PICKER_SHOW_SEARCH_EXPLAIN' => 'Uncheck to remove the search field from the picker.',
-    'REACTIONS_PICKER_USE_JSON'          => 'Load full emoji set',
-    'REACTIONS_PICKER_USE_JSON_EXPLAIN'  => 'Uncheck to not load the external JSON file and only display the 10 frequent emojis.',
-    'REACTIONS_SYNC_INTERVAL'            => 'Refresh interval',
-    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Time (in milliseconds) between automatic reaction updates.',
+    'REACTIONS_DISPLAY_SETTINGS'         => 'Paramètres d\'affichage et du sélecteur',
+    'REACTIONS_POST_EMOJI_SIZE'          => 'Taille des emojis sous les messages',
+    'REACTIONS_POST_EMOJI_SIZE_EXPLAIN'  => 'Définit la taille (en pixels) des réactions affichées sous chaque message.',
+    'REACTIONS_PICKER_EMOJI_SIZE'        => 'Taille des icônes du sélecteur',
+    'REACTIONS_PICKER_EMOJI_SIZE_EXPLAIN'=> 'Taille (en pixels) des emojis du sélecteur ainsi que des icônes d\'onglet/catégorie.',
+    'REACTIONS_PICKER_WIDTH'             => 'Largeur du sélecteur',
+    'REACTIONS_PICKER_WIDTH_EXPLAIN'     => 'Largeur (en pixels) de la palette d\'emojis.',
+    'REACTIONS_PICKER_HEIGHT'            => 'Hauteur du sélecteur',
+    'REACTIONS_PICKER_HEIGHT_EXPLAIN'    => 'Hauteur (en pixels) de la palette d\'emojis.',
+    'REACTIONS_PICKER_SHOW_CATEGORIES'   => 'Afficher les catégories',
+    'REACTIONS_PICKER_SHOW_CATEGORIES_EXPLAIN' => 'Décochez pour masquer les onglets de catégories et n\'afficher que les emojis rapides.',
+    'REACTIONS_PICKER_SHOW_SEARCH'       => 'Afficher la recherche',
+    'REACTIONS_PICKER_SHOW_SEARCH_EXPLAIN' => 'Décochez pour supprimer le champ de recherche de la palette.',
+    'REACTIONS_PICKER_USE_JSON'          => 'Charger le jeu complet d\'emojis',
+    'REACTIONS_PICKER_USE_JSON_EXPLAIN'  => 'Décochez pour ne pas charger le fichier JSON externe et n\'afficher que les 10 emojis fréquents.',
+    'REACTIONS_SYNC_INTERVAL'            => 'Intervalle de rafraîchissement',
+    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Temps (en millisecondes) entre les mises à jour automatiques des réactions.',
 
-    // --- Admin Log Messages ---
-    'LOG_REACTIONS_IMPORT_START'         => '<strong>Attempting to import reactions</strong><br>• Searching for data from an old reactions extension.',
-    'LOG_REACTIONS_IMPORT_EMPTY'         => '<strong>Reaction import skipped</strong><br>• Old tables were found but were empty.',
-    'LOG_REACTIONS_IMPORT_SUCCESS'       => '<strong>Reaction import complete</strong><br>• %1$d reactions imported (%2$d skipped).<br>• %3$d users and %4$d posts affected.',
+    // --- Messages du journal d'administration ---
+    'LOG_REACTIONS_IMPORT_START'         => '<strong>Tentative d\'importation des réactions</strong><br>• Recherche de données d\'une ancienne extension de réactions.',
+    'LOG_REACTIONS_IMPORT_EMPTY'         => '<strong>Importation des réactions ignorée</strong><br>• D\'anciennes tables ont été trouvées mais étaient vides.',
+    'LOG_REACTIONS_IMPORT_SUCCESS'       => '<strong>Importation des réactions terminée</strong><br>• %1$d réactions importées (%2$d ignorées).<br>• %3$d utilisateurs et %4$d messages affectés.',
 ]);
