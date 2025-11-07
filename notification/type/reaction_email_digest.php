@@ -91,6 +91,28 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
     }
 
     /**
+     * Retourne le nom du type affiché dans l'UCP.
+     *
+     * @return string La clé de langue pour le nom.
+     */
+    public static function get_item_type_name()
+    {
+        // Cette clé doit être définie dans le fichier de langue de la notification.
+        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE';
+    }
+
+    /**
+     * Retourne la description du type affichée dans l'UCP.
+     *
+     * @return string La clé de langue pour la description.
+     */
+    public static function get_item_type_description()
+    {
+        // Cette clé doit être définie dans le fichier de langue de la notification.
+        return 'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC';
+    }
+
+    /**
      * Spécifie le fichier de langue à charger.
      * Doit pointer vers le fichier unifié.
      *

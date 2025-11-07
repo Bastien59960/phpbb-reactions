@@ -22,11 +22,11 @@ $lang = array_merge($lang ?? [], [
     'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
 
     // --- Notification instantanée (cloche & UCP) ---
-    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s.',
-    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Quelqu\'un a réagi à l\'un de vos messages',
+    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s.', // Texte affiché dans la cloche
+    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Réaction instantanée à un message', // Titre dans l'UCP
     'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification instantanée dans la cloche du forum lorsqu\'un utilisateur réagit à l\'un de vos messages.',
 
     // --- Résumé par e-mail (UCP) ---
-    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé des réactions par e-mail',
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé périodique des réactions par e-mail',
     'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
 ]);
