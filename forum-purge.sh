@@ -102,6 +102,15 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/react
 check_status "Tentative de désactivation de l'extension terminée." "$output"
 
 # ==============================================================================
+# 1.5️⃣ PURGE DES DONNÉES DE L'EXTENSION (NOUVEAU - CRUCIAL)
+# ==============================================================================
+echo "───[ 1.5 PURGE DES DONNÉES DE L'EXTENSION (bastien59960/reactions) ]──────"
+sleep 0.2
+
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1 || true)
+check_status "Purge des données de l'extension (tables, config, modules)." "$output"
+
+# ==============================================================================
 # 2️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
 # ==============================================================================
 echo "───[ 2️⃣  PURGE DU CACHE (APRÈS DÉSACTIVATION) ]────────────────────"
