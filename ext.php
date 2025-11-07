@@ -84,25 +84,49 @@ class ext extends \phpbb\extension\base
 		return parent::enable_step($old_state);
 	}
 
-
-	/*
-		public function disable_step($old_state)
+	/**
+	 * Étape de désactivation de l'extension
+	 *
+	 * Cette méthode est appelée par phpBB lors de la désactivation de l'extension.
+	 * Elle désactive les types de notifications pour éviter les erreurs.
+	 *
+	 * @param mixed $old_state État précédent de l'extension
+	 * @return mixed Résultat de l'étape de désactivation parente
+	 */
+	public function disable_step($old_state)
+	{
+		if ($old_state === false)
 		{
+			// Récupérer le gestionnaire de notifications phpBB
+			$notification_manager = $this->container->get('notification_manager');
 			
-			if ($old_state === false)
-			{
-				// Récupérer le gestionnaire de notifications phpBB
-				$notification_manager = $this->container->get('notification_manager');
-				
-				// Désactiver la notification cloche
-				$notification_manager->disable_notifications('notification.type.reaction');
-			
-				// Désactiver la notification email digest
-				$notification_manager->disable_notifications('notification.type.reaction_email_digest');
-			}
-			
-			return parent::disable_step($old_state);
+			// Désactiver la notification cloche
+			$notification_manager->disable_notifications('bastien59960.reactions.reaction');
+		
+			// Désactiver la notification email digest
+			$notification_manager->disable_notifications('bastien59960.reactions.reaction_email_digest');
 		}
-	*/
+		
+		return parent::disable_step($old_state);
+	}
+
+	/**
+	 * Étape de purge de l'extension
+	 *
+	 * Cette méthode est appelée par phpBB lors de la purge de l'extension.
+	 * Elle est responsable de la suppression de toutes les données de l'extension.
+	 *
+	 * @param mixed $old_state État précédent de l'extension
+	 * @return mixed Résultat de l'étape de purge parente
+	 */
+	public function purge_step($old_state)
+	{
+		// La logique de purge (suppression des tables, configs, modules, etc.)
+		// est gérée par les fichiers de migration dans le dossier `migrations/`.
+		// La méthode `revert()` de chaque fichier de migration est appelée.
+		// Il est crucial que chaque méthode `revert()` retourne un tableau,
+		// même s'il est vide, pour éviter une erreur fatale.
+		return parent::purge_step($old_state);
+	}
 
 }
