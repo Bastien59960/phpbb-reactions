@@ -183,7 +183,10 @@ DELETE FROM phpbb_config WHERE config_name = 'reactions_ucp_preferences_installe
 
 -- Suppression des modules UCP de l'extension (votre version)
 SELECT '🗑️  Purge des modules...' AS status;
-DELETE FROM phpbb_modules WHERE module_basename LIKE '%reactions%' OR module_langname LIKE '%reactions%';
+DELETE FROM phpbb_modules 
+WHERE module_basename LIKE '%reactions%' 
+   OR module_langname LIKE '%reactions%';
+
 -- Nettoyage des modules orphelins qui peuvent causer des erreurs
 DELETE FROM phpbb_modules WHERE module_basename = '' OR module_basename NOT LIKE '\\%';
 
