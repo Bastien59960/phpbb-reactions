@@ -163,8 +163,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 MODIFY `reaction_emoji` VARCHAR(191)
                 CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
         $this->db->sql_query($sql);
-
-        return [];
     }
 
     public function clean_orphan_notifications()
@@ -177,7 +175,5 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 SELECT notification_type_id FROM {$types}
             )";
         $this->db->sql_query($sql);
-
-        return [];
     }
 }
