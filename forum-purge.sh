@@ -267,14 +267,11 @@ check_status "Nettoyage des migrations problématiques terminé."
 # ==============================================================================
 echo "───[ 7️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
 sleep 0.2
-echo -e "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
-UPDATE phpbb_post_reactions SET reaction_notified = 0;
 EOF
 
-check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
 check_status "Verrou du cron réinitialisé en base de données."
 
 # ==============================================================================
