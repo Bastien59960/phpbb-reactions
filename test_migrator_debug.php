@@ -66,7 +66,16 @@ try {
     }
     echo "✅ Répertoire extension trouvé\n";
     
-    // Charger la classe ext
+    // Obtenir la version depuis le composer.json ou ext.php directement
+    $composer_file = $ext_path . '/composer.json';
+    if (file_exists($composer_file)) {
+        $composer = json_decode(file_get_contents($composer_file), true);
+        if (isset($composer['version'])) {
+            echo "📋 Version de l'extension (composer.json) : " . $composer['version'] . "\n";
+        }
+    }
+    
+    // Charger la classe ext pour vérifier qu'elle existe
     $ext_class_file = $ext_path . '/ext.php';
     if (!file_exists($ext_class_file)) {
         echo "❌ Fichier ext.php introuvable\n";
@@ -80,13 +89,7 @@ try {
         echo "❌ Classe extension non trouvée : $ext_class\n";
         exit(1);
     }
-    
-    $ext = new $ext_class($phpbb_container, $ext_manager, $ext_name);
-    echo "✅ Extension instanciée\n";
-    
-    // Obtenir la version de l'extension
-    $version = $ext->get_version();
-    echo "📋 Version de l'extension : $version\n\n";
+    echo "✅ Classe extension trouvée\n\n";
     
     // Trouver toutes les migrations
     $migrations_path = $ext_path . '/migrations';
@@ -256,6 +259,79 @@ try {
         }
     } else {
         echo "ℹ️  Aucune migration enregistrée en base de données\n";
+    }
+    echo "\n";
+    
+    // TEST CRITIQUE : Simuler exactement ce que fait migrator.php ligne 788
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ TEST CRITIQUE : Simulation migrator.php ligne 788            │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    echo "🔍 Tentative de récupération des migrations via le migrator...\n";
+    
+    try {
+        // Essayer de charger les migrations comme le fait phpBB
+        $extension_migrations = array();
+        
+        foreach ($migration_files as $file) {
+            $filename = basename($file, '.php');
+            $class_name = '\\bastien59960\\reactions\\migrations\\' . $filename;
+            
+            if (class_exists($class_name)) {
+                $extension_migrations[] = $class_name;
+            }
+        }
+        
+        echo "📋 Migrations trouvées : " . count($extension_migrations) . "\n";
+        
+        // Simuler le code de migrator.php qui collecte les dépendances
+        $all_deps = array();
+        
+        foreach ($extension_migrations as $migration_class) {
+            echo "🔍 Traitement de : $migration_class\n";
+            
+            if (!class_exists($migration_class)) {
+                echo "   ❌ Classe non trouvée\n\n";
+                continue;
+            }
+            
+            $reflection = new ReflectionClass($migration_class);
+            if ($reflection->hasMethod('depends_on')) {
+                $method = $reflection->getMethod('depends_on');
+                if ($method->isStatic()) {
+                    $deps = $method->invoke(null);
+                    
+                    echo "   Type de depends_on() : " . gettype($deps) . "\n";
+                    
+                    // C'est ici que l'erreur se produit dans migrator.php ligne 788
+                    if (!is_array($deps)) {
+                        echo "   ❌ PROBLÈME DÉTECTÉ : depends_on() retourne " . gettype($deps) . " au lieu d'un array !\n";
+                        echo "      Valeur : " . var_export($deps, true) . "\n";
+                        echo "      💡 C'est la cause de l'erreur array_merge() !\n\n";
+                        continue;
+                    }
+                    
+                    echo "   ✅ depends_on() retourne un array\n";
+                    
+                    // Simuler array_merge() comme à la ligne 788
+                    try {
+                        $all_deps = array_merge($all_deps, $deps);
+                        echo "   ✅ array_merge() réussi\n";
+                    } catch (\TypeError $e) {
+                        echo "   ❌ ERREUR array_merge() : " . $e->getMessage() . "\n";
+                        echo "      💡 C'est la cause exacte du problème !\n";
+                    }
+                }
+            }
+            echo "\n";
+        }
+        
+        echo "✅ Test terminé. Total dépendances : " . count($all_deps) . "\n";
+        
+    } catch (\Throwable $e) {
+        echo "❌ ERREUR lors du test avec migrator : " . $e->getMessage() . "\n";
+        echo "   Fichier : " . $e->getFile() . ":" . $e->getLine() . "\n";
+        echo "   Trace :\n" . $e->getTraceAsString() . "\n";
     }
     
 } catch (\Throwable $e) {
