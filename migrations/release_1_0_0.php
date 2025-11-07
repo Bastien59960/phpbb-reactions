@@ -107,10 +107,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 
             // Étapes personnalisées
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
-            array('custom', array(array($this, 'create_notification_type'))),
-            array('custom', array(array($this, 'enable_notification_types'))),
-            array('custom', array(array($this, 'clean_orphan_notifications'))),
             array('custom', array(array($this, 'import_old_reactions'))),
+            array('custom', array(array($this, 'clean_orphan_notifications'))), // Keep this for cleanup
         );
     }
 
@@ -131,9 +129,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('bastien59960_reactions_picker_use_json')),
             array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
             array('config.remove', array('bastien59960_reactions_sync_interval')),
-
-            // Suppression des notifications
-            array('custom', array(array($this, 'purge_notification_types'))),
         );
     }
 
@@ -146,67 +141,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         $this->db->sql_query($sql);
     }
 
-    public function create_notification_type()
-    {
-        $types_table = $this->table_prefix . 'notification_types';
-
-        $obsolete = [
-            // Anciens noms incorrects à nettoyer
-            'reaction',
-            'reaction_email_digest',
-            'bastien59960.reactions.reaction',
-            'bastien59960.reactions.reaction_email_digest',
-            'notification.type.reaction',
-            'notification.type.reaction_email_digest',
-        ];
-        $sql = 'DELETE FROM ' . $types_table . '
-                WHERE ' . $this->db->sql_in_set('notification_type_name', $obsolete);
-        $this->db->sql_query($sql);
-
-        $types = [
-            // Noms de service complets, corrects pour la BDD
-            'bastien59960.reactions.notification.type.reaction',
-            'bastien59960.reactions.notification.type.reaction_email_digest',
-        ];
-
-        foreach ($types as $type) {
-            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-                    WHERE notification_type_name = '" . $this->db->sql_escape($type) . "'";
-            $result = $this->db->sql_query($sql);
-            $row = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
-
-            if (!$row) {
-                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' .
-                    $this->db->sql_build_array('INSERT', [
-                        'notification_type_name'    => $type,
-                        'notification_type_enabled' => 1,
-                    ])
-                );
-            }
-        }
-    }
-
-    public function enable_notification_types()
-    {
-        $manager = $this->container->get('notification_manager');
-        $types = [
-            // Noms courts, corrects pour l'activation
-            'bastien59960.reactions.reaction',
-            'bastien59960.reactions.reaction_email_digest',
-        ];
-
-        foreach ($types as $type) {
-            try {
-                $manager->enable_notifications($type);
-            } catch (\Throwable $e) {
-                if (defined('DEBUG')) {
-                    trigger_error('[Reactions] enable_notifications(' . $type . ') échoué : ' . $e->getMessage(), E_USER_NOTICE);
-                }
-            }
-        }
-    }
-
     public function clean_orphan_notifications()
     {
         $notif = $this->table_prefix . 'notifications';
@@ -217,29 +151,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 SELECT notification_type_id FROM {$types}
             )";
         $this->db->sql_query($sql);
-    }
-
-    public function purge_notification_types()
-    {
-        $types_table = $this->table_prefix . 'notification_types';
-        $names = [
-            // Noms de service complets à purger
-            'bastien59960.reactions.notification.type.reaction',
-            'bastien59960.reactions.notification.type.reaction_email_digest',
-        ];
-
-        $manager = $this->container->get('notification_manager');
-
-        foreach ($names as $name) {
-            try {
-                $manager->purge_notifications($name);
-            } catch (\Throwable $e) {
-                // Ignorer les erreurs
-            }
-            $sql = 'DELETE FROM ' . $types_table . "
-                    WHERE notification_type_name = '" . $this->db->sql_escape($name) . "'";
-            $this->db->sql_query($sql);
-        }
     }
 
     public function import_old_reactions()
