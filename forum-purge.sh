@@ -155,10 +155,13 @@ echo ""
 
 
 # ==============================================================================
-# 3️⃣ DÉSACTIVATION DE L'EXTENSION
+# 3️⃣ DÉSACTIVATION DE L'EXTENSION (Étape ignorée)
 # ==============================================================================
 echo "───[ 3️⃣  DÉSACTIVATION DE L'EXTENSION (bastien59960/reactions) ]────────────"
+echo "───[ 3️⃣  DÉSACTIVATION DE L'EXTENSION (Étape ignorée) ]────────────"
 sleep 0.2
+echo -e "${YELLOW}ℹ️  L'étape 'extension:disable' est ignorée car elle est redondante avec la purge manuelle.${NC}"
+echo ""
 
 # On tente de désactiver l'extension. On ajoute `|| true` pour que le script ne
 # s'arrête pas si l'extension est déjà désactivée (ce qui produit une erreur).
@@ -212,9 +215,9 @@ else
 fi
 
 # ==============================================================================
-# 6️⃣.5️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
+# 7️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
-echo "───[ 6️⃣.5️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
+echo "───[ 7️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
@@ -263,9 +266,9 @@ CLEANUP_EOF
 check_status "Nettoyage des migrations problématiques terminé."
 
 # ==============================================================================
-# 7️⃣ SQL RESET – UN SEUL PROMPT
+# 8️⃣ SQL RESET – UN SEUL PROMPT
 # ==============================================================================
-echo "───[ 7️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
+echo "───[ 8️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
 sleep 0.2
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
@@ -275,9 +278,9 @@ EOF
 check_status "Verrou du cron réinitialisé en base de données."
 
 # ==============================================================================
-# 7️⃣.5️⃣ DIAGNOSTIC SQL AVANT RÉACTIVATION
+# 9️⃣ DIAGNOSTIC SQL AVANT RÉACTIVATION
 # ==============================================================================
-echo "───[ 7️⃣.5️⃣  DIAGNOSTIC SQL (AVANT RÉACTIVATION) ]──────────────────────"
+echo "───[ 9️⃣  DIAGNOSTIC SQL (AVANT RÉACTIVATION) ]──────────────────────"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo ""
@@ -445,15 +448,15 @@ echo ""
 # ==============================================================================
 # 8️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
-echo "───[ 8️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
+echo "───[ 🔟  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Extension réactivée." "$output"
 
 # ==============================================================================
-# 8️⃣.2️⃣ RESET DES NOTIFICATIONS (MAINTENANT QUE LA TABLE EXISTE)
+# 1️⃣1️⃣ RESET DES NOTIFICATIONS (MAINTENANT QUE LA TABLE EXISTE)
 # ==============================================================================
-echo "───[ 8️⃣.2️⃣  RESET DES NOTIFICATIONS (POST-RÉACTIVATION) ]──────────"
+echo "───[ 1️⃣1️⃣  RESET DES NOTIFICATIONS (POST-RÉACTIVATION) ]──────────"
 sleep 0.2
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
@@ -465,11 +468,11 @@ EOF
 check_status "Statut 'reaction_notified' réinitialisé (si la table contient des données)."
 
 # ==============================================================================
-# 8️⃣.5️⃣ DIAGNOSTIC SQL APRÈS RÉACTIVATION (si erreur)
+# 1️⃣2️⃣ DIAGNOSTIC SQL APRÈS RÉACTIVATION (si erreur)
 # ==============================================================================
 if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
-    echo "───[ 8️⃣.5️⃣  DIAGNOSTIC APPROFONDI APRÈS ERREUR ]──────────────────────────────"
+    echo "───[ 1️⃣2️⃣  DIAGNOSTIC APPROFONDI APRÈS ERREUR ]──────────────────────────────"
     sleep 0.2
     echo -e "${YELLOW}⚠️  Une erreur a été détectée. Diagnostic approfondi...${NC}"
     echo ""
@@ -662,7 +665,7 @@ fi
 # ==============================================================================
 # 9️⃣ PURGE CACHE (APRÈS)
 # ==============================================================================
-echo "───[ 9️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
+echo "───[ 1️⃣3️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
@@ -670,17 +673,16 @@ check_status "Cache purgé et container reconstruit." "$output"
 # ==============================================================================
 # 🔟 TEST FINAL DU CRON
 # ==============================================================================
-echo "───[ 🔟 TEST FINAL DU CRON ]──────────────────────────────────"
+echo "───[ 1️⃣4️⃣ TEST FINAL DU CRON ]──────────────────────────────────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
 check_status "Exécution de la tâche cron" "$output"
 
 
 # ==============================================================================
-# 8️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
-# 1️⃣1️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
+# 1️⃣5️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
 # ==============================================================================
-echo "───[ 1️⃣1️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
+echo "───[ 1️⃣5️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 sleep 0.2
 
 # ⚠️ À ADAPTER ! Remplacez 'www-data' par l'utilisateur/groupe de votre serveur web (ex: 'apache', 'nginx', etc.)
