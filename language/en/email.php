@@ -2,7 +2,7 @@
 /**
  * =============================================================================
  * Fichier : /language/en/email.php
- * Extension : bastien59960/reactions
+ * Extension: bastien59960/reactions
  * =============================================================================
  *
  * @package   bastien59960/reactions
@@ -11,7 +11,7 @@
  * @license   http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
  * @description
- * Contains the English language strings for the emails sent by the extension.
+ * Contains the English language strings for emails sent by the extension.
  * This file is used by the cron task to build the reaction digest email.
  */
 
@@ -40,7 +40,7 @@ $lang = array_merge($lang, array(
     // =========================================================================
     // POSTS CONTENT
     // =========================================================================
-    'REACTIONS_DIGEST_POST_TITLE' => 'Reactions on your post “%1$s”',
+    'REACTIONS_DIGEST_POST_TITLE' => 'Reactions on your post "%1$s"',
 
     // =========================================================================
     // REACTION LABELS
@@ -52,7 +52,7 @@ $lang = array_merge($lang, array(
     // =========================================================================
     // FOOTER AND SIGNATURE
     // =========================================================================
-    'REACTIONS_DIGEST_SIGNATURE'   => "Best regards,\nThe %s Team",
+    'REACTIONS_DIGEST_SIGNATURE' => "Sincerely,\nThe %s Team", // %s is replaced by the forum name
     'REACTIONS_DIGEST_FOOTER'      => 'You are receiving this email because you have chosen to receive reaction summaries.',
     'REACTIONS_DIGEST_UNSUBSCRIBE' => 'To manage your notification preferences, please visit your User Control Panel.',
 ));
