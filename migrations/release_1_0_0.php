@@ -100,6 +100,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.add', array('bastien59960_reactions_max_per_user', 10)),
             array('config.add', array('bastien59960_reactions_enabled', 1)),
             array('config.add', array('reactions_ucp_preferences_installed', 1)),
+            array('config.add', array('bastien59960_reactions_spam_time', 45)),
+            array('config.add', array('bastien59960_reactions_cron_last_run', 0)),
 
             // Options de configuration de l'interface (fusionné depuis release_1_0_4)
 			array('config.add', array('bastien59960_reactions_post_emoji_size', 24)),
@@ -141,6 +143,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('bastien59960_reactions_max_per_user')),
             array('config.remove', array('bastien59960_reactions_enabled')),
             array('config.remove', array('reactions_ucp_preferences_installed')),
+            array('config.remove', array('bastien59960_reactions_spam_time')),
+            array('config.remove', array('bastien59960_reactions_cron_last_run')),
 
             // Suppression des configurations de l'interface (fusionné depuis release_1_0_4)
 			array('config.remove', array('bastien59960_reactions_post_emoji_size')),
@@ -237,7 +241,6 @@ public function create_notification_type()
         );
         $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
     }
-    trigger_error('[DEBUG] create_notification_type() exécutée');
 }
 public function remove_notification_type()
 {
