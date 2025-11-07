@@ -1,13 +1,13 @@
 <?php
 /**
  * ============================================================================
- * Fichier : language/fr/reactions.php
- * Extension : bastien59960/reactions
+ * File: language/en/reactions.php
+ * Extension: bastien59960/reactions
  * ============================================================================
  *
- * 📘 Description :
- * Ce fichier centralise toutes les chaînes de langue françaises pour les
- * notifications de l'extension Reactions.
+ * 📘 Description:
+ * This file centralizes all English language strings for the
+ * Reactions extension notifications.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
@@ -18,15 +18,15 @@ if (!defined('IN_PHPBB')) {
 }
 
 $lang = array_merge($lang ?? [], [
-    // --- Groupe de notifications (UCP) ---
-    'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
+    // --- Notification Group (UCP) ---
+    'NOTIFICATION_GROUP_REACTIONS' => 'Reactions',
 
-    // --- Notification instantanée (cloche & UCP) ---
-    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s.',
-    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Quelqu\'un a réagi à l\'un de vos messages',
-    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification instantanée dans la cloche du forum lorsqu\'un utilisateur réagit à l\'un de vos messages.',
+    // --- Instant Notification (bell & UCP) ---
+    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> reacted to your post with %2$s.',
+    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Someone reacted to one of your posts',
+    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Receive an instant notification in the forum bell when a user reacts to one of your posts.',
 
-    // --- Résumé par e-mail (UCP) ---
-    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé e-mail des réactions',
-    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
+    // --- Email Summary (UCP) ---
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Reaction Email Summary',
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Receive a periodic email summary of new reactions on your posts.',
 ]);
