@@ -212,48 +212,46 @@ class release_1_0_0 extends \phpbb\db\migration\migration
      * et un pour le résumé par e-mail (utilisé par le CRON).
      */
     public function create_notification_type()
-    {
-        $types_table = $this->table_prefix . 'notification_types';
+	{
+		$types_table = $this->table_prefix . 'notification_types';
 
-        // Nettoyage préventif d'une ancienne entrée potentiellement malformée (sans le préfixe complet).
-        $malformed_name = 'bastien59960.reactions.notification.type.reaction';
-        $sql_cleanup = 'DELETE FROM ' . $types_table . "
-            WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
-        $this->db->sql_query($sql_cleanup);
+		// --- ÉTAPE 1 : Nettoyage robuste ---
+		// On supprime TOUTES les anciennes variations de noms qui ont pu être créées
+		// lors des tentatives d'installation précédentes pour éviter les conflits.
+		$obsolete_names = [
+			'reaction',
+			'reaction_email_digest',
+			'bastien59960.reactions.reaction',
+			'bastien59960.reactions.reaction_email_digest',
+		];
+		$sql_cleanup = 'DELETE FROM ' . $types_table . ' WHERE ' . $this->db->sql_in_set('notification_type_name', $obsolete_names);
+		$this->db->sql_query($sql_cleanup);
 
-        $canonical_name = 'bastien59960.reactions.notification.type.reaction'; // Nom complet du service
-        $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-            WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
-            LIMIT 1";
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
+		// --- ÉTAPE 2 : Création des types de notification avec les noms de service complets ---
+		// C'est le nom complet du service (défini dans services.yml) qui doit être stocké ici.
+		$notification_types_to_create = [
+			'bastien59960.reactions.notification.type.reaction',
+			'bastien59960.reactions.notification.type.reaction_email_digest',
+		];
 
-        if (!$row) {
-            $insert_data = array(
-                'notification_type_name'    => $canonical_name,
-                'notification_type_enabled' => 1,
-            );
-            $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
-        }
+		foreach ($notification_types_to_create as $type_name)
+		{
+			$sql = 'SELECT notification_type_id FROM ' . $types_table . "
+				WHERE notification_type_name = '" . $this->db->sql_escape($type_name) . "'";
+			$result = $this->db->sql_query($sql);
+			$row = $this->db->sql_fetchrow($result);
+			$this->db->sql_freeresult($result);
 
-        $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest'; // Nom complet du service
-        $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-            WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
-            LIMIT 1";
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-
-        if (!$row) {
-            $insert_data = array(
-                'notification_type_name'    => $digest_name,
-                'notification_type_enabled' => 1,
-            );
-            $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
-        }
-        trigger_error('[DEBUG] create_notification_type() exécutée');
-    }
+			if (!$row)
+			{
+				$this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', [
+					'notification_type_name'    => $type_name,
+					'notification_type_enabled' => 1, // Activé par défaut à la création
+				]));
+			}
+		}
+		trigger_error('[DEBUG] create_notification_type() nettoyée et exécutée');
+	}
 
     /**
      * Active les types de notifications que nous venons de créer.
@@ -265,8 +263,8 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     {
         $notification_manager = $this->container->get('notification_manager');
         $notification_types = array(
-            'bastien59960.reactions.notification.type.reaction', // Nom complet du service
-            'bastien59960.reactions.notification.type.reaction_email_digest', // Nom complet du service
+            'bastien59960.reactions.reaction', // Nom court, correspondant à get_type()
+            'bastien59960.reactions.reaction_email_digest', // Nom court, correspondant à get_type()
         );
 
         foreach ($notification_types as $type) {
