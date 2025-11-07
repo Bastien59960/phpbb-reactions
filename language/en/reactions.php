@@ -29,4 +29,12 @@ $lang = array_merge($lang ?? [], [
     // --- Email Summary (UCP) ---
     'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Periodic reaction email summary',
     'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Receive a periodic email summary of new reactions on your posts.',
+
+    // =============================================================================
+    // KEYS FOR UCP (moved from ucp_reactions.php)
+    // =============================================================================
+    'UCP_REACTIONS_TITLE'           => 'Reaction Preferences',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choose how to be notified when members react to your posts.',
+    'UCP_REACTIONS_NOTIFY'          => 'Notify me of new reactions (notification)',
+    'UCP_REACTIONS_CRON_EMAIL'      => 'Notify me of new reactions (email)',
 ]);

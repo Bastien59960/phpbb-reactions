@@ -287,7 +287,7 @@ class reaction extends base implements type_interface
      */
     public function get_language_file()
     {
-        return 'bastien59960/reactions:notification/reaction';
+        return 'bastien59960/reactions/reactions';
     }
 
     // =========================================================================

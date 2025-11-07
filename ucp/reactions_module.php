@@ -44,6 +44,7 @@ class reactions_module
 
 		// Récupérer le contrôleur depuis le conteneur de services et lui passer la main.
 		$controller = $phpbb_container->get('bastien59960.reactions.controller.ucp_reactions');
+		$controller->set_u_action($this->u_action);
 		$controller->handle($id, $mode);
 	}
 }

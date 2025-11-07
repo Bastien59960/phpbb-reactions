@@ -72,6 +72,16 @@ class ucp_reactions
 	}
 
 	/**
+	 * Définit l'URL de base pour l'action du formulaire.
+	 *
+	 * @param string $u_action L'URL de l'action.
+	 */
+	public function set_u_action($u_action)
+	{
+		$this->u_action = $u_action;
+	}
+
+	/**
 	 * Méthode principale qui gère l'affichage et le traitement de la page.
 	 *
 	 * @param string $id   Identifiant du module.
@@ -79,8 +89,8 @@ class ucp_reactions
 	 */
 	public function handle($id, $mode)
 	{
-		// Charger le fichier de langue spécifique à ce module UCP
-		$this->user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
+		// Charger le fichier de langue unifié pour les notifications et l'UCP
+		$this->user->add_lang_ext('bastien59960/reactions', 'reactions');
 
 		$user_id = (int) $this->user->data['user_id'];
 

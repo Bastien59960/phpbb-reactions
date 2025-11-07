@@ -120,7 +120,7 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
      */
     public function get_language_file()
     {
-        return 'bastien59960/reactions/notification/reaction';
+        return 'bastien59960/reactions/reactions';
     }
 
     /**
