@@ -149,7 +149,7 @@ class reaction extends base implements type_interface
      */
     public function get_type()
     {
-        return 'bastien59960.reactions.reaction';
+        return 'bastien59960.reactions.reaction'; // Doit correspondre à la fin du nom de service
     }
 
     /**

@@ -104,7 +104,7 @@ class ext extends \phpbb\extension\base
 			$notification_manager->disable_notifications('bastien59960.reactions.reaction');
 		
 			// Désactiver la notification email digest
-			$notification_manager->disable_notifications('bastien59960.reactions.reaction_email_digest');
+			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
 		}
 		
 		return parent::disable_step($old_state);

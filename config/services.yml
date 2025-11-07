@@ -114,7 +114,7 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)
     # =========================================================================
-    bastien59960.reactions.notification.type.reaction:
+    bastien59960.reactions.notification.type.bastien59960.reactions.reaction:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
             - '@dbal.conn'                      # 1. driver_interface
