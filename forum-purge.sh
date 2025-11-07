@@ -116,6 +116,7 @@ SELECT migration_name, migration_depends_on FROM phpbb_migrations WHERE migratio
 -- Supprimer l'extension et ses migrations
 DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
 DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+DELETE FROM phpbb_config WHERE config_name = 'ext_bastien59960_reactions_version';
 
 -- Vérifier que les suppressions ont bien eu lieu
 SELECT 'Vérification après suppression:' AS info;
