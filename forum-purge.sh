@@ -133,7 +133,7 @@ DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%
 -- Vérifier que les suppressions ont bien eu lieu
 SELECT 'Vérification après suppression:' AS info;
 SELECT COUNT(*) as remaining_count FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
-EOF
+MANUAL_PURGE_EOF
 
 check_status "État de l'extension 'Reactions' réinitialisé dans la BDD."
 
