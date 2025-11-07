@@ -169,11 +169,25 @@ check_status "Tentative de désactivation de l'extension terminée." "$output"
 # ==============================================================================
 # 4️⃣ PURGE DES DONNÉES DE L'EXTENSION
 # ==============================================================================
-echo "───[ 4️⃣  PURGE DES DONNÉES DE L'EXTENSION (bastien59960/reactions) ]──────"
+echo "───[ 4️⃣  PURGE MANUELLE DES DONNÉES (SANS SUPPRIMER LA TABLE) ]──────"
 sleep 0.2
+echo "   (Le mot de passe a été demandé au début du script.)"
 
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1 || true)
-check_status "Purge des données de l'extension (tables, config, modules)." "$output"
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
+-- Suppression des configurations de l'extension (votre version, plus précise)
+DELETE FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%';
+DELETE FROM phpbb_config WHERE config_name = 'reactions_ucp_preferences_installed';
+
+-- Suppression des modules UCP de l'extension (votre version)
+DELETE FROM phpbb_modules WHERE module_basename LIKE '%reactions%';
+
+-- Suppression des types de notification de l'extension (votre version, plus sûre)
+DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%';
+
+-- Confirmation
+SELECT '✅ Purge manuelle des configs, modules et types de notif terminée.' AS status;
+MANUAL_PURGE_EOF
+check_status "Purge manuelle des données de l'extension (tables de réactions CONSERVÉES)."
 
 # ==============================================================================
 # 5️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
@@ -261,6 +275,7 @@ UPDATE phpbb_post_reactions SET reaction_notified = 0;
 EOF
 
 check_status "Requêtes SQL exécutées : reaction_notified + cron_lock."
+check_status "Verrou du cron réinitialisé en base de données."
 
 # ==============================================================================
 # 7️⃣.5️⃣ DIAGNOSTIC SQL AVANT RÉACTIVATION
@@ -437,6 +452,20 @@ echo "───[ 8️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) 
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Extension réactivée." "$output"
+
+# ==============================================================================
+# 8️⃣.2️⃣ RESET DES NOTIFICATIONS (MAINTENANT QUE LA TABLE EXISTE)
+# ==============================================================================
+echo "───[ 8️⃣.2️⃣  RESET DES NOTIFICATIONS (POST-RÉACTIVATION) ]──────────"
+sleep 0.2
+
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
+-- Cette commande est maintenant exécutée après la création de la table par la migration.
+-- Elle peut échouer si l'importation n'a pas eu lieu, c'est pourquoi on ajoute '|| true'
+UPDATE phpbb_post_reactions SET reaction_notified = 0;
+EOF
+
+check_status "Statut 'reaction_notified' réinitialisé (si la table contient des données)."
 
 # ==============================================================================
 # 8️⃣.5️⃣ DIAGNOSTIC SQL APRÈS RÉACTIVATION (si erreur)
