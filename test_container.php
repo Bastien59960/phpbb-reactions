@@ -1,7 +1,7 @@
 <?php
 /**
- * Script de diagnostic simplifié pour phpBB 3.3.x
- * Compatible avec la structure de configuration de phpBB 3.3
+ * Script de diagnostic amélioré pour phpBB 3.3.x
+ * Vérifie l'état de l'extension, des migrations, et des services CRON
  */
 
 error_reporting(E_ALL);
@@ -26,22 +26,20 @@ define('IN_PHPBB', true);
 $phpEx = 'php';
 
 echo "╔═══════════════════════════════════════════════════════════════╗\n";
-echo "║  DIAGNOSTIC EXTENSION REACTIONS - phpBB 3.3                   ║\n";
+echo "║  DIAGNOSTIC EXTENSION REACTIONS - phpBB 3.3 (AMÉLIORÉ)       ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
 echo "📁 Racine phpBB : " . $phpbb_root_path . "\n\n";
 
 try {
-    // ========== PHASE 1 : Initialisation simplifiée ==========
+    // ========== PHASE 1 : Initialisation ==========
     echo "┌─────────────────────────────────────────────────────────────┐\n";
     echo "│ PHASE 1 : Chargement de l'environnement phpBB              │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
-    // Charger common.php qui initialise TOUT phpBB
     require($phpbb_root_path . 'common.' . $phpEx);
     echo "✅ common.php chargé (DB + Config + User + Cache initialisés)\n\n";
 
-    // Récupérer le conteneur depuis $phpbb_container (variable globale)
-    global $phpbb_container;
+    global $phpbb_container, $db, $table_prefix, $config;
     
     if (!isset($phpbb_container)) {
         throw new \Exception("Le conteneur phpBB n'est pas disponible");
@@ -74,6 +72,82 @@ try {
     }
     echo "\n";
 
+    // ========== PHASE 2.5 : Vérification des migrations ==========
+    echo "┌─────────────────────────────────────────────────────────────┐\n";
+    echo "│ PHASE 2.5 : Vérification des migrations                     │\n";
+    echo "└─────────────────────────────────────────────────────────────┘\n";
+    
+    $migration_files = [
+        'ext/bastien59960/reactions/migrations/release_1_0_0.php',
+        'ext/bastien59960/reactions/migrations/release_1_0_1.php',
+    ];
+    
+    foreach ($migration_files as $file) {
+        $path = $phpbb_root_path . $file;
+        $basename = basename($file);
+        
+        if (!file_exists($path)) {
+            echo "❌ MANQUANT : $basename\n";
+            continue;
+        }
+        
+        echo "✅ Fichier trouvé : $basename\n";
+        
+        // Vérifier que le fichier est valide PHP
+        $content = file_get_contents($path);
+        if (strpos($content, 'class ') === false) {
+            echo "   ⚠️  Fichier ne contient pas de classe\n";
+        }
+        
+        // Vérifier les méthodes critiques
+        $methods_to_check = ['depends_on', 'update_schema', 'revert_schema', 'update_data', 'revert_data'];
+        foreach ($methods_to_check as $method) {
+            if (strpos($content, "function $method") !== false) {
+                // Vérifier que la méthode retourne un array
+                $pattern = "/function\s+$method\s*\([^)]*\)\s*\{[^}]*return\s+([^;]+);/s";
+                if (preg_match($pattern, $content, $matches)) {
+                    $return_value = trim($matches[1]);
+                    if (strpos($return_value, 'array(') === 0 || strpos($return_value, '[') === 0) {
+                        echo "   ✅ $method() retourne un tableau\n";
+                    } else {
+                        echo "   ⚠️  $method() retourne : $return_value (pourrait être problématique)\n";
+                    }
+                } else {
+                    echo "   ⚠️  $method() : impossible de vérifier le retour\n";
+                }
+            }
+        }
+    }
+    echo "\n";
+    
+    // Vérifier les migrations en base de données
+    $sql = "SELECT migration_name, migration_depends_on 
+            FROM {$table_prefix}migrations 
+            WHERE migration_name LIKE '%bastien59960%reactions%'
+            ORDER BY migration_name";
+    $result = $db->sql_query($sql);
+    $migrations_in_db = $db->sql_fetchrowset($result);
+    $db->sql_freeresult($result);
+    
+    if (!empty($migrations_in_db)) {
+        echo "📋 Migrations enregistrées en base de données :\n";
+        foreach ($migrations_in_db as $migration) {
+            $name = $migration['migration_name'];
+            $file_name = str_replace('\\', '/', $name);
+            $file_name = preg_replace('/.*\/([^\/]+)$/', '$1', $file_name) . '.php';
+            $file_path = $phpbb_root_path . 'ext/bastien59960/reactions/migrations/' . $file_name;
+            
+            if (file_exists($file_path)) {
+                echo "   ✅ $name (fichier existe)\n";
+            } else {
+                echo "   ❌ $name (fichier MANQUANT - peut causer array_merge())\n";
+            }
+        }
+    } else {
+        echo "ℹ️  Aucune migration enregistrée en base de données\n";
+    }
+    echo "\n";
+
     // ========== PHASE 3 : Services cron ==========
     echo "┌─────────────────────────────────────────────────────────────┐\n";
     echo "│ PHASE 3 : Vérification des services cron                   │\n";
@@ -81,7 +155,7 @@ try {
     
     $cron_services = [
         'cron.task.bastien59960.reactions.test_task',
-        'cron.task.bastien59960.reactions.notification_task',
+        'cron.task.bastien59960.reactions.notification',
     ];
     
     foreach ($cron_services as $service_id) {
@@ -158,8 +232,6 @@ try {
     echo "│ PHASE 5 : Configuration email du forum                     │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
-    global $config;
-    
     echo "Email activé : " . ($config['email_enable'] ? "✅ OUI" : "❌ NON") . "\n";
     echo "Fonction email : " . ($config['email_function_name'] ?? 'mail') . "\n";
     
@@ -183,8 +255,6 @@ try {
     echo "┌─────────────────────────────────────────────────────────────┐\n";
     echo "│ PHASE 6 : Réactions en attente de notification             │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
-    
-    global $db, $table_prefix;
     
     $sql = 'SELECT COUNT(*) as total
             FROM ' . $table_prefix . 'post_reactions
@@ -226,10 +296,11 @@ try {
     
     echo "💡 PROCHAINES ÉTAPES :\n";
     echo "   1. Vérifiez que tous les fichiers ci-dessus existent et ne sont PAS vides\n";
-    echo "   2. Si des réactions sont en attente, lancez manuellement le cron :\n";
+    echo "   2. Si des migrations sont enregistrées mais les fichiers manquent, supprimez-les de la DB\n";
+    echo "   3. Si des réactions sont en attente, lancez manuellement le cron :\n";
     echo "      php bin/phpbbcli.php cron:run bastien59960.reactions.notification -vvv\n";
-    echo "   3. Surveillez les logs : tail -f /var/log/apache2/error.log\n";
-    echo "   4. Si get_name() retourne vide, corrigez cron/notification_task.php\n\n";
+    echo "   4. Surveillez les logs : tail -f /var/log/apache2/error.log\n";
+    echo "   5. Si get_name() retourne vide, corrigez cron/notification_task.php\n\n";
 
 } catch (\Throwable $e) {
     echo "\n╔═══════════════════════════════════════════════════════════════╗\n";

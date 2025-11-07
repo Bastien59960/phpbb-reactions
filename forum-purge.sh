@@ -105,11 +105,35 @@ sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
+-- Sauvegarde des migrations avant suppression pour diagnostic
+CREATE TEMPORARY TABLE IF NOT EXISTS temp_migrations_backup AS 
+SELECT * FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+
+-- Afficher les migrations qui seront supprimées
+SELECT 'Migrations à supprimer:' AS info;
+SELECT migration_name, migration_depends_on FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+
+-- Supprimer l'extension et ses migrations
 DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
 DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
 EOF
 
 check_status "État de l'extension réinitialisé dans la base de données."
+
+# Vérifier les fichiers de migration manquants
+echo ""
+echo "🔍 Vérification des fichiers de migration..."
+MIGRATION_DIR="$FORUM_ROOT/ext/bastien59960/reactions/migrations"
+if [ -d "$MIGRATION_DIR" ]; then
+    echo "📁 Répertoire migrations trouvé : $MIGRATION_DIR"
+    echo "📋 Fichiers présents :"
+    ls -1 "$MIGRATION_DIR"/*.php 2>/dev/null | while read file; do
+        echo "   ✅ $(basename "$file")"
+    done
+else
+    echo "❌ Répertoire migrations introuvable : $MIGRATION_DIR"
+fi
+echo ""
 
 
 # ==============================================================================
@@ -350,9 +374,52 @@ check_status "Extension réactivée." "$output"
 # ==============================================================================
 if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
-    echo "───[ 8️⃣.5️⃣  DIAGNOSTIC SQL APRÈS ERREUR ]──────────────────────────────"
+    echo "───[ 8️⃣.5️⃣  DIAGNOSTIC APPROFONDI APRÈS ERREUR ]──────────────────────────────"
     sleep 0.2
     echo -e "${YELLOW}⚠️  Une erreur a été détectée. Diagnostic approfondi...${NC}"
+    echo ""
+    
+    # Afficher l'erreur complète
+    echo "📋 Sortie complète de l'erreur :"
+    echo "$output" | grep -A 10 -B 5 "array_merge\|Fatal error" | head -30
+    echo ""
+    
+    # Vérifier les fichiers de migration
+    echo "🔍 Vérification des fichiers de migration..."
+    MIGRATION_DIR="$FORUM_ROOT/ext/bastien59960/reactions/migrations"
+    if [ -d "$MIGRATION_DIR" ]; then
+        for file in "$MIGRATION_DIR"/*.php; do
+            if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                echo "   📄 Analyse de $filename..."
+                
+                # Vérifier les méthodes critiques
+                if grep -q "function depends_on" "$file"; then
+                    if grep -A 3 "function depends_on" "$file" | grep -q "return array"; then
+                        echo "      ✅ depends_on() retourne un array"
+                    else
+                        echo "      ⚠️  depends_on() pourrait ne pas retourner un array"
+                    fi
+                fi
+                
+                if grep -q "function update_schema" "$file"; then
+                    if grep -A 5 "function update_schema" "$file" | grep -q "return array"; then
+                        echo "      ✅ update_schema() retourne un array"
+                    else
+                        echo "      ⚠️  update_schema() pourrait ne pas retourner un array"
+                    fi
+                fi
+                
+                if grep -q "function update_data" "$file"; then
+                    if grep -A 5 "function update_data" "$file" | grep -q "return array"; then
+                        echo "      ✅ update_data() retourne un array"
+                    else
+                        echo "      ⚠️  update_data() pourrait ne pas retourner un array"
+                    fi
+                fi
+            fi
+        done
+    fi
     echo ""
     
     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'ERROR_DIAGNOSTIC_EOF'
