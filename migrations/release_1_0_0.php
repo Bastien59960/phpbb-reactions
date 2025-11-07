@@ -102,14 +102,14 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.add', array('reactions_ucp_preferences_installed', 1)),
 
             // Options de configuration de l'interface (fusionné depuis release_1_0_4)
-			['config.add', ['bastien59960_reactions_post_emoji_size', 24]],
-			['config.add', ['bastien59960_reactions_picker_width', 320]],
-			['config.add', ['bastien59960_reactions_picker_height', 280]],
-			['config.add', ['bastien59960_reactions_picker_show_categories', 1]],
-			['config.add', ['bastien59960_reactions_picker_show_search', 1]],
-			['config.add', ['bastien59960_reactions_picker_use_json', 1]],
-			['config.add', ['bastien59960_reactions_picker_emoji_size', 24]],
-			['config.add', ['bastien59960_reactions_sync_interval', 5000]],
+			array('config.add', array('bastien59960_reactions_post_emoji_size', 24)),
+			array('config.add', array('bastien59960_reactions_picker_width', 320)),
+			array('config.add', array('bastien59960_reactions_picker_height', 280)),
+			array('config.add', array('bastien59960_reactions_picker_show_categories', 1)),
+			array('config.add', array('bastien59960_reactions_picker_show_search', 1)),
+			array('config.add', array('bastien59960_reactions_picker_use_json', 1)),
+			array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
+			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
             // Ajout du module UCP
             array('module.add', array(
@@ -138,14 +138,14 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('reactions_ucp_preferences_installed')),
 
             // Suppression des configurations de l'interface (fusionné depuis release_1_0_4)
-			['config.remove', ['bastien59960_reactions_post_emoji_size']],
-			['config.remove', ['bastien59960_reactions_picker_width']],
-			['config.remove', ['bastien59960_reactions_picker_height']],
-			['config.remove', ['bastien59960_reactions_picker_show_categories']],
-			['config.remove', ['bastien59960_reactions_picker_show_search']],
-			['config.remove', ['bastien59960_reactions_picker_use_json']],
-			['config.remove', ['bastien59960_reactions_picker_emoji_size']],
-			['config.remove', ['bastien59960_reactions_sync_interval']],
+			array('config.remove', array('bastien59960_reactions_post_emoji_size')),
+			array('config.remove', array('bastien59960_reactions_picker_width')),
+			array('config.remove', array('bastien59960_reactions_picker_height')),
+			array('config.remove', array('bastien59960_reactions_picker_show_categories')),
+			array('config.remove', array('bastien59960_reactions_picker_show_search')),
+			array('config.remove', array('bastien59960_reactions_picker_use_json')),
+			array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
+			array('config.remove', array('bastien59960_reactions_sync_interval')),
 
             // Suppression du module UCP
             array('module.remove', array(
