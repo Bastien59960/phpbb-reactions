@@ -385,8 +385,6 @@ class ajax
                     throw new \phpbb\exception\http_exception(429, $errorMessage);
                 }
 
-                error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
-                error_log("[Reactions RID=$rid] current_types = {$current_types}, user_reactions = {$user_reactions}");
             }
 
             // =====================================================================

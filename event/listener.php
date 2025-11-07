@@ -52,7 +52,7 @@ class listener implements EventSubscriberInterface
     public function __construct(
         driver_interface $db,
         \phpbb\user $user,
-        $post_reactions_table,
+        string $post_reactions_table,
         $posts_table,    // ✅ NOUVEAU PARAMÈTRE
         \phpbb\template\template $template,
         \phpbb\language\language $language,
@@ -116,11 +116,11 @@ class listener implements EventSubscriberInterface
         $picker_height = (int) ($this->config['bastien59960_reactions_picker_height'] ?? 280);
         $picker_emoji_size = (int) ($this->config['bastien59960_reactions_picker_emoji_size'] ?? 24);
         $picker_show_categories = (int) ($this->config['bastien59960_reactions_picker_show_categories'] ?? 1);
-        $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 1);
-        $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 1);
+        $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 0);
+        $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 0);
         $sync_interval = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5000);
 
-        $json_path = $picker_use_json
+        $json_path = $picker_use_json && $picker_show_categories
             ? $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json'
             : '';
 

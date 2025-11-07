@@ -117,8 +117,7 @@ check_status "Permissions de cache/store rétablies (777)."
 echo "───[ 3️⃣  HARD RESET MANUEL DE LA BASE DE DONNÉES ]──────────────────────"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
-
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
 -- Sauvegarde des migrations avant suppression pour diagnostic
 -- CREATE TEMPORARY TABLE IF NOT EXISTS temp_migrations_backup AS 
 -- SELECT * FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
@@ -130,7 +129,6 @@ SELECT migration_name, migration_depends_on FROM phpbb_migrations WHERE migratio
 -- Supprimer l'extension et ses migrations
 DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
 DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
-DELETE FROM phpbb_config WHERE config_name = 'ext_bastien59960_reactions_version';
 
 -- Vérifier que les suppressions ont bien eu lieu
 SELECT 'Vérification après suppression:' AS info;
@@ -176,27 +174,30 @@ sleep 0.2
 echo "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
--- Suppression des configurations de l'extension (votre version, plus précise)
-SELECT '🗑️  Purge des configurations...' AS status;
+-- ============================================================================
+-- PURGE DES DONNÉES SPÉCIFIQUES À L'EXTENSION
+-- ============================================================================
+SELECT '--- Purge des configurations...' AS '';
 DELETE FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%';
 DELETE FROM phpbb_config WHERE config_name = 'reactions_ucp_preferences_installed';
 
--- Suppression des modules UCP de l'extension (votre version)
-SELECT '🗑️  Purge des modules...' AS status;
+-- Suppression des modules ACP et UCP de l'extension
+SELECT '--- Purge des modules...' AS '';
 DELETE FROM phpbb_modules
 WHERE module_basename LIKE '%\\bastien59960\\reactions\\%'
-   OR module_langname LIKE 'UCP_REACTIONS%'
-   OR module_langname = 'ACP_REACTIONS_SETTINGS';
+   OR module_langname IN ('UCP_REACTIONS_SETTINGS', 'ACP_REACTIONS_SETTINGS', 'bastien59960_reactions_ucp_module');
 
 -- Nettoyage des modules orphelins qui peuvent causer des erreurs
 DELETE FROM phpbb_modules WHERE module_basename = '' OR module_basename NOT LIKE '\\%';
 
--- Suppression des types de notification de l'extension (votre version, plus sûre)
-SELECT '🗑️  Purge des types de notifications...' AS status;
+-- Suppression des types de notification de l'extension
+SELECT '--- Purge des types de notifications...' AS '';
 DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%';
 
 -- Confirmation
-SELECT '✅ Purge des données (configs, modules, notifs) terminée.' AS status;
+SELECT CONCAT('--- Lignes de configuration supprimées : ', ROW_COUNT()) as result;
+SELECT CONCAT('--- Lignes de modules supprimées : ', ROW_COUNT()) as result;
+SELECT CONCAT('--- Lignes de types de notifs supprimées : ', ROW_COUNT()) as result;
 MANUAL_PURGE_EOF
 check_status "Purge des données de l'extension (configs, modules, notifs)."
 
@@ -209,7 +210,7 @@ echo "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'SCHEMA_PURGE_EOF'
 -- Suppression des tables de l'extension
--- La suppression de la table des réactions est désactivée pour conserver les données.
+-- La suppression de la table des réactions est commentée pour conserver les données.
 -- DROP TABLE IF EXISTS phpbb_post_reactions;
 
 -- Suppression des colonnes ajoutées par l'extension
@@ -228,7 +229,7 @@ echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
 echo ""
 # ==============================================================================
-# 6️⃣ SUPPRESSION FICHIER cron.lock
+# 7️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
 echo "───[ 7️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
 sleep 0.2
@@ -283,7 +284,7 @@ CLEANUP_EOF
 check_status "Nettoyage des migrations problématiques terminé."
 
 # ==============================================================================
-# 8️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES
+# 8️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
 # ==============================================================================
 echo "───[ 8️⃣  NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
 sleep 0.2
@@ -301,7 +302,7 @@ FINAL_CLEANUP_EOF
 check_status "Nettoyage final de la BDD (cron_lock, notifs orphelines)."
 
 # ==============================================================================
-# 9️⃣ PURGE CACHE (AVANT RÉACTIVATION)
+# 9️⃣ PURGE DU CACHE (AVANT RÉACTIVATION)
 # ==============================================================================
 echo "───[ 9️⃣  PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
 sleep 0.2
@@ -309,7 +310,7 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
 
 # ==============================================================================
-# DÉFINITION DU BLOC DE DIAGNOSTIC (HEREDOC)
+# DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
 # ==============================================================================
 # Ce bloc est défini une seule fois et redirigé vers le descripteur de fichier 3.
 # Il sera réutilisé par les étapes 10 et 12.
@@ -498,7 +499,7 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reacti
 check_status "Extension réactivée." "$output"
 
 # ==============================================================================
-# 1️⃣2️⃣ DIAGNOSTIC SQL POST-RÉACTIVATION (SI SUCCÈS)
+# 1️⃣2️⃣ DIAGNOSTIC SQL POST-RÉACTIVATION
 # ==============================================================================
 # On ne lance ce diagnostic que si l'étape précédente a réussi (code de sortie 0)
 if [ $? -eq 0 ]; then
@@ -511,7 +512,7 @@ if [ $? -eq 0 ]; then
 fi
 
 # ==============================================================================
-# 1️⃣3️⃣ DIAGNOSTIC POST-ERREUR
+# 1️⃣3️⃣ DIAGNOSTIC APPROFONDI POST-ERREUR
 # ==============================================================================
 if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
@@ -706,7 +707,7 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 1️⃣4️⃣ PURGE CACHE FINALE
+# 1️⃣4️⃣ PURGE DU CACHE FINALE
 # ==============================================================================
 echo "───[ 1️⃣4️⃣ PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
 sleep 0.2
@@ -714,7 +715,7 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
-# 1️⃣5️⃣ TEST FINAL DU CRON
+# 1️⃣5️⃣ TEST DE L'EXÉCUTION DU CRON
 # ==============================================================================
 echo "───[ 1️⃣5️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
 sleep 0.2
@@ -723,7 +724,7 @@ check_status "Exécution de la tâche cron" "$output"
 
 
 # ==============================================================================
-# 1️⃣6️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE)
+# 1️⃣6️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
 echo "───[ 1️⃣6️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 sleep 0.2
@@ -746,7 +747,7 @@ find "$CACHE_DIR" -type f -exec chmod 0666 {} \;
 check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
-# 🔍 CHECK FINAL EXTENSION STATUS (Version corrigée avec l'astérisque)
+# 1️⃣7️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
 # ==============================================================================
 echo ""
 echo "───[ 1️⃣7️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
@@ -769,7 +770,7 @@ else
 fi
 
 # ==============================================================================
-# 🔍 CHECK FINAL CRON TASK STATUS
+# 1️⃣8️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
 # ==============================================================================
 echo ""
 echo "───[ 1️⃣8️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
