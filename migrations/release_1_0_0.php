@@ -113,12 +113,17 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 
             // Ajout du module UCP
             array('module.add', array(
+                'ucp', // parent
+                'UCP_PREFS', // après
+                'bastien59960_reactions_ucp_module' // nom du module
+            )),
+            array('module.add', array(
                 'ucp',
-                'UCP_PREFS',
+                'bastien59960_reactions_ucp_module', // parent
                 array(
                     'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
                     'modes'             => array('settings'),
-                ),
+                )
             )),
 
             // Fonctions personnalisées à exécuter
@@ -149,9 +154,9 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 
             // Suppression du module UCP
             array('module.remove', array(
-                'ucp',
-                'UCP_PREFS',
-                array('module_basename' => '\bastien59960\reactions\ucp\reactions_module'),
+                'ucp', // parent
+                false, // après
+                'bastien59960_reactions_ucp_module' // nom du module
             )),
 
             array('custom', array(array($this, 'remove_notification_type'))),
