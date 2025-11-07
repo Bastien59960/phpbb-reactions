@@ -963,17 +963,9 @@ function toggle_visible(id) {
                 }
                 
             } else {
-                // =====================================================================
-                // GESTION DES ERREURS MÉTIER RENVOYÉES PAR LE SERVEUR
-                // =====================================================================
-                
-                console.error('[Reactions] Erreur métier du serveur:', data.error || data.message || 'Erreur inconnue.');
-                alert(data.error || 'Une erreur est survenue.');
-                
-                // Si erreur de limite (max réactions atteintes)
-                if (data.error && data.error.includes('LIMIT')) {
-                    alert('Limite de réactions atteinte pour ce message.');
-                }
+                // Ce bloc est intentionnellement laissé vide.
+                // Toutes les erreurs (4xx, 5xx) sont maintenant gérées par le bloc .catch()
+                // pour une gestion centralisée et plus claire.
             }
         })
         .catch(error => {
@@ -983,16 +975,23 @@ function toggle_visible(id) {
             
             console.error('[Reactions] Erreur lors de l\'envoi:', error);
 
-            // Si l'erreur contient des données du serveur, on les utilise.
-            if (error.data && error.data.error) {
-                // C'est ici qu'on affiche le message d'erreur spécifique !
-                alert(error.data.error);
-            } else if (error.response && error.response.status === 403) {
-                // Cas spécifique d'une erreur 403 sans JSON (rare)
-                showLoginMessage();
-            } else {
-                // Fallback pour les erreurs réseau ou les erreurs 500 sans JSON.
-                alert('Une erreur est survenue lors de l\'ajout de la réaction. Veuillez réessayer.');
+            // Gestion des erreurs en fonction du code de statut HTTP
+            const status = error.response ? error.response.status : null;
+            const serverMessage = error.data ? error.data.error : null;
+
+            switch (status) {
+                case 403: // Forbidden
+                    showLoginMessage();
+                    break;
+                case 429: // Too Many Requests (limite atteinte)
+                case 400: // Bad Request (emoji invalide, etc.)
+                    // Affiche le message d'erreur spécifique envoyé par le serveur.
+                    alert(serverMessage || 'Une erreur de validation est survenue.');
+                    break;
+                default:
+                    // Fallback pour les erreurs réseau ou les erreurs 500.
+                    alert('Une erreur est survenue lors de la communication avec le serveur. Veuillez réessayer.');
+                    break;
             }
         });
     }
