@@ -15,12 +15,6 @@
 
 namespace bastien59960\reactions\migrations;
 
-// Sécurité : interdire l'accès direct au fichier
-if (!defined('IN_PHPBB'))
-{
-	exit;
-}
-
 class release_1_0_0 extends \phpbb\db\migration\migration
 {
     public function effectively_installed()
