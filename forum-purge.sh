@@ -197,6 +197,57 @@ else
 fi
 
 # ==============================================================================
+# 6️⃣.5️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
+# ==============================================================================
+echo "───[ 6️⃣.5️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
+sleep 0.2
+echo -e "   (Le mot de passe a été demandé au début du script.)"
+echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
+echo ""
+
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'CLEANUP_EOF'
+-- Détecter les migrations problématiques (dépendances non-array)
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔍 MIGRATIONS PROBLÉMATIQUES DÉTECTÉES' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+SELECT 
+    migration_name,
+    LEFT(migration_depends_on, 80) as depends_preview,
+    CASE 
+        WHEN migration_depends_on LIKE 'a:%' THEN '✅ ARRAY'
+        WHEN migration_depends_on LIKE 's:%' THEN '❌ STRING (PROBLÉMATIQUE)'
+        WHEN migration_depends_on IS NULL THEN 'NULL'
+        WHEN migration_depends_on = '' THEN 'EMPTY'
+        ELSE '❓ OTHER (PROBLÉMATIQUE)'
+    END as type_detected
+FROM phpbb_migrations
+WHERE (migration_depends_on LIKE 's:%' 
+       OR (migration_depends_on NOT LIKE 'a:%' 
+           AND migration_depends_on NOT LIKE 's:%'
+           AND migration_depends_on IS NOT NULL 
+           AND migration_depends_on != ''))
+ORDER BY migration_name;
+
+-- Supprimer les migrations problématiques (sauf celles de notre extension déjà supprimées)
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🗑️  SUPPRESSION DES MIGRATIONS PROBLÉMATIQUES' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+DELETE FROM phpbb_migrations
+WHERE (migration_depends_on LIKE 's:%' 
+       OR (migration_depends_on NOT LIKE 'a:%' 
+           AND migration_depends_on NOT LIKE 's:%'
+           AND migration_depends_on IS NOT NULL 
+           AND migration_depends_on != ''))
+  AND migration_name NOT LIKE '%bastien59960%reactions%';
+
+SELECT CONCAT('✅ Migrations problématiques supprimées (', ROW_COUNT(), ' ligne(s))') AS result;
+CLEANUP_EOF
+
+check_status "Nettoyage des migrations problématiques terminé."
+
+# ==============================================================================
 # 7️⃣ SQL RESET – UN SEUL PROMPT
 # ==============================================================================
 echo "───[ 7️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
