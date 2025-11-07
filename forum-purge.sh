@@ -79,6 +79,20 @@ echo "" # Nouvelle ligne après l'entrée masquée
 
 
 # ==============================================================================
+# 1️⃣ DÉSACTIVATION & PURGE PROPRE VIA PHPBB-CLI
+# ==============================================================================
+echo "───[ 1️⃣  DÉSACTIVATION & PURGE PROPRE VIA PHPBB-CLI ]───────────────────"
+sleep 0.2
+echo -e "${YELLOW}ℹ️  Tentative de désactivation propre. Les erreurs ici sont souvent normales si l'extension est déjà dans un état cassé.${NC}"
+
+# On tente de désactiver proprement. On ignore les erreurs avec `|| true` car si l'extension est cassée, cette commande échouera.
+php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv > /dev/null 2>&1 || true
+check_status "Tentative de désactivation propre de l'extension."
+
+php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
+check_status "Purge du cache après désactivation."
+
+# ==============================================================================
 # 1️⃣ NETTOYAGE AGRESSIF DU CACHE
 # ==============================================================================
 echo "───[ 1️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
@@ -100,14 +114,14 @@ check_status "Permissions de cache/store rétablies (777)."
 # ==============================================================================
 # 2️⃣ FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION
 # ==============================================================================
-echo "───[ 2️⃣  FORCER LA RÉINITIALISATION DE L'ÉTAT DE L'EXTENSION ]──────────"
+echo "───[ 2️⃣  HARD RESET MANUEL DE LA BASE DE DONNÉES ]──────────────────────"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
 -- Sauvegarde des migrations avant suppression pour diagnostic
-CREATE TEMPORARY TABLE IF NOT EXISTS temp_migrations_backup AS 
-SELECT * FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+-- CREATE TEMPORARY TABLE IF NOT EXISTS temp_migrations_backup AS 
+-- SELECT * FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
 
 -- Afficher les migrations qui seront supprimées
 SELECT 'Migrations à supprimer:' AS info;
@@ -123,7 +137,7 @@ SELECT 'Vérification après suppression:' AS info;
 SELECT COUNT(*) as remaining_count FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
 EOF
 
-check_status "État de l'extension réinitialisé dans la base de données."
+check_status "État de l'extension 'Reactions' réinitialisé dans la BDD."
 
 # Vérifier que les migrations ont bien été supprimées
 echo ""
@@ -155,14 +169,6 @@ echo ""
 
 
 # ==============================================================================
-# 3️⃣ DÉSACTIVATION DE L'EXTENSION (Étape ignorée)
-# ==============================================================================
-echo "───[ 3️⃣  DÉSACTIVATION DE L'EXTENSION (Étape ignorée) ]────────────"
-sleep 0.2
-echo -e "${YELLOW}ℹ️  L'étape 'extension:disable' est ignorée car elle est redondante avec la purge manuelle.${NC}"
-echo ""
-
-# ==============================================================================
 # 4️⃣ PURGE DES DONNÉES DE L'EXTENSION
 # ==============================================================================
 echo "───[ 4️⃣  PURGE MANUELLE DES DONNÉES (SANS SUPPRIMER LA TABLE) ]──────"
@@ -185,15 +191,15 @@ SELECT '✅ Purge manuelle des configs, modules et types de notif terminée.' AS
 MANUAL_PURGE_EOF
 check_status "Purge manuelle des données de l'extension (tables de réactions CONSERVÉES)."
 
+
 # ==============================================================================
-# 5️⃣ PURGE CACHE (APRÈS DÉSACTIVATION)
+# 5️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
-echo "───[ 5️⃣  PURGE DU CACHE (APRÈS DÉSACTIVATION) ]────────────────────"
+echo "───[ 5️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
 sleep 0.2
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
-check_status "Cache purgé après désactivation." "$output"
-
-
+echo -e "   (Le mot de passe a été demandé au début du script.)"
+echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
+echo ""
 # ==============================================================================
 # 6️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
@@ -206,15 +212,6 @@ if [ -f "$CRON_LOCK_FILE" ]; then
 else
     echo -e "${GREEN}ℹ️  Aucun cron.lock trouvé (déjà absent).${NC}"
 fi
-
-# ==============================================================================
-# 7️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
-# ==============================================================================
-echo "───[ 7️⃣  NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES ]───────────────────"
-sleep 0.2
-echo -e "   (Le mot de passe a été demandé au début du script.)"
-echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
-echo ""
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'CLEANUP_EOF'
 -- Détecter les migrations problématiques (dépendances non-array)
@@ -260,16 +257,28 @@ check_status "Nettoyage des migrations problématiques terminé."
 
 # ==============================================================================
 # 8️⃣ SQL RESET – UN SEUL PROMPT
-# ==============================================================================
-echo "───[ 8️⃣  RÉINITIALISATION SQL (CRON & NOTIFICATIONS) ]──────────"
+echo "───[ 7️⃣  NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
 sleep 0.2
 
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'FINAL_CLEANUP_EOF'
+-- Réinitialiser le verrou du cron en base de données
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
-EOF
 
-check_status "Verrou du cron réinitialisé en base de données."
+-- Supprimer les notifications orphelines qui pourraient causer des problèmes
+DELETE n FROM phpbb_notifications n
+LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
+WHERE t.notification_type_id IS NULL;
+FINAL_CLEANUP_EOF
 
+check_status "Nettoyage final de la BDD (cron_lock, notifs orphelines)."
+
+# ==============================================================================
+# 8️⃣ PURGE CACHE (AVANT RÉACTIVATION)
+# ==============================================================================
+echo "───[ 8️⃣  PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
+sleep 0.2
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+check_status "Cache purgé avant réactivation." "$output"
 # ==============================================================================
 # 9️⃣ DIAGNOSTIC SQL AVANT RÉACTIVATION
 # ==============================================================================
@@ -444,7 +453,7 @@ echo -e "${GREEN}✅ Diagnostic SQL terminé.${NC}"
 echo ""
 
 # ==============================================================================
-# 8️⃣ RÉACTIVATION EXTENSION
+# 🔟 RÉACTIVATION EXTENSION
 # ==============================================================================
 echo "───[ 🔟  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────────"
 sleep 0.2
@@ -452,7 +461,7 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reacti
 check_status "Extension réactivée." "$output"
 
 # ==============================================================================
-# 1️⃣1️⃣ RESET DES NOTIFICATIONS (MAINTENANT QUE LA TABLE EXISTE)
+# 1️⃣1️⃣ RESET DES NOTIFICATIONS (POST-RÉACTIVATION)
 # ==============================================================================
 echo "───[ 1️⃣1️⃣  RESET DES NOTIFICATIONS (POST-RÉACTIVATION) ]──────────"
 sleep 0.2
@@ -466,7 +475,7 @@ EOF
 check_status "Statut 'reaction_notified' réinitialisé (si la table contient des données)."
 
 # ==============================================================================
-# 1️⃣2️⃣ DIAGNOSTIC SQL APRÈS RÉACTIVATION (si erreur)
+# 1️⃣2️⃣ DIAGNOSTIC POST-ERREUR
 # ==============================================================================
 if echo "$output" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
@@ -661,7 +670,7 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 9️⃣ PURGE CACHE (APRÈS)
+# 1️⃣3️⃣ PURGE CACHE FINALE
 # ==============================================================================
 echo "───[ 1️⃣3️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]──────"
 sleep 0.2
@@ -669,7 +678,7 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
-# 🔟 TEST FINAL DU CRON
+# 1️⃣4️⃣ TEST FINAL DU CRON
 # ==============================================================================
 echo "───[ 1️⃣4️⃣ TEST FINAL DU CRON ]──────────────────────────────────"
 sleep 0.2
@@ -678,7 +687,7 @@ check_status "Exécution de la tâche cron" "$output"
 
 
 # ==============================================================================
-# 1️⃣5️⃣ CORRECTION DES PERMISSIONS DU CACHE (CRITIQUE)
+# 1️⃣5️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
 echo "───[ 1️⃣5️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 sleep 0.2
