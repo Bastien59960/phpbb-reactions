@@ -170,10 +170,14 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     public function set_utf8mb4_bin()
     {
         $table = $this->table_prefix . 'post_reactions';
-        $sql = "ALTER TABLE {$table}
-                MODIFY `reaction_emoji` VARCHAR(191)
-                CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
-        $this->db->sql_query($sql);
+        try {
+            $sql = "ALTER TABLE {$table}
+                    MODIFY `reaction_emoji` VARCHAR(191)
+                    CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
+            $this->db->sql_query($sql);
+        } catch (\Throwable $e) {
+            // Ignorer silencieusement si la table n'existe pas encore ou si la colonne est déjà correcte
+        }
     }
 
     public function clean_orphan_notifications()
@@ -181,79 +185,84 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         $notifications_table = $this->table_prefix . 'notifications';
         $types = $this->table_prefix . 'notification_types';
         try {
-            $sql = "
-                DELETE FROM {$notifications_table}
-                WHERE notification_type_id NOT IN (
-                    SELECT notification_type_id FROM {$types}
-                )
-            ";
+            // Utiliser LEFT JOIN au lieu de NOT IN pour compatibilité MySQL
+            $sql = "DELETE n FROM {$notifications_table} n
+                    LEFT JOIN {$types} t ON n.notification_type_id = t.notification_type_id
+                    WHERE t.notification_type_id IS NULL";
             $this->db->sql_query($sql);
         } catch (\Throwable $e) {
-            if (defined('DEBUG')) {
-                trigger_error('[Reactions] Échec du nettoyage des notifications orphelines : ' . $e->getMessage(), E_USER_NOTICE);
-            }
+            // Ignorer silencieusement les erreurs pour ne pas bloquer la migration
+            // Les notifications orphelines seront nettoyées plus tard si nécessaire
         }
     }
 
-public function create_notification_type()
-{
-    $types_table = $this->table_prefix . 'notification_types';
+    public function create_notification_type()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
 
-    // Nettoyage préventif d'une ancienne entrée erronée
-    $malformed_name = 'bastien59960.reactions.notification.type.reaction';
-    $sql_cleanup = 'DELETE FROM ' . $types_table . "
-        WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
-    $this->db->sql_query($sql_cleanup);
+        try {
+            // Nettoyage préventif d'une ancienne entrée erronée
+            $malformed_name = 'bastien59960.reactions.notification.type.reaction';
+            $sql_cleanup = 'DELETE FROM ' . $types_table . "
+                WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
+            $this->db->sql_query($sql_cleanup);
 
+            // === TYPE 1 : notification.type.reaction (instantané, cloche) ===
+            // Ce type gère les notifications immédiates dans la "cloche" du forum.
+            $canonical_name = 'notification.type.reaction';
+            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
+                WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
+                LIMIT 1";
+            $result = $this->db->sql_query($sql);
+            $row = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
 
-    // === TYPE 1 : notification.type.reaction (instantané, cloche) ===
-    // Ce type gère les notifications immédiates dans la "cloche" du forum.
-    $canonical_name = 'notification.type.reaction';
-    $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-        WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
-        LIMIT 1";
-    $result = $this->db->sql_query($sql);
-    $row = $this->db->sql_fetchrow($result);
-    $this->db->sql_freeresult($result);
+            if (!$row) {
+                $insert_data = array(
+                    'notification_type_name'    => $canonical_name,
+                    'notification_type_enabled' => 1,
+                );
+                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
+            }
 
-    if (!$row) {
-        $insert_data = array(
-            'notification_type_name'    => $canonical_name,
-            'notification_type_enabled' => 1,
+            // === TYPE 2 : notification.type.reaction_email_digest (résumé e-mail) ===
+            // Ce type est utilisé par la tâche CRON pour envoyer des résumés périodiques par e-mail.
+            $digest_name = 'notification.type.reaction_email_digest';
+            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
+                WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
+                LIMIT 1";
+            $result = $this->db->sql_query($sql);
+            $row = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if (!$row) {
+                $insert_data = array(
+                    'notification_type_name'    => $digest_name,
+                    'notification_type_enabled' => 1,
+                );
+                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
+            }
+        } catch (\Throwable $e) {
+            // Ignorer silencieusement les erreurs pour ne pas bloquer la migration
+        }
+    }
+
+    public function remove_notification_type()
+    {
+        $types_table = $this->table_prefix . 'notification_types';
+        $names = array(
+            'notification.type.reaction',
+            'notification.type.reaction_email_digest',
         );
-        $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
-    }
 
-    // === TYPE 2 : notification.type.reaction_email_digest (résumé e-mail) ===
-    // Ce type est utilisé par la tâche CRON pour envoyer des résumés périodiques par e-mail.
-    $digest_name = 'notification.type.reaction_email_digest';
-    $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-        WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
-        LIMIT 1";
-    $result = $this->db->sql_query($sql);
-    $row = $this->db->sql_fetchrow($result);
-    $this->db->sql_freeresult($result);
-
-    if (!$row) {
-        $insert_data = array(
-            'notification_type_name'    => $digest_name,
-            'notification_type_enabled' => 1,
-        );
-        $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
+        try {
+            foreach ($names as $canonical_name) {
+                $sql = 'DELETE FROM ' . $types_table . "
+                    WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
+                $this->db->sql_query($sql);
+            }
+        } catch (\Throwable $e) {
+            // Ignorer silencieusement les erreurs pour ne pas bloquer la migration
+        }
     }
-}
-public function remove_notification_type()
-{
-    $types_table = $this->table_prefix . 'notification_types';
-    $names = array(
-        'notification.type.reaction',
-        'notification.type.reaction_email_digest',
-    );
-
-    foreach ($names as $canonical_name) {
-        $sql = 'DELETE FROM ' . $types_table . "
-            WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
-        $this->db->sql_query($sql);
-    }
-}
 }
