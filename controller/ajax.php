@@ -377,10 +377,12 @@ class ajax
                 $this->db->sql_freeresult($result);
                 
                 if ($current_types >= $max_per_post) {
-                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_POST', [$max_per_post]);
+                    $errorMessage = vsprintf($this->language->lang('REACTIONS_LIMIT_POST'), [$max_per_post]);
+                    throw new \phpbb\exception\http_exception(429, $errorMessage);
                 }
                 if ($user_reactions >= $max_per_user) {
-                    throw new \phpbb\exception\http_exception(429, 'REACTIONS_LIMIT_USER', [$max_per_user]);
+                    $errorMessage = vsprintf($this->language->lang('REACTIONS_LIMIT_USER'), [$max_per_user]);
+                    throw new \phpbb\exception\http_exception(429, $errorMessage);
                 }
 
                 error_log("[Reactions RID=$rid] CONFIG max_per_post={$max_per_post} max_per_user={$max_per_user}");
@@ -446,14 +448,8 @@ class ajax
             ob_end_clean();
             return new JsonResponse([
                 'success' => false,
-                // CORRECTION : Utiliser ->lang() au lieu de ->get()
-                // On vérifie si le message est une clé de langue (contient des majuscules/underscores)
-                // ou un message simple.
-                'error'   => (preg_match('/^[A-Z0-9_]+$/', $httpEx->getMessage()))
-                               ? ($httpEx->getParameters()
-                                   ? vsprintf($this->language->lang($httpEx->getMessage()), $httpEx->getParameters())
-                                   : $this->language->lang($httpEx->getMessage()))
-                               : $httpEx->getMessage(),
+                // Le message est déjà traduit et formaté au moment où l'exception est lancée.
+                'error'   => $httpEx->getMessage(),
                 'rid'     => $rid,
             ], $httpEx->getStatusCode());
 
