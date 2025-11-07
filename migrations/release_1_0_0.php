@@ -4,23 +4,56 @@
  * @author     Bastien (bastien59960)
  * @copyright  (c) 2025 Bastien59960
  * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ *
+ * Fichier : /migrations/release_1_0_0.php
+ * Rôle :
+ * Ce fichier de migration est le script d'installation et de mise à jour de
+ * l'extension pour la version 1.0.0. Il est exécuté automatiquement par phpBB
+ * lors de l'activation de l'extension.
+ *
+ * Il est responsable de :
+ * - Créer la table `phpbb_post_reactions` pour stocker les réactions.
+ * - Ajouter les colonnes nécessaires aux tables `phpbb_users` et `phpbb_notifications`.
+ * - Insérer les configurations par défaut dans la table `phpbb_config`.
+ * - Créer et activer les types de notifications personnalisés.
+ * - Importer les données d'une ancienne version de l'extension si elle existe.
  */
 
 namespace bastien59960\reactions\migrations;
 
+/**
+ * Migration pour la version 1.0.0 de l'extension Reactions.
+ *
+ * Cette classe contient toutes les instructions pour modifier la base de données
+ * afin d'installer, mettre à jour ou désinstaller l'extension.
+ */
 class release_1_0_0 extends \phpbb\db\migration\migration
 {
+    /**
+     * Vérifie si l'extension est déjà "effectivement installée".
+     *
+     * Cette méthode est appelée par phpBB pour déterminer si la migration doit
+     * être exécutée. Si elle retourne `true`, phpBB considère que l'installation
+     * est déjà faite et passe à la suite.
+     *
+     * @return bool True si les structures principales de la BDD existent déjà.
+     */
     public function effectively_installed()
     {
+        // On vérifie la présence d'un des types de notification que nous créons.
         $types_table = $this->table_prefix . 'notification_types';
         $sql = 'SELECT notification_type_id
                 FROM ' . $types_table . "
                 WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'
-                   OR notification_type_name = 'reaction'";
+                   OR notification_type_name = 'reaction'"; // Inclut l'ancien nom pour la compatibilité
         $result = $this->db->sql_query($sql);
         $type_exists = (bool) $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
 
+        // L'extension est considérée comme installée si :
+        // 1. La table des réactions existe.
+        // 2. La colonne de préférence utilisateur existe.
+        // 3. Au moins un de nos types de notification existe.
         return (
             $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions') &&
             $this->db_tools->sql_column_exists($this->table_prefix . 'users', 'user_reactions_notify') &&
@@ -28,11 +61,23 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         );
     }
 
+    /**
+     * Définit les dépendances de cette migration.
+     *
+     * phpBB s'assurera que la migration `v3310` de phpBB 3.3.10 est exécutée
+     * avant celle-ci. C'est une bonne pratique pour garantir la compatibilité.
+     *
+     * @return array Liste des migrations requises.
+     */
     static public function depends_on()
     {
         return array('\phpbb\db\migration\data\v33x\v3310');
     }
 
+    /**
+     * Définit les modifications du schéma de la base de données à appliquer.
+     * C'est ici qu'on crée les tables et les colonnes.
+     */
     public function update_schema()
     {
         return array(
@@ -43,7 +88,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                         'post_id'           => array('UINT', 0),
                         'topic_id'          => array('UINT', 0),
                         'user_id'           => array('UINT', 0),
-                        'reaction_emoji'    => array('VCHAR:191', ''),
+                        'reaction_emoji'    => array('VCHAR:191', ''), // 191 pour supporter les emojis 4-bytes en utf8mb4
                         'reaction_time'     => array('UINT:11', 0),
                         'reaction_notified' => array('BOOL', 0),
                     ),
@@ -57,15 +102,21 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 ),
             ),
             'add_columns' => array(
-                $this->table_prefix . 'notifications' => array(),
+                // La colonne `reaction_emoji` dans la table des notifications est gérée
+                // dynamiquement par la classe de notification elle-même (via get_insert_sql).
+                // Il n'est donc pas nécessaire de l'ajouter ici.
+                $this->table_prefix . 'notifications' => array(), 
                 $this->table_prefix . 'users' => array(
-                    'user_reactions_notify'     => array('BOOL', 1),
-                    'user_reactions_cron_email' => array('BOOL', 1),
+                    'user_reactions_notify'     => array('BOOL', 1), // Préférence pour les notifs "cloche"
+                    'user_reactions_cron_email' => array('BOOL', 1), // Préférence pour les notifs par e-mail (digest)
                 ),
             ),
         );
     }
 
+    /**
+     * Inverse les modifications du schéma. Appelé lors de la désinstallation.
+     */
     public function revert_schema()
     {
         return array(
@@ -82,6 +133,10 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         );
     }
 
+    /**
+     * Définit les modifications des données à appliquer.
+     * C'est ici qu'on ajoute les configurations et qu'on appelle des fonctions personnalisées.
+     */
     public function update_data()
     {
         return array(
@@ -110,6 +165,9 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         );
     }
 
+    /**
+     * Inverse les modifications des données. Appelé lors de la purge des données de l'extension.
+     */
     public function revert_data()
     {
         return array(
@@ -131,6 +189,13 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         );
     }
 
+    /**
+     * Fonction personnalisée pour forcer l'encodage de la colonne emoji.
+     *
+     * C'est une étape CRUCIALE pour assurer le support complet des emojis (y compris
+     * les plus récents qui utilisent 4 octets en UTF-8). `utf8mb4_bin` est le
+     * standard recommandé pour stocker des emojis de manière fiable.
+     */
     public function set_utf8mb4_bin()
     {
         $table_name = $this->table_prefix . 'post_reactions';
@@ -139,16 +204,24 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         $this->db->sql_query($sql);
     }
 
+    /**
+     * Crée les types de notifications personnalisés dans la base de données.
+     *
+     * phpBB a besoin de connaître ces types pour pouvoir les gérer.
+     * On crée deux types : un pour les notifications instantanées ("cloche")
+     * et un pour le résumé par e-mail (utilisé par le CRON).
+     */
     public function create_notification_type()
     {
         $types_table = $this->table_prefix . 'notification_types';
 
+        // Nettoyage préventif d'une ancienne entrée potentiellement malformée (sans le préfixe complet).
         $malformed_name = 'bastien59960.reactions.notification.type.reaction';
         $sql_cleanup = 'DELETE FROM ' . $types_table . "
             WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
         $this->db->sql_query($sql_cleanup);
 
-        $canonical_name = 'bastien59960.reactions.notification.type.reaction';
+        $canonical_name = 'bastien59960.reactions.notification.type.reaction'; // Nom complet du service
         $sql = 'SELECT notification_type_id FROM ' . $types_table . "
             WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
             LIMIT 1";
@@ -164,7 +237,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
         }
 
-        $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest';
+        $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest'; // Nom complet du service
         $sql = 'SELECT notification_type_id FROM ' . $types_table . "
             WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
             LIMIT 1";
@@ -182,16 +255,23 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         trigger_error('[DEBUG] create_notification_type() exécutée');
     }
 
+    /**
+     * Active les types de notifications que nous venons de créer.
+     *
+     * La simple création dans la base de données ne suffit pas, il faut dire
+     * explicitement à phpBB de les activer pour qu'ils soient utilisables.
+     */
     public function enable_notification_types()
     {
         $notification_manager = $this->container->get('notification_manager');
         $notification_types = array(
-            'bastien59960.reactions.notification.type.reaction',
-            'bastien59960.reactions.notification.type.reaction_email_digest',
+            'bastien59960.reactions.notification.type.reaction', // Nom complet du service
+            'bastien59960.reactions.notification.type.reaction_email_digest', // Nom complet du service
         );
 
         foreach ($notification_types as $type) {
             try {
+                // On utilise le manager de notifications pour activer chaque type.
                 $notification_manager->enable_notifications($type);
             } catch (\phpbb\notification\exception $e) {
                 if (defined('DEBUG')) {
@@ -201,6 +281,12 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         }
     }
 
+    /**
+     * Nettoie les notifications orphelines.
+     *
+     * C'est une mesure de propreté : si des notifications existent pour un type
+     * qui a été supprimé, cette fonction les efface pour éviter les erreurs.
+     */
     public function clean_orphan_notifications()
     {
         $notifications_table = $this->table_prefix . 'notifications';
@@ -220,6 +306,12 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         }
     }
 
+    /**
+     * Purge complètement les types de notifications de l'extension.
+     *
+     * Cette méthode est appelée lors de la suppression des données de l'extension.
+     * Elle supprime toutes les notifications associées et les types eux-mêmes.
+     */
     public function purge_notification_types()
     {
         $types_table = $this->table_prefix . 'notification_types';
@@ -232,6 +324,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 
         foreach ($names as $canonical_name) {
             try {
+                // Demande à phpBB de purger toutes les notifications de ce type.
                 $notification_manager->purge_notifications($canonical_name);
             } catch (\phpbb\notification\exception $e) {
                 // Ignorer l'erreur
@@ -243,6 +336,14 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         }
     }
 
+    /**
+     * Importe les réactions d'une ancienne version de l'extension.
+     *
+     * Cette fonction est un exemple de migration de données. Elle vérifie l'existence
+     * d'anciennes tables (`phpbb_reactions`), lit leur contenu, convertit les anciennes
+     * réactions (basées sur des images PNG) en emojis Unicode, et les insère dans la
+     * nouvelle table `phpbb_post_reactions`.
+     */
     public function import_old_reactions()
     {
         $log = $this->container->get('log');
@@ -265,6 +366,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             return;
         }
 
+        // Table de correspondance entre les anciens noms de fichiers image et les emojis Unicode.
         $emoji_map = array(
             '1f44d.png' => '👍',
             '1f44e.png' => '👎',
