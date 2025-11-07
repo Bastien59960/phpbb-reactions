@@ -116,6 +116,20 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 			array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
 			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
+            // Ajout du module ACP
+            array('module.add', array(
+                'acp', // parent
+                'ACP_CAT_DOT_MODS', // après (catégorie "Extensions")
+                'ACP_REACTIONS_SETTINGS' // nom du module
+            )),
+            array('module.add', array(
+                'acp',
+                'ACP_REACTIONS_SETTINGS', // parent
+                array(
+                    'module_basename'   => '\bastien59960\reactions\acp\main_module',
+                    'modes'             => array('settings'),
+                )
+            )),
             // Ajout du module UCP
             array('module.add', array(
                 'ucp', // parent
@@ -159,6 +173,12 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 			array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
 			array('config.remove', array('bastien59960_reactions_sync_interval')),
 
+            // Suppression du module ACP
+            array('module.remove', array(
+                'acp',
+                false,
+                'ACP_REACTIONS_SETTINGS'
+            )),
             // Suppression du module UCP
             array('module.remove', array(
                 'ucp', // parent
