@@ -1,0 +1,13 @@
+services:
+    bastien59960.reactions.ucp.reactions_module:
+        class: bastien59960\reactions\ucp\reactions_module
+        tags:
+            - { name: ucp_module, parent: UCP_PREFS, title: 'UCP_REACTIONS_SETTINGS', modes: [settings], icon: 'fa-smile-o' }
+
+parameters:
+    ucp_modules:
+        bastien59960.reactions.ucp.reactions_module:
+            parent: UCP_PREFS
+            title: 'UCP_REACTIONS_SETTINGS'
+            modes: [settings]
+            icon: 'fa-smile-o'

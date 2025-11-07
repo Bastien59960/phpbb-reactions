@@ -22,10 +22,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         $types_table = $this->table_prefix . 'notification_types';
         $sql = 'SELECT notification_type_id
                 FROM ' . $types_table . "
-                WHERE notification_type_name IN (
-                    'notification.type.reaction',
-                    'notification.type.reaction_email_digest'
-                )";
+                WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'";
         $result = $this->db->sql_query($sql);
         $exists = (bool) $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
@@ -98,16 +95,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.add', array('bastien59960_reactions_max_per_user', 10)),
             array('config.add', array('reactions_ucp_preferences_installed', 1)),
 
-            // Ajout du module UCP - Préférences des réactions
-            array('module.add', array(
-                'ucp',
-                'UCP_PREFS',
-                array(
-                    'module_basename' => '\bastien59960\reactions\ucp\reactions_module',
-                    'modes'           => array('settings'),
-                ),
-            )),
-
             // Configurations interface
             array('config.add', array('bastien59960_reactions_post_emoji_size', 24)),
             array('config.add', array('bastien59960_reactions_picker_width', 320)),
@@ -145,13 +132,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
             array('config.remove', array('bastien59960_reactions_sync_interval')),
 
-            // Suppression du module UCP
-            array('module.remove', array(
-                'ucp',
-                'UCP_PREFS',
-                array('module_basename' => '\bastien59960\reactions\ucp\reactions_module'),
-            )),
-
             // Suppression des notifications
             array('custom', array(array($this, 'purge_notification_types'))),
         );
@@ -171,20 +151,22 @@ class release_1_0_0 extends \phpbb\db\migration\migration
         $types_table = $this->table_prefix . 'notification_types';
 
         $obsolete = [
+            // Anciens noms incorrects à nettoyer
             'reaction',
             'reaction_email_digest',
-            'bastien59960.reactions.notification.type.reaction',
-            'bastien59960.reactions.notification.type.reaction_email_digest',
             'bastien59960.reactions.reaction',
             'bastien59960.reactions.reaction_email_digest',
+            'notification.type.reaction',
+            'notification.type.reaction_email_digest',
         ];
         $sql = 'DELETE FROM ' . $types_table . '
                 WHERE ' . $this->db->sql_in_set('notification_type_name', $obsolete);
         $this->db->sql_query($sql);
 
         $types = [
-            'notification.type.reaction',
-            'notification.type.reaction_email_digest',
+            // Noms de service complets, corrects pour la BDD
+            'bastien59960.reactions.notification.type.reaction',
+            'bastien59960.reactions.notification.type.reaction_email_digest',
         ];
 
         foreach ($types as $type) {
@@ -209,8 +191,9 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     {
         $manager = $this->container->get('notification_manager');
         $types = [
-            'notification.type.reaction',
-            'notification.type.reaction_email_digest',
+            // Noms courts, corrects pour l'activation
+            'bastien59960.reactions.reaction',
+            'bastien59960.reactions.reaction_email_digest',
         ];
 
         foreach ($types as $type) {
@@ -240,8 +223,9 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     {
         $types_table = $this->table_prefix . 'notification_types';
         $names = [
-            'notification.type.reaction',
-            'notification.type.reaction_email_digest',
+            // Noms de service complets à purger
+            'bastien59960.reactions.notification.type.reaction',
+            'bastien59960.reactions.notification.type.reaction_email_digest',
         ];
 
         $manager = $this->container->get('notification_manager');
