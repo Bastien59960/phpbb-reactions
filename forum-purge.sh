@@ -106,7 +106,7 @@ echo -e "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<EOF
 DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
-DELETE FROM phpbb_migrations WHERE migration_name LIKE '%\bastien59960\reactions%';
+DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
 EOF
 
 check_status "État de l'extension réinitialisé dans la base de données."
@@ -301,8 +301,7 @@ SELECT '════════════════════════
 SELECT 
     ext_name,
     ext_active,
-    ext_state,
-    ext_version
+    ext_state
 FROM phpbb_ext
 WHERE ext_name LIKE '%reactions%'
 ORDER BY ext_name;

@@ -65,8 +65,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 ),
             ),
             'add_columns' => array(
-                $this->table_prefix . 'notifications' => array(
-                ),
                 $this->table_prefix . 'users' => array(
                     'user_reactions_notify'     => array('BOOL', 1),
                     'user_reactions_cron_email' => array('BOOL', 1),
@@ -82,8 +80,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                 $this->table_prefix . 'post_reactions',
             ),
             'drop_columns' => array(
-                $this->table_prefix . 'notifications' => array(
-                ),
                 $this->table_prefix . 'users' => array(
                     'user_reactions_notify',
                     'user_reactions_cron_email',
