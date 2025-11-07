@@ -34,7 +34,7 @@ public function effectively_installed()
     $types_table = $this->table_prefix . 'notification_types';
     $sql = 'SELECT notification_type_id
             FROM ' . $types_table . "
-            WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'";
+            WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' OR notification_type_name = 'reaction'";
     $result = $this->db->sql_query($sql);
     $type_exists = (bool) $this->db->sql_fetchrow($result);
     $this->db->sql_freeresult($result);
