@@ -119,9 +119,11 @@ class listener implements EventSubscriberInterface
         $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 0);
         $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 0);
         $sync_interval = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5000);
-
-        $json_path = $picker_use_json && $picker_show_categories
-            ? $this->root_path . 'ext/bastien59960/reactions/styles/prosilver/theme/categories.json'
+        
+        // CORRECTION : Utiliser un chemin web relatif au lieu d'un chemin de fichier serveur.
+        // Le JavaScript (fetch) a besoin d'une URL, pas d'un chemin de disque dur.
+        $json_path = ($picker_use_json && $picker_show_categories)
+            ? generate_board_url() . '/ext/bastien59960/reactions/styles/prosilver/theme/categories.json'
             : '';
 
         $this->template->assign_vars([

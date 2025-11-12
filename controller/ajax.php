@@ -838,7 +838,8 @@ class ajax
             return false;
         }
 
-        // Vérifier si l'utilisateur a le droit de répondre dans ce forum
+        // Vérifier si l'utilisateur a le droit de répondre dans ce forum.
+        // Règle métier : on ne peut réagir que si on peut participer activement.
         if (!$this->auth->acl_get('f_reply', $post_data['forum_id'])) {
             return false;
         }
