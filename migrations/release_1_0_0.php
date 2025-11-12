@@ -15,7 +15,14 @@
 
 namespace bastien59960\reactions\migrations;
 
-class release_1_0_0 extends \phpbb\db\migration\migration
+/**
+ * Migration 1.0.0
+ *
+ * CORRECTION CRITIQUE :
+ * La classe hérite de `\phpbb\db\migration\container_aware_migration`
+ * pour que le conteneur de services ($this->container) soit injecté.
+ */
+class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 {
     public function effectively_installed()
     {
@@ -62,7 +69,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
                         'post_id'           => ['INDEX', 'post_id'],
                         'topic_id'          => ['INDEX', 'topic_id'],
                         'user_id'           => ['INDEX', 'user_id'],
-                        'post_notified_idx' => ['INDEX', ['post_id', 'reaction_notified']],
+                        'user_post_idx'     => ['INDEX', ['user_id', 'post_id']], // Pour vérifier rapidement les limites par utilisateur
                     ],
                 ],
             ],
@@ -101,6 +108,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.add', array('bastien59960_reactions_cron_last_run', 0)),
 
             // Options de configuration de l'interface (fusionné depuis release_1_0_4)
+			array('config.add', array('bastien59960_reactions_picker_width', 320)),
 			array('config.add', array('bastien59960_reactions_picker_height', 280)),
 			array('config.add', array('bastien59960_reactions_picker_show_categories', 0)),
 			array('config.add', array('bastien59960_reactions_picker_show_search', 0)),
@@ -156,6 +164,7 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('bastien59960_reactions_cron_last_run')),
 
             // Suppression des configurations de l'interface
+			array('config.remove', array('bastien59960_reactions_picker_width')),
 			array('config.remove', array('bastien59960_reactions_picker_height')),
 			array('config.remove', array('bastien59960_reactions_picker_show_categories')),
 			array('config.remove', array('bastien59960_reactions_picker_show_search')),
