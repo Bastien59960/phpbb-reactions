@@ -23,10 +23,10 @@
 <script src="{ROOT_PATH}ext/bastien59960/reactions/styles/prosilver/template/js/emoji-keywords-fr.js"></script>
 
 <script>
+// Injection des variables globales depuis le listener PHP
 {REACTIONS_AJAX_URL_JS}
-var REACTIONS_AJAX_URL = window.REACTIONS_AJAX_URL || '{U_REACTIONS_AJAX}';
-var REACTIONS_SID = window.REACTIONS_SID || '{S_SESSION_ID}';
-var REACTIONS_JSON_PATH = window.REACTIONS_JSON_PATH || '{REACTIONS_JSON_PATH}';
+
+// Fallback au cas où l'injection échouerait (ne devrait pas arriver)
 var REACTIONS_OPTIONS = window.REACTIONS_OPTIONS || {
     postEmojiSize: parseInt('{REACTIONS_POST_EMOJI_SIZE}', 10) || 24,
     pickerWidth: parseInt('{REACTIONS_PICKER_WIDTH}', 10) || 320,

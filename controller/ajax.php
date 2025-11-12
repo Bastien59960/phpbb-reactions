@@ -176,25 +176,6 @@ class ajax
      */
     public function handle()
     {
-        // =========================================================================
-        // CORRECTION CRITIQUE : Nettoyer TOUTE sortie parasite AVANT le JSON
-        // =========================================================================
-
-        // 1. Supprimer tous les buffers de sortie existants (ex: warnings PHP)
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // 2. Démarrer un nouveau buffer pour capturer toute sortie inattendue
-        ob_start();
-        
-        // 3. Forcer les headers JSON immédiatement
-        if (!headers_sent()) {
-            header('Content-Type: application/json; charset=utf-8');
-            header('X-Content-Type-Options: nosniff');
-            header('Cache-Control: no-cache, must-revalidate');
-        }
-
         // Génération d'un identifiant unique pour le debug et le chronométrage
         $rid = bin2hex(random_bytes(8));
         $t0 = microtime(true);
@@ -202,6 +183,18 @@ class ajax
         try {
             // =====================================================================
             // 1. VÉRIFICATIONS PRÉLIMINAIRES
+            // =====================================================================
+
+            // Démarrer un nouveau buffer pour capturer toute sortie inattendue
+            ob_start();
+        
+            // Forcer les headers JSON immédiatement
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=utf-8');
+                header('X-Content-Type-Options: nosniff');
+                header('Cache-Control: no-cache, must-revalidate');
+            }
+            // =====================================================================
             // =====================================================================
             
             // Seuls les utilisateurs connectés peuvent interagir.
@@ -242,13 +235,12 @@ class ajax
                         $data = $parsed;
                         error_log("[Reactions RID=$rid] parsed form-encoded payload as fallback.");
                     } else {
-                        // Nettoyer le buffer et retourner l'erreur JSON
-                        ob_end_clean();
                         return new JsonResponse([
                             'success' => false,
                             'stage'   => 'json_decode',
                             'error'   => $jsonEx2->getMessage(),
                             'raw_len' => strlen($raw),
+                            'note'    => 'Raw payload was not valid JSON or form-encoded.',
                             'rid'     => $rid,
                         ], 400);
                     }
@@ -272,7 +264,6 @@ class ajax
 
             // Valider que l'action demandée est l'une des actions autorisées.
             if (!in_array($action, ['add', 'remove', 'get', 'get_users', 'sync'], true)) {
-                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'error'   => 'Invalid action',
@@ -287,7 +278,6 @@ class ajax
             if ($action === 'sync') {
                 $post_ids_raw = $data['post_ids'] ?? [];
                 if (!is_array($post_ids_raw)) {
-                    ob_end_clean();
                     return new JsonResponse([
                         'success' => false,
                         'error'   => 'Invalid payload: post_ids must be an array',
@@ -303,7 +293,6 @@ class ajax
                 )));
 
                 if (empty($post_ids)) {
-                    ob_end_clean();
                     return new JsonResponse([
                         'success' => false,
                         'error'   => 'No valid post_ids provided',
@@ -314,7 +303,6 @@ class ajax
 
             // Pour les actions non-sync, un post_id valide est requis.
             if ($action !== 'sync' && (!$post_id || !$this->is_valid_post($post_id))) {
-                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'error'   => $this->language->lang('REACTION_INVALID_POST'),
@@ -324,7 +312,6 @@ class ajax
 
             // Un emoji valide est requis pour ajouter ou supprimer une réaction.
             if (!in_array($action, ['get', 'sync'], true) && (!$emoji || !$this->is_valid_emoji($emoji))) {
-                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'validation',
@@ -342,7 +329,6 @@ class ajax
             if ($action !== 'sync')
             {
                 if (!$this->can_react_to_post($post_id)) {
-                    ob_end_clean();
                     return new JsonResponse([
                         'success' => false,
                         'error'   => $this->language->lang('REACTION_NOT_AUTHORIZED'),
@@ -412,7 +398,6 @@ class ajax
                     break;
                     
                 default:
-                    ob_end_clean();
                     return new JsonResponse([
                         'success' => false,
                         'error' => 'Invalid action',
@@ -440,8 +425,11 @@ class ajax
 
         } catch (\phpbb\exception\http_exception $httpEx) {
             // Gérer les exceptions HTTP (ex: 403 Forbidden).
+            // Nettoyer le buffer avant de retourner une erreur JSON
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
             error_log("[Reactions RID=$rid] HttpException: " . $httpEx->getMessage());
-            ob_end_clean();
             return new JsonResponse([
                 'success' => false,
                 // Le message est déjà traduit et formaté au moment où l'exception est lancée.
@@ -451,8 +439,11 @@ class ajax
 
         } catch (\Throwable $e) {
             // Gérer toutes les autres erreurs serveur (500) pour éviter une réponse non-JSON.
+            // Nettoyer le buffer avant de retourner une erreur JSON
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
             error_log("[Reactions RID=$rid] Exception attrapée: " . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-            ob_end_clean();
             return new JsonResponse([
                 'success' => false,
                 // CORRECTION : Afficher le message d'erreur en mode DEBUG
@@ -517,7 +508,6 @@ class ajax
             }
 
             if (!$row || !isset($row['topic_id'])) {
-                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'topic_lookup',
@@ -544,7 +534,6 @@ class ajax
             }
 
             if ($already) {
-                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'duplicate',
@@ -581,7 +570,6 @@ class ajax
                 }
             } catch (\Throwable $buildEx) {
                 error_log("[Reactions RID=$rid] sql_build_array error: " . $buildEx->getMessage());
-                ob_end_clean();
                 return new JsonResponse([
                     'success' => false,
                     'stage'   => 'sql_build',
@@ -595,7 +583,6 @@ class ajax
             } catch (\Throwable $dbEx) {
                 $err = $this->db->sql_error();
                 error_log("[Reactions RID=$rid] sql_query error: " . $dbEx->getMessage() . " db=" . json_encode($err));
-                ob_end_clean();
                 return new JsonResponse([
                     'success'  => false,
                     'stage'    => 'sql_insert',
@@ -636,7 +623,6 @@ class ajax
 
         } catch (\Throwable $e) {
             error_log("[Reactions RID=$rid] add_reaction fatal: " . $e->getMessage());
-            ob_end_clean();
             return new JsonResponse([
                 'success' => false,
                 'stage'   => 'fatal',
