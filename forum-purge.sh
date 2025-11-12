@@ -411,17 +411,52 @@ DIAGNOSTIC_EOF
 # 3️⃣ DIAGNOSTIC SQL POST-PURGE
 # ==============================================================================
 echo "───[ 3️⃣  DIAGNOSTIC SQL (POST-PURGE) ]────────────────────────────"
-echo -e "${YELLOW}ℹ️  Vérification que la purge a bien fonctionné. Idéalement, aucune trace de l'extension ne doit rester.${NC}"
+echo -e "${YELLOW}ℹ️  Validation du 'revert'. Recherche de toute trace restante de l'extension...${NC}"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo ""
 
-# Exécution du diagnostic depuis le descripteur de fichier 3
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <&3
+REMAINING_TRACES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'POST_PURGE_CHECK_EOF'
+-- Ce bloc vérifie toutes les traces que l'extension aurait pu laisser.
+-- Il retourne une ligne pour chaque élément trouvé. S'il ne retourne rien, la purge est parfaite.
 
-echo ""
-echo -e "${GREEN}✅ Diagnostic post-purge terminé. Idéalement, toutes les sections ci-dessus devraient être vides.${NC}"
-echo ""
+SELECT 'CONFIG_REMAINING', config_name, config_value FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%'
+UNION ALL
+SELECT 'MODULE_REMAINING', module_langname, module_basename FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%'
+UNION ALL
+SELECT 'NOTIFICATION_TYPE_REMAINING', notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%'
+UNION ALL
+SELECT 'COLUMN_REMAINING', TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_users' AND COLUMN_NAME LIKE '%reaction%'
+UNION ALL
+SELECT 'TABLE_REMAINING', TABLE_NAME, 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions'
+UNION ALL
+SELECT 'MIGRATION_ENTRY_REMAINING', migration_name, 'MIGRATION' FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%'
+UNION ALL
+SELECT 'EXT_ENTRY_REMAINING', ext_name, ext_active FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
+
+POST_PURGE_CHECK_EOF
+)
+
+if [ -z "$REMAINING_TRACES" ]; then
+    echo -e "${GREEN}✅ VALIDATION RÉUSSIE : Aucune trace de l'extension n'a été trouvée après la purge.${NC}"
+    echo -e "${GREEN}   Les méthodes 'revert_*' des migrations semblent fonctionner correctement.${NC}"
+    echo ""
+else
+    echo -e "${WHITE_ON_RED}⚠️ VALIDATION ÉCHOUÉE : Des traces de l'extension ont été trouvées après la purge !${NC}"
+    echo -e "${YELLOW}   Cela signifie que les méthodes 'revert_*' de vos migrations sont incomplètes.${NC}"
+    echo -e "${YELLOW}   Voici la liste exacte de ce qui reste :${NC}"
+    echo "┌──────────────────────────────────────────────────────────────────────────┐"
+    echo "| TYPE DE TRACE RESTANTE      | NOM                                        | VALEUR/INFO |"
+    echo "├──────────────────────────────────────────────────────────────────────────┤"
+    
+    # Formatter la sortie pour l'afficher dans un tableau
+    echo "$REMAINING_TRACES" | while IFS=$'\t' read -r type name value; do
+        printf "| %-27s | %-42s | %-11s |\n" "$type" "$name" "$value"
+    done
+    
+    echo "└──────────────────────────────────────────────────────────────────────────┘"
+    echo ""
+fi
 
 # ==============================================================================
 # 4️⃣ RÉACTIVATION EXTENSION
@@ -506,7 +541,7 @@ if [ $? -eq 0 ]; then
 fi
 
 # ==============================================================================
-# 7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS
+# 7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (FIABILISÉE)
 # ==============================================================================
 echo "───[ 6️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
 echo -e "${YELLOW}ℹ️  Réinjection des données sauvegardées dans la table fraîchement recréée par les migrations.${NC}"
@@ -518,7 +553,7 @@ MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_EOF'
 SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
 SET @dest_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
 
-SET @sql = IF(@backup_exists > 0 AND @dest_exists > 0,
+SET @sql = IF(@backup_exists > 0 AND @dest_exists > 0 AND (SELECT COUNT(*) FROM phpbb_post_reactions_backup) > 0,
     '
     -- Insérer les données de la sauvegarde dans la nouvelle table.
     -- On utilise `INSERT IGNORE` par sécurité, bien que la table devrait être vide.
@@ -526,7 +561,7 @@ SET @sql = IF(@backup_exists > 0 AND @dest_exists > 0,
     
     SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées depuis la sauvegarde.") AS status FROM phpbb_post_reactions;
     ',
-    'SELECT "⚠️  Restauration impossible : la table de sauvegarde ou de destination n''existe pas." AS status;'
+    'SELECT "ℹ️  Restauration ignorée : la table de sauvegarde est vide ou une des tables est manquante." AS status;'
 );
 
 PREPARE stmt FROM @sql;
