@@ -51,6 +51,38 @@ check_status() {
     fi
 }
 
+# Fonction de nettoyage manuel forcé
+force_manual_purge() {
+    echo "───[ ⚙️ NETTOYAGE MANUEL FORCÉ DE LA BASE DE DONNÉES ]───────────"
+    sleep 0.2
+    echo -e "   (Le mot de passe a été demandé au début du script.)"
+    
+    output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
+    -- Supprimer de force l'extension et ses migrations
+    SELECT '--- Purge des tables ext et migrations...' AS '';
+    DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
+    DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+
+    -- Purge des configurations
+    SELECT '--- Purge des configurations...' AS '';
+    DELETE FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%';
+
+    -- Purge des modules
+    SELECT '--- Purge des modules...' AS '';
+    DELETE FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%';
+
+    -- Purge des types de notifications
+    SELECT '--- Purge des types de notifications...' AS '';
+    DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%';
+
+    -- Purge du schéma (colonnes et tables)
+    SELECT '--- Purge du schéma (colonnes et tables)...' AS '';
+    ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
+    DROP TABLE IF EXISTS phpbb_post_reactions;
+MANUAL_PURGE_EOF
+    )
+    check_status "Nettoyage manuel forcé de la base de données." "$output"
+}
 # ==============================================================================
 # START
 # ==============================================================================
@@ -453,10 +485,9 @@ else
         printf "| %-27s | %-42s | %-11s |\n" "$type" "$name" "$value"
     done
     
-    echo "└──────────────────────────────────────────────────────────────────────────┘"
-    echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' avant de relancer.${NC}"
-    echo ""
-    exit 1 # Arrêter le script car l'état est incohérent
+    echo "└──────────────────────────────────────────────────────────────────────────┘"    
+    # Lancer le nettoyage manuel forcé car la purge a échoué
+    force_manual_purge
 fi
 
 # ==============================================================================
@@ -480,35 +511,7 @@ if [ $? -ne 0 ]; then
     # --------------------------------------------------------------------------
     # 5.1 NETTOYAGE MANUEL FORCÉ
     # --------------------------------------------------------------------------
-    echo "───[ 5.1 NETTOYAGE MANUEL FORCÉ DE LA BASE DE DONNÉES ]───────────"
-    sleep 0.2
-    echo -e "   (Le mot de passe a été demandé au début du script.)"
-    
-    MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
-    -- Supprimer de force l'extension et ses migrations
-    SELECT '--- Purge des tables ext et migrations...' AS '';
-    DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
-    DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
-
-    -- Purge des configurations
-    SELECT '--- Purge des configurations...' AS '';
-    DELETE FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%';
-
-    -- Purge des modules
-    SELECT '--- Purge des modules...' AS '';
-    DELETE FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%';
-
-    -- Purge des types de notifications
-    SELECT '--- Purge des types de notifications...' AS '';
-    DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%';
-
-    -- Purge du schéma (colonnes)
-    SELECT '--- Purge du schéma (colonnes)...' AS '';
-    ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
-
-    SELECT '✅ Nettoyage manuel forcé terminé.' AS status;
-MANUAL_PURGE_EOF
-    check_status "Nettoyage manuel forcé de la base de données."
+    force_manual_purge
     
     # --------------------------------------------------------------------------
     # 5.2 NOUVELLE PURGE DU CACHE ET SECONDE TENTATIVE
@@ -540,36 +543,6 @@ if [ $? -eq 0 ]; then
     # On ré-exécute le même bloc de diagnostic depuis le descripteur de fichier 3
     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <&3
 fi
-
-# ==============================================================================
-# 7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (FIABILISÉE)
-# ==============================================================================
-echo "───[ 6️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
-echo -e "${YELLOW}ℹ️  Réinjection des données sauvegardées dans la table fraîchement recréée par les migrations.${NC}"
-sleep 0.2
-echo -e "   (Le mot de passe a été demandé au début du script.)"
-
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_EOF'
--- Vérifier si la table de backup et la table de destination existent
-SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
-SET @dest_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
-
-SET @sql = IF(@backup_exists > 0 AND @dest_exists > 0 AND (SELECT COUNT(*) FROM phpbb_post_reactions_backup) > 0,
-    '
-    -- Insérer les données de la sauvegarde dans la nouvelle table.
-    -- On utilise `INSERT IGNORE` par sécurité, bien que la table devrait être vide.
-    INSERT IGNORE INTO phpbb_post_reactions SELECT * FROM phpbb_post_reactions_backup;
-    
-    SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées depuis la sauvegarde.") AS status FROM phpbb_post_reactions;
-    ',
-    'SELECT "ℹ️  Restauration ignorée : la table de sauvegarde est vide ou une des tables est manquante." AS status;'
-);
-
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-RESTORE_EOF
-check_status "Restauration des données depuis 'phpbb_post_reactions_backup'."
 
 # ==============================================================================
 # 8️⃣ DIAGNOSTIC APPROFONDI POST-ERREUR
@@ -824,6 +797,40 @@ EXT_STATUS=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:show | grep "bastien59
 # On affiche la sortie brute récupérée pour le débogage.
 echo -e "${YELLOW}ℹ️  Sortie CLI brute pour l'extension :${NC}"
 echo "'$EXT_STATUS'"
+echo ""
+
+# ==============================================================================
+# 7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
+# ==============================================================================
+# On ne restaure que si l'extension est bien active.
+if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
+    echo "───[ 7️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
+    echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
+    sleep 0.2
+    echo -e "   (Le mot de passe a été demandé au début du script.)"
+
+    restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_EOF'
+    -- Vérifier si la table de backup et la table de destination existent
+    SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
+    SET @dest_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
+
+    SET @sql = IF(@backup_exists > 0 AND @dest_exists > 0 AND (SELECT COUNT(*) FROM phpbb_post_reactions_backup) > 0,
+        '
+        -- Insérer les données de la sauvegarde dans la nouvelle table.
+        INSERT IGNORE INTO phpbb_post_reactions SELECT * FROM phpbb_post_reactions_backup;
+        
+        SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées depuis la sauvegarde.") AS status FROM phpbb_post_reactions;
+        ',
+        'SELECT "ℹ️  Restauration ignorée : la table de sauvegarde est vide ou une des tables est manquante." AS status;'
+    );
+
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+RESTORE_EOF
+    )
+    check_status "Restauration des données depuis 'phpbb_post_reactions_backup'." "$restore_output"
+fi
 echo ""
 
 # NOUVELLE VÉRIFICATION : On regarde si la ligne commence par un astérisque,

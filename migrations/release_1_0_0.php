@@ -167,25 +167,28 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 			array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
 			array('config.remove', array('bastien59960_reactions_sync_interval')),
 
-            // Suppression du module ACP et de son parent
+            // Suppression du module ACP enfant
+            array('module.remove', array(
+                'acp',
+                'ACP_REACTIONS_SETTINGS',
+                array(
+                    'module_basename'   => '\bastien59960\reactions\acp\main_module',
+                )
+            )),
+            // Suppression de la catégorie ACP parente
             array('module.remove', array(
                 'acp',
                 'ACP_REACTIONS_SETTINGS',
             )),
 
-            // Suppression du module ACP
-            array('module.remove', array(
-                'acp',
-                false,
-                'ACP_REACTIONS_SETTINGS'
-            )),
-
-            // Suppression du module UCP
+            // Suppression du module UCP enfant
             array('module.remove', array(
                 'ucp',
-                false,
-                'bastien59960_reactions_ucp_module'
+                'bastien59960_reactions_ucp_module',
+                'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
             )),
+            // Suppression de la catégorie UCP parente
+            array('module.remove', array('ucp', 'bastien59960_reactions_ucp_module')),
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
         );
