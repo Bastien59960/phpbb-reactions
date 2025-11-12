@@ -69,6 +69,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                         'post_id'           => ['INDEX', 'post_id'],
                         'topic_id'          => ['INDEX', 'topic_id'],
                         'user_id'           => ['INDEX', 'user_id'],
+                        'post_user_emoji'   => ['UNIQUE', ['post_id', 'user_id', 'reaction_emoji']],
                         'user_post_idx'     => ['INDEX', ['user_id', 'post_id']], // Pour vérifier rapidement les limites par utilisateur
                     ],
                 ],
