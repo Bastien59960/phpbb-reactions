@@ -1,0 +1,15 @@
+# /home/bastien/www/forum/config/development/services.yml
+#
+# Ce fichier active le mode debug pour le conteneur de services de Symfony.
+# Il sera automatiquement chargé par phpBB si le mode DEBUG est activé
+# dans le fichier config.php du forum.
+#
+# EFFETS :
+# - Des traces d'erreurs beaucoup plus détaillées (stack traces complètes).
+# - Moins de mise en cache des services, ce qui facilite le debug.
+# - Validation plus stricte des définitions de services.
+
+parameters:
+    # Active le mode debug du conteneur de services.
+    # C'est le paramètre le plus important pour obtenir des erreurs claires.
+    debug.container: true
