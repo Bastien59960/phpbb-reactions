@@ -149,15 +149,15 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     public function revert_data()
     {
         return array(
-            // Suppression des configs
+            // Suppression des configurations générales
             array('config.remove', array('bastien59960_reactions_max_per_post')),
             array('config.remove', array('bastien59960_reactions_max_per_user')),
             array('config.remove', array('bastien59960_reactions_enabled')),
             array('config.remove', array('reactions_ucp_preferences_installed')),
-            array('config.remove', array('bastien59960_reactions_spam_time', 15)),
+            array('config.remove', array('bastien59960_reactions_spam_time')),
             array('config.remove', array('bastien59960_reactions_cron_last_run')),
 
-            // Suppression des configurations de l'interface (fusionné depuis release_1_0_4)
+            // Suppression des configurations de l'interface
 			array('config.remove', array('bastien59960_reactions_post_emoji_size')),
 			array('config.remove', array('bastien59960_reactions_picker_width')),
 			array('config.remove', array('bastien59960_reactions_picker_height')),
@@ -167,19 +167,26 @@ class release_1_0_0 extends \phpbb\db\migration\migration
 			array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
 			array('config.remove', array('bastien59960_reactions_sync_interval')),
 
+            // Suppression du module ACP et de son parent
+            array('module.remove', array(
+                'acp',
+                'ACP_REACTIONS_SETTINGS',
+            )),
+
             // Suppression du module ACP
             array('module.remove', array(
                 'acp',
                 false,
                 'ACP_REACTIONS_SETTINGS'
             )),
+
             // Suppression du module UCP
             array('module.remove', array(
-                'ucp', // parent
-                false, // après
-                'bastien59960_reactions_ucp_module' // nom du module
+                'ucp',
+                false,
+                'bastien59960_reactions_ucp_module'
             )),
-
+            // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
         );
     }
