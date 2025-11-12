@@ -81,6 +81,19 @@ class ext extends \phpbb\extension\base
 	 */
 	public function enable_step($old_state)
 	{
+		if ($old_state === false)
+		{
+			// Récupérer le gestionnaire de notifications phpBB
+			$notification_manager = $this->container->get('notification_manager');
+
+			// Enregistrer la notification cloche
+			$notification_manager->enable_notifications('notification.type.reaction');
+
+			// Enregistrer la notification email digest
+			$notification_manager->enable_notifications('notification.type.reaction_email_digest');
+
+			return 'notification'; // Indique à phpBB que des types de notifs ont été gérés
+		}
 		return parent::enable_step($old_state);
 	}
 
@@ -95,17 +108,14 @@ class ext extends \phpbb\extension\base
 	 */
 	public function disable_step($old_state)
 	{
-		if ($old_state === false)
-		{
-			// Récupérer le gestionnaire de notifications phpBB
-			$notification_manager = $this->container->get('notification_manager');
-			
-			// Désactiver la notification cloche
-			$notification_manager->disable_notifications('notification.type.reaction');
+		// Récupérer le gestionnaire de notifications phpBB
+		$notification_manager = $this->container->get('notification_manager');
 		
-			// Désactiver la notification email digest
-			$notification_manager->disable_notifications('notification.type.reaction_email_digest');
-		}
+		// Désactiver la notification cloche
+		$notification_manager->disable_notifications('notification.type.reaction');
+	
+		// Désactiver la notification email digest
+		$notification_manager->disable_notifications('notification.type.reaction_email_digest');
 		
 		return parent::disable_step($old_state);
 	}

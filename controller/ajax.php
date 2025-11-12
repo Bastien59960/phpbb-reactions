@@ -154,8 +154,6 @@ class ajax
         // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
         
-        // Forcer la connexion en utf8mb4 pour supporter les emojis
-        $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
     }
 
     // =============================================================================
@@ -794,30 +792,15 @@ class ajax
      */
     private function is_valid_emoji($emoji)
     {
-        // Vérifier d'abord les emojis courantes (plus rapide)
-        if (in_array($emoji, $this->common_emojis, true)) {
-            return true;
-        }
-        
-        // Vérifier que l'emoji n'est pas vide
-        if (empty($emoji)) {
+        if (!is_string($emoji) || $emoji === '') {
             return false;
         }
-        
-        // Limite de longueur pour les emojis composés (ZWJ)
-        // Les emojis peuvent être composés : autoriser jusqu'à 191 octets (sécurité côté app)
-        if (strlen($emoji) > 191 * 4) { // 4 octets max / point Unicode en UTF-8
-            return false;
-        }
-
-        // Vérifier la longueur Unicode (par point de code) : tolérer plus de points de code si nécessaire
-        $mb_length = mb_strlen($emoji, 'UTF-8');
-        if ($mb_length === 0 || $mb_length > 64) { // 64 points code est large pour une séquence emoji
-            return false;
-        }
-        
-        // Vérifier qu'il n'y a pas de caractères de contrôle dangereux
-        if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $emoji)) {
+    
+        // Cette expression régulière vérifie que la chaîne ne contient QUE des caractères graphiques Unicode.
+        // \p{L} (lettres), \p{N} (nombres), \p{P} (ponctuation), \p{S} (symboles, incluant les emojis), \p{Z} (séparateurs).
+        // Le modificateur 'u' est crucial pour la gestion de l'Unicode.
+        // Cela empêche l'injection de caractères de contrôle invisibles.
+        if (!preg_match('/^[\p{L}\p{N}\p{P}\p{S}\p{Z}]+$/u', $emoji)) {
             return false;
         }
         
