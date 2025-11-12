@@ -101,7 +101,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.add', array('bastien59960_reactions_cron_last_run', 0)),
 
             // Options de configuration de l'interface (fusionné depuis release_1_0_4)
-			array('config.add', array('bastien59960_reactions_picker_width', 320)),
 			array('config.add', array('bastien59960_reactions_picker_height', 280)),
 			array('config.add', array('bastien59960_reactions_picker_show_categories', 0)),
 			array('config.add', array('bastien59960_reactions_picker_show_search', 0)),
@@ -157,7 +156,6 @@ class release_1_0_0 extends \phpbb\db\migration\migration
             array('config.remove', array('bastien59960_reactions_cron_last_run')),
 
             // Suppression des configurations de l'interface
-			array('config.remove', array('bastien59960_reactions_picker_width')),
 			array('config.remove', array('bastien59960_reactions_picker_height')),
 			array('config.remove', array('bastien59960_reactions_picker_show_categories')),
 			array('config.remove', array('bastien59960_reactions_picker_show_search')),

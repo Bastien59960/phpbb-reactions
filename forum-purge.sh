@@ -494,22 +494,10 @@ else
     echo "└──────────────────────────────────────────────────────────────────────────┘"    
     # Lancer le nettoyage manuel forcé car la purge a échoué
     force_manual_purge
-fi
 
-# ==============================================================================
-# 8️⃣ NETTOYAGE FORCÉ SI NÉCESSAIRE
-# ==============================================================================
-# Si la validation a échoué, on lance le nettoyage manuel forcé.
-# Cela inclut la suppression des modules orphelins.
-if [ -n "$REMAINING_TRACES" ]; then
-    echo "───[ 8️⃣  LANCEMENT DU NETTOYAGE FORCÉ ]──────────────────────"
-    echo -e "${YELLOW}ℹ️  Des traces ont été détectées. Lancement du nettoyage manuel forcé...${NC}"
-    sleep 0.2
-    
-    force_manual_purge
-    
-    echo -e "${YELLOW}ℹ️  Purge du cache après nettoyage forcé pour garantir un état propre.${NC}"
-    php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge > /dev/null 2>&1
+    echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' avant de relancer.${NC}"
+    echo ""
+    exit 1 # Arrêter le script car l'état est incohérent
 fi
 
 # ==============================================================================
