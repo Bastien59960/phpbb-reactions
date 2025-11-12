@@ -191,9 +191,12 @@ function toggle_visible(id) {
      * @param {HTMLElement} context Contexte DOM de recherche
      */
     function attachReactionEvents(context) {
-        context.querySelectorAll('.post-reactions .reaction:not(.reaction-readonly)').forEach(reaction => {
-            reaction.removeEventListener('click', handleReactionClick);
-            reaction.addEventListener('click', handleReactionClick);
+        // CORRECTION : Utiliser la délégation d'événements pour les conteneurs de réactions.
+        // C'est plus performant et robuste aux mises à jour du DOM.
+        context.querySelectorAll('.post-reactions').forEach(container => {
+            // On s'assure de ne pas attacher plusieurs fois le même listener.
+            container.removeEventListener('click', handleReactionClick);
+            container.addEventListener('click', handleReactionClick);
         });
     }
 
@@ -247,10 +250,15 @@ function toggle_visible(id) {
      * @param {MouseEvent} event Événement de clic
      */
     function handleReactionClick(event) {
-        event.preventDefault();
-        event.stopPropagation();
+        // CORRECTION : Cible l'élément .reaction, même si le clic est sur un enfant (ex: .count)
+        const reactionElement = event.target.closest('.reaction:not(.reaction-readonly)');
 
-        const reactionElement = event.currentTarget;
+        // Si le clic n'est pas sur une réaction valide, on ignore.
+        if (!reactionElement) {
+            return;
+        }
+
+        event.preventDefault(); // Empêche le comportement par défaut uniquement si c'est une réaction.
         const emoji = reactionElement.getAttribute('data-emoji');
         const postId = getPostIdFromReaction(reactionElement);
         
@@ -283,7 +291,7 @@ function toggle_visible(id) {
      * @param {MouseEvent} event Événement de clic
      */
     function handleMoreButtonClick(event) {
-        event.preventDefault();
+        event.preventDefault(); // Garder pour éviter le comportement par défaut si c'est un lien
         event.stopPropagation(); // Empêche la fermeture immédiate par le listener global
 
         if (!isUserLoggedIn()) {
@@ -309,12 +317,12 @@ function toggle_visible(id) {
         picker.style.maxHeight = `${options.pickerHeight}px`;
         currentPicker = picker;
 
-        const shouldLoadJson = options.useJson !== false
-            && typeof REACTIONS_JSON_PATH === 'string'
-            && REACTIONS_JSON_PATH.trim() !== '';
+        const shouldLoadJson = options.useJson !== false &&
+            typeof window.REACTIONS_JSON_PATH === 'string' &&
+            window.REACTIONS_JSON_PATH.trim() !== '';
 
         if (shouldLoadJson) {
-            fetch(REACTIONS_JSON_PATH)
+            fetch(window.REACTIONS_JSON_PATH)
                 .then((res) => {
                     if (!res.ok) {
                         throw new Error('categories.json HTTP ' + res.status);
@@ -713,36 +721,26 @@ function toggle_visible(id) {
      * @param {number|string} postId ID du message cible
      */
     function buildFallbackPicker(picker, postId) {
-        const pickerContent = document.createElement('div');
-        pickerContent.classList.add('emoji-picker-content');
+        // CORRECTION : Réutiliser la délégation d'événement pour la cohérence.
+        picker.addEventListener('click', handlePickerEmojiClick);
 
-        const commonSection = document.createElement('div');
-        commonSection.classList.add('common-section');
+        picker.innerHTML = `
+            <div class="emoji-picker-header">
+                <button type="button" class="emoji-picker-close" title="${L.CLOSE}" aria-label="Fermer"></button>
+            </div>
+            <div class="emoji-picker-body">
+                <div class="emoji-frequent-section">
+                    <div class="emoji-category-title">${L.FREQUENTLY_USED}</div>
+                    <div class="emoji-grid"></div>
+                </div>
+                <div style="padding: 16px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #e0e0e0;">Fichier JSON non accessible. Seuls les emojis courantes sont disponibles.</div>
+            </div>
+        `;
 
-        const commonTitle = document.createElement('div');
-        commonTitle.classList.add('common-section-title');
-        commonTitle.textContent = L.FREQUENTLY_USED;
-        commonSection.appendChild(commonTitle);
+        const grid = picker.querySelector('.emoji-grid');
+        COMMON_EMOJIS.forEach(emoji => grid.appendChild(createEmojiCell(emoji, postId)));
 
-        const commonGrid = document.createElement('div');
-        commonGrid.classList.add('emoji-grid', 'common-grid');
-
-        COMMON_EMOJIS.forEach(emoji => {
-            const cell = createEmojiCell(emoji, postId);
-            cell.classList.add('common-emoji');
-            commonGrid.appendChild(cell);
-        });
-
-        commonSection.appendChild(commonGrid);
-        pickerContent.appendChild(commonSection);
-
-        // Message d'information
-        const infoDiv = document.createElement('div');
-        infoDiv.style.cssText = 'padding: 16px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #e0e0e0;';
-        infoDiv.textContent = 'Fichier JSON non accessible. Seuls les emojis courantes sont disponibles.';
-        pickerContent.appendChild(infoDiv);
-
-        picker.appendChild(pickerContent);
+        picker.querySelector('.emoji-picker-close').addEventListener('click', (e) => { e.stopPropagation(); closeAllPickers(); });
     }
 
     /* ---------------------------------------------------------------------- */
