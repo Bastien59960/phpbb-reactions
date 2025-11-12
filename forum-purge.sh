@@ -85,7 +85,7 @@ sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'BACKUP_EOF'
--- Vérifier si la table source existe avant de faire quoi que ce soit
+-- Vérifier si la table source existe avant de faire quoi que ce soit. -t est utilisé pour avoir une sortie tabulaire.
 SET @table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
 
 -- Si la table existe, on procède à la sauvegarde
@@ -100,7 +100,7 @@ SET @sql = IF(@table_exists > 0,
     -- 3. Copier toutes les données de la table active vers la table de backup.
     INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
     
-    SELECT CONCAT("✅ ", COUNT(*), " réactions sauvegardées dans phpbb_post_reactions_backup.") AS status FROM phpbb_post_reactions_backup;
+    SELECT "BACKUP_DONE" AS status_code, CONCAT("✅ ", COUNT(*), " réactions sauvegardées dans phpbb_post_reactions_backup.") AS status FROM phpbb_post_reactions_backup;
     ',
     'SELECT "ℹ️  La table phpbb_post_reactions n''existe pas, aucune sauvegarde nécessaire." AS status;'
 );
@@ -109,7 +109,13 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 BACKUP_EOF
-check_status "Sauvegarde de la table 'phpbb_post_reactions'."
+
+backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t --skip-column-names <&3)
+if echo "$backup_output" | grep -q "BACKUP_DONE"; then
+    check_status "Sauvegarde de la table 'phpbb_post_reactions'."
+else
+    echo -e "${GREEN}ℹ️  Sauvegarde non nécessaire (table source absente).${NC}"
+fi
 
 # ==============================================================================
 # 1️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
