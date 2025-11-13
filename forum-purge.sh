@@ -73,6 +73,7 @@ force_manual_purge() {
     -- Purge des modules
     SELECT '--- Purge des modules...' AS '';
     DELETE FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%';
+    DELETE FROM phpbb_modules WHERE module_langname LIKE '%REACTIONS%';
 
     -- Purge des types de notifications
     SELECT '--- Purge des types de notifications...' AS '';
@@ -840,7 +841,7 @@ sleep 3
 
 # Le nom à rechercher est le nom logique retourné par get_name(), et non le nom du service.
 # C'est ce nom qui est affiché par `cron:list` si la traduction échoue.
-CRON_TASK_NAME="bastien59960.reactions.notification"
+CRON_TASK_NAME="cron.task.bastien59960.reactions.notification"
 
 CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 

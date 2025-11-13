@@ -126,18 +126,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // Philosophie : On s'assure que la place est nette AVANT de construire.
             // Cette étape supprime préventivement les modules de l'extension au cas où une
             // désinstallation précédente aurait échoué, laissant des modules ou catégories "fantômes".
-            // La suppression de la catégorie parente supprime en cascade ses modules enfants.
-            array('module.remove', array(
-                'acp',
-                'ACP_REACTIONS_SETTINGS',
-            )),
-            array('module.remove', array(
-                'ucp',
-                'UCP_REACTIONS_TITLE',
-            )),
+            // On utilise une fonction custom pour un nettoyage plus robuste.
+            array('custom', array(array($this, 'remove_existing_modules'))),
             // Étape cruciale : on vide le cache pour que phpBB "oublie" les modules
-            // que l'on vient de supprimer, évitant ainsi une erreur `MODULE_EXISTS` liée au cache
-            // lors de leur recréation juste après.
+            // que l'on vient de supprimer, évitant une erreur `MODULE_EXISTS` liée au cache.
             array('cache.purge', array()),
 
             // Ajout du module ACP en une seule étape.
@@ -210,6 +202,21 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('custom', array(array($this, 'remove_notification_type'))),
 
         );
+    }
+
+    /**
+     * Fonction de nettoyage préventif pour garantir une installation propre.
+     * Cette méthode est appelée au début de update_data().
+     */
+    public function remove_existing_modules()
+    {
+        // Utilise l'outil de module pour supprimer les catégories.
+        // La suppression d'une catégorie entraîne la suppression de ses enfants.
+        // C'est la méthode la plus fiable pour garantir l'idempotence.
+        /** @var \phpbb\db\migration\tool\module $module_tool */
+        $module_tool = $this->container->get('phpbb.db.migration.tool.module');
+        $module_tool->remove('acp', 'ACP_REACTIONS_SETTINGS');
+        $module_tool->remove('ucp', 'UCP_REACTIONS_TITLE');
     }
 
     public function set_utf8mb4_bin()
