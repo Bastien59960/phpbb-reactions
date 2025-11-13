@@ -122,6 +122,22 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 			array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
 			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
+            // --- Début de la robustification ---
+            // Suppression préventive des modules pour garantir une installation propre, même si des résidus existent.
+            // Cela rend la migration idempotente et évite les erreurs "MODULE_EXISTS".
+            array('module.remove', array(
+                'acp',
+                false, // Recherche globale dans la section
+                '\bastien59960\reactions\acp\main_module',
+            )),
+            array('module.remove', array(
+                'ucp',
+                false, // Recherche globale dans la section
+                '\bastien59960\reactions\ucp\reactions_module',
+            )),
+            // Purge du cache pour forcer la reconstruction de l'index des modules avant de les recréer.
+            array('cache.purge', array()),
+
             // Ajout du module ACP
             // Étape 1 : Créer la catégorie parente dans l'ACP.
             // On utilise un tableau détaillé avec `module_basename` à null pour définir une catégorie.

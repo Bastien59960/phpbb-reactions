@@ -322,6 +322,11 @@ function toggle_visible(id) {
             window.REACTIONS_JSON_PATH.trim() !== '';
 
         if (shouldLoadJson) {
+            // Log de débogage pour vérifier l'URL utilisée pour le fetch.
+            if (window.REACTIONS_DEBUG_MODE) {
+                console.log('[Reactions] Tentative de chargement du JSON depuis :', window.REACTIONS_JSON_PATH);
+            }
+
             fetch(window.REACTIONS_JSON_PATH)
                 .then((res) => {
                     if (!res.ok) {
