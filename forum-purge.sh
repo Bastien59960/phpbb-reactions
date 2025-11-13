@@ -882,16 +882,14 @@ if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
         if [ "$BACKUP_ROWS" -gt 0 ]; then
             # 2. Si la sauvegarde n'est pas vide, exécuter la restauration.
             restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESTORE_EOF'
-                -- CORRECTION : On spécifie les colonnes pour forcer reaction_notified à 0.
-                -- Cela permet de retester le cron d'envoi d'e-mails à chaque exécution du script.
-                INSERT IGNORE INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
-                SELECT 
-                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, 
-                    0 -- On force le statut "non notifié"
-                FROM phpbb_post_reactions_backup;
+                -- Vider la table avant de la remplir pour éviter les doublons
+                TRUNCATE TABLE phpbb_post_reactions;
 
-                -- Le message de statut compte toujours les lignes de la sauvegarde.
-                SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées et marquées comme non-notifiées.") AS status FROM phpbb_post_reactions_backup;
+                -- Insérer les données depuis la sauvegarde, en forçant reaction_notified à 0 pour retester le cron.
+                INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
+                SELECT 
+                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, 0
+                FROM phpbb_post_reactions_backup
 RESTORE_EOF
             )
             check_status "Restauration des données depuis 'phpbb_post_reactions_backup'." "$restore_output"
