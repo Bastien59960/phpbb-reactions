@@ -154,6 +154,13 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function revert_data()
     {
         return array(
+            // Suppression des types de notifications EN PREMIER pour éviter les contraintes
+            array('custom', array(array($this, 'remove_notification_type'))),
+            
+            // Suppression des modules après les notifications
+            array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
+            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')),
+            
             // Suppression des configurations générales
             array('config.remove', array('bastien59960_reactions_max_per_post')),
             array('config.remove', array('bastien59960_reactions_max_per_user')),
@@ -170,17 +177,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.remove', array('bastien59960_reactions_picker_use_json')),
             array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
             array('config.remove', array('bastien59960_reactions_sync_interval')),
-            
-            // CORRECTION CRITIQUE : Supprimer les modules AVANT les types de notifications
-            // pour éviter les dépendances circulaires
-            array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
-            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')),
-            
-            // Purge du cache après suppression des modules
-            array('cache.purge', array()),
-
-            // Suppression des types de notifications EN DERNIER
-            array('custom', array(array($this, 'remove_notification_type'))),
         );
     }
 

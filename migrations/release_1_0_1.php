@@ -100,12 +100,12 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
         try
         {
             // Étape 2 : Définir la correspondance emoji.
-            $emoji_map = [
+            $emoji_map = array(
                 '1f44d.png' => '👍', '1f44e.png' => '👎', '1f642.png' => '🙂',
                 '1f60d.png' => '😍', '1f602.png' => '😂', '1f611.png' => '😑',
                 '1f641.png' => '🙁', '1f62f.png' => '😯', '1f62d.png' => '😭',
                 '1f621.png' => '😡', 'OMG.png'   => '😮',
-            ];
+            );
 
             // Étape 3 : Lire toutes les anciennes réactions.
             $sql = 'SELECT reaction_user_id, post_id, topic_id, reaction_file_name, reaction_time 
@@ -125,8 +125,8 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
             }
 
             // Étape 4 : Préparer les données pour une insertion en masse.
-            $reactions_to_insert = [];
-            $existing_keys = [];
+            $reactions_to_insert = array();
+            $existing_keys = array();
 
             foreach ($old_reactions as $row)
             {
@@ -148,14 +148,14 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
                     continue;
                 }
 
-                $reactions_to_insert[] = [
+                $reactions_to_insert[] = array(
                     'post_id'           => $post_id,
                     'topic_id'          => (int) $row['topic_id'],
                     'user_id'           => $user_id,
                     'reaction_emoji'    => $emoji,
                     'reaction_time'     => (int) $row['reaction_time'],
                     'reaction_notified' => 0,
-                ];
+                );
 
                 $existing_keys[$key] = true;
             }
@@ -163,8 +163,8 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
             // Étape 5 : Insérer toutes les nouvelles réactions en une seule fois.
             if (!empty($reactions_to_insert))
             {
-                $affected_users = [];
-                $affected_posts = [];
+                $affected_users = array();
+                $affected_posts = array();
                 foreach ($reactions_to_insert as $reaction) {
                     $affected_users[$reaction['user_id']] = true;
                     $affected_posts[$reaction['post_id']] = true;
