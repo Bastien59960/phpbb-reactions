@@ -199,7 +199,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             )),
 
             // Suppression des types de notifications
-            array('custom', array(array($this, 'remove_notification_type'))) // Removed trailing comma
+            array('custom', array(array($this, 'remove_notification_type')))
         );
     }
 
