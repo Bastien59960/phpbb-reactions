@@ -855,7 +855,7 @@ sleep 1 # Réduit car la purge du cache a déjà stabilisé
 
 # Le nom à rechercher est le nom logique retourné par get_name(), et non le nom du service.
 # C'est ce nom qui est affiché par `cron:list` si la traduction échoue.
-CRON_TASK_NAME="cron.task.bastien59960.reactions.notification"
+CRON_TASK_NAME="bastien59960.reactions.notification"
 
 CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 
