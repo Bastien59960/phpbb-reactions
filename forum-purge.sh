@@ -920,9 +920,9 @@ RESTORE_EOF
     sleep 0.2
 
     # Récupérer la valeur de la fenêtre de spam (en minutes) depuis la config phpBB
-    SPAM_MINUTES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null || echo 45)
+    SPAM_MINUTES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null || echo 15)
     # Utiliser une valeur par défaut si la requête échoue ou est vide
-    SPAM_MINUTES=${SPAM_MINUTES:-45}
+    SPAM_MINUTES=${SPAM_MINUTES:-15}
 
     # Exécuter une requête SQL pour obtenir le statut des réactions
     POST_CRON_STATUS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<POST_CRON_EOF
