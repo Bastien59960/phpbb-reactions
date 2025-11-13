@@ -543,16 +543,13 @@ echo -e "${YELLOW}ℹ️  Lancement de la réactivation. C'est ici que les méth
 echo -e "${YELLOW}   Première tentative...${NC}"
 sleep 0.2
 output_enable=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
+check_status "Première tentative d'activation de l'extension." "$output_enable"
 
 # ==============================================================================
 # 5️⃣ NETTOYAGE BRUTAL ET 2ÈME TENTATIVE (SI ÉCHEC)
 # ============================================================================== # ÉTAPE 10
-# On vérifie le code de sortie de la commande précédente. Si différent de 0, c'est un échec.
+# La fonction check_status retourne un code d'erreur si elle échoue.
 if [ $? -ne 0 ]; then
-    echo ""
-    echo -e "${WHITE_ON_RED}⚠️ ÉCHEC de la première tentative d'activation. Passage en mode de nettoyage forcé.${NC}"
-    echo ""
-    
     # --------------------------------------------------------------------------
     # NETTOYAGE MANUEL FORCÉ
     # --------------------------------------------------------------------------
@@ -572,8 +569,6 @@ if [ $? -ne 0 ]; then
     echo -e "${YELLOW}   Seconde tentative d'activation...${NC}"
     output_enable=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
     check_status "Seconde tentative d'activation de l'extension." "$output_enable"
-else
-    check_status "Première tentative d'activation de l'extension." "$output_enable"
 fi
 
 # ==============================================================================
