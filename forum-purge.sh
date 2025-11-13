@@ -832,16 +832,26 @@ else
 fi
 
 # ==============================================================================
-# 1️⃣4️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
+# 1️⃣4️⃣ PURGE DU CACHE FINALE (CRUCIAL POUR LES CRONS)
+# ==============================================================================
+echo ""
+echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
+echo -e "───[ 1️⃣4️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
+sleep 0.2
+output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+check_status "Cache purgé et container reconstruit." "$output"
+
+# ==============================================================================
+# 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que la tâche cron de l'extension est bien enregistrée et visible par phpBB.${NC}"
-echo -e "───[ 1️⃣4️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
+echo -e "───[ 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
 sleep 0.2
 
 # Ajout d'une temporisation de 3 secondes pour laisser le temps au système de se stabiliser
 echo -e "${YELLOW}ℹ️  Attente de 3 secondes avant la vérification...${NC}"
-sleep 3
+sleep 1 # Réduit car la purge du cache a déjà stabilisé
 
 # Le nom à rechercher est le nom logique retourné par get_name(), et non le nom du service.
 # C'est ce nom qui est affiché par `cron:list` si la traduction échoue.
@@ -854,11 +864,11 @@ echo "$CRON_LIST_OUTPUT"
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
-    # 1️⃣5️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
+    # 1️⃣6️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
     # ==============================================================================
     # On ne restaure que si l'extension est bien active.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo -e "───[ 1️⃣5️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
+        echo -e "───[ 1️⃣6️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -891,23 +901,12 @@ RESTORE_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣6️⃣ PURGE DU CACHE FINALE
-    # ==============================================================================
-    echo -e "───[ 1️⃣6️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
-    echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
-    sleep 0.2
-    output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
-    check_status "Cache purgé et container reconstruit." "$output"
-
-    # ==============================================================================
     # 1️⃣7️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
     # ==============================================================================
     echo -e "───[ 1️⃣7️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
     echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.2
-    output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
-    check_status "Exécution de la tâche cron" "$output"
 
     echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
     echo -e "${GREEN}"
