@@ -377,30 +377,24 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function should_run()
     {
-        // Récupérer le délai anti-spam configuré (en minutes).
+        // Récupérer le délai anti-spam configuré (en minutes). Si 0, la tâche est désactivée.
         $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
         if ($spam_minutes <= 0)
         {
-            // Si le délai est à 0, la fonctionnalité est désactivée.
             return false;
         }
     
-        // Calculer l'intervalle en secondes et le temps de la dernière exécution.
-        $interval = max(60, $spam_minutes * 60);
-        $last_run = (int) ($this->config['bastien59960_reactions_cron_last_run'] ?? 0);
-    
-        // Condition 1 : Le temps écoulé depuis la dernière exécution est supérieur à l'intervalle.
-        // C'est le comportement normal.
-        if ((time() - $last_run) >= $interval)
-        {
-            return true;
-        }
-    
-        // Condition 2 (LA CORRECTION) : Vérifier s'il y a des réactions "en retard".
-        // Cela force l'exécution si des réactions anciennes (ex: après une restauration)
-        // n'ont pas été traitées, même si le cron a tourné récemment.
-        $threshold_timestamp = time() - $interval;
-        $sql = 'SELECT 1 FROM ' . $this->post_reactions_table . '
+        // CORRECTION : La seule condition pour exécuter la tâche est de vérifier
+        // s'il existe au moins une réaction non notifiée qui est plus ancienne
+        // que le seuil anti-spam.
+        // Cela garantit que la tâche s'exécute toujours quand il y a du travail à faire,
+        // ce qui est crucial pour les tests et après une restauration de sauvegarde.
+        
+        $spam_delay_seconds = $spam_minutes * 60;
+        $threshold_timestamp = time() - $spam_delay_seconds;
+        
+        $sql = 'SELECT 1
+                FROM ' . $this->post_reactions_table . '
                 WHERE reaction_notified = 0 AND reaction_time <= ' . (int) $threshold_timestamp;
         $result = $this->db->sql_query_limit($sql, 1);
         $has_pending_old_reactions = (bool) $this->db->sql_fetchrow($result);
