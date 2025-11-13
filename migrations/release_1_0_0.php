@@ -152,6 +152,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 )
             )),
 
+            // CORRECTION : Ajout de la tâche cron principale pour les notifications par e-mail.
+            // C'est l'oubli de cette ligne qui causait l'échec final.
+            array('cron.task.add', array('bastien59960.reactions.notification', '\bastien59960\reactions\cron\notification_task', 300, false)),
+
             // Fonctions personnalisées à exécuter
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
             array('custom', array(array($this, 'create_notification_type'))),
@@ -193,6 +197,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 'ucp',
                 'UCP_REACTIONS_TITLE',
             )),
+
+            // CORRECTION : Ajout de la tâche cron qui avait été oubliée.
+            array('cron.task.add', array('bastien59960.reactions.notification', '\bastien59960\reactions\cron\notification_task', 300, false)),
 
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
