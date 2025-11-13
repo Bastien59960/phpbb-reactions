@@ -56,7 +56,7 @@ check_status() {
 
 # Fonction de nettoyage manuel forcé
 force_manual_purge() {
-    echo "───[ ⚙️ NETTOYAGE MANUEL FORCÉ DE LA BASE DE DONNÉES ]───────────"
+    echo -e "───[ ⚙️ NETTOYAGE MANUEL FORCÉ DE LA BASE DE DONNÉES ]───────────"
     sleep 0.2
     echo -e "   (Le mot de passe a été demandé au début du script.)"
     
@@ -118,7 +118,7 @@ echo "" # Nouvelle ligne après l'entrée masquée
 # ==============================================================================
 # 0️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
 # ==============================================================================
-echo "───[ 0️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
+echo -e "───[ 0️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
 echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité de la table 'phpbb_post_reactions' avant toute modification.${NC}"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -152,7 +152,7 @@ fi
 # ==============================================================================
 # 1️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
 # ==============================================================================
-echo "───[ 1️⃣  DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
+echo -e "───[ 1️⃣  DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
 echo -e "${YELLOW}ℹ️  Utilisation des commandes natives de phpBB pour tester le cycle de vie de l'extension.${NC}"
 sleep 0.2
 
@@ -175,7 +175,7 @@ fi
 # ==============================================================================
 # 2️⃣ NETTOYAGE AGRESSIF DU CACHE
 # ==============================================================================
-echo "───[ 2️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
+echo -e "───[ 2️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
 echo -e "${YELLOW}ℹ️  Suppression manuelle pour éliminer les fichiers de cache corrompus que 'cache:purge' pourrait manquer.${NC}"
 sleep 0.2
 
@@ -196,7 +196,7 @@ check_status "Permissions de cache/store rétablies (777)."
 # ==============================================================================
 # 3️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
-echo "───[ 3️⃣  NETTOYAGE DES MIGRATIONS CORROMPUES ]───────────────────"
+echo -e "───[ 3️⃣  NETTOYAGE DES MIGRATIONS CORROMPUES ]───────────────────"
 sleep 0.2
 echo -e "${YELLOW}ℹ️  Certaines extensions tierces peuvent laisser des migrations corrompues qui empêchent l'activation d'autres extensions.${NC}"
 echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -262,7 +262,7 @@ check_status "Nettoyage des migrations problématiques terminé."
 # ==============================================================================
 # 4️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
-echo "───[ 4️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
+echo -e "───[ 4️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
 echo -e "${YELLOW}ℹ️  Un fichier de verrouillage de cron ('cron.lock') peut bloquer l'exécution des tâches planifiées.${NC}"
 sleep 0.2
 if [ -f "$FORUM_ROOT/store/cron.lock" ]; then
@@ -274,26 +274,24 @@ fi
 # ==============================================================================
 # 5️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
 # ==============================================================================
-echo "───[ 5️⃣  NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
-echo -e "${YELLOW}ℹ️  Réinitialisation du verrou de cron en BDD et suppression des notifications sans type valide.${NC}"
+echo -e "───[ 5️⃣  NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
+echo -e "${YELLOW}ℹ️  Réinitialisation du verrou de cron en BDD et suppression de TOUTES les notifications.${NC}"
 sleep 0.2
 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'FINAL_CLEANUP_EOF' > /dev/null
 -- Réinitialiser le verrou du cron en base de données
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
 
--- Supprimer les notifications orphelines qui pourraient causer des problèmes
-DELETE n FROM phpbb_notifications n
-LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
-WHERE t.notification_type_id IS NULL;
+-- Vider complètement la table des notifications pour un test propre
+TRUNCATE TABLE phpbb_notifications;
 FINAL_CLEANUP_EOF
 
-check_status "Nettoyage final de la BDD (cron_lock, notifs orphelines)."
+check_status "Nettoyage final de la BDD (cron_lock, toutes notifications)."
 
 # ==============================================================================
 # 6️⃣ PURGE DU CACHE (AVANT RÉACTIVATION)
 # ==============================================================================
-echo "───[ 6️⃣  PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
+echo -e "───[ 6️⃣  PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
 echo -e "${YELLOW}ℹ️  Dernière purge pour s'assurer que le forum est dans un état parfaitement propre avant de réactiver.${NC}"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
@@ -474,7 +472,7 @@ DIAGNOSTIC_EOF
 # ==============================================================================
 # 7️⃣ DIAGNOSTIC SQL POST-PURGE
 # ==============================================================================
-echo "───[ 7️⃣  DIAGNOSTIC POST-PURGE ]────────────────────────────"
+echo -e "───[ 7️⃣  DIAGNOSTIC POST-PURGE ]────────────────────────────"
 echo -e "${YELLOW}ℹ️  Validation de la purge. Recherche de toute trace restante de l'extension...${NC}"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -543,7 +541,7 @@ fi
 # ==============================================================================
 # 8️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
-echo "───[ 9️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────"
+echo -e "───[ 8️⃣  RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────"
 echo -e "${YELLOW}ℹ️  Lancement de la réactivation. C'est ici que les méthodes 'update_*' des migrations sont exécutées.${NC}"
 echo -e "${YELLOW}   Première tentative...${NC}"
 sleep 0.2
@@ -563,7 +561,7 @@ if [ $? -ne 0 ]; then
     # --------------------------------------------------------------------------
     # NOUVELLE PURGE DU CACHE ET SECONDE TENTATIVE
     # --------------------------------------------------------------------------
-    echo "───[ 9.1. PURGE CACHE ET SECONDE TENTATIVE D'ACTIVATION ]──────────"
+    echo -e "───[ 9️⃣  PURGE CACHE ET SECONDE TENTATIVE D'ACTIVATION ]──────────"
     sleep 0.2
     
     echo "   Nettoyage agressif du cache à nouveau..."
@@ -579,9 +577,9 @@ fi
 # ==============================================================================
 # 🔟 DIAGNOSTIC SQL POST-RÉACTIVATION
 # ==============================================================================
-# On ne lance ce diagnostic que si l'étape précédente a réussi (code de sortie 0)
+# On ne lance ce diagnostic que si l'activation a réussi (code de sortie 0)
 if [ $? -eq 0 ]; then
-    echo "───[ 1️⃣1️⃣  DIAGNOSTIC POST-RÉACTIVATION (SUCCÈS) ]────────────"
+    echo -e "───[ 🔟  DIAGNOSTIC POST-RÉACTIVATION (SUCCÈS) ]────────────"
     echo -e "${YELLOW}ℹ️  Vérification de l'état de la base de données après réactivation réussie.${NC}"
     echo -e "${GREEN}ℹ️  Vérification que les migrations ont correctement recréé les structures.${NC}"
     echo ""
@@ -594,7 +592,7 @@ fi
 # ==============================================================================
 if echo "$output_enable" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
-    echo "───[ 1️⃣1️⃣. DIAGNOSTIC APPROFONDI APRÈS ERREUR ]───────────────────────"
+    echo -e "───[ ⚠️  DIAGNOSTIC APPROFONDI APRÈS ERREUR ]───────────────────────"
     echo -e "${YELLOW}ℹ️  Une erreur critique a été détectée. Lancement d'une série de diagnostics pour en trouver la cause.${NC}"
     sleep 0.2
     echo -e "${YELLOW}⚠️  Une erreur a été détectée. Diagnostic approfondi...${NC}"
@@ -786,28 +784,9 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 1️⃣2️⃣ PURGE DU CACHE FINALE
+# 1️⃣1️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
-echo "───[ 1️⃣2️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
-echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
-sleep 0.2
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
-check_status "Cache purgé et container reconstruit." "$output"
-
-# ==============================================================================
-# 1️⃣3️⃣ TEST DE L'EXÉCUTION DU CRON
-# ==============================================================================
-echo "───[ 1️⃣3️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
-echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
-sleep 0.2
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
-check_status "Exécution de la tâche cron" "$output"
-
-
-# ==============================================================================
-# 1️⃣4️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
-# ==============================================================================
-echo "───[ 1️⃣4️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
+echo -e "───[ 1️⃣1️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 echo -e "${YELLOW}ℹ️  Rétablissement des permissions pour que le serveur web (ex: Apache/Nginx) puisse écrire dans le cache.${NC}"
 sleep 0.2
 
@@ -829,11 +808,11 @@ find "$CACHE_DIR" -type f -exec chmod 0666 {} \;
 check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
-# 1️⃣5️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
+# 1️⃣2️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que phpBB considère bien l'extension comme active.${NC}"
-echo "───[ 1️⃣5️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
+echo -e "───[ 1️⃣2️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
 sleep 0.2
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
@@ -848,11 +827,11 @@ else
 fi
 
 # ==============================================================================
-# 1️⃣6️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
+# 1️⃣3️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que la tâche cron de l'extension est bien enregistrée et visible par phpBB.${NC}"
-echo "───[ 1️⃣6️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
+echo -e "───[ 1️⃣3️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
 sleep 0.2
 
 # Ajout d'une temporisation de 3 secondes pour laisser le temps au système de se stabiliser
@@ -870,11 +849,11 @@ echo "$CRON_LIST_OUTPUT"
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
-    # 1️⃣7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
+    # 1️⃣4️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
     # ==============================================================================
     # On ne restaure que si l'extension est bien active.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo "───[ 1️⃣7️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
+        echo -e "───[ 1️⃣4️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -887,8 +866,16 @@ if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
         if [ "$BACKUP_ROWS" -gt 0 ]; then
             # 2. Si la sauvegarde n'est pas vide, exécuter la restauration.
             restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESTORE_EOF'
-                INSERT IGNORE INTO phpbb_post_reactions SELECT * FROM phpbb_post_reactions_backup;
-                SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées depuis la sauvegarde.") AS status FROM phpbb_post_reactions_backup;
+                -- CORRECTION : On spécifie les colonnes pour forcer reaction_notified à 0.
+                -- Cela permet de retester le cron d'envoi d'e-mails à chaque exécution du script.
+                INSERT IGNORE INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
+                SELECT 
+                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, 
+                    0 -- On force le statut "non notifié"
+                FROM phpbb_post_reactions_backup;
+
+                -- Le message de statut compte toujours les lignes de la sauvegarde.
+                SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées et marquées comme non-notifiées.") AS status FROM phpbb_post_reactions_backup;
 RESTORE_EOF
             )
             check_status "Restauration des données depuis 'phpbb_post_reactions_backup'." "$restore_output"
@@ -897,6 +884,25 @@ RESTORE_EOF
             echo -e "${GREEN}ℹ️  Restauration ignorée : la table de sauvegarde est vide ou absente.${NC}"
         fi
     fi
+
+    # ==============================================================================
+    # 1️⃣5️⃣ PURGE DU CACHE FINALE
+    # ==============================================================================
+    echo -e "───[ 1️⃣5️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
+    echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
+    sleep 0.2
+    output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+    check_status "Cache purgé et container reconstruit." "$output"
+
+    # ==============================================================================
+    # 1️⃣6️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
+    # ==============================================================================
+    echo -e "───[ 1️⃣6️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
+    echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
+    echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
+    sleep 0.2
+    output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
+    check_status "Exécution de la tâche cron" "$output"
 
     echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
     echo -e "${GREEN}"

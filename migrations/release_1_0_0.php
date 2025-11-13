@@ -117,10 +117,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 			array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
 			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
-            // Ajout de la tâche cron de test (si elle n'est pas déjà là)
-            // array('cron.task.add', array('bastien59960.reactions.test_task', '\bastien59960\reactions\cron\test_task', 86400, false)),
-            // array('config.add', array('bastien59960_reactions_last_test_run', 0)),
-
             // Ajout du module ACP
             array('module.add', array(
                 'acp', // parent

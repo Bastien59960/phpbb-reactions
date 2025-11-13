@@ -154,7 +154,6 @@ try {
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
     $cron_services = [
-        'cron.task.bastien59960.reactions.test_task',
         'cron.task.bastien59960.reactions.notification',
     ];
     
