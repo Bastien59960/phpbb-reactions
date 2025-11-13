@@ -1,16 +1,17 @@
 <?php
 /**
  * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
+ * @author     Bastien (bastien59960) - https://github.com/bastien59960
  * @copyright  (c) 2025 Bastien59960
  * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
  * Fichier : /migrations/release_1_0_0.php
- * --------------------------------------------------------------
  * Rôle :
- * Ce script gère l'installation initiale de l'extension Reactions.
- * Il crée les tables, colonnes, configurations, notifications et module UCP nécessaires.
- * --------------------------------------------------------------
+ * Ce fichier de migration gère l'installation et la désinstallation initiales
+ * de l'extension "Reactions". Il est responsable de la création (et de la
+ * suppression) de toutes les structures de base de données : tables, colonnes,
+ * configurations, modules ACP/UCP, et types de notifications.
+ * C'est le plan de construction de l'extension.
  */
 
 namespace bastien59960\reactions\migrations;
@@ -64,6 +65,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                         'reaction_time'     => ['UINT:11', 0],
                         'reaction_notified' => ['BOOL', 0],
                     ],
+                    // HISTORIQUE : La clé primaire est sur `reaction_id` pour une identification unique de chaque réaction.
+                    // Les autres clés et index sont cruciaux pour les performances des requêtes.
+                    // La clé UNIQUE `post_user_emoji` empêche un utilisateur de mettre deux fois le même emoji sur un post.
+                    // L'index `user_post_idx` accélère la vérification des limites de réactions par utilisateur.
                     'PRIMARY_KEY'   => 'reaction_id',
                     'KEYS'          => [
                         'post_id'           => ['INDEX', 'post_id'],
@@ -118,6 +123,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
             // Ajout du module ACP
+            // HISTORIQUE : La création des modules se fait en deux temps :
+            // 1. Créer une catégorie (un conteneur dans le menu).
+            // 2. Créer le module "classe" (la page réelle) à l'intérieur de cette catégorie.
+            // Cette approche structurée est essentielle pour une bonne intégration dans l'ACP.
             array('module.add', array(
                 'acp', // parent
                 'ACP_CAT_DOT_MODS', // après (catégorie "Extensions")
@@ -132,10 +141,13 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 )
             )),
             // Ajout du module UCP - CORRECTION
+            // HISTORIQUE : La création d'une catégorie UCP nécessite un tableau détaillé.
+            // Une erreur précédente où une simple chaîne était passée créait un module "fantôme"
+            // avec un `module_basename` vide. La structure ci-dessous est la méthode correcte.
             array('module.add', array(
                 'ucp', // parent
                 'UCP_PREFS', // après
-                // CORRECTION : Pour créer une catégorie, il faut un tableau détaillé.
+                // Pour créer une catégorie, il faut un tableau détaillé.
                 array(
                     'module_basename'   => null, // Pas de classe pour une catégorie
                     'module_langname'   => 'UCP_REACTIONS_TITLE', // Clé de langue pour le titre
@@ -152,8 +164,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 )
             )),
 
-            // CORRECTION : Ajout de la tâche cron principale pour les notifications par e-mail.
-            // C'est l'oubli de cette ligne qui causait l'échec final.
+            // Ajout de la tâche cron principale pour les notifications par e-mail.
+            // HISTORIQUE : L'oubli de cette ligne était la cause d'un bug où l'extension
+            // s'activait correctement, mais la tâche cron n'apparaissait jamais dans la liste
+            // des tâches de phpBB, rendant les notifications par e-mail impossibles.
             array('cron.task.add', array('bastien59960.reactions.notification', '\bastien59960\reactions\cron\notification_task', 300, false)),
 
             // Fonctions personnalisées à exécuter
@@ -184,21 +198,28 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 			array('config.remove', array('bastien59960_reactions_sync_interval')),
             
             // Suppression du module ACP.
-            // La suppression de la catégorie parente supprime aussi les enfants.
+            // HISTORIQUE : Une erreur "MODULE_EXISTS" se produisait lors de la réactivation rapide
+            // car la suppression de la catégorie ne supprimait pas toujours l'enfant de manière fiable
+            // à cause d'un cache de module non invalidé.
+            // La solution la plus robuste est de supprimer explicitement l'enfant AVANT le parent.
+            // 1. D'abord le module enfant (la page).
+            array('module.remove', array(
+                'acp',
+                'ACP_REACTIONS_SETTINGS',
+                '\bastien59960\reactions\acp\main_module',
+            )),
+            // 2. Ensuite la catégorie parente.
             array('module.remove', array(
                 'acp',
                 'ACP_REACTIONS_SETTINGS',
             )),
 
             // Suppression du module UCP.
-            // CORRECTION : On supprime la CATÉGORIE en utilisant sa clé de langue.
-            // phpBB se chargera de supprimer le module enfant automatiquement.
             array('module.remove', array(
                 'ucp',
                 'UCP_REACTIONS_TITLE',
             )),
-
-            // CORRECTION : Il faut bien utiliser "remove" pour la suppression de la tâche cron.
+            // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
 
             // Suppression des types de notifications
@@ -237,6 +258,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 
     public function create_notification_type()
     {
+        // HISTORIQUE : Cette fonction a été rendue idempotente.
+        // Elle vérifie si les types de notifications existent déjà avant de tenter de les créer.
+        // Cela évite des erreurs SQL si la migration est exécutée plusieurs fois dans un état
+        // de base de données incohérent.
         $types_table = $this->table_prefix . 'notification_types';
 
         try {
