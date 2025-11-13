@@ -131,15 +131,21 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                     'modes'             => array('settings'),
                 )
             )),
-            // Ajout du module UCP
+            // Ajout du module UCP - CORRECTION
             array('module.add', array(
                 'ucp', // parent
                 'UCP_PREFS', // après
-                'bastien59960_reactions_ucp_module' // nom du module
+                // CORRECTION : Pour créer une catégorie, il faut un tableau détaillé.
+                array(
+                    'module_basename'   => null, // Pas de classe pour une catégorie
+                    'module_langname'   => 'UCP_REACTIONS_TITLE', // Clé de langue pour le titre
+                    'module_mode'       => 'settings', // Mode pour le lien
+                    'module_auth'       => 'acl_u_reactions_prefs', // Permission pour voir le module
+                )
             )),
             array('module.add', array(
                 'ucp',
-                'bastien59960_reactions_ucp_module', // parent
+                'UCP_REACTIONS_TITLE', // Le parent est maintenant la clé de langue de la catégorie
                 array(
                     'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
                     'modes'             => array('settings'),
@@ -185,12 +191,11 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             )),
 
             // Suppression du module UCP.
-            // La suppression de la catégorie parente supprime aussi les enfants.
-            // CORRECTION : Le nom du module doit correspondre à 'module_basename' pour que la suppression fonctionne.
+            // CORRECTION : On supprime la CATÉGORIE en utilisant sa clé de langue.
+            // phpBB se chargera de supprimer le module enfant automatiquement.
             array('module.remove', array(
                 'ucp',
-                false, // On ne spécifie pas de module "après" lequel supprimer
-                '\bastien59960\reactions\ucp\reactions_module'
+                'UCP_REACTIONS_TITLE',
             )),
 
             // CORRECTION : Ajout de la suppression de la tâche cron.
