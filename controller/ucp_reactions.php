@@ -89,9 +89,6 @@ class ucp_reactions
 	 */
 	public function handle($id, $mode)
 	{
-		// Charger le fichier de langue unifié pour les notifications et l'UCP
-		$this->user->add_lang_ext('bastien59960/reactions', 'reactions');
-
 		$user_id = (int) $this->user->data['user_id'];
 
 		// Récupérer les préférences actuelles de l'utilisateur.
