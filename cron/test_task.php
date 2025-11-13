@@ -58,7 +58,7 @@ class test_task extends \phpbb\cron\task\base
      */
     public function get_name()
     {
-        return 'bastien59960.reactions.test';
+        return 'cron.task.bastien59960.reactions.test';
     }
 
     /**
