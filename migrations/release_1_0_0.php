@@ -128,60 +128,37 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // désinstallation précédente aurait échoué, laissant des modules ou catégories "fantômes".
             // Cela rend la migration "idempotente" : on peut la lancer plusieurs fois sans erreur.
             array('module.remove', array(
-                'acp',
+                'acp', // Section
                 'bastien59960\reactions\acp\main_module',
             )),
             array('module.remove', array(
-                'acp',
-                'ACP_REACTIONS_SETTINGS', // Suppression de la catégorie parente
-            )),
-            array('module.remove', array(
-                'ucp',
+                'ucp', // Section
                 'bastien59960\reactions\ucp\reactions_module',
-            )),
-            array('module.remove', array(
-                'ucp',
-                'UCP_REACTIONS_TITLE', // Suppression de la catégorie parente
             )),
             // Étape cruciale : on vide le cache pour que phpBB "oublie" les modules
             // que l'on vient de supprimer, évitant ainsi une erreur `MODULE_EXISTS` liée au cache
             // lors de leur recréation juste après.
             array('cache.purge', array()),
 
-            // Ajout du module ACP
-            // Étape 1 : Créer la catégorie parente dans l'ACP.
-            // On utilise un tableau détaillé avec `module_basename` à null pour définir une catégorie.
+            // Ajout du module ACP en une seule étape.
+            // On crée une catégorie "ACP_REACTIONS_SETTINGS" et on y place notre module.
             array('module.add', array(
-                'acp', // parent
-                'ACP_CAT_DOT_MODS', // après (catégorie "Extensions")
-                array(
-                    'module_basename'   => null, // Indique que c'est une catégorie
-                    'module_langname'   => 'ACP_REACTIONS_SETTINGS', // Clé de langue pour le titre de la catégorie
-                    'module_mode'       => 'settings', // Mode pour le lien (même si c'est une catégorie)
-                    'module_auth'       => 'acl_a_board', // Permission pour voir la catégorie
-                ),
+                'acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS'
             )),
-            // Étape 2 : Créer le module réel (la page) à l'intérieur de la catégorie que nous venons de créer.
             array('module.add', array(
-                'acp',
-                'ACP_REACTIONS_SETTINGS', // Le parent est la clé de langue de la catégorie
-                array(
+                'acp', 'ACP_REACTIONS_SETTINGS', array(
                     'module_basename'   => '\bastien59960\reactions\acp\main_module',
                     'modes'             => array('settings'),
-                )
+                ),
             )),
 
-            // Ajout du module UCP
-            // Étape 1 : Créer la catégorie parente dans l'UCP.
+            // Ajout du module UCP en une seule étape.
+            // On crée une catégorie "UCP_REACTIONS_TITLE" et on y place notre module.
             array('module.add', array(
-                'ucp', // parent
-                'UCP_PREFS', // après (catégorie "Préférences")
-                'UCP_REACTIONS_TITLE' // Nom de la catégorie
+                'ucp', 'UCP_PREFS', 'UCP_REACTIONS_TITLE'
             )),
-            // Étape 2 : Créer le module réel à l'intérieur de la catégorie.
             array('module.add', array(
-                'ucp',
-                'UCP_REACTIONS_TITLE', // Le parent est la clé de langue de la catégorie
+                'ucp', 'UCP_REACTIONS_TITLE',
                 array(
                     'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
                     'modes'             => array('settings'),
@@ -226,22 +203,16 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // à cause d'un cache de module non invalidé.
             // La solution la plus robuste est de supprimer explicitement l'enfant AVANT le parent.
             // 1. D'abord le module enfant (la page).
+            // CORRECTION : La suppression de la catégorie parente supprime aussi les enfants.
+            // Il suffit donc de supprimer les catégories.
             array('module.remove', array(
-                'acp', // Section
-                'bastien59960\reactions\acp\main_module' // Basename du module
+                'acp',
+                'ACP_REACTIONS_SETTINGS'
             )),
-            // 2. Ensuite la catégorie parente.
             array('module.remove', array(
-                'acp', // Section
-                'ACP_REACTIONS_SETTINGS' // Langname de la catégorie
+                'ucp',
+                'UCP_REACTIONS_TITLE'
             )),
-
-            // Suppression du module UCP (catégorie et enfant).
-            array('module.remove', array(
-                'ucp', // Section
-                'bastien59960\reactions\ucp\reactions_module' // Basename du module
-            )),
-            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')), // Suppression de la catégorie
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
 
