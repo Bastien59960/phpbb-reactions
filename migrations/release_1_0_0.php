@@ -182,9 +182,11 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 
             // Suppression du module UCP.
             // La suppression de la catégorie parente supprime aussi les enfants.
+            // CORRECTION : Le nom du module doit correspondre à 'module_basename' pour que la suppression fonctionne.
             array('module.remove', array(
                 'ucp',
-                'bastien59960_reactions_ucp_module',
+                false, // On ne spécifie pas de module "après" lequel supprimer
+                '\bastien59960\reactions\ucp\reactions_module'
             )),
 
             // CORRECTION : Ajout de la suppression de la tâche cron.

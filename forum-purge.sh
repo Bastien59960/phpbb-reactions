@@ -40,12 +40,15 @@ check_status() {
         echo "$output" | grep -E "PHP Fatal error|PHP Parse error" | sed 's/^/   /' # Indent error line
         echo -e "${NC}" # Réinitialise la couleur après l'erreur
         exit 1
-    # Puis vérifie le code de sortie
+    # Puis vérifie le code de sortie. Si non nul, c'est une erreur.
     elif [ $exit_code -ne 0 ]; then
         echo -e "${WHITE_ON_RED}❌ ERREUR (CODE DE SORTIE NON NUL) lors de l'étape : $step_description${NC}"
+        echo -e "${YELLOW}   Sortie complète de la commande :${NC}"
+        # Affiche la sortie complète pour le débogage, avec indentation.
+        echo "$output" | sed 's/^/   | /'
         echo -e "${NC}" # Réinitialise la couleur
-        exit 1
-    # Si tout va bien
+        # On ne quitte plus le script ici, on retourne le code d'erreur pour que l'appelant puisse décider.
+        return $exit_code
     else
         echo -e "${GREEN}✅ SUCCÈS : $step_description${NC}"
     fi
@@ -159,8 +162,16 @@ check_status "Désactivation de l'extension via phpbbcli." "$output_disable"
 
 # On purge l'extension. C'est CETTE commande qui exécute les méthodes `revert_schema()` et `revert_data()` des fichiers de migration.
 output_purge=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1)
-check_status "Purge des données de l'extension via phpbbcli (test du revert)." "$output_purge"
+# On vérifie le statut, mais on n'arrête pas le script en cas d'échec.
+# La variable `purge_failed` nous servira à décider de la suite.
+purge_failed=0
+check_status "Purge des données de l'extension via phpbbcli (test du revert)." "$output_purge" || purge_failed=1
 
+# Si la purge a échoué, on le signale explicitement.
+# Le script continuera jusqu'au diagnostic post-purge pour montrer ce qui reste.
+if [ $purge_failed -ne 0 ]; then
+    echo -e "${WHITE_ON_RED}⚠️ La commande 'extension:purge' a échoué. Le diagnostic post-purge va révéler ce qui n'a pas été supprimé.${NC}"
+fi
 # ==============================================================================
 # 2️⃣ NETTOYAGE AGRESSIF DU CACHE
 # ==============================================================================
@@ -499,8 +510,13 @@ else
     echo "└──────────────────────────────────────────────────────────────────────────┘"    
     # Lancer le nettoyage manuel forcé car la purge a échoué
     force_manual_purge
-
-    echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' avant de relancer.${NC}"
+    
+    # Si la purge a échoué, on donne un conseil plus précis.
+    if [ $purge_failed -ne 0 ]; then
+        echo -e "${WHITE_ON_RED}   CONSEIL : L'échec de 'extension:purge' suivi de ces traces restantes pointe vers une erreur dans vos méthodes 'revert_data()' ou 'revert_schema()'. Vérifiez-les !${NC}"
+    else
+        echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' avant de relancer.${NC}"
+    fi
     echo ""
     exit 1 # Arrêter le script car l'état est incohérent
 fi
