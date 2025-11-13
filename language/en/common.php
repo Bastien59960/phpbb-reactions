@@ -5,33 +5,27 @@
  * @github https://github.com/bastien59960/reactions
  *
  * Role:
- * This file contains the general English language strings for the user interface
- * (UI), error messages, tooltips, and extension options. It is loaded on most
- * pages where the extension is active.
+ * This file contains the general English language strings for the user
+ * interface (UI), error messages, tooltips, and extension options.
+ * It is loaded on most pages where the extension is active.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
-if (!defined('IN_PHPBB'))
-{
+if (!defined('IN_PHPBB')) {
     exit;
 }
 
-if (empty($lang) || !is_array($lang))
-{
-    $lang = array();
-}
-
-$lang = array_merge($lang, array(
+$lang = array_merge($lang ?? [], [
     // =============================================================================
     // USER INTERFACE MESSAGES
     // =============================================================================
-    'REACTION_ADD'              => 'Add a reaction',
+    'REACTION_ADD'              => 'Add reaction',
     'REACTION_REMOVE'           => 'Remove your reaction',
     'REACTION_MORE'             => 'More reactions',
     'REACTION_LOADING'          => 'Loading...',
-    'REACTION_ERROR'            => 'Error reacting',
+    'REACTION_ERROR'            => 'Error while reacting',
     'REACTION_SUCCESS_ADD'      => 'Reaction added successfully',
     'REACTION_SUCCESS_REMOVE'   => 'Reaction removed successfully',
     
@@ -52,8 +46,8 @@ $lang = array_merge($lang, array(
     'REACTION_COUNT_PLURAL'     => '%d reactions',
     'REACTIONS_TITLE'           => 'Reactions',
     'NO_REACTIONS'              => 'No reactions yet',
-    'REACTIONS_BY_USERS'        => 'User reactions',
-    'REACTION_BY_USER'          => 'Reaction by %s',
+    'REACTIONS_BY_USERS'        => 'Reactions from users',
+    'REACTION_BY_USER'          => 'Reaction from %s',
     'REACTIONS_SEPARATOR'       => ', ',
     'REACTION_AND'              => ' and ',
     
@@ -77,13 +71,13 @@ $lang = array_merge($lang, array(
     // =============================================================================
     'REACTIONS_DEBUG_ENABLED'   => 'Reactions debug mode enabled',
     'REACTIONS_CSRF_ERROR'      => 'Invalid CSRF token',
-    'REACTIONS_SERVER_ERROR'    => 'Server error during reaction',
+    'REACTIONS_SERVER_ERROR'    => 'Server error while reacting',
     
     // =============================================================================
     // LIMITS AND RESTRICTIONS
     // =============================================================================
     'REACTIONS_LIMIT_POST'      => 'Maximum %d reaction types per post',
-    'REACTIONS_LIMIT_USER'      => 'Maximum %d reaction types per user and per post',
+    'REACTIONS_LIMIT_USER'      => 'Maximum %d reaction types per user per post',
     'REACTION_LIMIT_POST'       => 'Reaction type limit for this post reached',
     'REACTION_LIMIT_USER'       => 'Reaction limit per user reached',
     'REACTIONS_LIMIT_REACHED'   => 'Reaction limit reached',
@@ -91,11 +85,17 @@ $lang = array_merge($lang, array(
     'NO_SUBJECT'                    => '(No subject)',
 
     // =============================================================================
-    // CRON TASKS (ACP)
+    // CRON TASKS (ACP & CLI)
     // =============================================================================
-    'BASTIEN59960_REACTIONS_TEST'              => 'Reactions: System Test',
-    'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Periodic test to verify that the Reactions extension cron system is working correctly.',
+    // Keys for the command line (CLI) - CRUCIAL for `cron:list`
+    // The name is `TASK_` + the return of get_name() with dots replaced by underscores.
+    'TASK_BASTIEN59960_REACTIONS_NOTIFICATION'   => 'Reactions: Send email digests',
+    'TASK_BASTIEN59960_REACTIONS_TEST'           => 'Reactions: Log test task',
+
+    // Keys for the ACP display
+    'BASTIEN59960_REACTIONS_TEST'              => 'Reactions: System test',
+    'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Periodic test to verify that the Reactions extension\'s cron system is working correctly.',
     'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Reactions: Send email digests',
     'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Groups new reactions and sends periodic email summaries to users.',
-    'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Reactions Test Cron executed</strong><br>» The test task for the Reactions extension ran successfully.',
-));
+    'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Reactions test cron run</strong><br>» The test task for the Reactions extension has run successfully.',
+]);

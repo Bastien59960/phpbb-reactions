@@ -87,6 +87,12 @@ $lang = array_merge($lang ?? [], [
     // =============================================================================
     // TÂCHES CRON (ACP)
     // =============================================================================
+    // Clés pour la ligne de commande (CLI) - CRUCIAL pour `cron:list`
+    // Le nom est `TASK_` + le retour de get_name() avec les points remplacés par des underscores.
+    'TASK_BASTIEN59960_REACTIONS_NOTIFICATION'   => 'Reactions : Envoi des e-mails de résumé',
+    'TASK_BASTIEN59960_REACTIONS_TEST'           => 'Reactions : Tâche de test du journal',
+
+    // Clés pour l'affichage dans l'ACP (déjà présentes, mais conservées pour clarté)
     'BASTIEN59960_REACTIONS_TEST'              => 'Réactions : Test système',
     'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Test périodique pour vérifier que le système de cron de l\'extension Reactions fonctionne correctement.',
     'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Réactions : Envoyer les résumés par e-mail',
