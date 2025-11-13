@@ -147,6 +147,7 @@ class notification_task extends \phpbb\cron\task\base
         error_log('[Reactions Cron] Found ' . $total_reactions_found . ' unnotified reactions to process.');
 
         $by_author = [];
+        $reactions_to_cleanup = []; // Pour les réactions orphelines ou auto-infligées
 
         while ($row = $this->db->sql_fetchrow($result))
         {
@@ -164,15 +165,13 @@ class notification_task extends \phpbb\cron\task\base
 
             if ($author_id <= 0)
             {
-                error_log('[Reactions Cron] Skipping reaction_id ' . $reaction_id . ' (orphan post). Marking as handled.');
-                $this->mark_reactions_as_handled([$reaction_id]);
+                $reactions_to_cleanup[] = $reaction_id;
                 continue;
             }
 
             if ($author_id === $reacter_id)
             {
-                error_log('[Reactions Cron] Skipping reaction_id ' . $reaction_id . ' (self-reaction). Marking as handled.');
-                $this->mark_reactions_as_handled([$reaction_id]);
+                $reactions_to_cleanup[] = $reaction_id;
                 continue;
             }
 
@@ -219,6 +218,12 @@ class notification_task extends \phpbb\cron\task\base
         if (empty($by_author))
         {
             error_log('[Reactions Cron] No reactions to process after grouping. Exiting.');
+            // S'il n'y a pas de réactions valides mais des réactions à nettoyer, on le fait.
+            if (!empty($reactions_to_cleanup))
+            {
+                error_log('[Reactions Cron] Cleaning up ' . count($reactions_to_cleanup) . ' orphan/self reactions.');
+                $this->mark_reactions_as_handled($reactions_to_cleanup);
+            }
             return;
         }
 
@@ -291,6 +296,13 @@ class notification_task extends \phpbb\cron\task\base
                 $skipped_failed += $reaction_total_for_author;
                 error_log('[Reactions Cron] Send failed for user_id ' . $author_id . ' (status=' . $result['status'] . ').');
             }
+        }
+
+        // Nettoyer toutes les réactions orphelines/auto-infligées en une seule fois
+        if (!empty($reactions_to_cleanup))
+        {
+            error_log('[Reactions Cron] Cleaning up ' . count($reactions_to_cleanup) . ' orphan/self reactions.');
+            $this->mark_reactions_as_handled($reactions_to_cleanup);
         }
 
         // Utiliser le même timestamp que celui utilisé pour le calcul du seuil
