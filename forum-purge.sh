@@ -953,14 +953,12 @@ RESTORE_EOF
     sleep 0.2
 
     # Récupérer la valeur de la fenêtre de spam (en minutes) depuis la config phpBB
-    # CORRECTION : Simplification de la récupération pour plus de fiabilité.
-    # On tente de lire la valeur. Si la commande échoue ou ne retourne rien, on arrête le script.
-    SPAM_MINUTES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null)
+    # CORRECTION : Utiliser la valeur sauvegardée au début du script, car la clé a été purgée.
+    SPAM_MINUTES=${SPAM_TIME_BACKUP:-15} # Utilise la sauvegarde, avec 15 comme fallback ultime.
 
     if [ -z "$SPAM_MINUTES" ]; then
-        echo -e "${WHITE_ON_RED}❌ ERREUR CRITIQUE : Impossible de lire la valeur 'bastien59960_reactions_spam_time' depuis la base de données.${NC}"
-        echo -e "${YELLOW}   Causes possibles : la clé n'existe pas, ou un problème de connexion MySQL.${NC}"
-        echo -e "${YELLOW}   Le script va s'arrêter pour éviter d'utiliser une mauvaise valeur.${NC}"
+        echo -e "${WHITE_ON_RED}❌ ERREUR CRITIQUE : La valeur du délai anti-spam est vide et n'a pas pu être récupérée.${NC}"
+        echo -e "${YELLOW}   Le script va s'arrêter pour éviter un calcul erroné.${NC}"
         exit 1
     fi
 
