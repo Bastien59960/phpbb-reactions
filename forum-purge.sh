@@ -900,11 +900,31 @@ echo "$CRON_LIST_OUTPUT"
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
-    # 1️⃣6️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
+    # 1️⃣6️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME
+    # ==============================================================================
+    # On ne restaure que si une valeur a été sauvegardée.
+    if [ -n "$SPAM_TIME_BACKUP" ]; then
+        echo ""
+        echo -e "───[ 1️⃣6️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME ]──────────"
+        echo -e "${YELLOW}ℹ️  Restauration de la valeur du délai anti-spam à ${GREEN}${SPAM_TIME_BACKUP} minutes${NC}..."
+        sleep 0.2
+
+        # Utiliser INSERT ... ON DUPLICATE KEY UPDATE pour être sûr que la clé existe.
+        restore_spam_time_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<RESTORE_SPAM_EOF
+INSERT INTO phpbb_config (config_name, config_value, is_dynamic) 
+VALUES ('bastien59960_reactions_spam_time', '${SPAM_TIME_BACKUP}', 0)
+ON DUPLICATE KEY UPDATE config_value = '${SPAM_TIME_BACKUP}';
+RESTORE_SPAM_EOF
+        )
+        check_status "Restauration de la configuration du délai anti-spam." "$restore_spam_time_output"
+    fi
+
+    # ==============================================================================
+    # 1️⃣7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
     # ==============================================================================
     # On ne restaure que si l'extension est bien active.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo -e "───[ 1️⃣6️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
+        echo -e "───[ 1️⃣7️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -935,9 +955,9 @@ RESTORE_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣7️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
+    # 1️⃣8️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
     # ==============================================================================
-    echo -e "───[ 1️⃣7️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
+    echo -e "───[ 1️⃣8️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
     echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.2
@@ -946,9 +966,9 @@ RESTORE_EOF
     check_status "Exécution de toutes les tâches cron prêtes." "$output"
 
     # ==============================================================================
-    # 1️⃣8️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
+    # 1️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
     # ==============================================================================
-    echo -e "───[ 1️⃣8️⃣ VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
+    echo -e "───[ 1️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
     echo -e "${YELLOW}ℹ️  Vérification de l'état des réactions dans la base de données après l'exécution du cron.${NC}"
     sleep 0.2
 
@@ -1021,28 +1041,8 @@ POST_CRON_EOF
     printf "| %-33s │ %-8s │\n" "En attente (non traitées)" "${en_attente:-0}"
     printf "| %-33s │ %-8s │\n" "  └─ Éligibles au cron (anciennes)" "${eligibles_cron:-0}"
     printf "| %-33s │ %-8s │\n" "  └─ Dans la fenêtre de spam" "${dans_fenetre_spam:-0}"
-    printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
+printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
     echo "└───────────────────────────────────┴──────────┘"
-
-    # ==============================================================================
-    # 2️⃣0️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME
-    # ==============================================================================
-    # On ne restaure que si une valeur a été sauvegardée.
-    if [ -n "$SPAM_TIME_BACKUP" ]; then
-        echo ""
-        echo -e "───[ 2️⃣0️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME ]──────────"
-        echo -e "${YELLOW}ℹ️  Restauration de la valeur du délai anti-spam à ${GREEN}${SPAM_TIME_BACKUP} minutes${NC}..."
-        sleep 0.2
-
-        # Utiliser INSERT ... ON DUPLICATE KEY UPDATE pour être sûr que la clé existe.
-        restore_spam_time_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<RESTORE_SPAM_EOF
-INSERT INTO phpbb_config (config_name, config_value, is_dynamic) 
-VALUES ('bastien59960_reactions_spam_time', '${SPAM_TIME_BACKUP}', 0)
-ON DUPLICATE KEY UPDATE config_value = '${SPAM_TIME_BACKUP}';
-RESTORE_SPAM_EOF
-        )
-        check_status "Restauration de la configuration du délai anti-spam." "$restore_spam_time_output"
-    fi
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
