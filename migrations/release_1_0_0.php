@@ -128,12 +128,21 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // désinstallation précédente aurait échoué, laissant des modules ou catégories "fantômes".
             // Cela rend la migration "idempotente" : on peut la lancer plusieurs fois sans erreur.
             array('module.remove', array(
-                'acp', // Section
+                'acp',
                 'bastien59960\reactions\acp\main_module',
             )),
+            // CORRECTION CRITIQUE : Supprimer aussi la catégorie parente.
             array('module.remove', array(
-                'ucp', // Section
+                'acp',
+                'ACP_REACTIONS_SETTINGS',
+            )),
+            array('module.remove', array(
+                'ucp',
                 'bastien59960\reactions\ucp\reactions_module',
+            )),
+            array('module.remove', array(
+                'ucp',
+                'UCP_REACTIONS_TITLE',
             )),
             // Étape cruciale : on vide le cache pour que phpBB "oublie" les modules
             // que l'on vient de supprimer, évitant ainsi une erreur `MODULE_EXISTS` liée au cache
