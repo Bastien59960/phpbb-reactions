@@ -125,20 +125,26 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // --- DÉBUT : PLACE NETTE (ROBUSTIFICATION) ---
             // Philosophie : On s'assure que la place est nette AVANT de construire.
             // Cette étape supprime préventivement les modules de l'extension au cas où une
-            // désinstallation précédente aurait échoué, laissant des "modules fantômes".
+            // désinstallation précédente aurait échoué, laissant des modules ou catégories "fantômes".
             // Cela rend la migration "idempotente" : on peut la lancer plusieurs fois sans erreur.
             array('module.remove', array(
                 'acp',
-                false, // Recherche globale dans la section
                 'bastien59960\reactions\acp\main_module',
             )),
             array('module.remove', array(
+                'acp',
+                'ACP_REACTIONS_SETTINGS', // Suppression de la catégorie parente
+            )),
+            array('module.remove', array(
                 'ucp',
-                false, // Recherche globale dans la section
                 'bastien59960\reactions\ucp\reactions_module',
             )),
+            array('module.remove', array(
+                'ucp',
+                'UCP_REACTIONS_TITLE', // Suppression de la catégorie parente
+            )),
             // Étape cruciale : on vide le cache pour que phpBB "oublie" les modules
-            // que l'on vient de supprimer, évitant ainsi une erreur `MODULE_EXISTS`
+            // que l'on vient de supprimer, évitant ainsi une erreur `MODULE_EXISTS` liée au cache
             // lors de leur recréation juste après.
             array('cache.purge', array()),
 
@@ -221,31 +227,27 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // La solution la plus robuste est de supprimer explicitement l'enfant AVANT le parent.
             // 1. D'abord le module enfant (la page).
             array('module.remove', array(
-                'acp', // Section
+                'acp',
                 'bastien59960\reactions\acp\main_module'  // Basename du module à supprimer
             )),
             // 2. Ensuite la catégorie parente.
             array('module.remove', array(
-                'acp', // Section
+                'acp',
                 'ACP_REACTIONS_SETTINGS' // Langname de la catégorie à supprimer
             )),
 
             // Suppression du module UCP (catégorie et enfant).
-            // CORRECTION : La syntaxe pour supprimer par basename est `array('section', 'basename')`.
-            // L'argument `false` était incorrect et causait l'erreur MIGRATION_INVALID_DATA_UNDEFINED_TOOL.
             array('module.remove', array(
-                'ucp', // Section
+                'ucp',
                 'bastien59960\reactions\ucp\reactions_module' // Basename du module à supprimer
             )),
+            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')),
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
 
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
 
-            // CORRECTION CRITIQUE : Purger le cache après la suppression des modules.
-            // Cela force phpBB à reconstruire son cache de modules et évite l'erreur "MODULE_EXISTS" lors d'une réactivation rapide.
-            array('cache.purge', array()),
         );
     }
 
