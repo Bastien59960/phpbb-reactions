@@ -89,6 +89,9 @@ class ucp_reactions
 	 */
 	public function handle($id, $mode)
 	{
+		// Charger le fichier de langue pour que les clés comme 'UCP_REACTIONS_TITLE' soient traduites.
+		$this->user->add_lang_ext('bastien59960/reactions', 'common');
+
 		$user_id = (int) $this->user->data['user_id'];
 
 		// Récupérer les préférences actuelles de l'utilisateur.
