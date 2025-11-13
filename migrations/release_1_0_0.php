@@ -186,6 +186,13 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 'ucp',
                 'bastien59960_reactions_ucp_module',
             )),
+
+            // CORRECTION : Ajout de la suppression de la tâche cron.
+            // L'oubli de cette ligne empêchait une réinstallation propre.
+            array('cron.task.remove', array(
+                'bastien59960.reactions.notification',
+            )),
+
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
         );
