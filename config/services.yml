@@ -148,3 +148,4 @@ services:
             - '@request'
             - '@template'
             - '%core.table_prefix%'
+            - '@controller.helper'
