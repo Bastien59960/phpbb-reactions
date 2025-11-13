@@ -227,21 +227,21 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // La solution la plus robuste est de supprimer explicitement l'enfant AVANT le parent.
             // 1. D'abord le module enfant (la page).
             array('module.remove', array(
-                'acp',
-                'bastien59960\reactions\acp\main_module'  // Basename du module à supprimer
+                'acp', // Section
+                'bastien59960\reactions\acp\main_module' // Basename du module
             )),
             // 2. Ensuite la catégorie parente.
             array('module.remove', array(
-                'acp',
-                'ACP_REACTIONS_SETTINGS' // Langname de la catégorie à supprimer
+                'acp', // Section
+                'ACP_REACTIONS_SETTINGS' // Langname de la catégorie
             )),
 
             // Suppression du module UCP (catégorie et enfant).
             array('module.remove', array(
-                'ucp',
-                'bastien59960\reactions\ucp\reactions_module' // Basename du module à supprimer
+                'ucp', // Section
+                'bastien59960\reactions\ucp\reactions_module' // Basename du module
             )),
-            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')),
+            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')), // Suppression de la catégorie
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
 
