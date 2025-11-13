@@ -126,19 +126,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // Philosophie : On s'assure que la place est nette AVANT de construire.
             // Cette étape supprime préventivement les modules de l'extension au cas où une
             // désinstallation précédente aurait échoué, laissant des modules ou catégories "fantômes".
-            // Cela rend la migration "idempotente" : on peut la lancer plusieurs fois sans erreur.
-            array('module.remove', array(
-                'acp',
-                'bastien59960\reactions\acp\main_module',
-            )),
-            // CORRECTION CRITIQUE : Supprimer aussi la catégorie parente.
+            // La suppression de la catégorie parente supprime en cascade ses modules enfants.
             array('module.remove', array(
                 'acp',
                 'ACP_REACTIONS_SETTINGS',
-            )),
-            array('module.remove', array(
-                'ucp',
-                'bastien59960\reactions\ucp\reactions_module',
             )),
             array('module.remove', array(
                 'ucp',
@@ -173,11 +164,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                     'modes'             => array('settings'),
                 )
             )),
-            // Ajout de la tâche cron principale pour les notifications par e-mail.
-            // HISTORIQUE : L'oubli de cette ligne était la cause d'un bug où l'extension
-            // s'activait correctement, mais la tâche cron n'apparaissait jamais dans la liste
-            // des tâches de phpBB, rendant les notifications par e-mail impossibles.
-            array('cron.task.add', array('bastien59960.reactions.notification', '\bastien59960\reactions\cron\notification_task', 300, false)),
 
             // Fonctions personnalisées à exécuter
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
@@ -210,10 +196,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // HISTORIQUE : Une erreur "MODULE_EXISTS" se produisait lors de la réactivation rapide
             // car la suppression de la catégorie ne supprimait pas toujours l'enfant de manière fiable
             // à cause d'un cache de module non invalidé.
-            // La solution la plus robuste est de supprimer explicitement l'enfant AVANT le parent.
-            // 1. D'abord le module enfant (la page).
-            // CORRECTION : La suppression de la catégorie parente supprime aussi les enfants.
-            // Il suffit donc de supprimer les catégories.
+            // La suppression de la catégorie parente supprime aussi les enfants. Il suffit donc de supprimer les catégories.
             array('module.remove', array(
                 'acp',
                 'ACP_REACTIONS_SETTINGS'
@@ -222,8 +205,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 'ucp',
                 'UCP_REACTIONS_TITLE'
             )),
-            // Suppression de la tâche cron, miroir de son ajout dans update_data().
-            array('cron.task.remove', array('bastien59960.reactions.notification')),
 
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
