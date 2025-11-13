@@ -221,22 +221,21 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // La solution la plus robuste est de supprimer explicitement l'enfant AVANT le parent.
             // 1. D'abord le module enfant (la page).
             array('module.remove', array(
-                'acp',
-                false, // Recherche globale, plus robuste.
-                'bastien59960\reactions\acp\main_module', // CORRECTION : Sans l'antislash au début.
+                'acp', // Section
+                'bastien59960\reactions\acp\main_module'  // Basename du module à supprimer
             )),
             // 2. Ensuite la catégorie parente.
             array('module.remove', array(
-                'acp',
-                false, // Ne pas spécifier de parent pour une recherche globale dans la section 'acp'
-                'ACP_REACTIONS_SETTINGS',
+                'acp', // Section
+                'ACP_REACTIONS_SETTINGS' // Langname de la catégorie à supprimer
             )),
 
             // Suppression du module UCP (catégorie et enfant).
+            // CORRECTION : La syntaxe pour supprimer par basename est `array('section', 'basename')`.
+            // L'argument `false` était incorrect et causait l'erreur MIGRATION_INVALID_DATA_UNDEFINED_TOOL.
             array('module.remove', array(
-                'ucp',
-                false, // Recherche globale.
-                'bastien59960\reactions\ucp\reactions_module' // CORRECTION : On supprime le module par son basename.
+                'ucp', // Section
+                'bastien59960\reactions\ucp\reactions_module' // Basename du module à supprimer
             )),
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
