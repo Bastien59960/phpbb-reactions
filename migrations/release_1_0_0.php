@@ -140,27 +140,19 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                     'modes'             => array('settings'),
                 )
             )),
-            // Ajout du module UCP - CORRECTION
-            // HISTORIQUE : La création d'une catégorie UCP nécessite un tableau détaillé.
-            // Une erreur précédente où une simple chaîne était passée créait un module "fantôme"
-            // avec un `module_basename` vide. La structure ci-dessous est la méthode correcte.
+            // Ajout du module UCP (catégorie + module enfant) en une seule instruction.
+            // C'est la méthode correcte pour éviter l'erreur "MODULE_EXISTS".
+            // On crée le module 'reactions_module' et on spécifie que son parent est une NOUVELLE catégorie
+            // nommée 'UCP_REACTIONS_TITLE' qui sera créée à la volée.
             array('module.add', array(
                 'ucp', // parent
-                'UCP_PREFS', // après
-                // Pour créer une catégorie, il faut un tableau détaillé.
+                'UCP_PREFS', // Le module sera placé après la catégorie "Préférences"
                 array(
-                    'module_basename'   => null, // Pas de classe pour une catégorie
-                    'module_langname'   => 'UCP_REACTIONS_TITLE', // Clé de langue pour le titre
-                    'module_mode'       => 'settings', // Mode pour le lien
-                    'module_auth'       => 'acl_u_reactions_prefs', // Permission pour voir le module
-                )
-            )),
-            array('module.add', array(
-                'ucp',
-                'UCP_REACTIONS_TITLE', // Le parent est maintenant la clé de langue de la catégorie
-                array(
-                    'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
-                    'modes'             => array('settings'),
+                    'module_basename'	=> '\bastien59960\reactions\ucp\reactions_module',
+                    'module_langname'	=> 'UCP_REACTIONS_SETTINGS_TITLE', // Clé de langue pour le module lui-même
+                    'parent_id'			=> 'UCP_PREFS', // On le place dans la catégorie "Préférences"
+                    'module_mode'		=> 'settings',
+                    'module_auth'		=> 'acl_u_reactions_prefs',
                 )
             )),
 
@@ -214,10 +206,12 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 'ACP_REACTIONS_SETTINGS',
             )),
 
-            // Suppression du module UCP.
+            // Suppression du module UCP. Il suffit de supprimer le module enfant,
+            // phpBB s'occupe de la catégorie si elle devient vide.
             array('module.remove', array(
                 'ucp',
-                'UCP_REACTIONS_TITLE',
+                false, // On ne spécifie pas de parent pour une recherche globale dans la section 'ucp'
+                '\bastien59960\reactions\ucp\reactions_module'
             )),
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
