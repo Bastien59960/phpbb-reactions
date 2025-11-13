@@ -51,8 +51,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 
     public function update_schema()
     {
-        $schema_updates = [];
-
         return [
             'add_tables' => [
                 $this->table_prefix . 'post_reactions' => [
@@ -65,17 +63,13 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                         'reaction_time'     => ['UINT:11', 0],
                         'reaction_notified' => ['BOOL', 0],
                     ],
-                    // HISTORIQUE : La clé primaire est sur `reaction_id` pour une identification unique de chaque réaction.
-                    // Les autres clés et index sont cruciaux pour les performances des requêtes.
-                    // La clé UNIQUE `post_user_emoji` empêche un utilisateur de mettre deux fois le même emoji sur un post.
-                    // L'index `user_post_idx` accélère la vérification des limites de réactions par utilisateur.
                     'PRIMARY_KEY'   => 'reaction_id',
                     'KEYS'          => [
                         'post_id'           => ['INDEX', 'post_id'],
                         'topic_id'          => ['INDEX', 'topic_id'],
                         'user_id'           => ['INDEX', 'user_id'],
                         'post_user_emoji'   => ['UNIQUE', ['post_id', 'user_id', 'reaction_emoji']],
-                        'user_post_idx'     => ['INDEX', ['user_id', 'post_id']], // Pour vérifier rapidement les limites par utilisateur
+                        'user_post_idx'     => ['INDEX', ['user_id', 'post_id']],
                     ],
                 ],
             ],
@@ -87,6 +81,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ],
         ];
     }
+    
     public function revert_schema()
     {
         return array(
@@ -114,26 +109,19 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.add', array('bastien59960_reactions_cron_last_run', 0)),
 
             // Options de configuration de l'interface (fusionné depuis release_1_0_4)
-			array('config.add', array('bastien59960_reactions_picker_width', 320)),
-			array('config.add', array('bastien59960_reactions_picker_height', 280)),
-			array('config.add', array('bastien59960_reactions_picker_show_categories', 0)),
-			array('config.add', array('bastien59960_reactions_picker_show_search', 0)),
-			array('config.add', array('bastien59960_reactions_picker_use_json', 0)),
-			array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
-			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
+            array('config.add', array('bastien59960_reactions_picker_width', 320)),
+            array('config.add', array('bastien59960_reactions_picker_height', 280)),
+            array('config.add', array('bastien59960_reactions_picker_show_categories', 0)),
+            array('config.add', array('bastien59960_reactions_picker_show_search', 0)),
+            array('config.add', array('bastien59960_reactions_picker_use_json', 0)),
+            array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
+            array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
             // --- DÉBUT : PLACE NETTE (ROBUSTIFICATION) ---
-            // Philosophie : On s'assure que la place est nette AVANT de construire.
-            // Cette étape supprime préventivement les modules de l'extension au cas où une
-            // désinstallation précédente aurait échoué, laissant des modules ou catégories "fantômes".
-            // On utilise une fonction custom pour un nettoyage plus robuste.
             array('custom', array(array($this, 'remove_existing_modules'))),
-            // Étape cruciale : on vide le cache pour que phpBB "oublie" les modules
-            // que l'on vient de supprimer, évitant une erreur `MODULE_EXISTS` liée au cache.
             array('cache.purge', array()),
 
-            // Ajout du module ACP en une seule étape.
-            // On crée une catégorie "ACP_REACTIONS_SETTINGS" et on y place notre module.
+            // Ajout du module ACP
             array('module.add', array(
                 'acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS'
             )),
@@ -144,8 +132,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 ),
             )),
 
-            // Ajout du module UCP en une seule étape.
-            // On crée une catégorie "UCP_REACTIONS_TITLE" et on y place notre module.
+            // Ajout du module UCP
             array('module.add', array(
                 'ucp', 'UCP_PREFS', 'UCP_REACTIONS_TITLE'
             )),
@@ -176,30 +163,24 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.remove', array('bastien59960_reactions_cron_last_run')),
 
             // Suppression des configurations de l'interface
-			array('config.remove', array('bastien59960_reactions_picker_width')),
-			array('config.remove', array('bastien59960_reactions_picker_height')),
-			array('config.remove', array('bastien59960_reactions_picker_show_categories')),
-			array('config.remove', array('bastien59960_reactions_picker_show_search')),
-			array('config.remove', array('bastien59960_reactions_picker_use_json')),
-			array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
-			array('config.remove', array('bastien59960_reactions_sync_interval')),
+            array('config.remove', array('bastien59960_reactions_picker_width')),
+            array('config.remove', array('bastien59960_reactions_picker_height')),
+            array('config.remove', array('bastien59960_reactions_picker_show_categories')),
+            array('config.remove', array('bastien59960_reactions_picker_show_search')),
+            array('config.remove', array('bastien59960_reactions_picker_use_json')),
+            array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
+            array('config.remove', array('bastien59960_reactions_sync_interval')),
             
-            // Suppression du module ACP.
-            // HISTORIQUE : Une erreur "MODULE_EXISTS" se produisait lors de la réactivation rapide
-            // car la suppression de la catégorie ne supprimait pas toujours l'enfant de manière fiable
-            // à cause d'un cache de module non invalidé.
-            // La suppression de la catégorie parente supprime aussi les enfants. Il suffit donc de supprimer les catégories.
-            array('module.remove', array(
-                'acp',
-                'ACP_REACTIONS_SETTINGS'
-            )),
-            array('module.remove', array(
-                'ucp',
-                'UCP_REACTIONS_TITLE'
-            )),
+            // CORRECTION CRITIQUE : Supprimer les modules AVANT les types de notifications
+            // pour éviter les dépendances circulaires
+            array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
+            array('module.remove', array('ucp', 'UCP_REACTIONS_TITLE')),
+            
+            // Purge du cache après suppression des modules
+            array('cache.purge', array()),
 
-            // Suppression des types de notifications
-            array('custom', array(array($this, 'remove_notification_type'))) // Removed trailing comma
+            // Suppression des types de notifications EN DERNIER
+            array('custom', array(array($this, 'remove_notification_type'))),
         );
     }
 
@@ -209,9 +190,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
      */
     public function remove_existing_modules()
     {
-        // Utilise l'outil de module pour supprimer les catégories.
-        // La suppression d'une catégorie entraîne la suppression de ses enfants.
-        // C'est la méthode la plus fiable pour garantir l'idempotence.
         /** @var \phpbb\db\migration\tool\module $module_tool */
         $module_tool = $this->container->get('phpbb.db.migration.tool.module');
         $module_tool->remove('acp', 'ACP_REACTIONS_SETTINGS');
@@ -227,7 +205,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                     CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
             $this->db->sql_query($sql);
         } catch (\Throwable $e) {
-            // Ignorer silencieusement si la table n'existe pas encore ou si la colonne est déjà correcte
+            // Ignorer silencieusement si la table n'existe pas encore
         }
     }
 
@@ -236,23 +214,17 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         $notifications_table = $this->table_prefix . 'notifications';
         $types = $this->table_prefix . 'notification_types';
         try {
-            // Utiliser LEFT JOIN au lieu de NOT IN pour compatibilité MySQL
             $sql = "DELETE n FROM {$notifications_table} n
                     LEFT JOIN {$types} t ON n.notification_type_id = t.notification_type_id
                     WHERE t.notification_type_id IS NULL";
             $this->db->sql_query($sql);
         } catch (\Throwable $e) {
-            // Ignorer silencieusement les erreurs pour ne pas bloquer la migration
-            // Les notifications orphelines seront nettoyées plus tard si nécessaire
+            // Ignorer silencieusement
         }
     }
 
     public function create_notification_type()
     {
-        // HISTORIQUE : Cette fonction a été rendue idempotente.
-        // Elle vérifie si les types de notifications existent déjà avant de tenter de les créer.
-        // Cela évite des erreurs SQL si la migration est exécutée plusieurs fois dans un état
-        // de base de données incohérent.
         $types_table = $this->table_prefix . 'notification_types';
 
         try {
@@ -263,7 +235,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             $this->db->sql_query($sql_cleanup);
 
             // === TYPE 1 : notification.type.reaction (instantané, cloche) ===
-            // Ce type gère les notifications immédiates dans la "cloche" du forum.
             $canonical_name = 'notification.type.reaction';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
@@ -281,7 +252,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             }
 
             // === TYPE 2 : notification.type.reaction_email_digest (résumé e-mail) ===
-            // Ce type est utilisé par la tâche CRON pour envoyer des résumés périodiques par e-mail.
             $digest_name = 'notification.type.reaction_email_digest';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
@@ -298,26 +268,45 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
             }
         } catch (\Throwable $e) {
-            // Ignorer silencieusement les erreurs pour ne pas bloquer la migration
+            // Ignorer silencieusement
         }
     }
 
     public function remove_notification_type()
     {
         $types_table = $this->table_prefix . 'notification_types';
+        $notifications_table = $this->table_prefix . 'notifications';
+        
         $names = array(
             'notification.type.reaction',
             'notification.type.reaction_email_digest',
         );
 
         try {
+            // CORRECTION : Supprimer d'abord les notifications associées
             foreach ($names as $canonical_name) {
-                $sql = 'DELETE FROM ' . $types_table . "
+                // 1. Récupérer l'ID du type
+                $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                     WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
-                $this->db->sql_query($sql);
+                $result = $this->db->sql_query($sql);
+                $row = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
+                
+                if ($row) {
+                    // 2. Supprimer les notifications liées
+                    $type_id = (int) $row['notification_type_id'];
+                    $sql = 'DELETE FROM ' . $notifications_table . '
+                        WHERE notification_type_id = ' . $type_id;
+                    $this->db->sql_query($sql);
+                    
+                    // 3. Supprimer le type lui-même
+                    $sql = 'DELETE FROM ' . $types_table . "
+                        WHERE notification_type_id = " . $type_id;
+                    $this->db->sql_query($sql);
+                }
             }
         } catch (\Throwable $e) {
-            // Ignorer silencieusement les erreurs pour ne pas bloquer la migration
+            // Ignorer silencieusement
         }
     }
 }
