@@ -118,6 +118,26 @@ read -s MYSQL_PASSWORD # -s pour masquer l'entrée. Le mot de passe sera utilis�
 echo "" # Nouvelle ligne après l'entrée masquée
 
 # ==============================================================================
+# 0️⃣.1️⃣ VÉRIFICATION DE LA CONNEXION MYSQL (SÉCURITÉ)
+# ==============================================================================
+echo -e "───[ 🔗 VÉRIFICATION DE LA CONNEXION MYSQL ]────────────────────────"
+echo -e "${YELLOW}ℹ️  Test de la connexion à la base de données avec le mot de passe fourni...${NC}"
+sleep 0.2
+
+# Tente une commande simple. Redirige la sortie d'erreur vers la sortie standard.
+mysql_test_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT 1;" 2>&1)
+
+# Vérifie si la sortie contient "Access denied"
+if echo "$mysql_test_output" | grep -q "Access denied"; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Connexion refusée. Le mot de passe MySQL est incorrect.${NC}"
+    echo -e "${WHITE_ON_RED}   Le script va s'arrêter pour protéger vos données.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ SUCCÈS : Connexion à la base de données établie.${NC}"
+fi
+
+
+# ==============================================================================
 # 0️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
 # ==============================================================================
 echo -e "───[ 0️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
@@ -884,11 +904,11 @@ if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
             restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESTORE_EOF'
                 -- Vider la table avant de la remplir pour éviter les doublons
                 TRUNCATE TABLE phpbb_post_reactions;
-
-                -- Insérer les données depuis la sauvegarde, en forçant reaction_notified à 0 pour retester le cron.
+                
+                -- CORRECTION CRITIQUE : Insérer TOUTES les colonnes de la sauvegarde, en remplaçant seulement reaction_notified.
                 INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
                 SELECT 
-                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, 0
+                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, 0 AS reaction_notified
                 FROM phpbb_post_reactions_backup
 RESTORE_EOF
             )
