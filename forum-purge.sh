@@ -908,6 +908,9 @@ RESTORE_EOF
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.2
 
+    output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
+    check_status "Exécution de toutes les tâches cron prêtes." "$output"
+
     echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
     echo -e "${GREEN}"
     echo "            .-\"\"\"-."
