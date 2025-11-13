@@ -161,7 +161,7 @@ class main_module
             // Options d'interface supplémentaires
             $post_emoji_size = max(8, min(128, $request->variable('post_emoji_size', (int) ($config['bastien59960_reactions_post_emoji_size'] ?? 24))));
             $picker_width = max(200, min(900, $request->variable('picker_width', (int) ($config['bastien59960_reactions_picker_width'] ?? 320))));
-            $picker_height = max(200, min(900, $request->variable('picker_height', (int) ($config['bastien59960_reactions_picker_height'] ?? 280))));
+            $picker_height = max(200, min(900, $request->variable('picker_height', (int) ($config['bastien59960_reactions_picker_height'] ?? 500))));
             $picker_emoji_size = max(12, min(96, $request->variable('picker_emoji_size', (int) ($config['bastien59960_reactions_picker_emoji_size'] ?? 24))));
             $sync_interval = max(1000, min(60000, $request->variable('sync_interval', (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000))));
 
@@ -243,11 +243,11 @@ class main_module
             'REACTIONS_MAX_PER_USER'         => (int) ($config['bastien59960_reactions_max_per_user'] ?? 10),
             'REACTIONS_POST_EMOJI_SIZE'      => (int) ($config['bastien59960_reactions_post_emoji_size'] ?? 24),
             'REACTIONS_PICKER_WIDTH'         => (int) ($config['bastien59960_reactions_picker_width'] ?? 320),
-            'REACTIONS_PICKER_HEIGHT'        => (int) ($config['bastien59960_reactions_picker_height'] ?? 280),
+            'REACTIONS_PICKER_HEIGHT'        => (int) ($config['bastien59960_reactions_picker_height'] ?? 500),
             'REACTIONS_PICKER_EMOJI_SIZE'    => (int) ($config['bastien59960_reactions_picker_emoji_size'] ?? 24),
-            'REACTIONS_PICKER_SHOW_CATEGORIES' => (int) ($config['bastien59960_reactions_picker_show_categories'] ?? 1),
-            'REACTIONS_PICKER_SHOW_SEARCH'     => (int) ($config['bastien59960_reactions_picker_show_search'] ?? 1),
-            'REACTIONS_PICKER_USE_JSON'        => (int) ($config['bastien59960_reactions_picker_use_json'] ?? 1),
+            'REACTIONS_PICKER_SHOW_CATEGORIES' => (int) ($config['bastien59960_reactions_picker_show_categories'] ?? 0),
+            'REACTIONS_PICKER_SHOW_SEARCH'     => (int) ($config['bastien59960_reactions_picker_show_search'] ?? 0),
+            'REACTIONS_PICKER_USE_JSON'        => (int) ($config['bastien59960_reactions_picker_use_json'] ?? 0),
             'REACTIONS_SYNC_INTERVAL'          => (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000),
         ]);
         

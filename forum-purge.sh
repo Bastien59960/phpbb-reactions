@@ -302,8 +302,8 @@ check_status "Cache purgé avant réactivation." "$output"
 # ==============================================================================
 # PAUSE STRATÉGIQUE
 # ==============================================================================
-echo -e "${YELLOW}ℹ️  Pause de 3 secondes pour laisser le temps au système de se stabiliser...${NC}"
-sleep 3
+echo -e "${YELLOW}ℹ️  Pause de 1 seconde pour laisser le temps au système de se stabiliser...${NC}"
+sleep 1
 # ==============================================================================
 # DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
 # ==============================================================================
@@ -850,9 +850,9 @@ echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que la tâche cron
 echo -e "───[ 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
 sleep 0.2
 
-# Ajout d'une temporisation de 3 secondes pour laisser le temps au système de se stabiliser
-echo -e "${YELLOW}ℹ️  Attente de 3 secondes avant la vérification...${NC}"
-sleep 1 # Réduit car la purge du cache a déjà stabilisé
+# Ajout d'une temporisation de 1 seconde pour laisser le temps au système de se stabiliser
+echo -e "${YELLOW}ℹ️  Attente de 1 seconde avant la vérification...${NC}"
+sleep 1
 
 # Le nom à rechercher est le nom logique retourné par get_name(), et non le nom du service.
 # C'est ce nom qui est affiché par `cron:list` si la traduction échoue.
@@ -967,6 +967,9 @@ POST_CRON_EOF
     echo "       SYSTEM READY"
     echo -e "${NC}"
 
+    # Afficher la valeur de la fenêtre de spam utilisée pour le calcul
+    echo -e "${YELLOW}ℹ️  Fenêtre de spam configurée en base de données : ${GREEN}${SPAM_MINUTES} minutes${NC}\n"
+
     # Afficher le tableau de preuves
     echo -e "${GREEN}📊 PREUVE DU TRAITEMENT CRON :${NC}"
     echo "┌───────────────────────────────────┬──────────┐"
@@ -978,8 +981,8 @@ POST_CRON_EOF
     printf "| %-33s │ %-8s │\n" "Total des réactions" "${total_general:-0}"
     echo "├───────────────────────────────────┼──────────┤"
     printf "| %-33s │ %-8s │\n" "En attente (non traitées)" "${en_attente:-0}"
-    printf "|   └─ Éligibles au cron (anciennes) │ %-8s │\n" "${eligibles_cron:-0}"
-    printf "|   └─ Dans la fenêtre de spam       │ %-8s │\n" "${dans_fenetre_spam:-0}"
+    printf "| %-33s │ %-8s │\n" "  └─ Éligibles au cron (anciennes)" "${eligibles_cron:-0}"
+    printf "| %-33s │ %-8s │\n" "  └─ Dans la fenêtre de spam" "${dans_fenetre_spam:-0}"
     printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
     echo "└───────────────────────────────────┴──────────┘"
 else
