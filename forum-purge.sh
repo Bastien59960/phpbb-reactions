@@ -919,19 +919,35 @@ RESTORE_EOF
     echo -e "${YELLOW}ℹ️  Vérification de l'état des réactions dans la base de données après l'exécution du cron.${NC}"
     sleep 0.2
 
+    # Récupérer la valeur de la fenêtre de spam (en minutes) depuis la config phpBB
+    SPAM_MINUTES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null || echo 45)
+    # Utiliser une valeur par défaut si la requête échoue ou est vide
+    SPAM_MINUTES=${SPAM_MINUTES:-45}
+
     # Exécuter une requête SQL pour obtenir le statut des réactions
-    POST_CRON_STATUS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'POST_CRON_EOF'
+    POST_CRON_STATUS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<POST_CRON_EOF
         -- Vérifier si la table existe pour éviter une erreur
         SET @table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
+
+        -- Définir la fenêtre de spam en secondes
+        SET @spam_window_seconds = ${SPAM_MINUTES} * 60;
+        SET @threshold_timestamp = UNIX_TIMESTAMP() - @spam_window_seconds;
 
         -- Requête conditionnelle pour obtenir le statut
         SET @sql = IF(@table_exists > 0,
             'SELECT 
-                SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS non_notifiees,
-                SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS notifiees,
-                COUNT(*) AS total
+                -- Total des réactions en attente (notified = 0)
+                SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS en_attente,
+                -- Réactions traitées (notified = 1)
+                SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS traitees,
+                -- Réactions en attente MAIS trop récentes pour le cron (dans la fenêtre de spam)
+                SUM(CASE WHEN reaction_notified = 0 AND reaction_time > @threshold_timestamp THEN 1 ELSE 0 END) AS dans_fenetre_spam,
+                -- Réactions en attente ET assez anciennes pour être traitées (éligibles au cron)
+                SUM(CASE WHEN reaction_notified = 0 AND reaction_time <= @threshold_timestamp THEN 1 ELSE 0 END) AS eligibles_cron,
+                -- Total général
+                COUNT(*) AS total_general
              FROM phpbb_post_reactions;',
-            'SELECT "Table absente", "Table absente", "Table absente";'
+            'SELECT "N/A", "N/A", "N/A", "N/A", "N/A";'
         );
 
         PREPARE stmt FROM @sql;
@@ -953,17 +969,19 @@ POST_CRON_EOF
 
     # Afficher le tableau de preuves
     echo -e "${GREEN}📊 PREUVE DU TRAITEMENT CRON :${NC}"
-    echo "┌──────────────────────────┬──────────┐"
-    echo "│ STATUT DES RÉACTIONS     │ NOMBRE   │"
-    echo "├──────────────────────────┼──────────┤"
+    echo "┌───────────────────────────────────┬──────────┐"
+    echo "│ STATUT DES RÉACTIONS              │ NOMBRE   │"
+    echo "├───────────────────────────────────┼──────────┤"
     
     # Lire la sortie de la requête SQL
-    read -r non_notifiees notifiees total <<< "$POST_CRON_STATUS"
-    printf "| %-24s │ %-8s │\n" "En attente (notified=0)" "${non_notifiees:-0}"
-    printf "| %-24s │ %-8s │\n" "Traitées (notified=1)" "${notifiees:-0}"
-    echo "├──────────────────────────┼──────────┤"
-    printf "| %-24s │ %-8s │\n" "Total" "${total:-0}"
-    echo "└──────────────────────────┴──────────┘"
+    read -r en_attente traitees dans_fenetre_spam eligibles_cron total_general <<< "$POST_CRON_STATUS"
+    printf "| %-33s │ %-8s │\n" "Total des réactions" "${total_general:-0}"
+    echo "├───────────────────────────────────┼──────────┤"
+    printf "| %-33s │ %-8s │\n" "En attente (non traitées)" "${en_attente:-0}"
+    printf "|   └─ Éligibles au cron (anciennes) │ %-8s │\n" "${eligibles_cron:-0}"
+    printf "|   └─ Dans la fenêtre de spam       │ %-8s │\n" "${dans_fenetre_spam:-0}"
+    printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
+    echo "└───────────────────────────────────┴──────────┘"
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"

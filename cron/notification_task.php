@@ -377,16 +377,36 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function should_run()
     {
+        // Récupérer le délai anti-spam configuré (en minutes).
         $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
         if ($spam_minutes <= 0)
         {
+            // Si le délai est à 0, la fonctionnalité est désactivée.
             return false;
         }
-
+    
+        // Calculer l'intervalle en secondes et le temps de la dernière exécution.
         $interval = max(60, $spam_minutes * 60);
         $last_run = (int) ($this->config['bastien59960_reactions_cron_last_run'] ?? 0);
-
-        return (time() - $last_run) >= $interval;
+    
+        // Condition 1 : Le temps écoulé depuis la dernière exécution est supérieur à l'intervalle.
+        // C'est le comportement normal.
+        if ((time() - $last_run) >= $interval)
+        {
+            return true;
+        }
+    
+        // Condition 2 (LA CORRECTION) : Vérifier s'il y a des réactions "en retard".
+        // Cela force l'exécution si des réactions anciennes (ex: après une restauration)
+        // n'ont pas été traitées, même si le cron a tourné récemment.
+        $threshold_timestamp = time() - $interval;
+        $sql = 'SELECT 1 FROM ' . $this->post_reactions_table . '
+                WHERE reaction_notified = 0 AND reaction_time <= ' . (int) $threshold_timestamp;
+        $result = $this->db->sql_query_limit($sql, 1);
+        $has_pending_old_reactions = (bool) $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+    
+        return $has_pending_old_reactions;
     }
 
     /**
