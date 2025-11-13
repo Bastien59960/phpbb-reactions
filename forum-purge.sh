@@ -119,7 +119,7 @@ cleanup() {
         
         restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EMERGENCY_RESTORE_EOF'
             -- Vider la table avant de la remplir pour éviter les doublons
-            TRUNCATE TABLE IF EXISTS phpbb_post_reactions;
+            TRUNCATE TABLE phpbb_post_reactions;
             
             -- Insérer les données depuis la sauvegarde en forçant reaction_notified à 0
             INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
@@ -980,8 +980,8 @@ RESTORE_SPAM_EOF
         if [ "$BACKUP_ROWS" -gt 0 ]; then
             # Si la sauvegarde n'est pas vide, exécuter la restauration.
             restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESTORE_EOF'
-                -- Vider la table avant de la remplir pour éviter les doublons
-                TRUNCATE TABLE IF EXISTS phpbb_post_reactions;
+                -- Vider la table avant de la remplir pour éviter les doublons.
+                TRUNCATE TABLE phpbb_post_reactions;
                 
                 -- CORRECTION CRITIQUE : Insérer TOUTES les colonnes de la sauvegarde.
                 -- Le flag 'reaction_notified' est conservé tel quel depuis la sauvegarde.
@@ -1039,16 +1039,12 @@ RESTORE_EOF
         -- Requête conditionnelle pour obtenir le statut
         SET @sql = IF(@table_exists > 0,
             'SELECT 
-                -- Total des réactions en attente (notified = 0)
-                SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS en_attente,
-                -- Réactions traitées (notified = 1)
-                SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS traitees,
-                -- Réactions en attente MAIS trop récentes pour le cron (dans la fenêtre de spam)
-                SUM(CASE WHEN reaction_notified = 0 AND reaction_time > @threshold_timestamp THEN 1 ELSE 0 END) AS dans_fenetre_spam,
-                -- Réactions en attente ET assez anciennes pour être traitées (éligibles au cron)
-                SUM(CASE WHEN reaction_notified = 0 AND reaction_time <= @threshold_timestamp THEN 1 ELSE 0 END) AS eligibles_cron,
-                -- Total général
-                COUNT(*) AS total_general
+                -- CORRECTION : Utiliser IFNULL(..., 0) pour éviter les résultats NULL sur une table vide.
+                IFNULL(SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END), 0) AS en_attente,
+                IFNULL(SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END), 0) AS traitees,
+                IFNULL(SUM(CASE WHEN reaction_notified = 0 AND reaction_time > @threshold_timestamp THEN 1 ELSE 0 END), 0) AS dans_fenetre_spam,
+                IFNULL(SUM(CASE WHEN reaction_notified = 0 AND reaction_time <= @threshold_timestamp THEN 1 ELSE 0 END), 0) AS eligibles_cron,
+                IFNULL(COUNT(*), 0) AS total_general
              FROM phpbb_post_reactions;',
             'SELECT "N/A", "N/A", "N/A", "N/A", "N/A";'
         );
