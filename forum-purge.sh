@@ -2,6 +2,7 @@
 # ==============================================================================
 # Fichier : forum-purge.sh
 # Auteur : Bastien (bastien59960)
+# Version : 1.1.0
 # GitHub : https://github.com/bastien59960/reactions
 #
 # Rôle :
@@ -911,6 +912,34 @@ RESTORE_EOF
     output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
     check_status "Exécution de toutes les tâches cron prêtes." "$output"
 
+    # ==============================================================================
+    # 1️⃣8️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
+    # ==============================================================================
+    echo -e "───[ 1️⃣8️⃣ VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
+    echo -e "${YELLOW}ℹ️  Vérification de l'état des réactions dans la base de données après l'exécution du cron.${NC}"
+    sleep 0.2
+
+    # Exécuter une requête SQL pour obtenir le statut des réactions
+    POST_CRON_STATUS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'POST_CRON_EOF'
+        -- Vérifier si la table existe pour éviter une erreur
+        SET @table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
+
+        -- Requête conditionnelle pour obtenir le statut
+        SET @sql = IF(@table_exists > 0,
+            'SELECT 
+                SUM(CASE WHEN reaction_notified = 0 THEN 1 ELSE 0 END) AS non_notifiees,
+                SUM(CASE WHEN reaction_notified = 1 THEN 1 ELSE 0 END) AS notifiees,
+                COUNT(*) AS total
+             FROM phpbb_post_reactions;',
+            'SELECT "Table absente", "Table absente", "Table absente";'
+        );
+
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+POST_CRON_EOF
+    )
+
     echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
     echo -e "${GREEN}"
     echo "            .-\"\"\"-."
@@ -921,6 +950,20 @@ RESTORE_EOF
     echo "    \`--. .--. .--. .--'\`"
     echo "       SYSTEM READY"
     echo -e "${NC}"
+
+    # Afficher le tableau de preuves
+    echo -e "${GREEN}📊 PREUVE DU TRAITEMENT CRON :${NC}"
+    echo "┌──────────────────────────┬──────────┐"
+    echo "│ STATUT DES RÉACTIONS     │ NOMBRE   │"
+    echo "├──────────────────────────┼──────────┤"
+    
+    # Lire la sortie de la requête SQL
+    read -r non_notifiees notifiees total <<< "$POST_CRON_STATUS"
+    printf "| %-24s │ %-8s │\n" "En attente (notified=0)" "${non_notifiees:-0}"
+    printf "| %-24s │ %-8s │\n" "Traitées (notified=1)" "${notifiees:-0}"
+    echo "├──────────────────────────┼──────────┤"
+    printf "| %-24s │ %-8s │\n" "Total" "${total:-0}"
+    echo "└──────────────────────────┴──────────┘"
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
