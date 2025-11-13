@@ -519,7 +519,7 @@ else
     # Formatter la sortie pour l'afficher dans un tableau
     echo "$REMAINING_TRACES" | while IFS=$'\t' read -r type name value; do
         # CORRECTION : Tronquer la colonne 'name' si elle est trop longue pour ne pas casser le tableau.
-        local max_name_len=42
+        max_name_len=42
         if [ ${#name} -gt $max_name_len ]; then
             # Tronque et ajoute "..."
             name="${name:0:$((max_name_len-3))}..."
