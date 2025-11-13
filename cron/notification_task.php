@@ -427,20 +427,20 @@ class notification_task extends \phpbb\cron\task\base
 
         try
         {
+            // CORRECTION CRITIQUE : Changer la langue AVANT d'instancier le messenger.
+            // Le messenger charge les fichiers de langue dans son constructeur.
+            // Si on change la langue après, il est trop tard.
+            $this->language->set_user_language($author_lang);
+            $this->language->add_lang('email', 'bastien59960/reactions');
+            $this->language->add_lang('common', 'bastien59960/reactions');
+
             if (!class_exists('messenger'))
             {
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
             $messenger = new \messenger(false);
-
-            // Charger la langue de l'utilisateur
-            $this->language->set_user_language($author_lang);
-            $this->language->add_lang('email', 'bastien59960/reactions');
-            $this->language->add_lang('common', 'bastien59960/reactions');
-
             $messenger->to($author_email, $author_name);
-            
             $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
             $messenger->subject($subject);
 

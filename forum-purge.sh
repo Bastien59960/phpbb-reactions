@@ -1043,6 +1043,57 @@ POST_CRON_EOF
     printf "| %-33s │ %-8s │\n" "  └─ Dans la fenêtre de spam" "${dans_fenetre_spam:-0}"
 printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
     echo "└───────────────────────────────────┴──────────┘"
+
+    # ==============================================================================
+    # 2️⃣0️⃣ VALIDATION FINALE DU TRAITEMENT CRON
+    # ==============================================================================
+    echo ""
+    echo -e "───[ 2️⃣0️⃣ VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
+    echo -e "${YELLOW}ℹ️  Vérification qu'il ne reste aucune réaction éligible non traitée.${NC}"
+    sleep 0.2
+
+    # Si la variable 'eligibles_cron' (calculée à l'étape 19) est supérieure à 0,
+    # cela signifie que le cron a échoué à traiter des réactions qui étaient prêtes.
+    # On utilise -ne 0 pour être sûr, même si la valeur ne devrait jamais être négative.
+    if [ "${eligibles_cron:-0}" -ne 0 ]; then
+        echo ""
+        echo -e "${WHITE_ON_RED}                                                                                ${NC}"
+        echo -e "${WHITE_ON_RED}  🔥🔥🔥  CRITICAL FAILURE: LE CRON N'A PAS TRAITÉ TOUTES LES RÉACTIONS  🔥🔥🔥  ${NC}"
+        echo -e "${WHITE_ON_RED}                                                                                ${NC}"
+        echo ""
+        echo -e "${YELLOW}   Il reste ${eligibles_cron} réaction(s) éligible(s) avec le flag 'reaction_notified = 0'.${NC}"
+        echo -e "${YELLOW}   Cela indique un problème majeur dans la logique du cron ou dans l'envoi des e-mails.${NC}"
+        echo ""
+        echo -e "${YELLOW}   Causes possibles :${NC}"
+        echo -e "${YELLOW}   1. Problème de configuration des e-mails sur le serveur (SMTP, sendmail).${NC}"
+        echo -e "${YELLOW}   2. Erreur PHP dans la tâche cron (vérifiez les logs d'erreur Apache/PHP).${NC}"
+        echo -e "${YELLOW}   3. Fichiers de template ou de langue d'e-mail manquants ou vides.${NC}"
+        echo ""
+        echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Le diagnostic est un échec critique.${NC}"
+        echo ""
+        echo -e "${WHITE_ON_RED}"
+        echo "            .-\"\"\"-."
+        echo "           /       \\"
+        echo "           \\.---. ./"
+        echo "           ( ✗ ✗ )    👾 CRITICAL FAILURE"
+        echo "    _..oooO--(_)--Oooo.._"
+        echo "    \`--. .--. .--. .--'\`"
+        echo "       BUG INVASION DETECTED"
+        echo -e "${NC}"
+        exit 1
+    else
+        echo -e "${GREEN}✅ VALIDATION RÉUSSIE : Toutes les réactions éligibles ont été traitées par le cron.${NC}"
+        echo ""
+        echo -e "${GREEN}"
+        echo "            .-\"\"\"-."
+        echo "           /       \\"
+        echo "           \\.---. ./"
+        echo "           ( ✓ ✓ )    👾 MISSION ACCOMPLISHED"
+        echo "    _..oooO--(_)--Oooo.._"
+        echo "    \`--. .--. .--. .--'\`"
+        echo "       SYSTEM READY"
+        echo -e "${NC}"
+    fi
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
