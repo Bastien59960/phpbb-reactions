@@ -222,8 +222,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // 1. D'abord le module enfant (la page).
             array('module.remove', array(
                 'acp',
-                'ACP_REACTIONS_SETTINGS',
-                '\bastien59960\reactions\acp\main_module',
+                false, // Recherche globale, plus robuste.
+                'bastien59960\reactions\acp\main_module', // CORRECTION : Sans l'antislash au début.
             )),
             // 2. Ensuite la catégorie parente.
             array('module.remove', array(
@@ -235,8 +235,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // Suppression du module UCP (catégorie et enfant).
             array('module.remove', array(
                 'ucp',
-                false, // On ne spécifie pas de parent pour une recherche globale dans la section 'ucp'
-                'UCP_REACTIONS_TITLE'
+                false, // Recherche globale.
+                'bastien59960\reactions\ucp\reactions_module' // CORRECTION : On supprime le module par son basename.
             )),
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
