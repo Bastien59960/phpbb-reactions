@@ -188,6 +188,8 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             $subject_plain = ($post_subject !== '') ? html_entity_decode(strip_tags($post_subject), ENT_QUOTES, 'UTF-8') : $this->language->lang('NO_SUBJECT');
+            // CORRECTION UTF-8 : Normaliser le sujet en UTF-8
+            $subject_plain = $this->normalize_utf8($subject_plain);
             $post_url_absolute = generate_board_url() . "/viewtopic.{$this->php_ext}?p={$post_id}#p{$post_id}";
             $profile_url_absolute = generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$reacter_id}";
 
@@ -200,11 +202,15 @@ class notification_task extends \phpbb\cron\task\base
                 ];
             }
 
+            // CORRECTION UTF-8 : Normaliser l'emoji et le nom du réacteur en UTF-8
+            $emoji_normalized = $this->normalize_emoji($emoji);
+            $reacter_name_normalized = $this->normalize_utf8($reacter_name);
+
             $by_author[$author_id]['posts'][$post_id]['reactions'][] = [
                 'REACTION_ID'          => $reaction_id,
                 'REACTER_ID'           => $reacter_id,
-                'REACTER_NAME'         => $reacter_name,
-                'EMOJI'                => $emoji ?: '?',
+                'REACTER_NAME'         => $reacter_name_normalized,
+                'EMOJI'                => $emoji_normalized,
                 'TIME'                 => $r_time,
                 'TIME_FORMATTED'       => date('d/m/Y H:i', $r_time),
                 'PROFILE_URL_ABSOLUTE' => $profile_url_absolute,
@@ -452,46 +458,57 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             $messenger = new \messenger(false);
-            $messenger->to($author_email, $author_name);
+            
+            // CORRECTION UTF-8 : Normaliser tous les strings en UTF-8 avant l'envoi
+            $author_name_utf8 = $this->normalize_utf8($author_name);
+            $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
+            
+            $messenger->to($author_email, $author_name_utf8);
             $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
-            $messenger->subject($subject);
+            $subject_utf8 = $this->normalize_utf8($subject);
+            $messenger->subject($subject_utf8);
 
             // CORRECTION : Spécifier le chemin complet du template pour plus de robustesse.
             // Cela garantit que phpBB trouve les fichiers, même dans des configurations non standard.
             $template_path = '@bastien59960_reactions/email/reaction_digest';
             $messenger->template($template_path, $author_lang);
 
-            // Assigner les variables globales
+            // Assigner les variables globales (toutes normalisées en UTF-8)
             $messenger->assign_vars([
-                'HELLO_USERNAME'   => sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name),
-                'DIGEST_INTRO'     => sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $this->config['sitename']),
-                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
-                'DIGEST_FOOTER'    => $this->language->lang('REACTIONS_DIGEST_FOOTER'),
-                'UNSUBSCRIBE_TEXT' => $this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE'),
-                'SITENAME'         => $this->config['sitename'],
+                'HELLO_USERNAME'   => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8)),
+                'DIGEST_INTRO'     => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8)),
+                'DIGEST_SIGNATURE' => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $sitename_utf8)),
+                'DIGEST_FOOTER'    => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_FOOTER')),
+                'UNSUBSCRIBE_TEXT' => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE')),
+                'SITENAME'         => $sitename_utf8,
                 'BOARD_URL'        => generate_board_url(),
                 'U_UCP'            => generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications",
                 'U_USER_PROFILE'   => generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$author_id}",
-                'L_REACTION_FROM'  => $this->language->lang('REACTIONS_DIGEST_REACTION_FROM'),
-                'L_ON_DATE'        => $this->language->lang('REACTIONS_DIGEST_ON_DATE'),
-                'L_VIEW_POST'      => $this->language->lang('REACTIONS_DIGEST_VIEW_POST'),
-                'REACTIONS_DIGEST_SUBJECT' => $subject,
+                'L_REACTION_FROM'  => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_REACTION_FROM')),
+                'L_ON_DATE'        => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_ON_DATE')),
+                'L_VIEW_POST'      => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_VIEW_POST')),
+                'REACTIONS_DIGEST_SUBJECT' => $subject_utf8,
             ]);
 
-            // Assigner les blocs de posts
+            // Assigner les blocs de posts (tous normalisés en UTF-8)
             foreach ($data['posts'] as $post_data)
             {
+                $post_title_utf8 = $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']));
                 $messenger->assign_block_vars('posts', [
-                    'POST_TITLE'        => sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']),
+                    'POST_TITLE'        => $post_title_utf8,
                     'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
                 ]);
 
                 if (isset($post_data['reactions']) && is_array($post_data['reactions']))
                 {
                     foreach ($post_data['reactions'] as $reaction) {
+                        // CORRECTION CRITIQUE : Normaliser l'emoji en UTF-8 et s'assurer qu'il est valide
+                        $emoji_utf8 = $this->normalize_emoji($reaction['EMOJI']);
+                        $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
+                        
                         $messenger->assign_block_vars('posts.reactions', [
-                            'EMOJI'                => $reaction['EMOJI'],
-                            'REACTER_NAME'         => $reaction['REACTER_NAME'],
+                            'EMOJI'                => $emoji_utf8,
+                            'REACTER_NAME'         => $reacter_name_utf8,
                             'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
                             'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
                         ]);
@@ -522,6 +539,76 @@ class notification_task extends \phpbb\cron\task\base
                 'error'  => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Normalise une chaîne en UTF-8 valide
+     *
+     * @param string $str Chaîne à normaliser.
+     * @return string Chaîne normalisée en UTF-8.
+     */
+    protected function normalize_utf8($str)
+    {
+        if (!is_string($str))
+        {
+            return '';
+        }
+
+        // Si la chaîne est déjà en UTF-8 valide, la retourner telle quelle
+        if (mb_check_encoding($str, 'UTF-8'))
+        {
+            return $str;
+        }
+
+        // Tenter de convertir depuis différents encodages courants
+        $detected = mb_detect_encoding($str, ['UTF-8', 'ISO-8859-1', 'Windows-1252', 'ASCII'], true);
+        
+        if ($detected && $detected !== 'UTF-8')
+        {
+            $converted = mb_convert_encoding($str, 'UTF-8', $detected);
+            if ($converted !== false && mb_check_encoding($converted, 'UTF-8'))
+            {
+                return $converted;
+            }
+        }
+
+        // Dernier recours : nettoyer les caractères invalides
+        return mb_convert_encoding($str, 'UTF-8', 'UTF-8');
+    }
+
+    /**
+     * Normalise un emoji en UTF-8 valide
+     *
+     * @param string $emoji Emoji à normaliser.
+     * @return string Emoji normalisé en UTF-8, ou '?' si invalide.
+     */
+    protected function normalize_emoji($emoji)
+    {
+        if (empty($emoji) || !is_string($emoji))
+        {
+            return '?';
+        }
+
+        // Normaliser d'abord en UTF-8
+        $emoji_utf8 = $this->normalize_utf8($emoji);
+
+        // Vérifier que c'est un emoji valide (contient des caractères Unicode emoji)
+        // Les emojis sont généralement dans les plages Unicode suivantes :
+        // - U+1F300–U+1F9FF (Symbols and Pictographs)
+        // - U+2600–U+26FF (Miscellaneous Symbols)
+        // - U+2700–U+27BF (Dingbats)
+        // - U+FE00–U+FE0F (Variation Selectors)
+        // - U+1F900–U+1F9FF (Supplemental Symbols and Pictographs)
+        // - U+1F1E0–U+1F1FF (Regional Indicator Symbols)
+        
+        // Vérifier que la chaîne contient au moins un caractère emoji
+        if (preg_match('/[\x{1F300}-\x{1F9FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE00}-\x{FE0F}\x{1F900}-\x{1F9FF}\x{1F1E0}-\x{1F1FF}]/u', $emoji_utf8))
+        {
+            return $emoji_utf8;
+        }
+
+        // Si ce n'est pas un emoji valide, retourner '?'
+        return '?';
     }
 
     /**
