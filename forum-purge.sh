@@ -879,28 +879,24 @@ if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
-
-        restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_EOF'
-        -- Vérifier si la table de backup et la table de destination existent
-        SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
-        SET @dest_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
-
-        SET @sql = IF(@backup_exists > 0 AND @dest_exists > 0 AND (SELECT COUNT(*) FROM phpbb_post_reactions_backup) > 0,
-            '
-            -- Insérer les données de la sauvegarde dans la nouvelle table.
-            INSERT IGNORE INTO phpbb_post_reactions SELECT * FROM phpbb_post_reactions_backup;
-            
-            SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées depuis la sauvegarde.") AS status FROM phpbb_post_reactions;
-            ',
-            'SELECT "ℹ️  Restauration ignorée : la table de sauvegarde est vide ou une des tables est manquante." AS status;'
-        );
-
-        PREPARE stmt FROM @sql;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
+        
+        # CORRECTION : Séparer la vérification de l'exécution pour éviter les erreurs de syntaxe SQL complexes.
+        
+        # 1. Vérifier si la table de backup existe et contient des données.
+        BACKUP_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions_backup;" 2>/dev/null || echo 0)
+        
+        if [ "$BACKUP_ROWS" -gt 0 ]; then
+            # 2. Si la sauvegarde n'est pas vide, exécuter la restauration.
+            restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESTORE_EOF'
+                INSERT IGNORE INTO phpbb_post_reactions SELECT * FROM phpbb_post_reactions_backup;
+                SELECT CONCAT("✅ ", COUNT(*), " réactions restaurées depuis la sauvegarde.") AS status FROM phpbb_post_reactions_backup;
 RESTORE_EOF
-        )
-        check_status "Restauration des données depuis 'phpbb_post_reactions_backup'." "$restore_output"
+            )
+            check_status "Restauration des données depuis 'phpbb_post_reactions_backup'." "$restore_output"
+        else
+            # 3. Sinon, afficher un message et continuer.
+            echo -e "${GREEN}ℹ️  Restauration ignorée : la table de sauvegarde est vide ou absente.${NC}"
+        fi
     fi
 
     echo -e "\n${GREEN}✅ Tâche cron '$CRON_TASK_NAME' détectée dans la liste — tout est OK.${NC}\n"
