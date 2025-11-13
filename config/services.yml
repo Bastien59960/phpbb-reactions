@@ -72,7 +72,7 @@ services:
     # =========================================================================
     # TÂCHE CRON DE TEST
     # =========================================================================
-    cron.task.bastien59960.reactions.test_task:
+    cron.task.bastien59960.reactions.test:
         class: bastien59960\reactions\cron\test_task
         arguments:
             - '@config'
