@@ -1000,6 +1000,50 @@ RESTORE_EOF
     fi
 
     # ==============================================================================
+    # 1️⃣7️⃣.5️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (POUR DEBUG)
+    # ==============================================================================
+    echo ""
+    echo -e "───[ 1️⃣7️⃣.5️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (DEBUG) ]────────"
+    echo -e "${YELLOW}ℹ️  Remise à zéro de tous les flags 'reaction_notified' pour forcer l'envoi d'un email de test.${NC}"
+    echo -e "${YELLOW}   Cela permet de tester les corrections UTF-8 sur les emojis et les caractères accentués.${NC}"
+    sleep 0.2
+    echo -e "   (Le mot de passe a été demandé au début du script.)"
+    
+    # Remettre tous les flags reaction_notified à 0 pour forcer le traitement par le cron
+    reset_flags_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESET_FLAGS_EOF'
+        -- Vérifier si la table existe
+        SET @table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
+        
+        -- Si la table existe, remettre TOUS les flags à 0 (sans condition WHERE pour être sûr)
+        SET @sql = IF(@table_exists > 0,
+            'UPDATE phpbb_post_reactions SET reaction_notified = 0;',
+            'SELECT "Table phpbb_post_reactions n''existe pas" AS message;'
+        );
+        
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        
+        -- Afficher le nombre total de réactions qui sont maintenant à 0
+        SELECT 
+            COUNT(*) AS total_reactions_ready
+        FROM phpbb_post_reactions
+        WHERE reaction_notified = 0;
+RESET_FLAGS_EOF
+    )
+    
+    if [ $? -eq 0 ]; then
+        RESET_COUNT=$(echo "$reset_flags_output" | tail -n 1 | tr -d '[:space:]')
+        if [ -n "$RESET_COUNT" ] && [ "$RESET_COUNT" != "0" ]; then
+            echo -e "${GREEN}✅ SUCCÈS : $RESET_COUNT réaction(s) avec flag 'reaction_notified = 0' (prêtes pour le cron).${NC}"
+        else
+            echo -e "${YELLOW}ℹ️  Aucune réaction à réinitialiser (toutes sont déjà à 0 ou la table est vide).${NC}"
+        fi
+    else
+        echo -e "${WHITE_ON_RED}⚠️  Erreur lors de la réinitialisation des flags (peut être normal si la table n'existe pas encore).${NC}"
+    fi
+
+    # ==============================================================================
     # 1️⃣8️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
     # ==============================================================================
     echo -e "───[ 1️⃣8️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
