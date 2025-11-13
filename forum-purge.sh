@@ -276,6 +276,11 @@ output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
 
 # ==============================================================================
+# PAUSE STRATÉGIQUE
+# ==============================================================================
+echo -e "${YELLOW}ℹ️  Pause de 3 secondes pour laisser le temps au système de se stabiliser...${NC}"
+sleep 3
+# ==============================================================================
 # DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
 # ==============================================================================
 # Ce bloc est défini une seule fois et redirigé vers le descripteur de fichier 3.
