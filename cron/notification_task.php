@@ -106,22 +106,25 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
-        $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
+        // CORRECTION : Relire la configuration au moment de l'exécution pour garantir la fraîcheur de la valeur.
+        $spam_minutes = (int) $this->config['bastien59960_reactions_spam_time'];
         if ($spam_minutes <= 0)
         {
             error_log('[Reactions Cron] Run skipped (spam_minutes <= 0).');
             return;
         }
 
-        $spam_delay = $spam_minutes * 60;
+        $spam_delay_seconds = $spam_minutes * 60;
 
         if (!function_exists('generate_board_url'))
         {
             include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
         }
 
-        $this->language->add_lang('common', 'bastien59960/reactions');
-        $threshold_timestamp = time() - $spam_delay;
+        // CORRECTION : Utiliser $_SERVER['REQUEST_TIME'] au lieu de time() pour être
+        // compatible avec les environnements de test où la date système est modifiée.
+        $current_time = isset($_SERVER['REQUEST_TIME']) ? (int) $_SERVER['REQUEST_TIME'] : time();
+        $threshold_timestamp = $current_time - $spam_delay_seconds;
         $run_start = microtime(true);
 
         error_log('[Reactions Cron] Run start (interval=' . $spam_minutes . ' min, threshold=' . date('Y-m-d H:i:s', $threshold_timestamp) . ')');
@@ -290,7 +293,9 @@ class notification_task extends \phpbb\cron\task\base
             }
         }
 
-        $this->config->set('bastien59960_reactions_cron_last_run', time());
+        // Utiliser le même timestamp que celui utilisé pour le calcul du seuil
+        // pour la mise à jour de la dernière exécution.
+        $this->config->set('bastien59960_reactions_cron_last_run', $current_time);
 
         $duration_ms = (microtime(true) - $run_start) * 1000;
 
@@ -377,23 +382,141 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function should_run()
     {
-        // Récupérer le délai anti-spam configuré (en minutes). Si 0, la tâche est désactivée.
-        $spam_minutes = (int) ($this->config['bastien59960_reactions_spam_time'] ?? 45);
-        if ($spam_minutes <= 0)
+        // CORRECTION : Simplification radicale. La tâche doit TOUJOURS être considérée comme "prête".
+        // La logique de savoir s'il y a du travail à faire est déplacée dans la méthode run().
+        // Cela évite les problèmes de cache de configuration et garantit que le cron est toujours
+        // exécutable par `cron:run`, ce qui est essentiel pour le script de purge.
+        return true;
+    }
+
+    /**
+     * Construit et envoie un e-mail récapitulatif à un utilisateur
+     *
+     * @param array $data Données de l'auteur et de ses réactions groupées.
+     * @param string $since_time_formatted Date formatée du seuil de temps.
+     * @return array Résultat de l'envoi (ex: ['status' => 'sent']).
+     */
+    protected function send_digest_email(array $data, string $since_time_formatted)
+    {
+        $author_id    = (int) $data['author_id'];
+        $author_email = $data['author_email'];
+        $author_name  = $data['author_name'] ?: 'Utilisateur';
+        $author_lang  = $data['author_lang'] ?: 'fr';
+
+        $log_prefix = '[Reactions Cron]';
+
+        if (empty($data['posts']))
         {
-            return false;
+            error_log("$log_prefix Aucun contenu pour user_id $author_id");
+            return ['status' => 'skipped_empty'];
         }
-    
-        // CORRECTION : La seule condition pour exécuter la tâche est de vérifier
-        // s'il existe au moins une réaction non notifiée qui est plus ancienne
-        // que le seuil anti-spam.
-        // Cela garantit que la tâche s'exécute toujours quand il y a du travail à faire,
-        // ce qui est crucial pour les tests et après une restauration de sauvegarde.
-        
-        $spam_delay_seconds = $spam_minutes * 60;
-        $threshold_timestamp = time() - $spam_delay_seconds;
-        
-        $sql = 'SELECT 1
+
+        try
+        {
+            // CORRECTION CRITIQUE : Changer la langue AVANT d'instancier le messenger.
+            // Le messenger charge les fichiers de langue dans son constructeur.
+            // Si on change la langue après, il est trop tard.
+            $this->language->set_user_language($author_lang);
+            $this->language->add_lang('email', 'bastien59960/reactions');
+            $this->language->add_lang('common', 'bastien59960/reactions');
+
+            if (!class_exists('messenger'))
+            {
+                include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
+            }
+
+            $messenger = new \messenger(false);
+            $messenger->to($author_email, $author_name);
+            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
+            $messenger->subject($subject);
+
+            // Template relatif à partir de styles/all/template/
+            $messenger->template('email/reaction_digest', $author_lang);
+
+            // Assigner les variables globales
+            $messenger->assign_vars([
+                'HELLO_USERNAME'   => sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name),
+                'DIGEST_INTRO'     => sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $this->config['sitename']),
+                'DIGEST_SIGNATURE' => sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $this->config['sitename']),
+                'DIGEST_FOOTER'    => $this->language->lang('REACTIONS_DIGEST_FOOTER'),
+                'UNSUBSCRIBE_TEXT' => $this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE'),
+                'SITENAME'         => $this->config['sitename'],
+                'BOARD_URL'        => generate_board_url(),
+                'U_UCP'            => generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications",
+                'U_USER_PROFILE'   => generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$author_id}",
+                'L_REACTION_FROM'  => $this->language->lang('REACTIONS_DIGEST_REACTION_FROM'),
+                'L_ON_DATE'        => $this->language->lang('REACTIONS_DIGEST_ON_DATE'),
+                'L_VIEW_POST'      => $this->language->lang('REACTIONS_DIGEST_VIEW_POST'),
+                'REACTIONS_DIGEST_SUBJECT' => $subject,
+            ]);
+
+            // Assigner les blocs de posts
+            foreach ($data['posts'] as $post_data)
+            {
+                $messenger->assign_block_vars('posts', [
+                    'POST_TITLE'        => sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']),
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                ]);
+
+                if (isset($post_data['reactions']) && is_array($post_data['reactions']))
+                {
+                    foreach ($post_data['reactions'] as $reaction) {
+                        $messenger->assign_block_vars('posts.reactions', [
+                            'EMOJI'                => $reaction['EMOJI'],
+                            'REACTER_NAME'         => $reaction['REACTER_NAME'],
+                            'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
+                            'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
+                        ]);
+                    }
+                }
+            }
+
+            $send_result = $messenger->send(NOTIFY_EMAIL);
+
+            if ($send_result)
+            {
+                error_log("$log_prefix Email sent successfully to $author_name ($author_email) - " . count($data['mark_ids']) . " reactions");
+                return ['status' => 'sent'];
+            }
+            else
+            {
+                error_log("$log_prefix Send failed for $author_email (messenger->send() = false)");
+                return ['status' => 'failed', 'error' => 'messenger send returned false'];
+            }
+        }
+        catch (\Exception $e)
+        {
+            error_log("$log_prefix Exception for user_id $author_id: " . $e->getMessage());
+            error_log("$log_prefix File: " . $e->getFile() . " | Line: " . $e->getLine());
+
+            return [
+                'status' => 'failed',
+                'error'  => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Retourne le nom de la tâche
+     *
+     * @return string Nom de la tâche (utilisé dans l'ACP et par la CLI).
+     */
+    public function get_name()
+    {
+        return 'bastien59960.reactions.notification';
+    }
+
+    /**
+     * Détermine si la tâche peut s'exécuter
+     * La tâche ne peut s'exécuter que si les e-mails sont activés sur le forum.
+     *
+     * @return bool
+     */
+    public function is_runnable()
+    {
+        return (bool) $this->config['email_enable'];
+    }
+}
                 FROM ' . $this->post_reactions_table . '
                 WHERE reaction_notified = 0 AND reaction_time <= ' . (int) $threshold_timestamp;
         $result = $this->db->sql_query_limit($sql, 1);
