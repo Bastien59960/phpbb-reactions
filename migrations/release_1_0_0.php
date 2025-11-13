@@ -198,8 +198,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 'UCP_REACTIONS_TITLE',
             )),
 
-            // CORRECTION : Ajout de la tâche cron qui avait été oubliée.
-            array('cron.task.add', array('bastien59960.reactions.notification', '\bastien59960\reactions\cron\notification_task', 300, false)),
+            // CORRECTION : Il faut bien utiliser "remove" pour la suppression de la tâche cron.
+            array('cron.task.remove', array('bastien59960.reactions.notification')),
 
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),

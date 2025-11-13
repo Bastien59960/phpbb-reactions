@@ -506,12 +506,12 @@ if [ -z "$REMAINING_TRACES" ]; then
     echo -e "${GREEN}   Les méthodes 'revert_*' des migrations semblent fonctionner correctement.${NC}"
     echo ""
 else
-    echo -e "${WHITE_ON_RED}⚠️ VALIDATION ÉCHOUÉE : Des traces de l'extension ont été trouvées après la purge !${NC}"
+    echo -e "${WHITE_ON_RED}⚠️ VALIDATION ÉCHOUÉE : Des traces ont été trouvées après désactivation et désinstallation de l'extension !${NC}"
     echo -e "${YELLOW}   Cela signifie que les méthodes 'revert_*' de vos migrations sont incomplètes.${NC}"
     echo -e "${YELLOW}   Voici la liste exacte de ce qui reste :${NC}"
-    echo "┌──────────────────────────────────────────────────────────────────────────┐"
+    echo "┌─────────────────────────────┬────────────────────────────────────────────┬─────────────┐"
     echo "| TYPE DE TRACE RESTANTE      | NOM                                        | VALEUR/INFO |"
-    echo "├──────────────────────────────────────────────────────────────────────────┤"
+    echo "├─────────────────────────────┼────────────────────────────────────────────┼─────────────┤"
     
     # Formatter la sortie pour l'afficher dans un tableau
     echo "$REMAINING_TRACES" | while IFS=$'\t' read -r type name value; do
@@ -524,7 +524,7 @@ else
         printf "| %-27s | %-42s | %-11s |\n" "$type" "$name" "$value"
     done
     
-    echo "└──────────────────────────────────────────────────────────────────────────┘"    
+    echo "└─────────────────────────────┴────────────────────────────────────────────┴─────────────┘"
     # Lancer le nettoyage manuel forcé car la purge a échoué
     force_manual_purge
     
@@ -532,7 +532,7 @@ else
     if [ $purge_failed -ne 0 ]; then
         echo -e "${WHITE_ON_RED}   CONSEIL : L'échec de 'extension:purge' suivi de ces traces restantes pointe vers une erreur dans vos méthodes 'revert_data()' ou 'revert_schema()'. Vérifiez-les !${NC}"
     else
-        echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' avant de relancer.${NC}"
+        echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' dans les fichiers de migration avant de relancer.${NC}"
     fi
     echo ""
     exit 1 # Arrêter le script car l'état est incohérent
