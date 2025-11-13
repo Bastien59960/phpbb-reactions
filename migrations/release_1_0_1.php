@@ -94,7 +94,7 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
         if (!$this->db_tools->sql_table_exists($old_reactions_table) || !$this->db_tools->sql_table_exists($old_types_table))
         {
             // L'ancienne table n'existe pas, on ne fait rien.
-            return;
+            return true; // CRITIQUE : Retour explicite requis
         }
 
         try
@@ -121,7 +121,7 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
             if (empty($old_reactions))
             {
                 $log->add('admin', $user->data['user_id'], $user->ip, 'LOG_REACTIONS_IMPORT_EMPTY');
-                return;
+                return true; // CRITIQUE : Retour explicite requis
             }
 
             // Étape 4 : Préparer les données pour une insertion en masse.
@@ -192,5 +192,8 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
             // En cas d'erreur, on logue le problème mais on ne bloque pas la migration.
             $log->add('admin', $user->data['user_id'], $user->ip, 'LOG_REACTIONS_IMPORT_FAILED', false, array($e->getMessage()));
         }
+        
+        // CRITIQUE : Retour explicite requis
+        return true;
     }
 }

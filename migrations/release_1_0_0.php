@@ -190,6 +190,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         $module_tool = $this->container->get('phpbb.db.migration.tool.module');
         $module_tool->remove('acp', 'ACP_REACTIONS_SETTINGS');
         $module_tool->remove('ucp', 'UCP_REACTIONS_TITLE');
+        
+        // CRITIQUE : Retour explicite requis
+        return true;
     }
 
     public function set_utf8mb4_bin()
@@ -203,6 +206,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         } catch (\Throwable $e) {
             // Ignorer silencieusement si la table n'existe pas encore
         }
+        
+        // CRITIQUE : Retour explicite requis
+        return true;
     }
 
     public function clean_orphan_notifications()
@@ -217,6 +223,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         } catch (\Throwable $e) {
             // Ignorer silencieusement
         }
+        
+        // CRITIQUE : Retour explicite requis
+        return true;
     }
 
     public function create_notification_type()
@@ -266,6 +275,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         } catch (\Throwable $e) {
             // Ignorer silencieusement
         }
+        
+        // CRITIQUE : Retour explicite requis
+        return true;
     }
 
     public function remove_notification_type()
@@ -304,5 +316,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         } catch (\Throwable $e) {
             // Ignorer silencieusement
         }
+        
+        // CRITIQUE : Les méthodes custom DOIVENT retourner true explicitement
+        return true;
     }
 }
