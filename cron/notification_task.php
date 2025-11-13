@@ -239,6 +239,8 @@ class notification_task extends \phpbb\cron\task\base
 
         foreach ($by_author as $author_id => $data)
         {
+            error_log("[CRON] Début du traitement pour l'auteur #{$author_id} ({$data['author_name']}) avec " . count($data['mark_ids']) . " réaction(s).");
+
             $processed_authors++;
             $reaction_total_for_author = isset($data['mark_ids']) ? count($data['mark_ids']) : 0;
             $processed_reactions += $reaction_total_for_author;
@@ -274,7 +276,19 @@ class notification_task extends \phpbb\cron\task\base
 
             $data['posts'] = array_values($data['posts']);
             $since_time_formatted = date('d/m/Y H:i', $threshold_timestamp);
-            $result = $this->send_digest_email($data, $since_time_formatted);
+
+            // CORRECTION : Encapsuler l'envoi dans un try...catch pour éviter qu'une erreur ne bloque toute la boucle.
+            try
+            {
+                $result = $this->send_digest_email($data, $since_time_formatted);
+                error_log("[CRON] Résultat de send_digest_email pour l'auteur #{$author_id} : " . json_encode($result));
+            }
+            catch (\Throwable $e)
+            {
+                error_log("[CRON][ERREUR MAIL] Exception lors de l'envoi pour l'auteur #{$author_id} : " . $e->getMessage());
+                // S'assurer que $result est un tableau d'échec pour que la logique continue
+                $result = ['status' => 'failed', 'error' => $e->getMessage()];
+            }
 
             if (!is_array($result))
             {
@@ -442,8 +456,10 @@ class notification_task extends \phpbb\cron\task\base
             $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
             $messenger->subject($subject);
 
-            // Template relatif à partir de styles/all/template/
-            $messenger->template('email/reaction_digest', $author_lang);
+            // CORRECTION : Spécifier le chemin complet du template pour plus de robustesse.
+            // Cela garantit que phpBB trouve les fichiers, même dans des configurations non standard.
+            $template_path = '@bastien59960_reactions/email/reaction_digest';
+            $messenger->template($template_path, $author_lang);
 
             // Assigner les variables globales
             $messenger->assign_vars([
