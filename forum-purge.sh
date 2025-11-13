@@ -785,9 +785,9 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 1️⃣1️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
+# 1️⃣2️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
-echo -e "───[ 1️⃣1️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
+echo -e "───[ 1️⃣2️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
 echo -e "${YELLOW}ℹ️  Rétablissement des permissions pour que le serveur web (ex: Apache/Nginx) puisse écrire dans le cache.${NC}"
 sleep 0.2
 
@@ -795,6 +795,10 @@ sleep 0.2
 WEB_USER="www-data" 
 WEB_GROUP="www-data" 
 CACHE_DIR="$FORUM_ROOT/cache"
+
+# 0. Définir le propriétaire de l'ensemble du répertoire du forum
+chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT"
+check_status "Propriétaire du répertoire forum mis à jour à $WEB_USER:$WEB_GROUP."
 
 # 1. Définir le propriétaire du répertoire cache
 chown -R "$WEB_USER":"$WEB_GROUP" "$CACHE_DIR" 
@@ -809,11 +813,11 @@ find "$CACHE_DIR" -type f -exec chmod 0666 {} \;
 check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
-# 1️⃣2️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
+# 1️⃣3️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que phpBB considère bien l'extension comme active.${NC}"
-echo -e "───[ 1️⃣2️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
+echo -e "───[ 1️⃣3️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
 sleep 0.2
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
@@ -828,11 +832,11 @@ else
 fi
 
 # ==============================================================================
-# 1️⃣3️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
+# 1️⃣4️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que la tâche cron de l'extension est bien enregistrée et visible par phpBB.${NC}"
-echo -e "───[ 1️⃣3️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
+echo -e "───[ 1️⃣4️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
 sleep 0.2
 
 # Ajout d'une temporisation de 3 secondes pour laisser le temps au système de se stabiliser
@@ -850,11 +854,11 @@ echo "$CRON_LIST_OUTPUT"
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
-    # 1️⃣4️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
+    # 1️⃣5️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
     # ==============================================================================
     # On ne restaure que si l'extension est bien active.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo -e "───[ 1️⃣4️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
+        echo -e "───[ 1️⃣5️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -887,18 +891,18 @@ RESTORE_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣5️⃣ PURGE DU CACHE FINALE
+    # 1️⃣6️⃣ PURGE DU CACHE FINALE
     # ==============================================================================
-    echo -e "───[ 1️⃣5️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
+    echo -e "───[ 1️⃣6️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
     echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
     sleep 0.2
     output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
     check_status "Cache purgé et container reconstruit." "$output"
 
     # ==============================================================================
-    # 1️⃣6️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
+    # 1️⃣7️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
     # ==============================================================================
-    echo -e "───[ 1️⃣6️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
+    echo -e "───[ 1️⃣7️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
     echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.2
