@@ -123,39 +123,44 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
             // Ajout du module ACP
-            // HISTORIQUE : La création des modules se fait en deux temps :
-            // 1. Créer une catégorie (un conteneur dans le menu).
-            // 2. Créer le module "classe" (la page réelle) à l'intérieur de cette catégorie.
-            // Cette approche structurée est essentielle pour une bonne intégration dans l'ACP.
+            // Étape 1 : Créer la catégorie parente dans l'ACP.
+            // On utilise un tableau détaillé avec `module_basename` à null pour définir une catégorie.
             array('module.add', array(
                 'acp', // parent
                 'ACP_CAT_DOT_MODS', // après (catégorie "Extensions")
-                'ACP_REACTIONS_SETTINGS' // nom du module
+                array(
+                    'module_basename'   => null, // Indique que c'est une catégorie
+                    'module_langname'   => 'ACP_REACTIONS_SETTINGS', // Clé de langue pour le titre de la catégorie
+                    'module_mode'       => 'settings', // Mode pour le lien (même si c'est une catégorie)
+                    'module_auth'       => 'acl_a_board', // Permission pour voir la catégorie
+                ),
             )),
+            // Étape 2 : Créer le module réel (la page) à l'intérieur de la catégorie que nous venons de créer.
             array('module.add', array(
                 'acp',
-                'ACP_REACTIONS_SETTINGS', // parent
+                'ACP_REACTIONS_SETTINGS', // Le parent est la clé de langue de la catégorie
                 array(
                     'module_basename'   => '\bastien59960\reactions\acp\main_module',
                     'modes'             => array('settings'),
                 )
             )),
-            // Ajout du module UCP (catégorie + module enfant) en une seule instruction.
-            // C'est la méthode correcte pour éviter l'erreur "MODULE_EXISTS".
-            // On crée le module 'reactions_module' et on spécifie que son parent est une NOUVELLE catégorie
-            // nommée 'UCP_REACTIONS_TITLE' qui sera créée à la volée.
+
+            // Ajout du module UCP
+            // Étape 1 : Créer la catégorie parente dans l'UCP.
             array('module.add', array(
                 'ucp', // parent
-                'UCP_PREFS', // Le module sera placé après la catégorie "Préférences"
+                'UCP_PREFS', // après (catégorie "Préférences")
+                'UCP_REACTIONS_TITLE' // Nom de la catégorie
+            )),
+            // Étape 2 : Créer le module réel à l'intérieur de la catégorie.
+            array('module.add', array(
+                'ucp',
+                'UCP_REACTIONS_TITLE', // Le parent est la clé de langue de la catégorie
                 array(
-                    'module_basename'	=> '\bastien59960\reactions\ucp\reactions_module',
-                    'module_langname'	=> 'UCP_REACTIONS_SETTINGS_TITLE', // Clé de langue pour le module lui-même
-                    'parent_id'			=> 'UCP_PREFS', // On le place dans la catégorie "Préférences"
-                    'module_mode'		=> 'settings',
-                    'module_auth'		=> 'acl_u_reactions_prefs',
+                    'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
+                    'modes'             => array('settings'),
                 )
             )),
-
             // Ajout de la tâche cron principale pour les notifications par e-mail.
             // HISTORIQUE : L'oubli de cette ligne était la cause d'un bug où l'extension
             // s'activait correctement, mais la tâche cron n'apparaissait jamais dans la liste
@@ -203,15 +208,15 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // 2. Ensuite la catégorie parente.
             array('module.remove', array(
                 'acp',
+                false, // Ne pas spécifier de parent pour une recherche globale dans la section 'acp'
                 'ACP_REACTIONS_SETTINGS',
             )),
 
-            // Suppression du module UCP. Il suffit de supprimer le module enfant,
-            // phpBB s'occupe de la catégorie si elle devient vide.
+            // Suppression du module UCP (catégorie et enfant).
             array('module.remove', array(
                 'ucp',
                 false, // On ne spécifie pas de parent pour une recherche globale dans la section 'ucp'
-                '\bastien59960\reactions\ucp\reactions_module'
+                'UCP_REACTIONS_TITLE'
             )),
             // Suppression de la tâche cron, miroir de son ajout dans update_data().
             array('cron.task.remove', array('bastien59960.reactions.notification')),
