@@ -224,6 +224,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 
             // Suppression des types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
+
+            // CORRECTION CRITIQUE : Purger le cache après la suppression des modules.
+            // Cela force phpBB à reconstruire son cache de modules et évite l'erreur "MODULE_EXISTS" lors d'une réactivation rapide.
+            array('cache.purge', array()),
         );
     }
 
