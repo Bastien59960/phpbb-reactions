@@ -122,20 +122,24 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 			array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
 			array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
-            // --- Début de la robustification ---
-            // Suppression préventive des modules pour garantir une installation propre, même si des résidus existent.
-            // Cela rend la migration idempotente et évite les erreurs "MODULE_EXISTS".
+            // --- DÉBUT : PLACE NETTE (ROBUSTIFICATION) ---
+            // Philosophie : On s'assure que la place est nette AVANT de construire.
+            // Cette étape supprime préventivement les modules de l'extension au cas où une
+            // désinstallation précédente aurait échoué, laissant des "modules fantômes".
+            // Cela rend la migration "idempotente" : on peut la lancer plusieurs fois sans erreur.
             array('module.remove', array(
                 'acp',
                 false, // Recherche globale dans la section
-                '\bastien59960\reactions\acp\main_module',
+                'bastien59960\reactions\acp\main_module',
             )),
             array('module.remove', array(
                 'ucp',
                 false, // Recherche globale dans la section
-                '\bastien59960\reactions\ucp\reactions_module',
+                'bastien59960\reactions\ucp\reactions_module',
             )),
-            // Purge du cache pour forcer la reconstruction de l'index des modules avant de les recréer.
+            // Étape cruciale : on vide le cache pour que phpBB "oublie" les modules
+            // que l'on vient de supprimer, évitant ainsi une erreur `MODULE_EXISTS`
+            // lors de leur recréation juste après.
             array('cache.purge', array()),
 
             // Ajout du module ACP
