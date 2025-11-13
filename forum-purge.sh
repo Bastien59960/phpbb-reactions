@@ -138,6 +138,21 @@ fi
 
 
 # ==============================================================================
+# 0️⃣.5️⃣ SAUVEGARDE DE LA CONFIGURATION SPAM_TIME
+# ==============================================================================
+echo -e "───[ 0️⃣.5️⃣ SAUVEGARDE DE LA CONFIGURATION SPAM_TIME ]───────────────────"
+echo -e "${YELLOW}ℹ️  Sauvegarde de la valeur actuelle du délai anti-spam...${NC}"
+sleep 0.2
+
+# Lire la valeur actuelle et la stocker.
+# Si la clé n'existe pas (première exécution), la variable sera vide, ce qui est géré à la restauration.
+SPAM_TIME_BACKUP=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null)
+
+# Si la variable est vide, on utilise la valeur par défaut de la migration pour l'affichage.
+echo -e "${GREEN}✅ Valeur du délai anti-spam sauvegardée : ${SPAM_TIME_BACKUP:-15} minutes.${NC}"
+
+
+# ==============================================================================
 # 0️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
 # ==============================================================================
 echo -e "───[ 0️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
@@ -938,9 +953,16 @@ RESTORE_EOF
     sleep 0.2
 
     # Récupérer la valeur de la fenêtre de spam (en minutes) depuis la config phpBB
-    SPAM_MINUTES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null || echo 15)
-    # Utiliser une valeur par défaut si la requête échoue ou est vide
-    SPAM_MINUTES=${SPAM_MINUTES:-15}
+    # CORRECTION : Simplification de la récupération pour plus de fiabilité.
+    # On tente de lire la valeur. Si la commande échoue ou ne retourne rien, on arrête le script.
+    SPAM_MINUTES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null)
+
+    if [ -z "$SPAM_MINUTES" ]; then
+        echo -e "${WHITE_ON_RED}❌ ERREUR CRITIQUE : Impossible de lire la valeur 'bastien59960_reactions_spam_time' depuis la base de données.${NC}"
+        echo -e "${YELLOW}   Causes possibles : la clé n'existe pas, ou un problème de connexion MySQL.${NC}"
+        echo -e "${YELLOW}   Le script va s'arrêter pour éviter d'utiliser une mauvaise valeur.${NC}"
+        exit 1
+    fi
 
     # Exécuter une requête SQL pour obtenir le statut des réactions
     POST_CRON_STATUS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<POST_CRON_EOF
@@ -1003,6 +1025,26 @@ POST_CRON_EOF
     printf "| %-33s │ %-8s │\n" "  └─ Dans la fenêtre de spam" "${dans_fenetre_spam:-0}"
     printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
     echo "└───────────────────────────────────┴──────────┘"
+
+    # ==============================================================================
+    # 2️⃣0️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME
+    # ==============================================================================
+    # On ne restaure que si une valeur a été sauvegardée.
+    if [ -n "$SPAM_TIME_BACKUP" ]; then
+        echo ""
+        echo -e "───[ 2️⃣0️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME ]──────────"
+        echo -e "${YELLOW}ℹ️  Restauration de la valeur du délai anti-spam à ${GREEN}${SPAM_TIME_BACKUP} minutes${NC}..."
+        sleep 0.2
+
+        # Utiliser INSERT ... ON DUPLICATE KEY UPDATE pour être sûr que la clé existe.
+        restore_spam_time_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<RESTORE_SPAM_EOF
+INSERT INTO phpbb_config (config_name, config_value, is_dynamic) 
+VALUES ('bastien59960_reactions_spam_time', '${SPAM_TIME_BACKUP}', 0)
+ON DUPLICATE KEY UPDATE config_value = '${SPAM_TIME_BACKUP}';
+RESTORE_SPAM_EOF
+        )
+        check_status "Restauration de la configuration du délai anti-spam." "$restore_spam_time_output"
+    fi
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     echo -e "${WHITE_ON_RED}"
