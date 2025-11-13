@@ -203,11 +203,6 @@ echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
 echo ""
 # ==============================================================================
-# 7️⃣ SUPPRESSION FICHIER cron.lock
-# ============================================================================== # ÉTAPE 4
-echo "───[   SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
-echo -e "${YELLOW}ℹ️  Un fichier de verrouillage de cron ('cron.lock') peut bloquer l'exécution des tâches planifiées.${NC}"
-sleep 0.2
 CRON_LOCK_FILE="$FORUM_ROOT/store/cron.lock"
 if [ -f "$CRON_LOCK_FILE" ]; then
     rm -f "$CRON_LOCK_FILE"
@@ -216,13 +211,9 @@ else
     echo -e "${GREEN}ℹ️  Aucun cron.lock trouvé (déjà absent).${NC}"
 fi
 
-MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'CLEANUP_EOF'
--- Détecter les migrations problématiques (dépendances non-array)
-SELECT '═══════════════════════════════════════════════════════════════' AS '';
-SELECT '🔍 MIGRATIONS PROBLÉMATIQUES DÉTECTÉES' AS '';
-SELECT '═══════════════════════════════════════════════════════════════' AS '';
-
-SELECT 
+# Exécuter la détection SÉPARÉMENT pour capturer la sortie
+DETECTED_MIGRATIONS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'DETECT_EOF'
+SELECT
     migration_name,
     LEFT(migration_depends_on, 80) as depends_preview,
     CASE 
@@ -237,14 +228,24 @@ WHERE (migration_depends_on LIKE 's:%'
        OR (migration_depends_on NOT LIKE 'a:%' 
            AND migration_depends_on NOT LIKE 's:%'
            AND migration_depends_on IS NOT NULL 
-           AND migration_depends_on != ''))
-ORDER BY migration_name;
+           AND migration_depends_on != ''));
+DETECT_EOF
+)
 
--- Supprimer les migrations problématiques (sauf celles de notre extension déjà supprimées)
-SELECT '═══════════════════════════════════════════════════════════════' AS '';
-SELECT '🗑️  SUPPRESSION DES MIGRATIONS PROBLÉMATIQUES' AS '';
-SELECT '═══════════════════════════════════════════════════════════════' AS '';
+# N'afficher le bloc que si des migrations problématiques sont trouvées
+if [ -n "$DETECTED_MIGRATIONS" ]; then
+    echo -e "${YELLOW}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}🔍 MIGRATIONS PROBLÉMATIQUES DÉTECTÉES${NC}"
+    echo -e "${YELLOW}═══════════════════════════════════════════════════════════════${NC}"
+    echo "$DETECTED_MIGRATIONS" | column -t -s $'\t'
+    echo -e "${YELLOW}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}🗑️  SUPPRESSION DES MIGRATIONS PROBLÉMATIQUES...${NC}"
+    echo -e "${YELLOW}═══════════════════════════════════════════════════════════════${NC}"
+else
+    echo -e "${GREEN}✅ Aucune migration problématique (non-array) trouvée sur le forum.${NC}"
+fi
 
+MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'CLEANUP_EOF'
 DELETE FROM phpbb_migrations
 WHERE (migration_depends_on LIKE 's:%' 
        OR (migration_depends_on NOT LIKE 'a:%' 
@@ -258,6 +259,19 @@ CLEANUP_EOF
 
 check_status "Nettoyage des migrations problématiques terminé."
 
+# ==============================================================================
+# 7️⃣ SUPPRESSION FICHIER cron.lock
+# ============================================================================== # ÉTAPE 4
+echo "───[   SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
+echo -e "${YELLOW}ℹ️  Un fichier de verrouillage de cron ('cron.lock') peut bloquer l'exécution des tâches planifiées.${NC}"
+sleep 0.2
+CRON_LOCK_FILE="$FORUM_ROOT/store/cron.lock"
+if [ -f "$CRON_LOCK_FILE" ]; then
+    rm -f "$CRON_LOCK_FILE"
+    check_status "Fichier cron.lock supprimé."
+else
+    echo -e "${GREEN}ℹ️  Aucun cron.lock trouvé (déjà absent).${NC}"
+fi
 # ==============================================================================
 # 8️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
 # ============================================================================== # ÉTAPE 5
