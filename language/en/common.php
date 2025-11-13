@@ -98,4 +98,18 @@ $lang = array_merge($lang ?? [], [
     'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Reactions: Send email digests',
     'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Groups new reactions and sends periodic email summaries to users.',
     'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Reactions test cron run</strong><br>» The test task for the Reactions extension has run successfully.',
+
+    // =============================================================================
+    // NOTIFICATION KEYS (from reactions.php)
+    // =============================================================================
+    'NOTIFICATION_GROUP_REACTIONS' => 'Reactions',
+    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> reacted to your post with %2$s.',
+    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Instant reaction to a post',
+    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Receive an instant notification in the forum bell when a user reacts to one of your posts.',
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Periodic reaction email summary',
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Receive a periodic email summary of new reactions on your posts.',
+    'UCP_REACTIONS_TITLE'           => 'Reaction Preferences',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choose how to be notified when members react to your posts.',
+    'UCP_REACTIONS_NOTIFY'          => 'Notify me of new reactions (notification)',
+    'UCP_REACTIONS_CRON_EMAIL'      => 'Notify me of new reactions (email)',
 ]);

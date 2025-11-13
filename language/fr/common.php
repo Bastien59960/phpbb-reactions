@@ -98,4 +98,18 @@ $lang = array_merge($lang ?? [], [
     'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Réactions : Envoyer les résumés par e-mail',
     'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Regroupe les nouvelles réactions et envoie des résumés périodiques par e-mail aux utilisateurs.',
     'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Cron de test des réactions exécuté</strong><br>» La tâche de test pour l\'extension Reactions s\'est exécutée avec succès.',
+
+    // =============================================================================
+    // CLÉS DE NOTIFICATION (depuis reactions.php)
+    // =============================================================================
+    'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
+    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s.',
+    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Réaction instantanée à un message',
+    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification instantanée dans la cloche du forum lorsqu\'un utilisateur réagit à l\'un de vos messages.',
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé périodique des réactions par e-mail',
+    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
+    'UCP_REACTIONS_TITLE'           => 'Préférences des réactions',
+    'UCP_REACTIONS_EXPLAIN'         => 'Choisissez comment être notifié lorsque des membres réagissent à vos messages.',
+    'UCP_REACTIONS_NOTIFY'          => 'Me notifier des nouvelles réactions (notification)',
+    'UCP_REACTIONS_CRON_EMAIL'      => 'Me notifier des nouvelles réactions (e-mail)',
 ]);

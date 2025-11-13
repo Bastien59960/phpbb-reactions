@@ -280,14 +280,16 @@ class reaction extends base implements type_interface
     /**
      * Spécifie le fichier de langue à charger pour ce type
      * 
-     * phpBB chargera automatiquement le fichier `language/{iso}/notification/reaction.php`
-     * de cette extension.
+     * CORRECTION : Retourner `false` pour indiquer à phpBB de NE PAS charger
+     * de fichier de langue spécifique. Le chargement est déjà géré de manière
+     * centralisée par le listener d'événements (`event/listener.php`), qui charge
+     * `common.php` où toutes nos clés sont maintenant.
      * 
-     * @return string Le chemin au format `vendor/ext:path/filename`
+     * @return bool|string
      */
     public function get_language_file()
     {
-        return 'bastien59960/reactions/reactions';
+        return false;
     }
 
     // =========================================================================
