@@ -92,6 +92,46 @@ MANUAL_PURGE_EOF
     )
     check_status "Nettoyage manuel forcé de la base de données." "$output"
 }
+
+# ==============================================================================
+# FONCTION DE NETTOYAGE (TRAP)
+# ==============================================================================
+# Cette fonction est appelée à la fin du script, quoi qu'il arrive (succès, erreur, interruption).
+cleanup() {
+    local exit_code=$? # Capture le code de sortie du script
+
+    # Ne rien faire si le script s'est terminé normalement (code 0)
+    if [ $exit_code -eq 0 ]; then
+        return
+    fi
+
+    echo ""
+    echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
+    echo -e "${WHITE_ON_RED}  ⚠️  INTERRUPTION DU SCRIPT (CODE ${exit_code}) - LANCEMENT DE LA RESTAURATION D'URGENCE  ⚠️    ${NC}"
+    echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
+    echo ""
+
+    # Vérifier si la table de backup existe et si la table principale est vide ou absente
+    BACKUP_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions_backup;" 2>/dev/null || echo 0)
+
+    if [ "$BACKUP_ROWS" -gt 0 ]; then
+        echo -e "${YELLOW}ℹ️  ${BACKUP_ROWS} réactions trouvées dans la sauvegarde. Tentative de restauration...${NC}"
+        
+        restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EMERGENCY_RESTORE_EOF'
+            -- Vider la table avant de la remplir pour éviter les doublons
+            TRUNCATE TABLE IF EXISTS phpbb_post_reactions;
+            
+            -- Insérer les données depuis la sauvegarde en forçant reaction_notified à 0
+            INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
+            SELECT reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified
+            FROM phpbb_post_reactions_backup;
+EMERGENCY_RESTORE_EOF
+        )
+        check_status "Restauration d'urgence des réactions." "$restore_output"
+    else
+        echo -e "${GREEN}ℹ️  Restauration d'urgence non nécessaire (pas de sauvegarde ou sauvegarde vide).${NC}"
+    fi
+}
 # ==============================================================================
 # START
 # ==============================================================================
@@ -110,6 +150,10 @@ echo -e "╚══════════════════════�
 echo -e "🚀 Lancement du script de maintenance (ordre validé).\n"
 sleep 0.2
 
+# Enregistrer la fonction de nettoyage pour qu'elle soit appelée à la sortie du script
+# EXIT : Se déclenche à la fin normale ou via `exit`
+# INT : Se déclenche sur Ctrl+C
+trap cleanup EXIT INT
 # ==============================================================================
 # DEMANDE DU MOT DE PASSE MYSQL (UNE SEULE FOIS)
 # ==============================================================================
@@ -920,30 +964,31 @@ RESTORE_SPAM_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CONDITIONNELLE)
+    # 1️⃣7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CRUCIAL)
     # ==============================================================================
-    # On ne restaure que si l'extension est bien active.
+    # Cette étape est cruciale. Elle restaure les données sauvegardées au début du script
+    # dans la table fraîchement recréée par la réactivation de l'extension.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo -e "───[ 1️⃣7️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]──────────"
-        echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données sauvegardées...${NC}"
+        echo -e "───[ 1️⃣7️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]─────────"
+        echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données depuis la sauvegarde...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
         
-        # CORRECTION : Séparer la vérification de l'exécution pour éviter les erreurs de syntaxe SQL complexes.
-        
-        # 1. Vérifier si la table de backup existe et contient des données.
+        # Vérifier si la table de backup existe et contient des données.
         BACKUP_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions_backup;" 2>/dev/null || echo 0)
         
         if [ "$BACKUP_ROWS" -gt 0 ]; then
-            # 2. Si la sauvegarde n'est pas vide, exécuter la restauration.
+            # Si la sauvegarde n'est pas vide, exécuter la restauration.
             restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'RESTORE_EOF'
                 -- Vider la table avant de la remplir pour éviter les doublons
-                TRUNCATE TABLE phpbb_post_reactions;
+                TRUNCATE TABLE IF EXISTS phpbb_post_reactions;
                 
-                -- CORRECTION CRITIQUE : Insérer TOUTES les colonnes de la sauvegarde, en remplaçant seulement reaction_notified.
+                -- CORRECTION CRITIQUE : Insérer TOUTES les colonnes de la sauvegarde.
+                -- Le flag 'reaction_notified' est conservé tel quel depuis la sauvegarde.
+                -- Le cron se chargera de traiter les '0'.
                 INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
                 SELECT 
-                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, 0 AS reaction_notified
+                    reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified
                 FROM phpbb_post_reactions_backup
 RESTORE_EOF
             )
@@ -1041,7 +1086,7 @@ POST_CRON_EOF
     printf "| %-33s │ %-8s │\n" "En attente (non traitées)" "${en_attente:-0}"
     printf "| %-33s │ %-8s │\n" "  └─ Éligibles au cron (anciennes)" "${eligibles_cron:-0}"
     printf "| %-33s │ %-8s │\n" "  └─ Dans la fenêtre de spam" "${dans_fenetre_spam:-0}"
-printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
+    printf "| %-33s │ %-8s │\n" "Traitées (notifiées)" "${traitees:-0}"
     echo "└───────────────────────────────────┴──────────┘"
 
     # ==============================================================================
