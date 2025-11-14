@@ -268,12 +268,21 @@ check_status "Nettoyage manuel du cache de production."
 find "$FORUM_ROOT/store" -mindepth 1 -not -name ".htaccess" -not -name "index.htm" -exec rm -vrf {} +
 check_status "Nettoyage manuel du store."
 
-# Rétablissement des permissions pour éviter les erreurs d'écriture
-chmod -vR 777 "$FORUM_ROOT/cache/"
-chmod -vR 777 "$FORUM_ROOT/store/"
-check_status "Permissions de cache/store rétablies (777)."
+# ==============================================================================
+# 2.5 CORRECTION DES PERMISSIONS (IMMÉDIATEMENT APRÈS PURGE)
+# ==============================================================================
+# Il est crucial de le faire ici, AVANT que phpBB ne tente de recréer le cache.
+WEB_USER="www-data" 
+WEB_GROUP="www-data" 
 
+# 1. Définir le propriétaire du répertoire cache et store
+chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/"
+check_status "Propriétaire du cache/store mis à jour à $WEB_USER:$WEB_GROUP."
 
+# 2. Définir les permissions d'écriture
+find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type d -exec chmod 0777 {} \;
+find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type f -exec chmod 0666 {} \;
+check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 # ==============================================================================
 # 3️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
@@ -867,30 +876,9 @@ fi
 # ==============================================================================
 # 1️⃣2️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
-echo -e "───[ 1️⃣2️⃣ RÉTABLISSEMENT DES PERMISSIONS (CRITIQUE) ]────────────"
-echo -e "${YELLOW}ℹ️  Rétablissement des permissions pour que le serveur web (ex: Apache/Nginx) puisse écrire dans le cache.${NC}"
+echo -e "───[ 1️⃣2️⃣ VÉRIFICATION DES PERMISSIONS ]────────────"
+echo -e "${GREEN}ℹ️  Les permissions ont déjà été corrigées à l'étape 2.5. Cette étape est maintenant une vérification.${NC}"
 sleep 0.2
-
-# ⚠️ À ADAPTER ! Remplacez 'www-data' par l'utilisateur/groupe de votre serveur web (ex: 'apache', 'nginx', etc.)
-WEB_USER="www-data" 
-WEB_GROUP="www-data" 
-CACHE_DIR="$FORUM_ROOT/cache"
-
-# 0. Définir le propriétaire de l'ensemble du répertoire du forum
-chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT"
-check_status "Propriétaire du répertoire forum mis à jour à $WEB_USER:$WEB_GROUP."
-
-# 1. Définir le propriétaire du répertoire cache
-chown -R "$WEB_USER":"$WEB_GROUP" "$CACHE_DIR" 
-check_status "Propriétaire du cache mis à jour à $WEB_USER:$WEB_GROUP."
-
-# 2. Définir les permissions d'écriture pour le propriétaire et le groupe (récursif)
-# Ce sont les permissions recommandées par phpBB : 777 pour les répertoires et 666 pour les fichiers.
-# ATTENTION: Le 'find' est souvent nécessaire après le chown pour s'assurer que PHP puisse écrire partout.
-find "$CACHE_DIR" -type d -exec chmod 0777 {} \;
-find "$CACHE_DIR" -type f -exec chmod 0666 {} \;
-
-check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
 # 1️⃣3️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
