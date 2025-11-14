@@ -658,10 +658,10 @@ class notification_task extends \phpbb\cron\task\base
             {
                 if (file_exists($phpmailer_path))
                 {
-                    // Les fichiers Exception.php et SMTP.php sont dans le même répertoire que PHPMailer.php
-                    require_once $phpmailer_path;
-                    require_once dirname($phpmailer_path) . '/SMTP.php';
-                    require_once dirname($phpmailer_path) . '/Exception.php';
+                    // Correction : Inclure tous les fichiers nécessaires depuis le bon répertoire
+                    require_once $phpmailer_path; // Charge PHPMailer.php
+                    require_once dirname($phpmailer_path) . '/SMTP.php'; // Charge SMTP.php
+                    require_once dirname($phpmailer_path) . '/Exception.php'; // Charge Exception.php
                     $phpmailer_loaded = true;
                     $this->log("     ✅ [PHPMailer] Chargé depuis: {$phpmailer_path}");
                     break;
@@ -811,6 +811,10 @@ class notification_task extends \phpbb\cron\task\base
             $this->log("     🏗️  [Messenger Fallback] Création de l'instance messenger...");
             $messenger = new \messenger(false);
             
+            // FORCER QUOTED-PRINTABLE POUR LA SCIENCE !
+            $messenger->headers('Content-Transfer-Encoding: quoted-printable');
+            $this->log("     🧪 [Messenger Fallback] FORÇAGE de l'encodage 'quoted-printable' pour tester les emojis.");
+            
             $author_name_utf8 = $this->normalize_utf8($author_name);
             $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
             
@@ -828,12 +832,12 @@ class notification_task extends \phpbb\cron\task\base
 
             // Assigner les variables globales
             $messenger->assign_vars([
-                'HELLO_USERNAME'   => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8)),
+                'HELLO_USERNAME'   => '✨ ' . $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8)),
                 'DIGEST_INTRO'     => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8)),
                 'DIGEST_SIGNATURE' => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $sitename_utf8)),
                 'DIGEST_FOOTER'    => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_FOOTER')),
                 'UNSUBSCRIBE_TEXT' => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE')),
-                'SITENAME'         => $sitename_utf8,
+                'SITENAME'         => '✅ ' . $sitename_utf8,
                 'BOARD_URL'        => generate_board_url(),
                 'U_UCP'            => generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications",
                 'U_USER_PROFILE'   => generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$data['author_id']}",
@@ -865,7 +869,9 @@ class notification_task extends \phpbb\cron\task\base
                         $this->log("              └─ Emoji normalisé: [{$emoji_utf8}] (hex: " . ($emoji_utf8 !== '?' ? bin2hex($emoji_utf8) : '3f') . ")");
                         
                         // Utiliser la représentation textuelle car 8bit ne supporte pas les emojis
-                        $emoji_display = $this->emoji_to_text($emoji_utf8);
+                        // POUR LA SCIENCE : On envoie l'emoji brut pour voir s'il passe avec quoted-printable
+                        $emoji_display = $emoji_utf8;
+                        // $emoji_display = $this->emoji_to_text($emoji_utf8);
                         
                         $this->log("              └─ Emoji final (texte): {$emoji_display}");
                         
