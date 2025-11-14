@@ -93,23 +93,6 @@ MANUAL_PURGE_EOF
     check_status "Nettoyage manuel forcé de la base de données." "$output"
 }
 
-# Fonction pour corriger les permissions des dossiers critiques
-fix_permissions() {
-    local step_name=$1
-    echo -e "${YELLOW}ℹ️  Correction des permissions après l'étape : ${step_name}${NC}"
-    
-    WEB_USER="www-data"
-    WEB_GROUP="www-data"
-    
-    # Définir le propriétaire sur les dossiers qui nécessitent une écriture par le serveur web
-    sudo chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload"
-    check_status "Propriétaire des répertoires critiques mis à jour."
-    
-    # Appliquer les permissions recommandées par phpBB
-    sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload" -type d -exec chmod 0777 {} \;
-    sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload" -type f -exec chmod 0666 {} \;
-    check_status "Permissions de lecture/écriture (777/666) appliquées."
-}
 # ==============================================================================
 # FONCTION DE NETTOYAGE (TRAP)
 # ==============================================================================
@@ -374,7 +357,6 @@ echo -e "${YELLOW}ℹ️  Dernière purge pour s'assurer que le forum est dans u
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
-fix_permissions "Purge du cache avant réactivation"
 
 # ==============================================================================
 # PAUSE STRATÉGIQUE
@@ -890,8 +872,6 @@ echo -e "───[ 1️⃣3️⃣  PURGE DU CACHE (APRÈS) - reconstruction ser
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
-fix_permissions "Purge finale du cache"
-
 
 # ==============================================================================
 # 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
@@ -1163,3 +1143,20 @@ else
     echo "       BUG INVASION DETECTED"
     echo -e "${NC}"
 fi
+
+# ==============================================================================
+# 2️⃣2️⃣ CORRECTION FINALE ET DÉFINITIVE DES PERMISSIONS
+# ==============================================================================
+echo ""
+echo -e "───[ 2️⃣2️⃣ CORRECTION FINALE DES PERMISSIONS ]────────────────────"
+echo -e "${YELLOW}ℹ️  Application des permissions correctes en toute fin de script pour garantir l'accès au forum.${NC}"
+
+WEB_USER="www-data"
+WEB_GROUP="www-data"
+
+sudo chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload"
+check_status "Propriétaire des répertoires critiques mis à jour."
+
+sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload" -type d -exec chmod 0777 {} \;
+sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload" -type f -exec chmod 0666 {} \;
+check_status "Permissions de lecture/écriture (777/666) appliquées."
