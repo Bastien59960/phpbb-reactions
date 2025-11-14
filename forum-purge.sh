@@ -851,37 +851,11 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 1️⃣2️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
-# ==============================================================================
-echo -e "───[ 1️⃣2️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE) ]────────────"
-echo -e "${YELLOW}ℹ️  Nettoyage final du cache et rétablissement des permissions pour le serveur web.${NC}"
-sleep 0.2
-
-WEB_USER="www-data" 
-WEB_GROUP="www-data" 
-
-# 1. Suppression complète du répertoire de production pour être sûr.
-rm -rf "$FORUM_ROOT/cache/production"
-check_status "Suppression complète du répertoire 'cache/production'."
-
-# 2. Recréation du répertoire avec le bon propriétaire.
-mkdir -p "$FORUM_ROOT/cache/production"
-check_status "Recréation du répertoire 'cache/production'."
-
-# 3. Application du propriétaire et des permissions sur tout le cache.
-chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache/"
-check_status "Propriétaire du cache mis à jour à $WEB_USER:$WEB_GROUP."
-
-find "$FORUM_ROOT/cache/" -type d -exec chmod 0777 {} \;
-find "$FORUM_ROOT/cache/" -type f -exec chmod 0666 {} \;
-check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
-
-# ==============================================================================
 # 1️⃣3️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que phpBB considère bien l'extension comme active.${NC}"
-echo -e "───[ 1️⃣3️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
+echo -e "───[ 1️⃣2️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
 sleep 0.2
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
@@ -900,10 +874,37 @@ fi
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
-echo -e "───[ 1️⃣4️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
+echo -e "───[ 1️⃣3️⃣  PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
+
+# ==============================================================================
+# 1️⃣4️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE)
+# ==============================================================================
+echo -e "───[ 1️⃣4️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE) ]───────────"
+echo -e "${YELLOW}ℹ️  Rétablissement des permissions pour le serveur web après la purge finale.${NC}"
+sleep 0.2
+
+WEB_USER="www-data"
+WEB_GROUP="www-data"
+
+# 1. Suppression complète du répertoire de production pour être sûr.
+rm -rf "$FORUM_ROOT/cache/production"
+check_status "Suppression complète du répertoire 'cache/production'."
+
+# 2. Recréation du répertoire.
+mkdir -p "$FORUM_ROOT/cache/production"
+check_status "Recréation du répertoire 'cache/production'."
+
+# 3. Application du propriétaire et des permissions sur les répertoires critiques.
+# On cible les dossiers que phpBB doit pouvoir écrire.
+chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" "$FORUM_ROOT/files/" "$FORUM_ROOT/images/avatars/upload/"
+check_status "Propriétaire des répertoires critiques mis à jour à $WEB_USER:$WEB_GROUP."
+
+find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type d -exec chmod 0777 {} \;
+find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type f -exec chmod 0666 {} \;
+check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
 # 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
@@ -928,12 +929,12 @@ echo "$CRON_LIST_OUTPUT"
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
-    # 1️⃣6️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME
+    # 1️⃣6️⃣ RESTAURATION DE LA CONFIGURATION
     # ==============================================================================
     # On ne restaure que si une valeur a été sauvegardée.
     if [ -n "$SPAM_TIME_BACKUP" ]; then
         echo ""
-        echo -e "───[ 1️⃣6️⃣ RESTAURATION DE LA CONFIGURATION SPAM_TIME ]──────────"
+        echo -e "───[ 1️⃣6️⃣ RESTAURATION DE LA CONFIGURATION ]──────────"
         echo -e "${YELLOW}ℹ️  Restauration de la valeur du délai anti-spam à ${GREEN}${SPAM_TIME_BACKUP} minutes${NC}..."
         sleep 0.2
 
@@ -948,12 +949,12 @@ RESTORE_SPAM_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣7️⃣ RESTAURATION DES DONNÉES DE RÉACTIONS (CRUCIAL)
+    # 1️⃣7️⃣ RESTAURATION DES DONNÉES
     # ==============================================================================
     # Cette étape est cruciale. Elle restaure les données sauvegardées au début du script
     # dans la table fraîchement recréée par la réactivation de l'extension.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo -e "───[ 1️⃣7️⃣  RESTAURATION DES RÉACTIONS DEPUIS LA SAUVEGARDE ]─────────"
+        echo -e "───[ 1️⃣7️⃣  RESTAURATION DES RÉACTIONS ]─────────"
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données depuis la sauvegarde...${NC}"
         sleep 0.2
         echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -984,10 +985,10 @@ RESTORE_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣7️⃣.5️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (POUR DEBUG)
+    # 1️⃣8️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (POUR DEBUG)
     # ==============================================================================
     echo ""
-    echo -e "───[ 1️⃣7️⃣.5️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (DEBUG) ]────────"
+    echo -e "───[ 1️⃣8️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (DEBUG) ]────────"
     echo -e "${YELLOW}ℹ️  Remise à zéro de tous les flags 'reaction_notified' pour forcer l'envoi d'un email de test.${NC}"
     echo -e "${YELLOW}   Cela permet de tester les corrections UTF-8 sur les emojis et les caractères accentués.${NC}"
     sleep 0.2
@@ -1028,9 +1029,9 @@ RESET_FLAGS_EOF
     fi
 
     # ==============================================================================
-    # 1️⃣8️⃣ TEST DE L'EXÉCUTION DU CRON (APRÈS RESTAURATION)
+    # 1️⃣9️⃣ TEST DE L'EXÉCUTION DU CRON
     # ==============================================================================
-    echo -e "───[ 1️⃣8️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
+    echo -e "───[ 1️⃣9️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
     echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.2
@@ -1039,9 +1040,9 @@ RESET_FLAGS_EOF
     check_status "Exécution de toutes les tâches cron prêtes." "$output"
 
     # ==============================================================================
-    # 1️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
+    # 2️⃣0️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
     # ==============================================================================
-    echo -e "───[ 1️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
+    echo -e "───[ 2️⃣0️⃣ VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
     echo -e "${YELLOW}ℹ️  Vérification de l'état des réactions dans la base de données après l'exécution du cron.${NC}"
     sleep 0.2
 
@@ -1114,10 +1115,10 @@ POST_CRON_EOF
     echo "└───────────────────────────────────┴──────────┘"
 
     # ==============================================================================
-    # 2️⃣0️⃣ VALIDATION FINALE DU TRAITEMENT CRON
+    # 2️⃣1️⃣ VALIDATION FINALE DU TRAITEMENT CRON
     # ==============================================================================
     echo ""
-    echo -e "───[ 2️⃣0️⃣ VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
+    echo -e "───[ 2️⃣1️⃣ VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
     echo -e "${YELLOW}ℹ️  Vérification qu'il ne reste aucune réaction éligible non traitée.${NC}"
     sleep 0.2
 
