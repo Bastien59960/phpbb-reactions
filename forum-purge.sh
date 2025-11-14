@@ -260,29 +260,6 @@ echo -e "───[ 2️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────�
 echo -e "${YELLOW}ℹ️  Suppression manuelle pour éliminer les fichiers de cache corrompus que 'cache:purge' pourrait manquer.${NC}"
 sleep 0.2
 
-# Suppression de TOUT le contenu du cache de production pour forcer une reconstruction complète
-rm -vrf "$FORUM_ROOT/cache/production/"*
-check_status "Nettoyage manuel du cache de production."
-
-# Suppression de TOUT le contenu du store (sauf .htaccess et index.htm)
-find "$FORUM_ROOT/store" -mindepth 1 -not -name ".htaccess" -not -name "index.htm" -exec rm -vrf {} +
-check_status "Nettoyage manuel du store."
-
-# ==============================================================================
-# 2.5 CORRECTION DES PERMISSIONS (IMMÉDIATEMENT APRÈS PURGE)
-# ==============================================================================
-# Il est crucial de le faire ici, AVANT que phpBB ne tente de recréer le cache.
-WEB_USER="www-data" 
-WEB_GROUP="www-data" 
-
-# 1. Définir le propriétaire du répertoire cache et store
-chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/"
-check_status "Propriétaire du cache/store mis à jour à $WEB_USER:$WEB_GROUP."
-
-# 2. Définir les permissions d'écriture
-find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type d -exec chmod 0777 {} \;
-find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type f -exec chmod 0666 {} \;
-check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 # ==============================================================================
 # 3️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
@@ -876,9 +853,28 @@ fi
 # ==============================================================================
 # 1️⃣2️⃣ CORRECTION DES PERMISSIONS (CRITIQUE)
 # ==============================================================================
-echo -e "───[ 1️⃣2️⃣ VÉRIFICATION DES PERMISSIONS ]────────────"
-echo -e "${GREEN}ℹ️  Les permissions ont déjà été corrigées à l'étape 2.5. Cette étape est maintenant une vérification.${NC}"
+echo -e "───[ 1️⃣2️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE) ]────────────"
+echo -e "${YELLOW}ℹ️  Nettoyage final du cache et rétablissement des permissions pour le serveur web.${NC}"
 sleep 0.2
+
+WEB_USER="www-data" 
+WEB_GROUP="www-data" 
+
+# 1. Suppression complète du répertoire de production pour être sûr.
+rm -rf "$FORUM_ROOT/cache/production"
+check_status "Suppression complète du répertoire 'cache/production'."
+
+# 2. Recréation du répertoire avec le bon propriétaire.
+mkdir -p "$FORUM_ROOT/cache/production"
+check_status "Recréation du répertoire 'cache/production'."
+
+# 3. Application du propriétaire et des permissions sur tout le cache.
+chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache/"
+check_status "Propriétaire du cache mis à jour à $WEB_USER:$WEB_GROUP."
+
+find "$FORUM_ROOT/cache/" -type d -exec chmod 0777 {} \;
+find "$FORUM_ROOT/cache/" -type f -exec chmod 0666 {} \;
+check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
 # 1️⃣3️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
