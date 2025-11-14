@@ -744,7 +744,7 @@ class notification_task extends \phpbb\cron\task\base
             $mail->addAddress($author_email, $this->normalize_utf8($author_name));
             
             // Sujet
-            $subject = '🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
+            $subject = '[Mailer Reconstruit] 🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
             $mail->Subject = $this->normalize_utf8($subject);
             
             // Corps du message (construit depuis le template)
@@ -821,7 +821,7 @@ class notification_task extends \phpbb\cron\task\base
             $this->log("     📧 [Messenger Fallback] Configuration destinataire: {$author_name_utf8} <{$author_email}>");
             $messenger->to($author_email, $author_name_utf8);
             
-            $subject = '🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
+            $subject = '[Mailer Natif] 🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
             $subject_utf8 = $this->normalize_utf8($subject);
             $this->log("     📌 [Messenger Fallback] Sujet: {$subject_utf8}");
             $messenger->subject($subject_utf8);
