@@ -472,6 +472,35 @@ class notification_task extends \phpbb\cron\task\base
             // Cela garantit que phpBB trouve les fichiers, même dans des configurations non standard.
             $template_path = '@bastien59960_reactions/email/reaction_digest';
             $messenger->template($template_path, $author_lang);
+            
+            // CORRECTION UTF-8 : Forcer quoted-printable pour supporter les emojis
+            // Le messenger de phpBB utilise PHPMailer en interne, on essaie d'accéder à l'instance
+            // On le fait APRÈS template() car PHPMailer est initialisé à ce moment
+            try {
+                $reflection = new \ReflectionClass($messenger);
+                if ($reflection->hasProperty('msg')) {
+                    $msg_property = $reflection->getProperty('msg');
+                    $msg_property->setAccessible(true);
+                    $phpmailer = $msg_property->getValue($messenger);
+                    
+                    if ($phpmailer && (property_exists($phpmailer, 'Encoding') || method_exists($phpmailer, 'setEncoding'))) {
+                        // Forcer quoted-printable pour supporter les emojis UTF-8
+                        if (property_exists($phpmailer, 'Encoding')) {
+                            $phpmailer->Encoding = 'quoted-printable';
+                        } elseif (method_exists($phpmailer, 'setEncoding')) {
+                            $phpmailer->setEncoding('quoted-printable');
+                        }
+                        error_log("$log_prefix Forced Content-Transfer-Encoding to quoted-printable for emoji support");
+                    } else {
+                        error_log("$log_prefix PHPMailer instance found but Encoding property/method not available");
+                    }
+                } else {
+                    error_log("$log_prefix Messenger class does not have 'msg' property");
+                }
+            } catch (\Exception $e) {
+                // Si on ne peut pas accéder à PHPMailer, on continue avec le comportement par défaut
+                error_log("$log_prefix Could not force quoted-printable encoding: " . $e->getMessage());
+            }
 
             // Assigner les variables globales (toutes normalisées en UTF-8)
             $messenger->assign_vars([
@@ -503,11 +532,22 @@ class notification_task extends \phpbb\cron\task\base
                 {
                     foreach ($post_data['reactions'] as $reaction) {
                         // CORRECTION CRITIQUE : Normaliser l'emoji en UTF-8 et s'assurer qu'il est valide
-                        $emoji_utf8 = $this->normalize_emoji($reaction['EMOJI']);
+                        $emoji_original = $reaction['EMOJI'];
+                        $emoji_utf8 = $this->normalize_emoji($emoji_original);
+                        
+                        // DEBUG : Logger l'emoji original et normalisé
+                        error_log("[Reactions Cron] Emoji original: " . bin2hex($emoji_original) . " (length: " . strlen($emoji_original) . ")");
+                        error_log("[Reactions Cron] Emoji normalisé: " . bin2hex($emoji_utf8) . " (length: " . strlen($emoji_utf8) . ", display: " . $emoji_utf8 . ")");
+                        
+                        // NOUVELLE APPROCHE : Essayer d'utiliser l'emoji directement si quoted-printable est forcé
+                        // Sinon, utiliser la représentation textuelle comme fallback
+                        // On vérifie si l'emoji est valide et on l'utilise directement
+                        $emoji_display = ($emoji_utf8 !== '?' && $emoji_utf8 !== '') ? $emoji_utf8 : $this->emoji_to_text($emoji_utf8);
+                        
                         $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
                         
                         $messenger->assign_block_vars('posts.reactions', [
-                            'EMOJI'                => $emoji_utf8,
+                            'EMOJI'                => $emoji_display, // Utiliser la représentation textuelle
                             'REACTER_NAME'         => $reacter_name_utf8,
                             'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
                             'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
@@ -609,6 +649,58 @@ class notification_task extends \phpbb\cron\task\base
 
         // Si ce n'est pas un emoji valide, retourner '?'
         return '?';
+    }
+
+    /**
+     * Convertit un emoji en représentation textuelle pour les emails
+     * 
+     * SOLUTION DE CONTOURNEMENT : Content-Transfer-Encoding: 8bit ne supporte pas les emojis UTF-8.
+     * On utilise une représentation textuelle purement ASCII pour garantir la compatibilité.
+     *
+     * @param string $emoji Emoji UTF-8 à convertir.
+     * @return string Représentation textuelle de l'emoji (ex: "[thumbs up]" ou "[emoji]").
+     */
+    protected function emoji_to_text($emoji)
+    {
+        if (empty($emoji) || $emoji === '?')
+        {
+            return '[?]';
+        }
+
+        // Mapping des emojis les plus courants vers leur nom textuel (ASCII pur, sans accents)
+        // Format: emoji => description en français sans accents pour compatibilité email
+        $emoji_map = [
+            '👍' => '[pouce leve]',
+            '👎' => '[pouce baisse]',
+            '❤️' => '[coeur]',
+            '❤' => '[coeur]', // Variante sans variation selector
+            '😍' => '[yeux en coeur]',
+            '😂' => '[rire aux larmes]',
+            '😊' => '[sourire]',
+            '🙂' => '[leger sourire]',
+            '😑' => '[impassible]',
+            '🙁' => '[leger froncement]',
+            '😯' => '[surpris]',
+            '😭' => '[pleure]',
+            '😡' => '[en colere]',
+            '😮' => '[bouche ouverte]',
+            '🔥' => '[feu]',
+            '⭐' => '[etoile]',
+            '💯' => '[cent]',
+            '🎉' => '[fete]',
+            '✅' => '[coche]',
+            '❌' => '[croix]',
+        ];
+
+        // Si l'emoji est dans le mapping, utiliser le nom textuel
+        if (isset($emoji_map[$emoji]))
+        {
+            return $emoji_map[$emoji];
+        }
+
+        // Sinon, utiliser une description générique
+        // On évite d'inclure l'emoji lui-même car il ne s'affichera pas avec 8bit
+        return '[emoji]';
     }
 
     /**
