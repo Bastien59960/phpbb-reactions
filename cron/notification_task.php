@@ -58,6 +58,9 @@ class notification_task extends \phpbb\cron\task\base
     /** @var string Préfixe des tables phpBB */
     protected $table_prefix;
 
+    /** @var string Chemin du fichier de log pour le CLI */
+    protected $log_file;
+
     /**
      * Constructeur
      *
@@ -94,6 +97,27 @@ class notification_task extends \phpbb\cron\task\base
         $this->phpbb_root_path = $phpbb_root_path;
         $this->php_ext = $php_ext;
         $this->table_prefix = $table_prefix;
+        
+        // Définir le fichier de log pour le CLI
+        $this->log_file = $this->phpbb_root_path . 'cache/reactions_cron.log';
+    }
+
+    /**
+     * Log un message (compatible CLI et web)
+     *
+     * @param string $message Message à logger.
+     * @return void
+     */
+    protected function log($message)
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $log_message = "[{$timestamp}] {$message}\n";
+        
+        // Écrire dans error_log (visible dans les logs Apache/PHP)
+        error_log($message);
+        
+        // Écrire aussi dans un fichier dédié (visible depuis CLI)
+        @file_put_contents($this->log_file, $log_message, FILE_APPEND | LOCK_EX);
     }
 
     /**
@@ -203,6 +227,16 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             // CORRECTION UTF-8 : Normaliser l'emoji et le nom du réacteur en UTF-8
+            // DEBUG : Logger l'emoji brut depuis la DB pour diagnostiquer
+            if (empty($emoji) || $emoji === '?')
+            {
+                $this->log("[Reactions Cron] WARNING: Empty or invalid emoji in DB for reaction_id $reaction_id: " . bin2hex($emoji ?? 'NULL'));
+            }
+            else
+            {
+                $this->log("[Reactions Cron] Emoji from DB - reaction_id: $reaction_id, hex: " . bin2hex($emoji) . ", display: " . $emoji . ", length: " . strlen($emoji));
+            }
+            
             $emoji_normalized = $this->normalize_emoji($emoji);
             $reacter_name_normalized = $this->normalize_utf8($reacter_name);
 
@@ -210,7 +244,8 @@ class notification_task extends \phpbb\cron\task\base
                 'REACTION_ID'          => $reaction_id,
                 'REACTER_ID'           => $reacter_id,
                 'REACTER_NAME'         => $reacter_name_normalized,
-                'EMOJI'                => $emoji_normalized,
+                'EMOJI'                => $emoji_normalized, // Garder l'emoji brut pour le fallback
+                'EMOJI_ORIGINAL'       => $emoji, // Garder l'original pour debug
                 'TIME'                 => $r_time,
                 'TIME_FORMATTED'       => date('d/m/Y H:i', $r_time),
                 'PROFILE_URL_ABSOLUTE' => $profile_url_absolute,
@@ -671,11 +706,18 @@ class notification_task extends \phpbb\cron\task\base
                 if (isset($post_data['reactions']) && is_array($post_data['reactions']))
                 {
                     foreach ($post_data['reactions'] as $reaction) {
-                        $emoji_original = $reaction['EMOJI'];
-                        $emoji_utf8 = $this->normalize_emoji($emoji_original);
+                        // Utiliser l'emoji original si disponible, sinon celui normalisé
+                        $emoji_to_convert = $reaction['EMOJI_ORIGINAL'] ?? $reaction['EMOJI'] ?? '?';
+                        $emoji_utf8 = $this->normalize_emoji($emoji_to_convert);
+                        
+                        // DEBUG : Logger pour diagnostiquer
+                        $this->log("[Reactions Cron] Fallback: Converting emoji - original hex: " . bin2hex($emoji_to_convert) . ", normalized: " . ($emoji_utf8 !== '?' ? bin2hex($emoji_utf8) : '?'));
                         
                         // Utiliser la représentation textuelle car 8bit ne supporte pas les emojis
                         $emoji_display = $this->emoji_to_text($emoji_utf8);
+                        
+                        $this->log("[Reactions Cron] Fallback: Emoji display result: " . $emoji_display);
+                        
                         $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
                         
                         $messenger->assign_block_vars('posts.reactions', [
@@ -838,8 +880,12 @@ class notification_task extends \phpbb\cron\task\base
     {
         if (empty($emoji) || $emoji === '?')
         {
+            $this->log("[Reactions Cron] emoji_to_text: Empty or '?' emoji received");
             return '[?]';
         }
+        
+        // DEBUG : Logger l'emoji reçu
+        $this->log("[Reactions Cron] emoji_to_text: Converting emoji - hex: " . bin2hex($emoji) . ", display: " . $emoji . ", length: " . strlen($emoji));
 
         // Mapping des emojis les plus courants vers leur nom textuel (ASCII pur, sans accents)
         // Format: emoji => description en français sans accents pour compatibilité email
