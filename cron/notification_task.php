@@ -25,6 +25,10 @@ if (!defined('IN_PHPBB'))
 }
 
 use messenger;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+
 
 class notification_task extends \phpbb\cron\task\base
 {
@@ -654,10 +658,10 @@ class notification_task extends \phpbb\cron\task\base
             {
                 if (file_exists($phpmailer_path))
                 {
-                    $base_path = dirname($phpmailer_path);
-                    require_once $base_path . '/PHPMailer.php';
-                    require_once $base_path . '/SMTP.php';
-                    require_once $base_path . '/Exception.php';
+                    // Les fichiers Exception.php et SMTP.php sont dans le même répertoire que PHPMailer.php
+                    require_once $phpmailer_path;
+                    require_once dirname($phpmailer_path) . '/SMTP.php';
+                    require_once dirname($phpmailer_path) . '/Exception.php';
                     $phpmailer_loaded = true;
                     $this->log("     ✅ [PHPMailer] Chargé depuis: {$phpmailer_path}");
                     break;
@@ -678,7 +682,7 @@ class notification_task extends \phpbb\cron\task\base
         try
         {
             $this->log("     🏗️  [PHPMailer] Création de l'instance...");
-            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            $mail = new PHPMailer(true);
             
             // Configuration de base
             $this->log("     ⚙️  [PHPMailer] Configuration de base...");
@@ -774,7 +778,7 @@ class notification_task extends \phpbb\cron\task\base
             
             return $result;
         }
-        catch (\Exception $e)
+        catch (PHPMailerException $e)
         {
             error_log('[Reactions Cron] PHPMailer exception: ' . $e->getMessage());
             error_log('[Reactions Cron] PHPMailer exception trace: ' . $e->getTraceAsString());
