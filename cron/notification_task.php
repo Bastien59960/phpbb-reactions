@@ -454,17 +454,18 @@ class notification_task extends \phpbb\cron\task\base
 
             // NOUVELLE APPROCHE : Utiliser notre propre mailer avec PHPMailer
             // pour forcer quoted-printable et supporter les emojis
+            error_log("$log_prefix Attempting to send email to $author_name ($author_email) with " . count($data['mark_ids']) . " reactions");
             $email_sent = $this->send_email_with_phpmailer($data, $author_email, $author_name, $author_lang);
             
             if ($email_sent)
             {
-                error_log("$log_prefix Email sent successfully via custom PHPMailer to $author_name ($author_email) - " . count($data['mark_ids']) . " reactions");
+                error_log("$log_prefix Email sent successfully to $author_name ($author_email) - " . count($data['mark_ids']) . " reactions");
                 return ['status' => 'sent'];
             }
             else
             {
-                error_log("$log_prefix Send failed via custom PHPMailer for $author_email");
-                return ['status' => 'failed', 'error' => 'custom PHPMailer send returned false'];
+                error_log("$log_prefix Send failed for $author_email - both PHPMailer and messenger fallback returned false");
+                return ['status' => 'failed', 'error' => 'both PHPMailer and messenger fallback failed'];
             }
         }
         catch (\Exception $e)
@@ -495,18 +496,32 @@ class notification_task extends \phpbb\cron\task\base
         // Charger PHPMailer depuis phpBB
         if (!class_exists('\PHPMailer\PHPMailer\PHPMailer'))
         {
-            // Essayer le chemin standard de phpBB
-            $phpmailer_path = $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
-            if (file_exists($phpmailer_path))
+            // Essayer plusieurs chemins possibles pour PHPMailer
+            $possible_paths = [
+                $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php',
+                $this->phpbb_root_path . 'includes/phpmailer/PHPMailer.php', // Ancien chemin phpBB
+            ];
+            
+            $phpmailer_loaded = false;
+            foreach ($possible_paths as $phpmailer_path)
             {
-                require_once $phpmailer_path;
-                require_once $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/SMTP.php';
-                require_once $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/Exception.php';
+                if (file_exists($phpmailer_path))
+                {
+                    $base_path = dirname($phpmailer_path);
+                    require_once $base_path . '/PHPMailer.php';
+                    require_once $base_path . '/SMTP.php';
+                    require_once $base_path . '/Exception.php';
+                    $phpmailer_loaded = true;
+                    error_log('[Reactions Cron] PHPMailer loaded from: ' . $phpmailer_path);
+                    break;
+                }
             }
-            else
+            
+            if (!$phpmailer_loaded)
             {
-                error_log('[Reactions Cron] PHPMailer not found, falling back to messenger');
-                return false;
+                error_log('[Reactions Cron] PHPMailer not found in any of the expected paths. Tried: ' . implode(', ', $possible_paths));
+                error_log('[Reactions Cron] Falling back to phpBB messenger (will use 8bit encoding, emojis may not work)');
+                return $this->send_email_with_messenger_fallback($data, $author_email, $author_name, $author_lang);
             }
         }
 
@@ -590,6 +605,102 @@ class notification_task extends \phpbb\cron\task\base
         catch (\Exception $e)
         {
             error_log('[Reactions Cron] PHPMailer exception: ' . $e->getMessage());
+            error_log('[Reactions Cron] PHPMailer exception trace: ' . $e->getTraceAsString());
+            error_log('[Reactions Cron] Falling back to phpBB messenger');
+            return $this->send_email_with_messenger_fallback($data, $author_email, $author_name, $author_lang);
+        }
+    }
+
+    /**
+     * Fallback vers le messenger de phpBB si PHPMailer échoue
+     * 
+     * @param array $data Données de l'auteur et de ses réactions groupées.
+     * @param string $author_email Email du destinataire.
+     * @param string $author_name Nom du destinataire.
+     * @param string $author_lang Langue du destinataire.
+     * @return bool True si l'email a été envoyé avec succès, false sinon.
+     */
+    protected function send_email_with_messenger_fallback(array $data, string $author_email, string $author_name, string $author_lang)
+    {
+        try
+        {
+            if (!class_exists('messenger'))
+            {
+                include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
+            }
+
+            $messenger = new \messenger(false);
+            
+            $author_name_utf8 = $this->normalize_utf8($author_name);
+            $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
+            
+            $messenger->to($author_email, $author_name_utf8);
+            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
+            $subject_utf8 = $this->normalize_utf8($subject);
+            $messenger->subject($subject_utf8);
+
+            $template_path = '@bastien59960_reactions/email/reaction_digest';
+            $messenger->template($template_path, $author_lang);
+
+            // Assigner les variables globales
+            $messenger->assign_vars([
+                'HELLO_USERNAME'   => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8)),
+                'DIGEST_INTRO'     => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8)),
+                'DIGEST_SIGNATURE' => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $sitename_utf8)),
+                'DIGEST_FOOTER'    => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_FOOTER')),
+                'UNSUBSCRIBE_TEXT' => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE')),
+                'SITENAME'         => $sitename_utf8,
+                'BOARD_URL'        => generate_board_url(),
+                'U_UCP'            => generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications",
+                'U_USER_PROFILE'   => generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$data['author_id']}",
+                'L_REACTION_FROM'  => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_REACTION_FROM')),
+                'L_ON_DATE'        => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_ON_DATE')),
+                'L_VIEW_POST'      => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_VIEW_POST')),
+                'REACTIONS_DIGEST_SUBJECT' => $subject_utf8,
+            ]);
+
+            // Assigner les blocs de posts
+            foreach ($data['posts'] as $post_data)
+            {
+                $post_title_utf8 = $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']));
+                $messenger->assign_block_vars('posts', [
+                    'POST_TITLE'        => $post_title_utf8,
+                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
+                ]);
+
+                if (isset($post_data['reactions']) && is_array($post_data['reactions']))
+                {
+                    foreach ($post_data['reactions'] as $reaction) {
+                        $emoji_original = $reaction['EMOJI'];
+                        $emoji_utf8 = $this->normalize_emoji($emoji_original);
+                        
+                        // Utiliser la représentation textuelle car 8bit ne supporte pas les emojis
+                        $emoji_display = $this->emoji_to_text($emoji_utf8);
+                        $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
+                        
+                        $messenger->assign_block_vars('posts.reactions', [
+                            'EMOJI'                => $emoji_display,
+                            'REACTER_NAME'         => $reacter_name_utf8,
+                            'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
+                            'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
+                        ]);
+                    }
+                }
+            }
+
+            $send_result = $messenger->send(NOTIFY_EMAIL);
+            
+            if ($send_result)
+            {
+                error_log('[Reactions Cron] Email sent via phpBB messenger fallback (8bit encoding, emojis as text)');
+            }
+            
+            return $send_result;
+        }
+        catch (\Exception $e)
+        {
+            error_log('[Reactions Cron] Messenger fallback exception: ' . $e->getMessage());
+            error_log('[Reactions Cron] Messenger fallback trace: ' . $e->getTraceAsString());
             return false;
         }
     }
