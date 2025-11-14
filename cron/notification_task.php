@@ -744,7 +744,7 @@ class notification_task extends \phpbb\cron\task\base
             $mail->addAddress($author_email, $this->normalize_utf8($author_name));
             
             // Sujet
-            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
+            $subject = '🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
             $mail->Subject = $this->normalize_utf8($subject);
             
             // Corps du message (construit depuis le template)
@@ -817,7 +817,7 @@ class notification_task extends \phpbb\cron\task\base
             $this->log("     📧 [Messenger Fallback] Configuration destinataire: {$author_name_utf8} <{$author_email}>");
             $messenger->to($author_email, $author_name_utf8);
             
-            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
+            $subject = '🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
             $subject_utf8 = $this->normalize_utf8($subject);
             $this->log("     📌 [Messenger Fallback] Sujet: {$subject_utf8}");
             $messenger->subject($subject_utf8);
@@ -916,7 +916,7 @@ class notification_task extends \phpbb\cron\task\base
         $author_name_utf8 = $this->normalize_utf8($author_name);
         $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
         
-        $body = sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8) . "\n\n";
+        $body = '✨ ' . sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8) . "\n\n";
         $body .= sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8) . "\n\n";
         $body .= str_repeat('-', 50) . "\n\n";
         
@@ -948,7 +948,7 @@ class notification_task extends \phpbb\cron\task\base
                     
                     $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
                     
-                    $body .= "- {$emoji_display} par {$reacter_name_utf8} (le {$reaction['TIME_FORMATTED']})\n";
+                    $body .= "- {$emoji_display} par {$reacter_name_utf8} (le {$reaction['TIME_FORMATTED']}) ✅\n";
                 }
             }
             
