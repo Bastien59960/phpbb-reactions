@@ -93,6 +93,23 @@ MANUAL_PURGE_EOF
     check_status "Nettoyage manuel forcé de la base de données." "$output"
 }
 
+# Fonction pour corriger les permissions des dossiers critiques
+fix_permissions() {
+    local step_name=$1
+    echo -e "${YELLOW}ℹ️  Correction des permissions après l'étape : ${step_name}${NC}"
+    
+    WEB_USER="www-data"
+    WEB_GROUP="www-data"
+    
+    # Définir le propriétaire sur les dossiers qui nécessitent une écriture par le serveur web
+    sudo chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload"
+    check_status "Propriétaire des répertoires critiques mis à jour."
+    
+    # Appliquer les permissions recommandées par phpBB
+    sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload" -type d -exec chmod 0777 {} \;
+    sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload" -type f -exec chmod 0666 {} \;
+    check_status "Permissions de lecture/écriture (777/666) appliquées."
+}
 # ==============================================================================
 # FONCTION DE NETTOYAGE (TRAP)
 # ==============================================================================
@@ -253,12 +270,6 @@ check_status "Purge des données de l'extension via phpbbcli (test du revert)." 
 if [ $purge_failed -ne 0 ]; then
     echo -e "${WHITE_ON_RED}⚠️ La commande 'extension:purge' a échoué. Le diagnostic post-purge va révéler ce qui n'a pas été supprimé.${NC}"
 fi
-# ==============================================================================
-# 2️⃣ NETTOYAGE AGRESSIF DU CACHE
-# ==============================================================================
-echo -e "───[ 2️⃣  NETTOYAGE AGRESSIF DU CACHE & STORE ]────────────────────────"
-echo -e "${YELLOW}ℹ️  Suppression manuelle pour éliminer les fichiers de cache corrompus que 'cache:purge' pourrait manquer.${NC}"
-sleep 0.2
 
 # ==============================================================================
 # 3️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
@@ -363,6 +374,7 @@ echo -e "${YELLOW}ℹ️  Dernière purge pour s'assurer que le forum est dans u
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
+fix_permissions "Purge du cache avant réactivation"
 
 # ==============================================================================
 # PAUSE STRATÉGIQUE
@@ -878,32 +890,8 @@ echo -e "───[ 1️⃣3️⃣  PURGE DU CACHE (APRÈS) - reconstruction ser
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
+fix_permissions "Purge finale du cache"
 
-# ==============================================================================
-# 1️⃣4️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE)
-# ==============================================================================
-echo -e "───[ 1️⃣4️⃣ CORRECTION FINALE DES PERMISSIONS (CRITIQUE) ]───────────"
-echo -e "${YELLOW}ℹ️  Rétablissement des permissions pour le serveur web après la purge finale.${NC}"
-sleep 0.2
-
-WEB_USER="www-data"
-WEB_GROUP="www-data"
-
-# 1. Supprimer tout le contenu du cache, sauf les fichiers de protection.
-find "$FORUM_ROOT/cache" -mindepth 1 -not -name ".htaccess" -not -name "index.htm" -exec rm -rf {} +
-check_status "Nettoyage complet du répertoire 'cache'."
-
-# 2. Recréer le dossier 'production' qui est parfois nécessaire.
-mkdir -p "$FORUM_ROOT/cache/production"
-check_status "Recréation du répertoire 'cache/production'."
-
-# 3. Appliquer le propriétaire et les permissions sur l'ensemble des répertoires critiques.
-chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload"
-check_status "Propriétaire des répertoires critiques mis à jour à $WEB_USER:$WEB_GROUP."
-
-find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" -type d -exec chmod 0777 {} \;
-find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" -type f -exec chmod 0666 {} \;
-check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
 # 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
