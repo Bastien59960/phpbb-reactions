@@ -452,121 +452,19 @@ class notification_task extends \phpbb\cron\task\base
             $this->language->add_lang('email', 'bastien59960/reactions');
             $this->language->add_lang('common', 'bastien59960/reactions');
 
-            if (!class_exists('messenger'))
-            {
-                include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
-            }
-
-            $messenger = new \messenger(false);
+            // NOUVELLE APPROCHE : Utiliser notre propre mailer avec PHPMailer
+            // pour forcer quoted-printable et supporter les emojis
+            $email_sent = $this->send_email_with_phpmailer($data, $author_email, $author_name, $author_lang);
             
-            // CORRECTION UTF-8 : Normaliser tous les strings en UTF-8 avant l'envoi
-            $author_name_utf8 = $this->normalize_utf8($author_name);
-            $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
-            
-            $messenger->to($author_email, $author_name_utf8);
-            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
-            $subject_utf8 = $this->normalize_utf8($subject);
-            $messenger->subject($subject_utf8);
-
-            // CORRECTION : Spécifier le chemin complet du template pour plus de robustesse.
-            // Cela garantit que phpBB trouve les fichiers, même dans des configurations non standard.
-            $template_path = '@bastien59960_reactions/email/reaction_digest';
-            $messenger->template($template_path, $author_lang);
-            
-            // CORRECTION UTF-8 : Forcer quoted-printable pour supporter les emojis
-            // Le messenger de phpBB utilise PHPMailer en interne, on essaie d'accéder à l'instance
-            // On le fait APRÈS template() car PHPMailer est initialisé à ce moment
-            try {
-                $reflection = new \ReflectionClass($messenger);
-                if ($reflection->hasProperty('msg')) {
-                    $msg_property = $reflection->getProperty('msg');
-                    $msg_property->setAccessible(true);
-                    $phpmailer = $msg_property->getValue($messenger);
-                    
-                    if ($phpmailer && (property_exists($phpmailer, 'Encoding') || method_exists($phpmailer, 'setEncoding'))) {
-                        // Forcer quoted-printable pour supporter les emojis UTF-8
-                        if (property_exists($phpmailer, 'Encoding')) {
-                            $phpmailer->Encoding = 'quoted-printable';
-                        } elseif (method_exists($phpmailer, 'setEncoding')) {
-                            $phpmailer->setEncoding('quoted-printable');
-                        }
-                        error_log("$log_prefix Forced Content-Transfer-Encoding to quoted-printable for emoji support");
-                    } else {
-                        error_log("$log_prefix PHPMailer instance found but Encoding property/method not available");
-                    }
-                } else {
-                    error_log("$log_prefix Messenger class does not have 'msg' property");
-                }
-            } catch (\Exception $e) {
-                // Si on ne peut pas accéder à PHPMailer, on continue avec le comportement par défaut
-                error_log("$log_prefix Could not force quoted-printable encoding: " . $e->getMessage());
-            }
-
-            // Assigner les variables globales (toutes normalisées en UTF-8)
-            $messenger->assign_vars([
-                'HELLO_USERNAME'   => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8)),
-                'DIGEST_INTRO'     => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8)),
-                'DIGEST_SIGNATURE' => $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $sitename_utf8)),
-                'DIGEST_FOOTER'    => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_FOOTER')),
-                'UNSUBSCRIBE_TEXT' => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE')),
-                'SITENAME'         => $sitename_utf8,
-                'BOARD_URL'        => generate_board_url(),
-                'U_UCP'            => generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications",
-                'U_USER_PROFILE'   => generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$author_id}",
-                'L_REACTION_FROM'  => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_REACTION_FROM')),
-                'L_ON_DATE'        => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_ON_DATE')),
-                'L_VIEW_POST'      => $this->normalize_utf8($this->language->lang('REACTIONS_DIGEST_VIEW_POST')),
-                'REACTIONS_DIGEST_SUBJECT' => $subject_utf8,
-            ]);
-
-            // Assigner les blocs de posts (tous normalisés en UTF-8)
-            foreach ($data['posts'] as $post_data)
+            if ($email_sent)
             {
-                $post_title_utf8 = $this->normalize_utf8(sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']));
-                $messenger->assign_block_vars('posts', [
-                    'POST_TITLE'        => $post_title_utf8,
-                    'POST_URL_ABSOLUTE' => $post_data['POST_URL_ABSOLUTE'],
-                ]);
-
-                if (isset($post_data['reactions']) && is_array($post_data['reactions']))
-                {
-                    foreach ($post_data['reactions'] as $reaction) {
-                        // CORRECTION CRITIQUE : Normaliser l'emoji en UTF-8 et s'assurer qu'il est valide
-                        $emoji_original = $reaction['EMOJI'];
-                        $emoji_utf8 = $this->normalize_emoji($emoji_original);
-                        
-                        // DEBUG : Logger l'emoji original et normalisé
-                        error_log("[Reactions Cron] Emoji original: " . bin2hex($emoji_original) . " (length: " . strlen($emoji_original) . ")");
-                        error_log("[Reactions Cron] Emoji normalisé: " . bin2hex($emoji_utf8) . " (length: " . strlen($emoji_utf8) . ", display: " . $emoji_utf8 . ")");
-                        
-                        // NOUVELLE APPROCHE : Essayer d'utiliser l'emoji directement si quoted-printable est forcé
-                        // Sinon, utiliser la représentation textuelle comme fallback
-                        // On vérifie si l'emoji est valide et on l'utilise directement
-                        $emoji_display = ($emoji_utf8 !== '?' && $emoji_utf8 !== '') ? $emoji_utf8 : $this->emoji_to_text($emoji_utf8);
-                        
-                        $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
-                        
-                        $messenger->assign_block_vars('posts.reactions', [
-                            'EMOJI'                => $emoji_display, // Utiliser la représentation textuelle
-                            'REACTER_NAME'         => $reacter_name_utf8,
-                            'TIME_FORMATTED'       => $reaction['TIME_FORMATTED'],
-                            'PROFILE_URL_ABSOLUTE' => $reaction['PROFILE_URL_ABSOLUTE'],
-                        ]);
-                    }
-                }
-            }
-
-            $send_result = $messenger->send(NOTIFY_EMAIL);
-
-            if ($send_result)
-            {
-                error_log("$log_prefix Email sent successfully to $author_name ($author_email) - " . count($data['mark_ids']) . " reactions");
+                error_log("$log_prefix Email sent successfully via custom PHPMailer to $author_name ($author_email) - " . count($data['mark_ids']) . " reactions");
                 return ['status' => 'sent'];
             }
             else
             {
-                error_log("$log_prefix Send failed for $author_email (messenger->send() = false)");
-                return ['status' => 'failed', 'error' => 'messenger send returned false'];
+                error_log("$log_prefix Send failed via custom PHPMailer for $author_email");
+                return ['status' => 'failed', 'error' => 'custom PHPMailer send returned false'];
             }
         }
         catch (\Exception $e)
@@ -579,6 +477,171 @@ class notification_task extends \phpbb\cron\task\base
                 'error'  => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Envoie un email en utilisant PHPMailer directement avec la config SMTP de phpBB
+     * 
+     * Cette méthode permet de forcer quoted-printable pour supporter les emojis UTF-8
+     *
+     * @param array $data Données de l'auteur et de ses réactions groupées.
+     * @param string $author_email Email du destinataire.
+     * @param string $author_name Nom du destinataire.
+     * @param string $author_lang Langue du destinataire.
+     * @return bool True si l'email a été envoyé avec succès, false sinon.
+     */
+    protected function send_email_with_phpmailer(array $data, string $author_email, string $author_name, string $author_lang)
+    {
+        // Charger PHPMailer depuis phpBB
+        if (!class_exists('\PHPMailer\PHPMailer\PHPMailer'))
+        {
+            // Essayer le chemin standard de phpBB
+            $phpmailer_path = $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php';
+            if (file_exists($phpmailer_path))
+            {
+                require_once $phpmailer_path;
+                require_once $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/SMTP.php';
+                require_once $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/Exception.php';
+            }
+            else
+            {
+                error_log('[Reactions Cron] PHPMailer not found, falling back to messenger');
+                return false;
+            }
+        }
+
+        try
+        {
+            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+            
+            // Configuration de base
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'quoted-printable'; // FORCER quoted-printable pour les emojis !
+            $mail->isHTML(false);
+            $mail->setLanguage($author_lang);
+            
+            // Récupérer la config SMTP depuis phpBB
+            $smtp_delivery = (bool) ($this->config['smtp_delivery'] ?? false);
+            
+            if ($smtp_delivery)
+            {
+                // Configuration SMTP
+                $mail->isSMTP();
+                $mail->Host = $this->config['smtp_host'] ?? 'localhost';
+                $mail->Port = (int) ($this->config['smtp_port'] ?? 25);
+                $mail->SMTPAuth = !empty($this->config['smtp_username']);
+                
+                if ($mail->SMTPAuth)
+                {
+                    $mail->Username = $this->config['smtp_username'] ?? '';
+                    $mail->Password = $this->config['smtp_password'] ?? '';
+                }
+                
+                // Support TLS/SSL
+                $smtp_auth_method = $this->config['smtp_auth_method'] ?? '';
+                if ($smtp_auth_method === 'PLAIN' || $smtp_auth_method === 'LOGIN')
+                {
+                    $mail->AuthType = $smtp_auth_method;
+                }
+                
+                // Détection automatique de TLS/SSL basée sur le port
+                if ($mail->Port == 465)
+                {
+                    $mail->SMTPSecure = 'ssl';
+                }
+                elseif ($mail->Port == 587)
+                {
+                    $mail->SMTPSecure = 'tls';
+                }
+            }
+            else
+            {
+                // Utiliser la fonction mail() de PHP
+                $mail->isMail();
+            }
+            
+            // Expéditeur
+            $board_email = $this->config['board_email'] ?? $this->config['board_contact'] ?? 'noreply@' . parse_url(generate_board_url(), PHP_URL_HOST);
+            $board_name = $this->config['sitename'] ?? 'phpBB';
+            $mail->setFrom($board_email, $this->normalize_utf8($board_name));
+            $mail->addReplyTo($board_email, $this->normalize_utf8($board_name));
+            
+            // Destinataire
+            $mail->addAddress($author_email, $this->normalize_utf8($author_name));
+            
+            // Sujet
+            $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
+            $mail->Subject = $this->normalize_utf8($subject);
+            
+            // Corps du message (construit depuis le template)
+            $body = $this->build_email_body($data, $author_name, $author_lang);
+            $mail->Body = $body;
+            
+            // Envoyer
+            $result = $mail->send();
+            
+            if ($result)
+            {
+                error_log('[Reactions Cron] Email sent via custom PHPMailer with quoted-printable encoding');
+            }
+            
+            return $result;
+        }
+        catch (\Exception $e)
+        {
+            error_log('[Reactions Cron] PHPMailer exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Construit le corps de l'email depuis les données et le template
+     *
+     * @param array $data Données de l'auteur et de ses réactions groupées.
+     * @param string $author_name Nom du destinataire.
+     * @param string $author_lang Langue du destinataire.
+     * @return string Corps de l'email en texte brut.
+     */
+    protected function build_email_body(array $data, string $author_name, string $author_lang)
+    {
+        $author_name_utf8 = $this->normalize_utf8($author_name);
+        $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
+        
+        $body = sprintf($this->language->lang('REACTIONS_DIGEST_HELLO'), $author_name_utf8) . "\n\n";
+        $body .= sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8) . "\n\n";
+        $body .= str_repeat('-', 50) . "\n\n";
+        
+        foreach ($data['posts'] as $post_data)
+        {
+            $post_title = sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']);
+            $body .= $this->normalize_utf8($post_title) . "\n\n";
+            
+            if (isset($post_data['reactions']) && is_array($post_data['reactions']))
+            {
+                foreach ($post_data['reactions'] as $reaction)
+                {
+                    $emoji_original = $reaction['EMOJI'];
+                    $emoji_utf8 = $this->normalize_emoji($emoji_original);
+                    
+                    // Utiliser l'emoji directement (quoted-printable le supportera)
+                    $emoji_display = ($emoji_utf8 !== '?' && $emoji_utf8 !== '') ? $emoji_utf8 : '[?]';
+                    $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
+                    
+                    $body .= "- {$emoji_display} par {$reacter_name_utf8} (le {$reaction['TIME_FORMATTED']})\n";
+                }
+            }
+            
+            $body .= "\n" . $this->language->lang('REACTIONS_DIGEST_VIEW_POST') . " : {$post_data['POST_URL_ABSOLUTE']}\n";
+            $body .= str_repeat('-', 50) . "\n\n";
+        }
+        
+        $body .= "\n" . $this->language->lang('REACTIONS_DIGEST_FOOTER') . "\n";
+        $body .= $this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE') . "\n\n";
+        $body .= $this->language->lang('REACTIONS_DIGEST_VIEW_POST') . " : " . generate_board_url() . "/memberlist.{$this->php_ext}?mode=viewprofile&u={$data['author_id']}\n";
+        $body .= $this->language->lang('REACTIONS_DIGEST_UNSUBSCRIBE') . " : " . generate_board_url() . "/ucp.{$this->php_ext}?i=ucp_notifications\n\n";
+        $body .= sprintf($this->language->lang('REACTIONS_DIGEST_SIGNATURE'), $sitename_utf8) . "\n";
+        
+        return $body;
     }
 
     /**
