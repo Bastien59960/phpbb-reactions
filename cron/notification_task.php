@@ -645,8 +645,8 @@ class notification_task extends \phpbb\cron\task\base
             $this->log("     📦 [PHPMailer] Classe non trouvée, recherche des fichiers...");
             // Essayer plusieurs chemins possibles pour PHPMailer
             $possible_paths = [
-                $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php',
-                $this->phpbb_root_path . 'includes/phpmailer/PHPMailer.php', // Ancien chemin phpBB
+                $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php', // phpBB 3.3+
+                $this->phpbb_root_path . 'includes/phpmailer/class.phpmailer.php', // Ancien chemin phpBB 3.2
             ];
             
             $phpmailer_loaded = false;
