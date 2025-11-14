@@ -25,10 +25,6 @@ if (!defined('IN_PHPBB'))
 }
 
 use messenger;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception as PHPMailerException;
-
 
 class notification_task extends \phpbb\cron\task\base
 {
@@ -598,28 +594,19 @@ class notification_task extends \phpbb\cron\task\base
             $this->language->add_lang('email', 'bastien59960/reactions');
             $this->language->add_lang('common', 'bastien59960/reactions');
 
-            // NOUVELLE APPROCHE : Utiliser notre propre mailer avec PHPMailer
-            // pour forcer quoted-printable et supporter les emojis
+            // Utiliser le messenger natif de phpBB avec l'encodage forcé pour les emojis.
             $this->log("  📤 Tentative d'envoi d'email à {$author_name} ({$author_email})");
             $this->log("     └─ Nombre de réactions à inclure: " . count($data['mark_ids']));
             
-            $email_sent = $this->send_email_with_phpmailer($data, $author_email, $author_name, $author_lang);
+            $email_sent = $this->send_email_with_messenger($data, $author_email, $author_name, $author_lang);
             
             if ($email_sent)
             {
                 $this->log("  ✅ Email envoyé avec succès!");
                 return ['status' => 'sent'];
             }
-            else
-            {
-                $this->log("  ❌ Échec de l'envoi (PHPMailer et fallback messenger ont échoué)");
-                return ['status' => 'failed', 'error' => 'both PHPMailer and messenger fallback failed'];
-            }
-        }
-        catch (\Exception $e)
-        {
-            error_log("$log_prefix Exception for user_id $author_id: " . $e->getMessage());
-            error_log("$log_prefix File: " . $e->getFile() . " | Line: " . $e->getLine());
+            
+            $this->log("  ❌ Échec de l'envoi de l'email.");
 
             return [
                 'status' => 'failed',
@@ -629,166 +616,7 @@ class notification_task extends \phpbb\cron\task\base
     }
 
     /**
-     * Envoie un email en utilisant PHPMailer directement avec la config SMTP de phpBB
-     * 
-     * Cette méthode permet de forcer quoted-printable pour supporter les emojis UTF-8
-     *
-     * @param array $data Données de l'auteur et de ses réactions groupées.
-     * @param string $author_email Email du destinataire.
-     * @param string $author_name Nom du destinataire.
-     * @param string $author_lang Langue du destinataire.
-     * @return bool True si l'email a été envoyé avec succès, false sinon.
-     */
-    protected function send_email_with_phpmailer(array $data, string $author_email, string $author_name, string $author_lang)
-    {
-        $this->log("     🔧 [PHPMailer] Initialisation...");
-        
-        // Charger PHPMailer depuis phpBB
-        if (!class_exists('\PHPMailer\PHPMailer\PHPMailer'))
-        {
-            $this->log("     📦 [PHPMailer] Classe non trouvée, recherche des fichiers...");
-            // Essayer plusieurs chemins possibles pour PHPMailer
-            $possible_paths = [
-                $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php', // phpBB 3.3+
-                $this->phpbb_root_path . 'includes/phpmailer/class.phpmailer.php', // Ancien chemin phpBB 3.2
-            ];
-            
-            $phpmailer_loaded = false;
-            foreach ($possible_paths as $phpmailer_path)
-            {
-                if (file_exists($phpmailer_path))
-                {
-                    // Correction : Inclure tous les fichiers nécessaires depuis le bon répertoire
-                    require_once $phpmailer_path; // Charge PHPMailer.php
-                    require_once dirname($phpmailer_path) . '/SMTP.php'; // Charge SMTP.php
-                    require_once dirname($phpmailer_path) . '/Exception.php'; // Charge Exception.php
-                    $phpmailer_loaded = true;
-                    $this->log("     ✅ [PHPMailer] Chargé depuis: {$phpmailer_path}");
-                    break;
-                } else {
-                    $this->log("     ❌ [PHPMailer] Chemin non trouvé: {$phpmailer_path}");
-                }
-            }
-            
-            if (!$phpmailer_loaded)
-            {
-                $this->log("     ⚠️  [PHPMailer] Non trouvé dans aucun chemin. Fallback vers messenger phpBB (8bit, emojis en texte)");
-                return $this->send_email_with_messenger_fallback($data, $author_email, $author_name, $author_lang);
-            }
-        } else {
-            $this->log("     ✅ [PHPMailer] Classe déjà chargée");
-        }
-
-        try
-        {
-            $this->log("     🏗️  [PHPMailer] Création de l'instance...");
-            $mail = new PHPMailer(true);
-            
-            // Configuration de base
-            $this->log("     ⚙️  [PHPMailer] Configuration de base...");
-            $mail->CharSet = 'UTF-8';
-            $mail->Encoding = 'quoted-printable'; // FORCER quoted-printable pour les emojis !
-            $this->log("     ✅ [PHPMailer] CharSet=UTF-8, Encoding=quoted-printable (support emojis activé)");
-            $mail->isHTML(false);
-            $mail->setLanguage($author_lang);
-            
-            // Récupérer la config SMTP depuis phpBB
-            $this->log("     📡 [PHPMailer] Configuration SMTP depuis phpBB...");
-            $smtp_delivery = (bool) ($this->config['smtp_delivery'] ?? false);
-            $this->log("     └─ SMTP delivery: " . ($smtp_delivery ? '✅ Activé' : '❌ Désactivé (utilise mail())'));
-            
-            if ($smtp_delivery)
-            {
-                // Configuration SMTP
-                $mail->isSMTP();
-                $mail->Host = $this->config['smtp_host'] ?? 'localhost';
-                $mail->Port = (int) ($this->config['smtp_port'] ?? 25);
-                $mail->SMTPAuth = !empty($this->config['smtp_username']);
-                
-                if ($mail->SMTPAuth)
-                {
-                    $mail->Username = $this->config['smtp_username'] ?? '';
-                    $mail->Password = $this->config['smtp_password'] ?? '';
-                }
-                
-                // Support TLS/SSL
-                $smtp_auth_method = $this->config['smtp_auth_method'] ?? '';
-                if ($smtp_auth_method === 'PLAIN' || $smtp_auth_method === 'LOGIN')
-                {
-                    $mail->AuthType = $smtp_auth_method;
-                }
-                
-                // Détection automatique de TLS/SSL basée sur le port
-                if ($mail->Port == 465)
-                {
-                    $mail->SMTPSecure = 'ssl';
-                }
-                elseif ($mail->Port == 587)
-                {
-                    $mail->SMTPSecure = 'tls';
-                }
-            }
-            else
-            {
-                // Utiliser la fonction mail() de PHP
-                $mail->isMail();
-            }
-            
-            // Expéditeur
-            $board_email = $this->config['board_email'] ?? $this->config['board_contact'] ?? 'noreply@' . parse_url(generate_board_url(), PHP_URL_HOST);
-            $board_name = $this->config['sitename'] ?? 'phpBB';
-            $mail->setFrom($board_email, $this->normalize_utf8($board_name));
-            $mail->addReplyTo($board_email, $this->normalize_utf8($board_name));
-            
-            // Destinataire
-            $mail->addAddress($author_email, $this->normalize_utf8($author_name));
-            
-            // Sujet
-            $subject = '[Mailer Reconstruit] 🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
-            $mail->Subject = $this->normalize_utf8($subject);
-            
-            // Corps du message (construit depuis le template)
-            $this->log("     📝 [PHPMailer] Construction du corps de l'email...");
-            $body = $this->build_email_body($data, $author_name, $author_lang);
-            
-            // DEBUG : Afficher un extrait du corps avec les emojis
-            $body_preview = substr($body, 0, 200);
-            $this->log("     └─ Aperçu du corps (200 premiers caractères):");
-            $this->log("        " . str_replace("\n", "\\n", $body_preview));
-            
-            // Chercher les emojis dans le corps
-            if (preg_match_all('/[\x{1F300}-\x{1F9FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}]/u', $body, $emoji_matches)) {
-                $this->log("     └─ Emojis trouvés dans le corps: " . implode(' ', array_unique($emoji_matches[0])));
-            } else {
-                $this->log("     ⚠️  Aucun emoji Unicode trouvé dans le corps (peut être normal si conversion en texte)");
-            }
-            
-            $mail->Body = $body;
-            
-            // Envoyer
-            $this->log("     📤 [PHPMailer] Envoi de l'email...");
-            $result = $mail->send();
-            
-            if ($result)
-            {
-                $this->log("     ✅ [PHPMailer] Email envoyé avec succès (quoted-printable, emojis supportés)");
-            } else {
-                $this->log("     ❌ [PHPMailer] Échec de l'envoi: " . $mail->ErrorInfo);
-            }
-            
-            return $result;
-        }
-        catch (PHPMailerException $e)
-        {
-            error_log('[Reactions Cron] PHPMailer exception: ' . $e->getMessage());
-            error_log('[Reactions Cron] PHPMailer exception trace: ' . $e->getTraceAsString());
-            error_log('[Reactions Cron] Falling back to phpBB messenger');
-            return $this->send_email_with_messenger_fallback($data, $author_email, $author_name, $author_lang);
-        }
-    }
-
-    /**
-     * Fallback vers le messenger de phpBB si PHPMailer échoue
+     * Envoie l'email en utilisant le messenger natif de phpBB.
      * 
      * @param array $data Données de l'auteur et de ses réactions groupées.
      * @param string $author_email Email du destinataire.
@@ -796,9 +624,9 @@ class notification_task extends \phpbb\cron\task\base
      * @param string $author_lang Langue du destinataire.
      * @return bool True si l'email a été envoyé avec succès, false sinon.
      */
-    protected function send_email_with_messenger_fallback(array $data, string $author_email, string $author_name, string $author_lang)
+    protected function send_email_with_messenger(array $data, string $author_email, string $author_name, string $author_lang)
     {
-        $this->log("     🔄 [Messenger Fallback] Utilisation du messenger phpBB (8bit, emojis en texte)");
+        $this->log("      [Messenger] Utilisation du messenger phpBB");
         
         try
         {
@@ -808,22 +636,22 @@ class notification_task extends \phpbb\cron\task\base
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
-            $this->log("     🏗️  [Messenger Fallback] Création de l'instance messenger...");
+            $this->log("     🏗️  [Messenger] Création de l'instance messenger...");
             $messenger = new \messenger(false);
             
-            // FORCER QUOTED-PRINTABLE POUR LA SCIENCE !
+            // FORCER QUOTED-PRINTABLE : C'est la correction qui permet aux emojis de passer.
             $messenger->headers('Content-Transfer-Encoding: quoted-printable');
-            $this->log("     🧪 [Messenger Fallback] FORÇAGE de l'encodage 'quoted-printable' pour tester les emojis.");
+            $this->log("     🧪 [Messenger] Forçage de l'encodage 'quoted-printable' pour le support des emojis.");
             
             $author_name_utf8 = $this->normalize_utf8($author_name);
             $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
             
-            $this->log("     📧 [Messenger Fallback] Configuration destinataire: {$author_name_utf8} <{$author_email}>");
+            $this->log("     📧 [Messenger] Configuration destinataire: {$author_name_utf8} <{$author_email}>");
             $messenger->to($author_email, $author_name_utf8);
             
-            $subject = '[Mailer Natif] 🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
+            $subject = '🚀 ' . $this->language->lang('REACTIONS_DIGEST_SUBJECT') . ' ✨';
             $subject_utf8 = $this->normalize_utf8($subject);
-            $this->log("     📌 [Messenger Fallback] Sujet: {$subject_utf8}");
+            $this->log("     📌 [Messenger] Sujet: {$subject_utf8}");
             $messenger->subject($subject_utf8);
 
             $template_path = '@bastien59960_reactions/email/reaction_digest';
@@ -864,14 +692,12 @@ class notification_task extends \phpbb\cron\task\base
                         $emoji_to_convert = $reaction['EMOJI_ORIGINAL'] ?? $reaction['EMOJI'] ?? '?';
                         $emoji_utf8 = $this->normalize_emoji($emoji_to_convert);
                         
-                        $this->log("           Réaction #" . ($idx + 1) . " (Fallback):");
+                        $this->log("           Réaction #" . ($idx + 1) . ":");
                         $this->log("              └─ Emoji à convertir: [{$emoji_to_convert}] (hex: " . bin2hex($emoji_to_convert) . ")");
                         $this->log("              └─ Emoji normalisé: [{$emoji_utf8}] (hex: " . ($emoji_utf8 !== '?' ? bin2hex($emoji_utf8) : '3f') . ")");
                         
-                        // Utiliser la représentation textuelle car 8bit ne supporte pas les emojis
-                        // POUR LA SCIENCE : On envoie l'emoji brut pour voir s'il passe avec quoted-printable
+                        // On envoie l'emoji brut, car 'quoted-printable' le gère.
                         $emoji_display = $emoji_utf8;
-                        // $emoji_display = $this->emoji_to_text($emoji_utf8);
                         
                         $this->log("              └─ Emoji final (texte): {$emoji_display}");
                         
@@ -887,12 +713,12 @@ class notification_task extends \phpbb\cron\task\base
                 }
             }
 
-            $this->log("     📤 [Messenger Fallback] Envoi de l'email...");
+            $this->log("     📤 [Messenger] Envoi de l'email...");
             $send_result = $messenger->send(NOTIFY_EMAIL);
             
             if ($send_result)
             {
-                $this->log("     ✅ [Messenger Fallback] Email envoyé (8bit encoding, emojis en texte)");
+                $this->log("     ✅ [Messenger] Email envoyé avec succès.");
             } else {
                 $this->log("     ❌ [Messenger Fallback] Échec de l'envoi");
             }
@@ -901,8 +727,8 @@ class notification_task extends \phpbb\cron\task\base
         }
         catch (\Exception $e)
         {
-            error_log('[Reactions Cron] Messenger fallback exception: ' . $e->getMessage());
-            error_log('[Reactions Cron] Messenger fallback trace: ' . $e->getTraceAsString());
+            error_log('[Reactions Cron] Messenger exception: ' . $e->getMessage());
+            error_log('[Reactions Cron] Messenger trace: ' . $e->getTraceAsString());
             return false;
         }
     }
