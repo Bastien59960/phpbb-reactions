@@ -151,7 +151,35 @@ class notification_task extends \phpbb\cron\task\base
         $threshold_timestamp = $current_time - $spam_delay_seconds;
         $run_start = microtime(true);
 
-        error_log('[Reactions Cron] Run start (interval=' . $spam_minutes . ' min, threshold=' . date('Y-m-d H:i:s', $threshold_timestamp) . ')');
+        $this->log('═══════════════════════════════════════════════════════════════');
+        $this->log('🚀 [Reactions Cron] DÉBUT DU RUN');
+        $this->log('═══════════════════════════════════════════════════════════════');
+        $this->log("📊 Configuration: interval={$spam_minutes} min, threshold=" . date('Y-m-d H:i:s', $threshold_timestamp));
+        $this->log("⏰ Timestamp actuel: " . date('Y-m-d H:i:s', $current_time));
+
+        // CORRECTION CRITIQUE : Forcer utf8mb4 pour la connexion AVANT la requête
+        // Cela garantit que les emojis sont correctement lus depuis la base
+        $this->log('🔧 Étape 1: Configuration du charset de connexion...');
+        try {
+            $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
+            $this->log('✅ SET NAMES utf8mb4 exécuté avec succès');
+            
+            // Vérifier que le charset a bien été appliqué
+            $charset_check = $this->db->sql_query("SHOW VARIABLES LIKE 'character_set_connection'");
+            $charset_row = $this->db->sql_fetchrow($charset_check);
+            $this->db->sql_freeresult($charset_check);
+            if ($charset_row) {
+                $charset_value = $charset_row['Value'];
+                $this->log("📋 Charset de connexion vérifié: {$charset_value}");
+                if ($charset_value !== 'utf8mb4') {
+                    $this->log("⚠️  ALERTE: Le charset n'est PAS utf8mb4! Les emojis seront corrompus!");
+                } else {
+                    $this->log("✅ Charset utf8mb4 confirmé - les emojis devraient être correctement lus");
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->log("❌ ERREUR lors du SET NAMES utf8mb4: " . $e->getMessage());
+        }
 
         $sql = 'SELECT r.reaction_id, r.post_id, r.user_id AS reacter_id, r.reaction_emoji, r.reaction_time,
                        p.poster_id AS author_id, p.topic_id, p.post_subject,
@@ -165,16 +193,23 @@ class notification_task extends \phpbb\cron\task\base
                   AND r.reaction_time <= ' . (int) $threshold_timestamp . '
                 ORDER BY au.user_id, p.post_id, r.reaction_time ASC';
 
+        $this->log('🔍 Étape 2: Exécution de la requête SQL pour récupérer les réactions...');
         $result = $this->db->sql_query($sql);
         $total_reactions_found = $this->db->sql_affectedrows($result);
         
-        error_log('[Reactions Cron] Found ' . $total_reactions_found . ' unnotified reactions to process.');
+        $this->log("📦 Résultat SQL: {$total_reactions_found} réaction(s) non notifiée(s) trouvée(s)");
+        $this->log('───────────────────────────────────────────────────────────────');
 
         $by_author = [];
         $reactions_to_cleanup = []; // Pour les réactions orphelines ou auto-infligées
+        $reaction_count = 0;
 
+        $this->log('🔄 Étape 3: Traitement de chaque réaction...');
         while ($row = $this->db->sql_fetchrow($result))
         {
+            $reaction_count++;
+            $this->log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            $this->log("📝 Réaction #{$reaction_count} (reaction_id: {$row['reaction_id']})");
             $reaction_id   = (int) $row['reaction_id'];
             $post_id       = (int) $row['post_id'];
             $author_id     = isset($row['author_id']) ? (int) $row['author_id'] : 0;
@@ -183,7 +218,46 @@ class notification_task extends \phpbb\cron\task\base
             $author_lang   = $row['author_lang'] ?? '';
             $reacter_id    = (int) ($row['reacter_id'] ?? 0);
             $reacter_name  = $row['reacter_name'] ?? '';
-            $emoji         = $row['reaction_emoji'] ?? '';
+            
+            // CORRECTION CRITIQUE : Récupérer l'emoji directement depuis la DB sans conversion
+            // Le problème peut venir de sql_fetchrow() qui pourrait corrompre l'emoji
+            // On utilise directement la valeur brute depuis le résultat
+            $emoji_raw = isset($row['reaction_emoji']) ? $row['reaction_emoji'] : '';
+            
+            // DEBUG : Logger l'emoji brut AVANT toute manipulation avec affichage visuel
+            $emoji_hex = bin2hex($emoji_raw);
+            $emoji_length = strlen($emoji_raw);
+            $emoji_is_utf8 = mb_check_encoding($emoji_raw, 'UTF-8');
+            $emoji_display = $emoji_raw ?: '(VIDE)';
+            
+            $this->log("  📍 Emoji brut depuis sql_fetchrow():");
+            $this->log("     └─ Affichage visuel: [{$emoji_display}]");
+            $this->log("     └─ Hex: {$emoji_hex}");
+            $this->log("     └─ Longueur: {$emoji_length} octet(s)");
+            $this->log("     └─ UTF-8 valide: " . ($emoji_is_utf8 ? '✅ OUI' : '❌ NON'));
+            
+            // Si l'emoji est vide ou corrompu, essayer de le récupérer directement avec une requête séparée
+            if (empty($emoji_raw) || $emoji_raw === '?' || !$emoji_is_utf8)
+            {
+                $this->log("  ⚠️  Emoji semble corrompu! Tentative de récupération directe depuis la DB...");
+                $direct_sql = 'SELECT reaction_emoji FROM ' . $this->post_reactions_table . ' WHERE reaction_id = ' . (int) $reaction_id;
+                $direct_result = $this->db->sql_query($direct_sql);
+                $direct_row = $this->db->sql_fetchrow($direct_result);
+                $this->db->sql_freeresult($direct_result);
+                
+                if ($direct_row && !empty($direct_row['reaction_emoji']))
+                {
+                    $emoji_raw = $direct_row['reaction_emoji'];
+                    $direct_hex = bin2hex($emoji_raw);
+                    $this->log("  ✅ Récupération directe réussie:");
+                    $this->log("     └─ Affichage visuel: [{$emoji_raw}]");
+                    $this->log("     └─ Hex: {$direct_hex}");
+                } else {
+                    $this->log("  ❌ Récupération directe échouée - emoji toujours corrompu");
+                }
+            }
+            
+            $emoji = $emoji_raw;
             $r_time        = (int) ($row['reaction_time'] ?? 0);
             $post_subject  = $row['post_subject'] ?? '';
 
@@ -227,18 +301,22 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             // CORRECTION UTF-8 : Normaliser l'emoji et le nom du réacteur en UTF-8
-            // DEBUG : Logger l'emoji brut depuis la DB pour diagnostiquer
-            if (empty($emoji) || $emoji === '?')
-            {
-                $this->log("[Reactions Cron] WARNING: Empty or invalid emoji in DB for reaction_id $reaction_id: " . bin2hex($emoji ?? 'NULL'));
-            }
-            else
-            {
-                $this->log("[Reactions Cron] Emoji from DB - reaction_id: $reaction_id, hex: " . bin2hex($emoji) . ", display: " . $emoji . ", length: " . strlen($emoji));
+            $this->log("  🔄 Normalisation de l'emoji...");
+            $emoji_before_normalize = $emoji;
+            $emoji_normalized = $this->normalize_emoji($emoji);
+            
+            $this->log("     └─ Avant normalisation: [{$emoji_before_normalize}] (hex: " . bin2hex($emoji_before_normalize) . ")");
+            $this->log("     └─ Après normalisation:  [{$emoji_normalized}] (hex: " . bin2hex($emoji_normalized) . ")");
+            
+            if ($emoji_before_normalize !== $emoji_normalized) {
+                $this->log("     ⚠️  L'emoji a été modifié lors de la normalisation!");
+            } else {
+                $this->log("     ✅ L'emoji est inchangé après normalisation");
             }
             
-            $emoji_normalized = $this->normalize_emoji($emoji);
             $reacter_name_normalized = $this->normalize_utf8($reacter_name);
+            $this->log("  👤 Réacteur: {$reacter_name_normalized} (user_id: {$reacter_id})");
+            $this->log("  📧 Auteur: {$author_name} (user_id: {$author_id}, email: {$author_email})");
 
             $by_author[$author_id]['posts'][$post_id]['reactions'][] = [
                 'REACTION_ID'          => $reaction_id,
@@ -252,21 +330,30 @@ class notification_task extends \phpbb\cron\task\base
             ];
 
             $by_author[$author_id]['mark_ids'][] = $reaction_id;
+            $this->log("  ✅ Réaction ajoutée au groupe de l'auteur #{$author_id}");
         }
 
         $this->db->sql_freeresult($result);
+        
+        $this->log('───────────────────────────────────────────────────────────────');
+        $this->log("📊 Étape 4: Résumé du groupement");
+        $this->log("   └─ Total réactions traitées: {$reaction_count}");
+        $this->log("   └─ Auteurs uniques: " . count($by_author));
+        $this->log("   └─ Réactions à nettoyer (orphelines/auto): " . count($reactions_to_cleanup));
 
         if (empty($by_author))
         {
-            error_log('[Reactions Cron] No reactions to process after grouping. Exiting.');
+            $this->log('❌ Aucune réaction à traiter après groupement. Arrêt.');
             // S'il n'y a pas de réactions valides mais des réactions à nettoyer, on le fait.
             if (!empty($reactions_to_cleanup))
             {
-                error_log('[Reactions Cron] Cleaning up ' . count($reactions_to_cleanup) . ' orphan/self reactions.');
+                $this->log('🧹 Nettoyage de ' . count($reactions_to_cleanup) . ' réaction(s) orpheline(s)/auto-infligée(s).');
                 $this->mark_reactions_as_handled($reactions_to_cleanup);
             }
             return;
         }
+        
+        $this->log('✅ Groupement terminé - ' . count($by_author) . ' auteur(s) à notifier');
 
         include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
 
@@ -278,9 +365,29 @@ class notification_task extends \phpbb\cron\task\base
         $skipped_empty = 0;
         $skipped_failed = 0;
 
+        $this->log('═══════════════════════════════════════════════════════════════');
+        $this->log('📧 Étape 5: Envoi des emails aux auteurs');
+        $this->log('═══════════════════════════════════════════════════════════════');
+        
         foreach ($by_author as $author_id => $data)
         {
-            error_log("[CRON] Début du traitement pour l'auteur #{$author_id} ({$data['author_name']}) avec " . count($data['mark_ids']) . " réaction(s).");
+            $this->log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            $this->log("👤 Traitement de l'auteur #{$author_id}: {$data['author_name']}");
+            $this->log("   └─ Email: {$data['author_email']}");
+            $this->log("   └─ Langue: {$data['author_lang']}");
+            $this->log("   └─ Nombre de réactions: " . count($data['mark_ids']));
+            
+            // Afficher toutes les réactions avec leurs emojis
+            $this->log("   └─ Détail des réactions:");
+            foreach ($data['posts'] as $post_id => $post_data) {
+                $this->log("      📝 Post #{$post_id}: \"{$post_data['SUBJECT_PLAIN']}\"");
+                if (isset($post_data['reactions']) && is_array($post_data['reactions'])) {
+                    foreach ($post_data['reactions'] as $idx => $reaction) {
+                        $emoji_display = $reaction['EMOJI'] ?? $reaction['EMOJI_ORIGINAL'] ?? '?';
+                        $this->log("         " . ($idx + 1) . ". Emoji: [{$emoji_display}] par {$reaction['REACTER_NAME']} (hex: " . bin2hex($emoji_display) . ")");
+                    }
+                }
+            }
 
             $processed_authors++;
             $reaction_total_for_author = isset($data['mark_ids']) ? count($data['mark_ids']) : 0;
@@ -489,17 +596,19 @@ class notification_task extends \phpbb\cron\task\base
 
             // NOUVELLE APPROCHE : Utiliser notre propre mailer avec PHPMailer
             // pour forcer quoted-printable et supporter les emojis
-            error_log("$log_prefix Attempting to send email to $author_name ($author_email) with " . count($data['mark_ids']) . " reactions");
+            $this->log("  📤 Tentative d'envoi d'email à {$author_name} ({$author_email})");
+            $this->log("     └─ Nombre de réactions à inclure: " . count($data['mark_ids']));
+            
             $email_sent = $this->send_email_with_phpmailer($data, $author_email, $author_name, $author_lang);
             
             if ($email_sent)
             {
-                error_log("$log_prefix Email sent successfully to $author_name ($author_email) - " . count($data['mark_ids']) . " reactions");
+                $this->log("  ✅ Email envoyé avec succès!");
                 return ['status' => 'sent'];
             }
             else
             {
-                error_log("$log_prefix Send failed for $author_email - both PHPMailer and messenger fallback returned false");
+                $this->log("  ❌ Échec de l'envoi (PHPMailer et fallback messenger ont échoué)");
                 return ['status' => 'failed', 'error' => 'both PHPMailer and messenger fallback failed'];
             }
         }
@@ -528,9 +637,12 @@ class notification_task extends \phpbb\cron\task\base
      */
     protected function send_email_with_phpmailer(array $data, string $author_email, string $author_name, string $author_lang)
     {
+        $this->log("     🔧 [PHPMailer] Initialisation...");
+        
         // Charger PHPMailer depuis phpBB
         if (!class_exists('\PHPMailer\PHPMailer\PHPMailer'))
         {
+            $this->log("     📦 [PHPMailer] Classe non trouvée, recherche des fichiers...");
             // Essayer plusieurs chemins possibles pour PHPMailer
             $possible_paths = [
                 $this->phpbb_root_path . 'vendor/phpmailer/phpmailer/src/PHPMailer.php',
@@ -547,31 +659,39 @@ class notification_task extends \phpbb\cron\task\base
                     require_once $base_path . '/SMTP.php';
                     require_once $base_path . '/Exception.php';
                     $phpmailer_loaded = true;
-                    error_log('[Reactions Cron] PHPMailer loaded from: ' . $phpmailer_path);
+                    $this->log("     ✅ [PHPMailer] Chargé depuis: {$phpmailer_path}");
                     break;
+                } else {
+                    $this->log("     ❌ [PHPMailer] Chemin non trouvé: {$phpmailer_path}");
                 }
             }
             
             if (!$phpmailer_loaded)
             {
-                error_log('[Reactions Cron] PHPMailer not found in any of the expected paths. Tried: ' . implode(', ', $possible_paths));
-                error_log('[Reactions Cron] Falling back to phpBB messenger (will use 8bit encoding, emojis may not work)');
+                $this->log("     ⚠️  [PHPMailer] Non trouvé dans aucun chemin. Fallback vers messenger phpBB (8bit, emojis en texte)");
                 return $this->send_email_with_messenger_fallback($data, $author_email, $author_name, $author_lang);
             }
+        } else {
+            $this->log("     ✅ [PHPMailer] Classe déjà chargée");
         }
 
         try
         {
+            $this->log("     🏗️  [PHPMailer] Création de l'instance...");
             $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
             
             // Configuration de base
+            $this->log("     ⚙️  [PHPMailer] Configuration de base...");
             $mail->CharSet = 'UTF-8';
             $mail->Encoding = 'quoted-printable'; // FORCER quoted-printable pour les emojis !
+            $this->log("     ✅ [PHPMailer] CharSet=UTF-8, Encoding=quoted-printable (support emojis activé)");
             $mail->isHTML(false);
             $mail->setLanguage($author_lang);
             
             // Récupérer la config SMTP depuis phpBB
+            $this->log("     📡 [PHPMailer] Configuration SMTP depuis phpBB...");
             $smtp_delivery = (bool) ($this->config['smtp_delivery'] ?? false);
+            $this->log("     └─ SMTP delivery: " . ($smtp_delivery ? '✅ Activé' : '❌ Désactivé (utilise mail())'));
             
             if ($smtp_delivery)
             {
@@ -624,15 +744,32 @@ class notification_task extends \phpbb\cron\task\base
             $mail->Subject = $this->normalize_utf8($subject);
             
             // Corps du message (construit depuis le template)
+            $this->log("     📝 [PHPMailer] Construction du corps de l'email...");
             $body = $this->build_email_body($data, $author_name, $author_lang);
+            
+            // DEBUG : Afficher un extrait du corps avec les emojis
+            $body_preview = substr($body, 0, 200);
+            $this->log("     └─ Aperçu du corps (200 premiers caractères):");
+            $this->log("        " . str_replace("\n", "\\n", $body_preview));
+            
+            // Chercher les emojis dans le corps
+            if (preg_match_all('/[\x{1F300}-\x{1F9FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}]/u', $body, $emoji_matches)) {
+                $this->log("     └─ Emojis trouvés dans le corps: " . implode(' ', array_unique($emoji_matches[0])));
+            } else {
+                $this->log("     ⚠️  Aucun emoji Unicode trouvé dans le corps (peut être normal si conversion en texte)");
+            }
+            
             $mail->Body = $body;
             
             // Envoyer
+            $this->log("     📤 [PHPMailer] Envoi de l'email...");
             $result = $mail->send();
             
             if ($result)
             {
-                error_log('[Reactions Cron] Email sent via custom PHPMailer with quoted-printable encoding');
+                $this->log("     ✅ [PHPMailer] Email envoyé avec succès (quoted-printable, emojis supportés)");
+            } else {
+                $this->log("     ❌ [PHPMailer] Échec de l'envoi: " . $mail->ErrorInfo);
             }
             
             return $result;
@@ -657,24 +794,32 @@ class notification_task extends \phpbb\cron\task\base
      */
     protected function send_email_with_messenger_fallback(array $data, string $author_email, string $author_name, string $author_lang)
     {
+        $this->log("     🔄 [Messenger Fallback] Utilisation du messenger phpBB (8bit, emojis en texte)");
+        
         try
         {
             if (!class_exists('messenger'))
             {
+                $this->log("     📦 [Messenger Fallback] Chargement de la classe messenger...");
                 include_once($this->phpbb_root_path . 'includes/functions_messenger.' . $this->php_ext);
             }
 
+            $this->log("     🏗️  [Messenger Fallback] Création de l'instance messenger...");
             $messenger = new \messenger(false);
             
             $author_name_utf8 = $this->normalize_utf8($author_name);
             $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
             
+            $this->log("     📧 [Messenger Fallback] Configuration destinataire: {$author_name_utf8} <{$author_email}>");
             $messenger->to($author_email, $author_name_utf8);
+            
             $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
             $subject_utf8 = $this->normalize_utf8($subject);
+            $this->log("     📌 [Messenger Fallback] Sujet: {$subject_utf8}");
             $messenger->subject($subject_utf8);
 
             $template_path = '@bastien59960_reactions/email/reaction_digest';
+            $this->log("     📄 [Messenger Fallback] Template: {$template_path}");
             $messenger->template($template_path, $author_lang);
 
             // Assigner les variables globales
@@ -705,18 +850,20 @@ class notification_task extends \phpbb\cron\task\base
 
                 if (isset($post_data['reactions']) && is_array($post_data['reactions']))
                 {
-                    foreach ($post_data['reactions'] as $reaction) {
+                    $this->log("        └─ Traitement de " . count($post_data['reactions']) . " réaction(s) pour ce post");
+                    foreach ($post_data['reactions'] as $idx => $reaction) {
                         // Utiliser l'emoji original si disponible, sinon celui normalisé
                         $emoji_to_convert = $reaction['EMOJI_ORIGINAL'] ?? $reaction['EMOJI'] ?? '?';
                         $emoji_utf8 = $this->normalize_emoji($emoji_to_convert);
                         
-                        // DEBUG : Logger pour diagnostiquer
-                        $this->log("[Reactions Cron] Fallback: Converting emoji - original hex: " . bin2hex($emoji_to_convert) . ", normalized: " . ($emoji_utf8 !== '?' ? bin2hex($emoji_utf8) : '?'));
+                        $this->log("           Réaction #" . ($idx + 1) . " (Fallback):");
+                        $this->log("              └─ Emoji à convertir: [{$emoji_to_convert}] (hex: " . bin2hex($emoji_to_convert) . ")");
+                        $this->log("              └─ Emoji normalisé: [{$emoji_utf8}] (hex: " . ($emoji_utf8 !== '?' ? bin2hex($emoji_utf8) : '3f') . ")");
                         
                         // Utiliser la représentation textuelle car 8bit ne supporte pas les emojis
                         $emoji_display = $this->emoji_to_text($emoji_utf8);
                         
-                        $this->log("[Reactions Cron] Fallback: Emoji display result: " . $emoji_display);
+                        $this->log("              └─ Emoji final (texte): {$emoji_display}");
                         
                         $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
                         
@@ -730,11 +877,14 @@ class notification_task extends \phpbb\cron\task\base
                 }
             }
 
+            $this->log("     📤 [Messenger Fallback] Envoi de l'email...");
             $send_result = $messenger->send(NOTIFY_EMAIL);
             
             if ($send_result)
             {
-                error_log('[Reactions Cron] Email sent via phpBB messenger fallback (8bit encoding, emojis as text)');
+                $this->log("     ✅ [Messenger Fallback] Email envoyé (8bit encoding, emojis en texte)");
+            } else {
+                $this->log("     ❌ [Messenger Fallback] Échec de l'envoi");
             }
             
             return $send_result;
@@ -757,6 +907,8 @@ class notification_task extends \phpbb\cron\task\base
      */
     protected function build_email_body(array $data, string $author_name, string $author_lang)
     {
+        $this->log("        🔨 [build_email_body] Début de la construction...");
+        
         $author_name_utf8 = $this->normalize_utf8($author_name);
         $sitename_utf8 = $this->normalize_utf8($this->config['sitename']);
         
@@ -764,20 +916,32 @@ class notification_task extends \phpbb\cron\task\base
         $body .= sprintf($this->language->lang('REACTIONS_DIGEST_INTRO'), $sitename_utf8) . "\n\n";
         $body .= str_repeat('-', 50) . "\n\n";
         
-        foreach ($data['posts'] as $post_data)
+        $this->log("        └─ En-tête construit");
+        
+        foreach ($data['posts'] as $post_id => $post_data)
         {
             $post_title = sprintf($this->language->lang('REACTIONS_DIGEST_POST_TITLE'), $post_data['SUBJECT_PLAIN']);
             $body .= $this->normalize_utf8($post_title) . "\n\n";
             
+            $this->log("        📝 Post #{$post_id}: \"{$post_data['SUBJECT_PLAIN']}\"");
+            
             if (isset($post_data['reactions']) && is_array($post_data['reactions']))
             {
-                foreach ($post_data['reactions'] as $reaction)
+                $this->log("        └─ Nombre de réactions pour ce post: " . count($post_data['reactions']));
+                foreach ($post_data['reactions'] as $idx => $reaction)
                 {
-                    $emoji_original = $reaction['EMOJI'];
+                    $emoji_original = $reaction['EMOJI'] ?? $reaction['EMOJI_ORIGINAL'] ?? '?';
                     $emoji_utf8 = $this->normalize_emoji($emoji_original);
+                    
+                    $this->log("           Réaction #" . ($idx + 1) . ":");
+                    $this->log("              └─ Emoji original: [{$emoji_original}] (hex: " . bin2hex($emoji_original) . ")");
+                    $this->log("              └─ Emoji normalisé: [{$emoji_utf8}] (hex: " . bin2hex($emoji_utf8) . ")");
                     
                     // Utiliser l'emoji directement (quoted-printable le supportera)
                     $emoji_display = ($emoji_utf8 !== '?' && $emoji_utf8 !== '') ? $emoji_utf8 : '[?]';
+                    
+                    $this->log("              └─ Emoji final pour email: [{$emoji_display}]");
+                    
                     $reacter_name_utf8 = $this->normalize_utf8($reaction['REACTER_NAME']);
                     
                     $body .= "- {$emoji_display} par {$reacter_name_utf8} (le {$reaction['TIME_FORMATTED']})\n";
@@ -878,14 +1042,14 @@ class notification_task extends \phpbb\cron\task\base
      */
     protected function emoji_to_text($emoji)
     {
+        $this->log("              🔄 [emoji_to_text] Conversion de l'emoji en texte...");
+        $this->log("                 └─ Emoji reçu: [{$emoji}] (hex: " . bin2hex($emoji) . ", length: " . strlen($emoji) . ")");
+        
         if (empty($emoji) || $emoji === '?')
         {
-            $this->log("[Reactions Cron] emoji_to_text: Empty or '?' emoji received");
+            $this->log("                 ⚠️  Emoji vide ou '?' - retour de '[?]'");
             return '[?]';
         }
-        
-        // DEBUG : Logger l'emoji reçu
-        $this->log("[Reactions Cron] emoji_to_text: Converting emoji - hex: " . bin2hex($emoji) . ", display: " . $emoji . ", length: " . strlen($emoji));
 
         // Mapping des emojis les plus courants vers leur nom textuel (ASCII pur, sans accents)
         // Format: emoji => description en français sans accents pour compatibilité email
@@ -915,11 +1079,14 @@ class notification_task extends \phpbb\cron\task\base
         // Si l'emoji est dans le mapping, utiliser le nom textuel
         if (isset($emoji_map[$emoji]))
         {
-            return $emoji_map[$emoji];
+            $result = $emoji_map[$emoji];
+            $this->log("                 ✅ Emoji trouvé dans le mapping: [{$emoji}] → {$result}");
+            return $result;
         }
 
         // Sinon, utiliser une description générique
         // On évite d'inclure l'emoji lui-même car il ne s'affichera pas avec 8bit
+        $this->log("                 ⚠️  Emoji non trouvé dans le mapping - retour de '[emoji]'");
         return '[emoji]';
     }
 
