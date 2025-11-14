@@ -889,21 +889,20 @@ sleep 0.2
 WEB_USER="www-data"
 WEB_GROUP="www-data"
 
-# 1. Suppression complète du répertoire de production pour être sûr.
-rm -rf "$FORUM_ROOT/cache/production"
-check_status "Suppression complète du répertoire 'cache/production'."
+# 1. Supprimer tout le contenu du cache, sauf les fichiers de protection.
+find "$FORUM_ROOT/cache" -mindepth 1 -not -name ".htaccess" -not -name "index.htm" -exec rm -rf {} +
+check_status "Nettoyage complet du répertoire 'cache'."
 
-# 2. Recréation du répertoire.
+# 2. Recréer le dossier 'production' qui est parfois nécessaire.
 mkdir -p "$FORUM_ROOT/cache/production"
 check_status "Recréation du répertoire 'cache/production'."
 
-# 3. Application du propriétaire et des permissions sur les répertoires critiques.
-# On cible les dossiers que phpBB doit pouvoir écrire.
-chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" "$FORUM_ROOT/files/" "$FORUM_ROOT/images/avatars/upload/"
+# 3. Appliquer le propriétaire et les permissions sur l'ensemble des répertoires critiques.
+chown -R "$WEB_USER":"$WEB_GROUP" "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_ROOT/images/avatars/upload"
 check_status "Propriétaire des répertoires critiques mis à jour à $WEB_USER:$WEB_GROUP."
 
-find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type d -exec chmod 0777 {} \;
-find "$FORUM_ROOT/cache/" "$FORUM_ROOT/store/" -type f -exec chmod 0666 {} \;
+find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" -type d -exec chmod 0777 {} \;
+find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" -type f -exec chmod 0666 {} \;
 check_status "Permissions de lecture/écriture pour PHP rétablies (777/666)."
 
 # ==============================================================================
