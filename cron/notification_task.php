@@ -585,6 +585,8 @@ class notification_task extends \phpbb\cron\task\base
             return ['status' => 'skipped_empty'];
         }
 
+        // CORRECTION : Le bloc try...catch est essentiel pour gérer les erreurs d'envoi
+        // sans faire planter toute la boucle du cron.
         try
         {
             // CORRECTION CRITIQUE : Changer la langue AVANT d'instancier le messenger.
@@ -597,20 +599,29 @@ class notification_task extends \phpbb\cron\task\base
             // Utiliser le messenger natif de phpBB avec l'encodage forcé pour les emojis.
             $this->log("  📤 Tentative d'envoi d'email à {$author_name} ({$author_email})");
             $this->log("     └─ Nombre de réactions à inclure: " . count($data['mark_ids']));
-            
+
             $email_sent = $this->send_email_with_messenger($data, $author_email, $author_name, $author_lang);
-            
+
             if ($email_sent)
             {
                 $this->log("  ✅ Email envoyé avec succès!");
                 return ['status' => 'sent'];
             }
-            
+
             $this->log("  ❌ Échec de l'envoi de l'email.");
 
             return [
                 'status' => 'failed',
-                'error'  => $e->getMessage(),
+                'error' => 'send_email_with_messenger returned false',
+            ];
+        }
+        catch (\Throwable $e)
+        {
+            error_log("$log_prefix Exception for user_id $author_id: " . $e->getMessage());
+            error_log("$log_prefix File: " . $e->getFile() . " | Line: " . $e->getLine());
+            return [
+                'status' => 'failed',
+                'error' => $e->getMessage(),
             ];
         }
     }
