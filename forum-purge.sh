@@ -44,8 +44,9 @@ check_status() {
         echo -e "${WHITE_ON_RED}❌ ERREUR FATALE DÉTECTÉE lors de l'étape : $step_description${NC}"
         echo -e "${WHITE_ON_RED}   Détails de l'erreur :${NC}"
         echo "$output" | grep -E "PHP Fatal error|PHP Parse error" | sed 's/^/   /' # Indent error line
-        echo -e "${NC}" # Réinitialise la couleur après l'erreur
-        exit 1
+        echo -e "${NC}"
+        # Retourne un code d'erreur spécifique pour les erreurs fatales PHP
+        return 2
     # Puis vérifie le code de sortie. Si non nul, c'est une erreur.
     elif [ $exit_code -ne 0 ]; then
         echo -e "${WHITE_ON_RED}❌ ERREUR (CODE DE SORTIE NON NUL) lors de l'étape : $step_description${NC}"
@@ -314,10 +315,12 @@ check_status "Désactivation de l'extension via phpbbcli." "$output_disable"
 output_purge=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1)
 
 # Vérifier si la purge a échoué (à cause d'une erreur fatale dans les migrations par exemple)
-purge_failed=0
-check_status "Purge des données de l'extension via phpbbcli (test du revert)." "$output_purge" || purge_failed=1
+purge_exit_code=0
+check_status "Purge des données de l'extension via phpbbcli (test du revert)." "$output_purge"
+purge_exit_code=$? # Capture le code de retour de check_status
 
-if [ $purge_failed -ne 0 ]; then
+# On réagit si le code de sortie est non-nul (erreur normale ou fatale)
+if [ $purge_exit_code -ne 0 ]; then
     echo ""
     echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
     echo -e "${WHITE_ON_RED}  ⚠️  ÉCHEC DE LA PURGE AUTOMATIQUE - ANOMALIE DANS LES MIGRATIONS DÉTECTÉE          ${NC}"
