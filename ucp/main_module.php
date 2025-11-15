@@ -18,15 +18,22 @@ class main_module
     public $u_action;
     public $tpl_name;
     public $page_title;
+    
+    /**
+     * Constructeur.
+     * Chargement des fichiers de langue ici pour qu'ils soient disponibles
+     * pour le menu de navigation de l'UCP.
+     */
+    public function __construct()
+    {
+        global $user;
+        // CORRECTION CRITIQUE : Charger les langues ici, AVANT l'appel de main().
+        $user->add_lang_ext('bastien59960/reactions', 'common');
+    }
 
     public function main($id, $mode)
     {
         global $template, $user, $request, $config, $phpbb_container;
-
-        // CORRECTION CRITIQUE : Charger TOUS les fichiers de langue
-        $user->add_lang_ext('bastien59960/reactions', 'common');
-        $user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
-        $user->add_lang_ext('bastien59960/reactions', 'reactions');
 
         $this->tpl_name = 'ucp_reactions';
         $this->page_title = 'UCP_REACTIONS_TITLE';

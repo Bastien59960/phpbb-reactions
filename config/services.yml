@@ -143,8 +143,11 @@ services:
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%core.table_prefix%notifications'
             - '@config'
+            - '@user_loader'
+            - '@bastien59960.reactions.helper'
+            - '@request'
+            - '@template'
         tags:
             - { name: notification.type }
 
@@ -154,8 +157,8 @@ services:
     bastien59960.reactions.controller.ucp_reactions:
         class: bastien59960\reactions\controller\ucp_reactions
         arguments:
-            - '@user'
             - '@dbal.conn'
             - '@request'
             - '@template'
+            - '@user'
             - '%core.table_prefix%'

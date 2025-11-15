@@ -1,20 +1,20 @@
-<!-- BEGIN ucp_reactions -->
 <form id="ucp_reactions" method="post" action="{U_ACTION}">
 	<h2>{L_UCP_REACTIONS_TITLE}</h2>
 	<p>{L_UCP_REACTIONS_EXPLAIN}</p>
 
 	<fieldset>
 		<dl>
-			<dt><label for="user_reactions_notify">{L_UCP_REACTIONS_NOTIFY}</label></dt>
+			<dt><label for="user_reactions_notify">{L_UCP_REACTIONS_NOTIFY}</label><br /><span>{L_UCP_REACTIONS_NOTIFY_EXPLAIN}</span></dt>
 			<dd>
-				<label><input type="checkbox" name="user_reactions_notify" value="1"<!-- IF UCP_REACTIONS_NOTIFY --> checked<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" name="user_reactions_notify" value="1"<!-- IF USER_REACTIONS_NOTIFY --> checked="checked"<!-- ENDIF --> /> {L_YES}</label> &nbsp;
+				<label><input type="radio" name="user_reactions_notify" value="0"<!-- IF not USER_REACTIONS_NOTIFY --> checked="checked"<!-- ENDIF --> /> {L_NO}</label>
 			</dd>
 		</dl>
-
 		<dl>
-			<dt><label for="user_reactions_email">{L_UCP_REACTIONS_EMAIL}</label></dt>
+			<dt><label for="user_reactions_cron_email">{L_UCP_REACTIONS_CRON_EMAIL}</label><br /><span>{L_UCP_REACTIONS_CRON_EMAIL_EXPLAIN}</span></dt>
 			<dd>
-				<label><input type="checkbox" name="user_reactions_email" value="1"<!-- IF UCP_REACTIONS_EMAIL --> checked<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" name="user_reactions_cron_email" value="1"<!-- IF USER_REACTIONS_CRON_EMAIL --> checked="checked"<!-- ENDIF --> /> {L_YES}</label> &nbsp;
+				<label><input type="radio" name="user_reactions_cron_email" value="0"<!-- IF not USER_REACTIONS_CRON_EMAIL --> checked="checked"<!-- ENDIF --> /> {L_NO}</label>
 			</dd>
 		</dl>
 	</fieldset>
@@ -23,4 +23,3 @@
 		<input type="submit" name="submit" value="{L_SUBMIT}" class="button1" />
 	</fieldset>
 </form>
-<!-- END ucp_reactions -->
