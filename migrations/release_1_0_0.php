@@ -128,10 +128,31 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function revert_data()
     {
         return array(
+            // Étape 1 : Supprimer les types de notifications
             array('custom', array(array($this, 'remove_notification_type'))),
-            
-            // CORRECTION : Utiliser une fonction personnalisée pour un nettoyage complet.
-            array('custom', array(array($this, 'revert_all_extension_data'))),
+
+            // Étape 2 : Supprimer les modules ACP et UCP
+            array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
+            array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
+            array('module.remove', array('ucp', 'UCP_PREFS', '\bastien59960\reactions\ucp\main_module')),
+
+            // Étape 3 : Supprimer toutes les clés de configuration
+            array('config.remove', array('bastien59960_reactions_max_per_post')),
+            array('config.remove', array('bastien59960_reactions_max_per_user')),
+            array('config.remove', array('bastien59960_reactions_enabled')),
+            array('config.remove', array('reactions_ucp_preferences_installed')),
+            array('config.remove', array('bastien59960_reactions_spam_time')),
+            array('config.remove', array('bastien59960_reactions_cron_last_run')),
+            array('config.remove', array('bastien59960_reactions_picker_width')),
+            array('config.remove', array('bastien59960_reactions_picker_height')),
+            array('config.remove', array('bastien59960_reactions_picker_show_categories')),
+            array('config.remove', array('bastien59960_reactions_picker_show_search')),
+            array('config.remove', array('bastien59960_reactions_picker_use_json')),
+            array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
+            array('config.remove', array('bastien59960_reactions_sync_interval')),
+            // Supprimer aussi les clés des migrations suivantes au cas où
+            array('config.remove', array('bastien59960_reactions_imported_from_old')),
+            array('config.remove', array('bastien59960_reactions_version')),
         );
     }
 
@@ -261,28 +282,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         } catch (\Exception $e) {
             // Ignore errors
         }
-        return true;
-    }
-
-    /**
-     * Méthode de nettoyage complète pour la désinstallation.
-     * Supprime les modules et toutes les clés de configuration.
-     * Doit retourner true pour indiquer le succès.
-     *
-     * @return bool
-     */
-    public function revert_all_extension_data()
-    {
-        // Supprimer les modules
-        $this->remove_existing_modules();
-
-        // Supprimer toutes les clés de configuration de l'extension
-        $sql = 'DELETE FROM ' . $this->table_prefix . "config 
-                WHERE config_name LIKE 'bastien59960_reactions_%' 
-                   OR config_name LIKE 'reactions_ucp_%'";
-        $this->db->sql_query($sql);
-
-        // Indiquer que l'opération a réussi
         return true;
     }
 }
