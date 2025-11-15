@@ -6,11 +6,13 @@
  * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Cette classe fournit des méthodes utilitaires centralisées pour l'extension.
- * Son rôle principal est de générer le bloc HTML des réactions pour un message
- * donné. Ce HTML est ensuite renvoyé par le contrôleur AJAX pour mettre à jour
- * l'affichage sans recharger la page.
+ * Cette classe de service (helper) centralise la logique de génération du rendu
+ * HTML pour le bloc des réactions. Son rôle est de prendre un `post_id`, de
+ * récupérer l'état actuel des réactions depuis la base de données, et de
+ * construire le code HTML correspondant. Ce code est ensuite utilisé par le
+ * contrôleur AJAX et le listener d'événements pour mettre à jour l'affichage.
  *
+ * @output string Le bloc HTML complet des réactions pour un message.
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

@@ -1,14 +1,18 @@
 #!/bin/bash
 # ==============================================================================
 # Fichier : forum-purge.sh
+# Chemin : bastien59960/reactions/forum-purge.sh
 # Auteur : Bastien (bastien59960)
 # Version : 1.1.0
 # GitHub : https://github.com/bastien59960/reactions
 #
 # Rôle :
-# Script de maintenance complet pour le forum phpBB. Il effectue un cycle
-# complet de nettoyage du cache, de réinitialisation de l'extension "Reactions"
-# et de vérification de l'état final. Conçu pour accélérer le débogage.
+# Script de maintenance complet pour le forum phpBB. Il effectue un cycle complet
+# de nettoyage du cache, de réinitialisation de l'extension "Reactions" et de
+# vérification de l'état final. Conçu pour accélérer le débogage.
+#
+# @copyright (c) 2025 Bastien59960
+# @license GNU General Public License, version 2 (GPL-2.0)
 # ==============================================================================
 
 # ==============================================================================

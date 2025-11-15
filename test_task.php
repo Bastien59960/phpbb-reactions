@@ -1,17 +1,17 @@
 <?php
 /**
  * Fichier : test_task.php
- * Chemin : bastien59960/reactions/cron/test_task.php
- * 
- * Rôle : 
+ * Chemin : bastien59960/reactions/test_task.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
  * Tâche cron de test pour l'extension Reactions.
  * Cette tâche est conçue pour valider que le système de cron de phpBB
  * enregistre, nomme et exécute correctement les tâches de cette extension.
  * Elle s'exécute toutes les 24 heures et écrit une entrée dans le journal
  * d'administration pour confirmer son fonctionnement.
- * 
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */

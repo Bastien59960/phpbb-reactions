@@ -1,14 +1,19 @@
 <?php
 /**
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
- * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ * Fichier : test_autoload.php
+ * Chemin : bastien59960/reactions/test_autoload.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
- * Fichier : /test_autoload.php
- * Rôle : Script de diagnostic pour tester le chargement automatique (autoload)
- * des classes de l'extension. Il vérifie que l'autoloader de phpBB peut
- * trouver et charger correctement les classes principales de l'extension.
+ * Rôle :
+ * Script de diagnostic pour tester le chargement automatique (autoloading) des
+ * classes de l'extension. Il vérifie que l'autoloader de Composer configuré
+ * par phpBB est capable de trouver et de charger correctement les classes
+ * critiques de l'extension (contrôleurs, tâches cron, notifications, etc.),
+ * ce qui est essentiel pour le bon fonctionnement de l'injection de dépendances.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 define('IN_PHPBB', true);

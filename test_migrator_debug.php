@@ -1,7 +1,19 @@
 <?php
 /**
- * Script de debug approfondi pour identifier le problème array_merge()
- * Simule exactement ce que fait phpBB lors de l'activation d'une extension
+ * Fichier : test_migrator_debug.php
+ * Chemin : bastien59960/reactions/test_migrator_debug.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
+ * Script de débogage avancé conçu pour diagnostiquer les erreurs `array_merge()`
+ * qui peuvent survenir lors de l'activation d'une extension. Il simule le
+ * processus de chargement des migrations de phpBB, vérifie la validité des
+ * dépendances (s'assurant qu'elles retournent bien un tableau) et inspecte la
+ * base de données à la recherche de migrations corrompues ou orphelines.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 error_reporting(E_ALL);
@@ -608,4 +620,3 @@ try {
 echo "\n╔═══════════════════════════════════════════════════════════════╗\n";
 echo "║  DEBUG TERMINÉ                                                  ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n";
-

@@ -14,6 +14,7 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 - **Tooltips interactifs** : Survolez un emoji pour voir qui a réagi.
 - **AJAX ultra-rapide** : Toutes les interactions (ajout, retrait, affichage) sont instantanées, sans rechargement de page.
 - **Notifications puissantes** :
+   - **Synchronisation Intelligente** : Les réactions sont mises à jour sur la page sans action de l'utilisateur (ex: via `sync`).
   - **Cloche** : Notification immédiate dans le forum.
   - **Résumé e-mail** : Digest périodique groupé, anti-spam, personnalisable par l'utilisateur.
 - **Préférences utilisateur** : Chaque membre choisit s'il veut recevoir des notifications (cloche, e-mail, ou aucune).
@@ -21,7 +22,7 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 - **Sécurité avancée** : Protection CSRF, validation stricte des emojis, contrôle des permissions, anti-spam natif.
 - **Support multilingue** : Français et anglais inclus, facilement extensible.
 - **Design responsive** : Parfaitement intégré à prosilver, compatible mobile/tablette.
-- **Logs & debug** : Suivi détaillé des actions et erreurs pour un diagnostic facile.
+- **Outils de Diagnostic** : Scripts de maintenance et de diagnostic inclus pour un débogage rapide et efficace.
 
 ---
 
@@ -74,6 +75,31 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 - Requêtes AJAX groupées
 - Cache des emojis
 - Logs détaillés pour le debug
+
+---
+
+## 👨‍💻 Pour les Développeurs
+
+Cette extension inclut des outils de diagnostic et de maintenance conçus pour accélérer le développement et le débogage.
+
+### Script de Maintenance (`forum-purge.sh`)
+
+Un script shell "tout-en-un" qui automatise un cycle complet de réinitialisation de l'extension. Idéal pour garantir un environnement de test propre.
+
+**Fonctionnalités du script :**
+- Sauvegarde et restauration automatiques des réactions.
+- Désactivation, purge complète et réactivation de l'extension.
+- Nettoyage du cache phpBB et des migrations corrompues.
+- Test final de l'exécution du cron avec un rapport détaillé.
+
+**Usage :**
+```bash
+# Placez-vous dans le répertoire de l'extension
+cd /path/to/your/forum/ext/bastien59960/reactions/
+
+# Exécutez le script
+bash forum-purge.sh
+```
 
 ---
 
@@ -151,6 +177,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 - **Interactive tooltips**: Hover an emoji to see who reacted.
 - **Ultra-fast AJAX**: All interactions (add, remove, display) are instant, no page reload.
 - **Powerful notifications**:
+  - **Smart Sync**: Reactions are updated on the page without user action (e.g., via `sync`).
   - **Bell**: Instant in-forum notification.
   - **Email digest**: Periodic grouped digest, anti-spam, user-customizable.
 - **User preferences**: Each member chooses which notifications to receive (bell, email, or none).
@@ -158,7 +185,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 - **Advanced security**: CSRF protection, strict emoji validation, permission checks, built-in anti-spam.
 - **Multilingual**: French and English included, easily extensible.
 - **Responsive design**: Perfectly integrated with prosilver, mobile/tablet ready.
-- **Logs & debug**: Detailed action and error logs for easy diagnostics.
+- **Diagnostic Tools**: Includes maintenance and diagnostic scripts for fast and efficient debugging.
 
 ---
 
@@ -212,6 +239,30 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 - Emoji cache
 - Detailed logs for debugging
 
+---
+
+## 👨‍💻 For Developers
+
+This extension includes diagnostic and maintenance tools designed to speed up development and debugging.
+
+### Maintenance Script (`forum-purge.sh`)
+
+An all-in-one shell script that automates a full reset cycle for the extension. Ideal for ensuring a clean testing environment.
+
+**Script Features:**
+- Automatic backup and restoration of reactions.
+- Disabling, full purging, and re-enabling of the extension.
+- Clearing the phpBB cache and corrupted migrations.
+- Final cron execution test with a detailed report.
+
+**Usage:**
+```bash
+# Navigate to the extension directory
+cd /path/to/your/forum/ext/bastien59960/reactions/
+
+# Run the script
+bash forum-purge.sh
+```
 ---
 
 ## 📦 Project Structure

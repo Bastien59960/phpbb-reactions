@@ -1,13 +1,17 @@
-# /home/bastien/www/forum/config/development/services.yml
+##
+# Fichier : services.yml
+# Chemin : bastien59960/reactions/config/development/services.yml
+# Auteur : Bastien (bastien59960)
+# GitHub : https://github.com/bastien59960/reactions
 #
+# Rôle :
 # Ce fichier active le mode debug pour le conteneur de services de Symfony.
 # Il sera automatiquement chargé par phpBB si le mode DEBUG est activé
 # dans le fichier config.php du forum.
 #
-# EFFETS :
-# - Des traces d'erreurs beaucoup plus détaillées (stack traces complètes).
-# - Moins de mise en cache des services, ce qui facilite le debug.
-# - Validation plus stricte des définitions de services.
+# @copyright (c) 2025 Bastien59960
+# @license GNU General Public License, version 2 (GPL-2.0)
+##
 
 parameters:
     # Active le mode debug du conteneur de services.

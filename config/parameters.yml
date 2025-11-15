@@ -1,6 +1,16 @@
+##
+# Fichier : parameters.yml
+# Chemin : bastien59960/reactions/config/parameters.yml
+# Auteur : Bastien (bastien59960)
+# GitHub : https://github.com/bastien59960/reactions
 #
-# Fichier : config/parameters.yml — bastien59960/reactions/config/parameters.yml
+# Rôle :
+# Ce fichier définit les paramètres utilisés par l'extension, notamment les noms
+# des tables de la base de données.
 #
+# @copyright (c) 2025 Bastien59960
+# @license GNU General Public License, version 2 (GPL-2.0)
+##
 
 parameters:
     # =============================================================================

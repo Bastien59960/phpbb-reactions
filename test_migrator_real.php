@@ -1,7 +1,19 @@
 <?php
 /**
- * Test avec le migrator RÉEL de phpBB pour identifier le problème array_merge()
- * Ce script simule exactement ce que fait phpBB lors de l'activation d'une extension
+ * Fichier : test_migrator_real.php
+ * Chemin : bastien59960/reactions/test_migrator_real.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
+ * Script de diagnostic qui interagit avec le service `migrator` réel de phpBB
+ * pour analyser son état et identifier les problèmes potentiels liés aux
+ * dépendances des migrations. Il inspecte la base de données à la recherche de
+ * migrations dont les dépendances ne sont pas des tableaux sérialisés, cause
+ * fréquente d'erreurs `array_merge()` lors de l'activation d'extensions.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 error_reporting(E_ALL);
@@ -272,4 +284,3 @@ try {
 echo "\n╔═══════════════════════════════════════════════════════════════╗\n";
 echo "║  TEST TERMINÉ                                                  ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n";
-

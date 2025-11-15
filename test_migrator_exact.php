@@ -1,8 +1,19 @@
 <?php
 /**
- * Test EXACT de ce que fait phpBB lors de l'activation
- * Simule la méthode populate_migrations() qui charge TOUTES les migrations depuis la DB
- * et teste array_merge() exactement comme à la ligne 788 de migrator.php
+ * Fichier : test_migrator_exact.php
+ * Chemin : bastien59960/reactions/test_migrator_exact.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
+ * Script de diagnostic de haute précision qui simule le comportement exact du
+ * `migrator` de phpBB, en particulier la méthode `populate_migrations()` et la
+ * ligne 788 où l'erreur `array_merge()` se produit. Il lit TOUTES les migrations
+ * depuis la base de données, tente de désérialiser leurs dépendances et identifie
+ * précisément quelle migration corrompue (d'une autre extension par exemple) cause l'échec.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 error_reporting(E_ALL);
@@ -245,4 +256,3 @@ try {
 echo "\n╔═══════════════════════════════════════════════════════════════╗\n";
 echo "║  TEST TERMINÉ                                                  ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n";
-

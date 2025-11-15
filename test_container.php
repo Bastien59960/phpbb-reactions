@@ -1,7 +1,22 @@
 <?php
 /**
- * Script de diagnostic amélioré pour phpBB 3.3.x
- * Vérifie l'état de l'extension, des migrations, et des services CRON
+ * Fichier : test_container.php
+ * Chemin : bastien59960/reactions/test_container.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
+ * Script de diagnostic autonome et amélioré pour phpBB 3.3.x. Il agit comme
+ * un "scanner médical" pour l'extension "Reactions" en vérifiant en une seule
+ * exécution l'état de l'extension, la validité des migrations, l'enregistrement
+ * des services CRON, la présence des templates d'email, la configuration du
+ * forum et les données en attente dans la base de données.
+ *
+ * @input void (lancé manuellement via CLI ou navigateur)
+ * @output text/plain Rapport de diagnostic détaillé sur la sortie standard.
+ * 
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 error_reporting(E_ALL);
@@ -25,6 +40,20 @@ if (empty($phpbb_root_path)) {
 define('IN_PHPBB', true);
 $phpEx = 'php';
 
+// =============================================================================
+// SIMULATION DU TEMPS (POUR LE DÉBOGAGE)
+// =============================================================================
+$config_file = __DIR__ . '/test_container.config.php';
+if (file_exists($config_file)) {
+    $test_config = include($config_file);
+    if (!empty($test_config['MOCK_TIME'])) {
+        $mock_timestamp = strtotime($test_config['MOCK_TIME']);
+        if ($mock_timestamp) {
+            define('MOCK_TIMESTAMP', $mock_timestamp);
+        }
+    }
+}
+
 echo "╔═══════════════════════════════════════════════════════════════╗\n";
 echo "║  DIAGNOSTIC EXTENSION REACTIONS - phpBB 3.3 (AMÉLIORÉ)       ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
@@ -36,6 +65,11 @@ try {
     echo "│ PHASE 1 : Chargement de l'environnement phpBB              │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
+    if (defined('MOCK_TIMESTAMP')) {
+        echo "🕒 TEMPS SIMULÉ : " . date('Y-m-d H:i:s', MOCK_TIMESTAMP) . "\n";
+        // Remplacer la superglobale $_SERVER['REQUEST_TIME'] utilisée par phpBB
+        $_SERVER['REQUEST_TIME'] = MOCK_TIMESTAMP;
+    }
     require($phpbb_root_path . 'common.' . $phpEx);
     echo "✅ common.php chargé (DB + Config + User + Cache initialisés)\n\n";
 

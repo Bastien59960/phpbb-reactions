@@ -6,11 +6,13 @@
  * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce contrôleur fournit un point de terminaison de diagnostic pour l'extension.
- * Il effectue une série de vérifications (connexion BDD, existence des tables,
- * support UTF8MB4) et retourne les résultats au format JSON.
+ * Ce contrôleur fournit un point de terminaison de diagnostic simple, accessible
+ * via une URL, pour l'extension. Il effectue une série de vérifications de base
+ * (connexion BDD, existence de la table, support UTF8MB4) et retourne les
+ * résultats au format JSON.
  *
- * Il est destiné uniquement au développement et au débogage.
+ * @input void (Requête GET)
+ * @output \Symfony\Component\HttpFoundation\JsonResponse Un rapport de diagnostic JSON.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

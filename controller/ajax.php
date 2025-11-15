@@ -6,16 +6,21 @@
  * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce fichier est le cœur de l'interactivité de l'extension. Il reçoit et traite
- * toutes les requêtes AJAX envoyées par le client (reactions.js) pour ajouter ou
- * supprimer une réaction, et obtenir la liste des utilisateurs ayant réagi.
- * Il renvoie systématiquement une réponse au format JSON.
+ * Ce contrôleur est le point d'entrée unique pour toutes les requêtes AJAX
+ * de l'extension. Il gère l'ensemble des interactions utilisateur en temps réel,
+ * comme l'ajout, la suppression ou la consultation des réactions. Il assure la
+ * validation des données, la vérification des permissions, la gestion des erreurs
+ * et le déclenchement des notifications instantanées.
  *
- * Informations reçues (Payload JSON) :
- * - `post_id` : ID du message concerné
- * - `emoji` : L'emoji de la réaction (Unicode)
- * - `action` : L'action à effectuer ('add', 'remove', 'get_users')
- * - `sid` : Le jeton de session pour la protection CSRF
+ * @input \Symfony\Component\HttpFoundation\Request Requête POST avec un corps JSON.
+ *        Le JSON doit contenir :
+ *        - `action` (string) : 'add', 'remove', 'get_users', 'sync'.
+ *        - `post_id` (int) : ID du message concerné.
+ *        - `emoji` (string) : L'emoji de la réaction.
+ *        - `sid` (string) : Jeton de session pour la protection CSRF.
+ *
+ * @output \Symfony\Component\HttpFoundation\JsonResponse Réponse JSON standardisée
+ *         contenant un statut de succès et les données pertinentes (comptes, HTML, etc.).
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
