@@ -1131,6 +1131,83 @@ RESTORE_EOF
         fi
     fi
 
+
+# ==============================================================================
+# 18.5 PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG)
+# ==============================================================================
+echo ""
+echo -e "───[ 18.5 PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG) ]────────"
+echo -e "${YELLOW}ℹ️  Vérification si la table des réactions est vide pour la peupler avec des données de test.${NC}"
+sleep 0.2
+
+# Vérifier si la table des réactions est vide
+REACTIONS_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions;" 2>/dev/null || echo 0)
+
+if [ "$REACTIONS_COUNT" -eq 0 ]; then
+    echo -e "${GREEN}   La table est vide. Lancement du peuplement avec des données aléatoires pour le débogage...${NC}"
+    
+    # Exécuter le script SQL de peuplement
+    seeding_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'SEEDING_EOF'
+        -- Étape 1: Vider les tables temporaires si elles existent (sécurité)
+        DROP TEMPORARY TABLE IF EXISTS temp_posts, temp_users, temp_emojis;
+
+        -- Étape 2: Créer des tables temporaires pour stocker les posts, utilisateurs et emojis
+        CREATE TEMPORARY TABLE temp_posts (
+            post_id INT, 
+            topic_id INT, 
+            poster_id INT, 
+            PRIMARY KEY (post_id)
+        );
+        CREATE TEMPORARY TABLE temp_users (user_id INT, PRIMARY KEY (user_id));
+        CREATE TEMPORARY TABLE temp_emojis (emoji VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, PRIMARY KEY (emoji));
+
+        -- Étape 3: Peupler les tables temporaires
+        -- Sélectionner les 50 derniers posts visibles
+        INSERT INTO temp_posts (post_id, topic_id, poster_id)
+        SELECT post_id, topic_id, poster_id FROM phpbb_posts WHERE post_visibility = 1 ORDER BY post_time DESC LIMIT 50;
+
+        -- Sélectionner jusqu'à 20 utilisateurs actifs (non-bots, non-anonymes)
+        INSERT INTO temp_users (user_id)
+        SELECT user_id FROM phpbb_users WHERE user_type != 2 AND user_id != 1 ORDER BY RAND() LIMIT 20;
+
+        -- Définir une liste d'emojis pour les réactions
+        INSERT INTO temp_emojis (emoji) VALUES ('👍'), ('❤️'), ('😂'), ('😮'), ('😢'), ('😡'), ('🔥'), ('👌'), ('🥳'), ('💯');
+
+        -- Étape 4: Générer les réactions
+        -- Cette requête complexe croise les posts, les utilisateurs et les emojis pour insérer des données aléatoires.
+        INSERT INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
+        SELECT
+            p.post_id,
+            p.topic_id,
+            u.user_id,
+            (SELECT emoji FROM temp_emojis ORDER BY RAND() LIMIT 1) AS reaction_emoji,
+            -- Temps de réaction aléatoire dans les dernières 48 heures
+            UNIX_TIMESTAMP() - FLOOR(RAND() * 172800) AS reaction_time,
+            0 AS reaction_notified
+        FROM
+            temp_posts p,
+            temp_users u
+        WHERE 
+            -- Assurer que l'auteur ne réagit pas à son propre post
+            p.poster_id != u.user_id
+        -- Condition pour s'assurer que chaque post a un nombre aléatoire de réactions (entre 2 et 5)
+        -- et que chaque utilisateur réagit au moins une fois.
+        AND (
+            -- Assurer que chaque utilisateur réagit au moins une fois sur les premiers posts
+            p.post_id IN (SELECT post_id FROM temp_posts ORDER BY post_id ASC LIMIT (SELECT CEIL(COUNT(*)/5) FROM temp_users))
+            OR
+            -- Ajouter des réactions aléatoires supplémentaires
+            RAND() < 0.2
+        )
+        -- Limiter le nombre total de réactions générées pour éviter de surcharger
+        LIMIT 200;
+SEEDING_EOF
+    )
+    check_status "Peuplement de la base de données avec des réactions de test." "$seeding_output"
+else
+    echo -e "${YELLOW}ℹ️  Peuplement ignoré : la table contient déjà ${REACTIONS_COUNT} réaction(s).${NC}"
+fi
+
     # ==============================================================================
     # 1️⃣9️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (POUR DEBUG)
     # ==============================================================================
