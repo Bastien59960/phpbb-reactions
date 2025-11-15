@@ -128,31 +128,30 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function revert_data()
     {
         return array(
-            // Étape 1 : Supprimer les types de notifications via méthode custom
-            array('custom', array(array($this, 'remove_notification_type'))),
-
-            // Étape 2 : Supprimer les modules ACP et UCP
+            // Étape 1 : Supprimer les modules ACP et UCP
             array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
             array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
             array('module.remove', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS')),
 
+            // Étape 2 : Supprimer les types de notifications via méthode custom
+            array('custom', array(array($this, 'remove_notification_type'))),
+
             // Étape 3 : Supprimer les clés de configuration
-            array('config.remove', array('bastien59960_reactions_max_per_post')),
-            array('config.remove', array('bastien59960_reactions_max_per_user')),
-            array('config.remove', array('bastien59960_reactions_enabled')),
-            array('config.remove', array('reactions_ucp_preferences_installed')),
-            array('config.remove', array('bastien59960_reactions_spam_time')),
-            array('config.remove', array('bastien59960_reactions_cron_last_run')),
-            array('config.remove', array('bastien59960_reactions_picker_width')),
-            array('config.remove', array('bastien59960_reactions_picker_height')),
-            array('config.remove', array('bastien59960_reactions_picker_show_categories')),
-            array('config.remove', array('bastien59960_reactions_picker_show_search')),
-            array('config.remove', array('bastien59960_reactions_picker_use_json')),
-            array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
-            array('config.remove', array('bastien59960_reactions_sync_interval')),
-            // Supprimer aussi les clés des migrations suivantes au cas où
-            array('config.remove', array('bastien59960_reactions_imported_from_old')),
-            array('config.remove', array('bastien59960_reactions_version')),
+            array('config.remove', array('bastien59960_reactions_max_per_post', true)),
+            array('config.remove', array('bastien59960_reactions_max_per_user', true)),
+            array('config.remove', array('bastien59960_reactions_enabled', true)),
+            array('config.remove', array('reactions_ucp_preferences_installed', true)),
+            array('config.remove', array('bastien59960_reactions_spam_time', true)),
+            array('config.remove', array('bastien59960_reactions_cron_last_run', true)),
+            array('config.remove', array('bastien59960_reactions_picker_width', true)),
+            array('config.remove', array('bastien59960_reactions_picker_height', true)),
+            array('config.remove', array('bastien59960_reactions_picker_show_categories', true)),
+            array('config.remove', array('bastien59960_reactions_picker_show_search', true)),
+            array('config.remove', array('bastien59960_reactions_picker_use_json', true)),
+            array('config.remove', array('bastien59960_reactions_picker_emoji_size', true)),
+            array('config.remove', array('bastien59960_reactions_sync_interval', true)),
+            array('config.remove', array('bastien59960_reactions_imported_from_old', true)),
+            array('config.remove', array('bastien59960_reactions_version', true)),
         );
     }
 
