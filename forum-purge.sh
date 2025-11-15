@@ -1136,16 +1136,12 @@ POST_CRON_EOF
         echo -e "${NC}"
     fi
 else
-    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
-    echo -e "${WHITE_ON_RED}"
-    echo "            .-\"\"\"-."
-    echo "           /       \\"
-    echo "           \\.---. ./"
-    echo "           ( ✗ ✗ )    👾 CRITICAL FAILURE"
-    echo "    _..oooO--(_)--Oooo.._"
-    echo "    \`--. .--. .--. .--'\`"
-    echo "       BUG INVASION DETECTED"
-    echo -e "${NC}"
+    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste ! Lancement du diagnostic...${NC}\n"
+    
+    # Le script de diagnostic se trouve dans le même répertoire.
+    # On l'exécute pour obtenir une analyse détaillée du problème.
+    SCRIPT_DIR=$(dirname "$0")
+    bash "$SCRIPT_DIR/check-crons.sh"
 fi
 
 # ==============================================================================

@@ -66,6 +66,14 @@ check "Fichier 'test_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/rea
 check "Syntaxe PHP de 'notification_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
 check "Syntaxe PHP de 'test_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
 
+# 1.5 Vérification de la syntaxe de services.yml
+print_header "1.5 VÉRIFICATION DE LA SYNTAXE DE services.yml"
+SERVICES_FILE="$FORUM_ROOT/ext/bastien59960/reactions/config/services.yml"
+if [ -f "$SERVICES_FILE" ] && grep -q '^\s*/\*\*' "$SERVICES_FILE"; then
+    echo -e "  ${RED}❌ ÉCHEC  :${NC} Le fichier 'services.yml' commence par '/**' (commentaire PHP), ce qui est une syntaxe YAML invalide."
+    has_error=1
+fi
+
 # 2. Vérification de la configuration des services
 print_header "2. VÉRIFICATION DE services.yml"
 SERVICES_FILE="$FORUM_ROOT/ext/bastien59960/reactions/config/services.yml"
@@ -156,8 +164,8 @@ else
     echo -e "${RED}❌ Des problèmes ont été détectés.${NC}"
     echo -e "   ${YELLOW}Pistes de correction :${NC}"
     echo -e "   1. Si une tâche est ${RED}ABSENTE${NC} de la liste, le problème vient souvent du cache. Essayez de purger le cache :"
-    echo -e "      ${YELLOW}php $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC}"
+    echo -e "      ${YELLOW}php $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC} puis relancez ce script."
     echo -e "   2. Si la purge ne suffit pas, désactivez puis réactivez l'extension pour forcer la reconstruction des services."
-    echo -e "   3. Vérifiez que le fichier ${YELLOW}config/services.yml${NC} ne contient pas d'erreur de syntaxe (indentation, etc.)."
-    echo -e "   4. Assurez-vous que les noms des services et les clés de langue correspondent exactement à ce qui est attendu."
+    echo -e "   3. Si une erreur de syntaxe YAML a été détectée, corrigez le fichier ${YELLOW}config/services.yml${NC} pour utiliser des commentaires '#' au lieu de '/**'."
+    echo -e "   4. Vérifiez que les noms des services et les clés de langue correspondent exactement à ce qui est attendu."
 fi
