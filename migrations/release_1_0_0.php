@@ -134,7 +134,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // Étape 2 : Supprimer les modules ACP et UCP
             array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
             array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
-            array('module.remove', array('ucp', 'UCP_PREFS', '\bastien59960\reactions\ucp\main_module')),
+            array('module.remove', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS')),
 
             // Étape 3 : Supprimer toutes les clés de configuration
             array('config.remove', array('bastien59960_reactions_max_per_post')),
