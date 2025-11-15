@@ -68,15 +68,7 @@ class release_1_0_2 extends \phpbb\db\migration\container_aware_migration
     {
         return array(
             // Supprimer le module UCP
-            array('module.remove', array(
-                'ucp',
-                'UCP_PREFS',
-                array(
-                    'module_basename'   => '\bastien59960\reactions\ucp\main_module',
-                    'module_langname'   => 'UCP_REACTIONS_SETTINGS',
-                    'module_mode'       => 'settings',
-                )
-            )),
+            array('module.remove', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS')),
 
             // Supprimer la clé de version
             array('config.remove', array('bastien59960_reactions_version')),
