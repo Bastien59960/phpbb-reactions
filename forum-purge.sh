@@ -961,15 +961,24 @@ fi
 print_diag_header "2. VÉRIFICATION DE services.yml"
 check_diag "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error=1
 if [ -f "$SERVICES_FILE" ]; then
-    # CORRECTION : Chercher le nom exact du service tel que défini dans services.yml
-    # et vérifier que le tag 'cron.task' est bien présent dans le bloc de ce service.
-    if ! grep -A 5 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name:\s*cron\.task"; then
+    # CORRECTION : Utiliser awk pour une détection robuste du tag dans le bloc du service,
+    # indépendamment du nombre de lignes ou de l'indentation.
+    # awk '/^service_name:/ {in_block=1} /^[^[:space:]]/ && NR>1 {in_block=0} in_block && /name: cron\.task/ {print "found"; exit}'
+    if ! awk -v service="cron.task.bastien59960.reactions.notification:" '
+        $0 ~ "^" service { in_block=1 }
+        /^[^[:space:]]/ && NR > 1 && !($0 ~ "^" service) { in_block=0 }
+        in_block && /name:\s*cron\.task/ { print "found"; exit }
+    ' "$SERVICES_FILE" | grep -q "found"; then
         echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' ou tag 'cron.task' manquant."
         has_error=1
     else
         echo -e "  ${GREEN}✅ SUCCÈS :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' et tag 'cron.task'"
     fi
-    if ! grep -A 5 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name:\s*cron\.task"; then
+    if ! awk -v service="cron.task.bastien59960.reactions.test:" '
+        $0 ~ "^" service { in_block=1 }
+        /^[^[:space:]]/ && NR > 1 && !($0 ~ "^" service) { in_block=0 }
+        in_block && /name:\s*cron\.task/ { print "found"; exit }
+    ' "$SERVICES_FILE" | grep -q "found"; then
         echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.test' ou tag 'cron.task' manquant."
         has_error=1
     else
