@@ -885,6 +885,12 @@ echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que la tâche cron
 echo -e "───[ 1️⃣5️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
 sleep 0.2
 
+# Lancement systématique du diagnostic avancé pour avoir un état des lieux complet.
+echo -e "${YELLOW}ℹ️  Lancement du diagnostic avancé check-crons.sh...${NC}"
+SCRIPT_DIR=$(dirname "$0")
+bash "$SCRIPT_DIR/check-crons.sh"
+echo -e "${YELLOW}Diagnostic avancé terminé. Poursuite de la vérification...${NC}"
+
 # Ajout d'une temporisation de 1 seconde pour laisser le temps au système de se stabiliser
 echo -e "${YELLOW}ℹ️  Attente de 1 seconde avant la vérification...${NC}"
 sleep 1

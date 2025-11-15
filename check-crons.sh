@@ -80,13 +80,13 @@ SERVICES_FILE="$FORUM_ROOT/ext/bastien59960/reactions/config/services.yml"
 check "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error=1
 if [ -f "$SERVICES_FILE" ]; then
     # Vérifier la déclaration du service ET son tag
-    if grep -q "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" && grep -A 2 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+    if grep -q "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
         echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_NOTIFICATION_NAME' est bien déclaré avec le tag 'cron.task'."
     else
         echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_NOTIFICATION_NAME' ou son tag 'cron.task' est manquant ou incorrect."
         has_error=1
     fi
-    if grep -q "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" && grep -A 2 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+    if grep -q "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
         echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TEST_NAME' est bien déclaré avec le tag 'cron.task'."
     else
         echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TEST_NAME' ou son tag 'cron.task' est manquant ou incorrect."
