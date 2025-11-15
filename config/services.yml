@@ -113,7 +113,7 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)
     # =========================================================================
-    bastien59960.reactions.notification.type.reaction:
+    notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
             - '@dbal.conn'
