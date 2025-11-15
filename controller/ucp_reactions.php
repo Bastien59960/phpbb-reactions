@@ -87,6 +87,9 @@ class ucp_reactions {
 		// C'est la source unique pour toutes les clés UCP_REACTIONS_*.
 		$this->user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
 
+		// Définir le titre de la page et le fichier de template à utiliser.
+		page_header($this->user->lang('UCP_REACTIONS_TITLE'));
+
 		$user_id = (int) $this->user->data['user_id'];
 
 		// Récupérer les préférences actuelles de l'utilisateur.
@@ -123,8 +126,6 @@ class ucp_reactions {
 			'S_EMAIL_CHECKED'       => ($current_email) ? ' checked="checked"' : '',
 		));
 
-		// Définir le titre de la page et le fichier de template à utiliser.
-		page_header($this->user->lang('UCP_REACTIONS_TITLE'));
 		$this->template->set_filenames(array('body' => '@bastien59960_reactions/ucp_reactions.html'));
 		page_footer();
 	}
