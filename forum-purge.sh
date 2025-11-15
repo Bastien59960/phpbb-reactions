@@ -1147,89 +1147,72 @@ if [ "$REACTIONS_COUNT" -eq 0 ]; then
     echo -e "${GREEN}   La table est vide. Lancement du peuplement avec des données aléatoires pour le débogage...${NC}"
     
     # Exécuter le script SQL de peuplement et capturer la sortie
-    seeding_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'SEEDING_EOF'
-        -- Étape 1: Vider les tables temporaires si elles existent (sécurité)
-        DROP TEMPORARY TABLE IF EXISTS temp_posts, temp_users, temp_emojis;
+    # Exécuter le script SQL de peuplement et capturer la sortie et le code de sortie
+    {
+        seeding_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 <<'SEEDING_EOF'
+            -- Étape 1: Vider les tables temporaires si elles existent (sécurité)
+            DROP TEMPORARY TABLE IF EXISTS temp_posts, temp_users, temp_emojis;
 
-        -- Étape 2: Créer des tables temporaires pour stocker les posts, utilisateurs et emojis
-        CREATE TEMPORARY TABLE temp_posts (
-            post_id INT, 
-            topic_id INT, 
-            poster_id INT, 
-            PRIMARY KEY (post_id)
-        );
-        CREATE TEMPORARY TABLE temp_users (user_id INT, PRIMARY KEY (user_id));
-        CREATE TEMPORARY TABLE temp_emojis (emoji VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, PRIMARY KEY (emoji));
+            -- Étape 2: Créer des tables temporaires pour stocker les posts, utilisateurs et emojis
+            CREATE TEMPORARY TABLE temp_posts (post_id INT, topic_id INT, poster_id INT, PRIMARY KEY (post_id));
+            CREATE TEMPORARY TABLE temp_users (user_id INT, PRIMARY KEY (user_id));
+            CREATE TEMPORARY TABLE temp_emojis (emoji VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, PRIMARY KEY (emoji));
 
-        -- Étape 3: Peupler les tables temporaires
-        -- Sélectionner les 50 derniers posts visibles
-        INSERT INTO temp_posts (post_id, topic_id, poster_id)
-        SELECT post_id, topic_id, poster_id FROM phpbb_posts WHERE post_visibility = 1 ORDER BY post_time DESC LIMIT 50;
+            -- Étape 3: Peupler les tables temporaires
+            INSERT INTO temp_posts (post_id, topic_id, poster_id) SELECT post_id, topic_id, poster_id FROM phpbb_posts WHERE post_visibility = 1 ORDER BY post_time DESC LIMIT 50;
+            INSERT INTO temp_users (user_id) SELECT user_id FROM phpbb_users WHERE user_type != 2 AND user_id != 1 ORDER BY RAND() LIMIT 20;
+            INSERT INTO temp_emojis (emoji) VALUES (''), ('🤡'), ('🖕'), ('🗿'), ('🐸'), ('👻'), ('🤢'), ('👽'), ('🤏'), ('💀');
 
-        -- Sélectionner jusqu'à 20 utilisateurs actifs (non-bots, non-anonymes)
-        INSERT INTO temp_users (user_id)
-        SELECT user_id FROM phpbb_users WHERE user_type != 2 AND user_id != 1 ORDER BY RAND() LIMIT 20;
+            -- Étape 4: Générer les réactions
+            INSERT INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
+            SELECT
+                p.post_id, p.topic_id, u.user_id,
+                (SELECT emoji FROM temp_emojis ORDER BY RAND() LIMIT 1) AS reaction_emoji,
+                UNIX_TIMESTAMP() - FLOOR(RAND() * 172800) AS reaction_time,
+                0 AS reaction_notified
+            FROM temp_posts p, temp_users u
+            WHERE p.poster_id != u.user_id
+            AND (
+                p.post_id IN (SELECT post_id FROM temp_posts ORDER BY post_id ASC LIMIT (SELECT CEIL(COUNT(*)/5) FROM temp_users))
+                OR RAND() < 0.2
+            )
+            LIMIT 200;
 
-        -- Définir une liste d'emojis pour les réactions
-        INSERT INTO temp_emojis (emoji) VALUES ('👍'), ('❤️'), ('😂'), ('😮'), ('😢'), ('😡'), ('🔥'), ('👌'), ('🥳'), ('💯');
-
-        -- Étape 4: Générer les réactions
-        -- Cette requête complexe croise les posts, les utilisateurs et les emojis pour insérer des données aléatoires.
-        INSERT INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
-        SELECT
-            p.post_id,
-            p.topic_id,
-            u.user_id,
-            (SELECT emoji FROM temp_emojis ORDER BY RAND() LIMIT 1) AS reaction_emoji,
-            -- Temps de réaction aléatoire dans les dernières 48 heures
-            UNIX_TIMESTAMP() - FLOOR(RAND() * 172800) AS reaction_time,
-            0 AS reaction_notified
-        FROM
-            temp_posts p,
-            temp_users u
-        WHERE 
-            -- Assurer que l'auteur ne réagit pas à son propre post
-            p.poster_id != u.user_id
-        -- Condition pour s'assurer que chaque post a un nombre aléatoire de réactions (entre 2 et 5)
-        -- et que chaque utilisateur réagit au moins une fois.
-        AND (
-            -- Assurer que chaque utilisateur réagit au moins une fois sur les premiers posts
-            p.post_id IN (SELECT post_id FROM temp_posts ORDER BY post_id ASC LIMIT (SELECT CEIL(COUNT(*)/5) FROM temp_users))
-            OR
-            -- Ajouter des réactions aléatoires supplémentaires
-            RAND() < 0.2
-        )
-        -- Limiter le nombre total de réactions générées pour éviter de surcharger
-        LIMIT 200;
-
-        -- Étape 5: Renvoyer un résumé de ce qui a été fait
-        SELECT 
-            CONCAT('Utilisateurs actifs utilisés : ', (SELECT COUNT(*) FROM temp_users)),
-            CONCAT('Messages ciblés : ', (SELECT COUNT(*) FROM temp_posts)),
-            CONCAT('Réactions générées : ', ROW_COUNT());
+            -- Étape 5: Renvoyer un résumé de ce qui a été fait
+            SELECT 
+                CONCAT('Utilisateurs actifs utilisés : ', (SELECT COUNT(*) FROM temp_users)),
+                CONCAT('Messages ciblés : ', (SELECT COUNT(*) FROM temp_posts)),
+                CONCAT('Réactions générées : ', ROW_COUNT());
 SEEDING_EOF
-    )
+        )
+    }
+    seeding_exit_code=$?
 
-    # Afficher une jolie sortie
-    echo -e "${GREEN}"
-    echo "            .-\"\"\"-."
-    echo "           /       \\"
-    echo "           \\.---. ./"
-    echo "           ( 🎲 🎲 )    DATABASE SEEDING"
-    echo "    _..oooO--(_)--Oooo.._"
-    echo "    \`--. .--. .--. .--'\`"
-    echo "       TEST DATA LOADED"
-    echo -e "${NC}"
+    # Vérifier le statut de l'opération
+    (exit $seeding_exit_code); check_status "Peuplement de la base de données avec des réactions de test." "$seeding_output"
     
-    echo "┌──────────────────────────────────────────────────┐"
-    echo "│ 📊 RÉSUMÉ DU PEUPLEMENT DE LA BASE DE DONNÉES      │"
-    echo "├──────────────────────────────────────────────────┤"
-    echo "$seeding_output" | while IFS=$'\t' read -r users posts reactions; do
-        printf "│ %-48s │\n" "$users"
-        printf "│ %-48s │\n" "$posts"
-        printf "│ %-48s │\n" "$reactions"
-    done
-    echo "└──────────────────────────────────────────────────┘"
+    # N'afficher la jolie sortie que si l'opération a réussi
+    if [ $seeding_exit_code -eq 0 ]; then
+        echo -e "${GREEN}"
+        echo "            .-\"\"\"-."
+        echo "           /       \\"
+        echo "           \\.---. ./"
+        echo "           ( 🎲 🎲 )    DATABASE SEEDING"
+        echo "    _..oooO--(_)--Oooo.._"
+        echo "    \`--. .--. .--. .--'\`"
+        echo "       TEST DATA LOADED"
+        echo -e "${NC}"
+        
+        echo "┌──────────────────────────────────────────────────┐"
+        echo "│ 📊 RÉSUMÉ DU PEUPLEMENT DE LA BASE DE DONNÉES      │"
+        echo "├──────────────────────────────────────────────────┤"
+        echo "$seeding_output" | while IFS=$'\t' read -r users posts reactions; do
+            printf "│ %-48s │\n" "$users"
+            printf "│ %-48s │\n" "$posts"
+            printf "│ %-48s │\n" "$reactions"
+        done
+        echo "└──────────────────────────────────────────────────┘"
+    fi
 else
     echo -e "${YELLOW}ℹ️  Peuplement ignoré : la table contient déjà ${REACTIONS_COUNT} réaction(s).${NC}"
 fi
