@@ -60,10 +60,11 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
     {
         // Annule les actions de `update_data()`.
         // Note : On ne supprime PAS les données importées lors d'une désinstallation.
-        // On supprime juste la clé de configuration qui indique que l'import a eu lieu.
-        return [
-            ['config.remove', 'bastien59960_reactions_imported_from_old'],
-        ];
+        // On supprime juste la clé de configuration qui indique que l'import a eu lieu.        
+        // CORRECTION : L'argument de config.remove doit être un tableau.
+        return array(
+            array('config.remove', array('bastien59960_reactions_imported_from_old')),
+        );
     }
 
     /**

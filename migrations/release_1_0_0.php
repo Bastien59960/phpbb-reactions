@@ -107,14 +107,27 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
             array('module.add', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
-            array('module.add', array('acp', 'ACP_REACTIONS_SETTINGS', array(
-                'module_basename'   => '\bastien59960\reactions\acp\main_module',
-                'modes'             => array('settings'),
-            ))),
+            array('module.add', array(
+                'acp',
+                'ACP_REACTIONS_SETTINGS',
+                array(
+                    'module_basename'   => '\bastien59960\reactions\acp\main_module',
+                    'module_langname'   => 'ACP_REACTIONS_SETTINGS',
+                    'module_mode'       => 'settings',
+                    'module_auth'       => 'ext_bastien59960/reactions',
+                )
+            )),
 
-            array('module.add', array('ucp', 'UCP_PREFS', array(
-                'module_basename'   => '\bastien59960\reactions\ucp\main_module',
-                'modes'             => array('settings')
+            // CORRECTION : Utilisation de la syntaxe de module unique avec tous les champs requis.
+            array('module.add', array(
+                'ucp',
+                'UCP_PREFS',
+                array(
+                    'module_basename'   => '\bastien59960\reactions\ucp\main_module',
+                    'module_langname'   => 'UCP_REACTIONS_SETTINGS',
+                    'module_mode'       => 'settings',
+                    'module_auth'       => 'ext_bastien59960/reactions',
+                )
             ))),
 
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
@@ -132,27 +145,28 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             // Étape 1 : Supprimer les types de notifications via méthode custom
             array('custom', array(array($this, 'remove_notification_type'))),
 
-            // Étape 2 : Supprimer les modules ACP et UCP
-            array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
+            // Étape 2 : Supprimer les modules ACP et UCP (d'abord les enfants, puis la catégorie)
             array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
             array('module.remove', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS')),
+            array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
 
             // Étape 3 : Supprimer les clés de configuration
-            array('config.remove', 'bastien59960_reactions_max_per_post'),
-            array('config.remove', 'bastien59960_reactions_max_per_user'),
-            array('config.remove', 'bastien59960_reactions_enabled'),
-            array('config.remove', 'reactions_ucp_preferences_installed'),
-            array('config.remove', 'bastien59960_reactions_spam_time'),
-            array('config.remove', 'bastien59960_reactions_cron_last_run'),
-            array('config.remove', 'bastien59960_reactions_picker_width'),
-            array('config.remove', 'bastien59960_reactions_picker_height'),
-            array('config.remove', 'bastien59960_reactions_picker_show_categories'),
-            array('config.remove', 'bastien59960_reactions_picker_show_search'),
-            array('config.remove', 'bastien59960_reactions_picker_use_json'),
-            array('config.remove', 'bastien59960_reactions_picker_emoji_size'),
-            array('config.remove', 'bastien59960_reactions_sync_interval'),
-            array('config.remove', 'bastien59960_reactions_imported_from_old'),
-            array('config.remove', 'bastien59960_reactions_version'),
+            // CORRECTION : L'argument de config.remove doit être un tableau.
+            array('config.remove', array('bastien59960_reactions_max_per_post')),
+            array('config.remove', array('bastien59960_reactions_max_per_user')),
+            array('config.remove', array('bastien59960_reactions_enabled')),
+            array('config.remove', array('reactions_ucp_preferences_installed')),
+            array('config.remove', array('bastien59960_reactions_spam_time')),
+            array('config.remove', array('bastien59960_reactions_cron_last_run')),
+            array('config.remove', array('bastien59960_reactions_picker_width')),
+            array('config.remove', array('bastien59960_reactions_picker_height')),
+            array('config.remove', array('bastien59960_reactions_picker_show_categories')),
+            array('config.remove', array('bastien59960_reactions_picker_show_search')),
+            array('config.remove', array('bastien59960_reactions_picker_use_json')),
+            array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
+            array('config.remove', array('bastien59960_reactions_sync_interval')),
+            array('config.remove', array('bastien59960_reactions_imported_from_old')),
+            array('config.remove', array('bastien59960_reactions_version')),
         );
     }
 
@@ -161,7 +175,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         try {
             $module_tool = $this->container->get('phpbb.db.migration.tool.module');
             $module_tool->remove('acp', 'ACP_REACTIONS_SETTINGS');
-            $module_tool->remove('ucp', 'UCP_REACTIONS_TITLE');
+            // CORRECTION : Le nom du module UCP est UCP_REACTIONS_SETTINGS, pas TITLE.
+            $module_tool->remove('ucp', 'UCP_REACTIONS_SETTINGS');
         } catch (\Exception $e) {
             // Ignore errors
         }
