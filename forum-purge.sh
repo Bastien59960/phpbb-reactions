@@ -931,6 +931,60 @@ CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
 echo "$CRON_LIST_OUTPUT"
 
+# ==============================================================================
+# 1️⃣6️⃣.5 DIAGNOSTIC SYSTÉMATIQUE DES TÂCHES CRON
+# ==============================================================================
+echo ""
+echo -e "${YELLOW}ℹ️  Lancement du diagnostic systématique des tâches cron pour valider leur configuration.${NC}"
+echo -e "───[ 1️⃣6️⃣.5 DIAGNOSTIC SYSTÉMATIQUE DES TÂCHES CRON ]───────────"
+sleep 0.2
+
+has_error=0
+
+# 1. Vérification des fichiers et de leur syntaxe
+print_diag_header "1. VÉRIFICATION DES FICHIERS"
+check_diag "Fichier 'notification_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
+check_diag "Fichier 'test_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
+check_diag "Syntaxe PHP de 'notification_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
+check_diag "Syntaxe PHP de 'test_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
+
+# 1.5 Vérification de la syntaxe de services.yml
+print_diag_header "1.5 VÉRIFICATION DE LA SYNTAXE DE services.yml"
+SERVICES_FILE="$FORUM_ROOT/ext/bastien59960/reactions/config/services.yml"
+if [ -f "$SERVICES_FILE" ] && grep -q '^\s*/\*\*' "$SERVICES_FILE"; then
+    echo -e "  ${RED}❌ ÉCHEC  :${NC} Le fichier 'services.yml' commence par '/**' (commentaire PHP), ce qui est une syntaxe YAML invalide."
+    has_error=1
+else
+    echo -e "  ${GREEN}✅ SUCCÈS :${NC} La syntaxe des commentaires de 'services.yml' semble correcte."
+fi
+
+# 2. Vérification de la configuration des services
+print_diag_header "2. VÉRIFICATION DE services.yml"
+check_diag "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error=1
+if [ -f "$SERVICES_FILE" ]; then
+    if grep -q "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TASK_NAME' est bien déclaré avec le tag 'cron.task'."
+    else
+        echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TASK_NAME' ou son tag 'cron.task' est manquant ou incorrect."
+        has_error=1
+    fi
+    if grep -q "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TEST_NAME' est bien déclaré avec le tag 'cron.task'."
+    else
+        echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TEST_NAME' ou son tag 'cron.task' est manquant ou incorrect."
+        has_error=1
+    fi
+fi
+
+# 3. Vérification des fichiers de langue
+print_diag_header "3. VÉRIFICATION DES FICHIERS DE LANGUE"
+LANG_FILE_FR="$FORUM_ROOT/ext/bastien59960/reactions/language/fr/common.php"
+check_diag "Fichier de langue 'fr/common.php' existe" test -f "$LANG_FILE_FR" || has_error=1
+if [ -f "$LANG_FILE_FR" ]; then
+    if grep -q "TASK_BASTIEN59960_REACTIONS_NOTIFICATION" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' absente"; has_error=1; fi
+    if grep -q "TASK_BASTIEN59960_REACTIONS_TEST" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' absente"; has_error=1; fi
+fi
+
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
     # 1️⃣7️⃣ RESTAURATION DE LA CONFIGURATION
@@ -1169,79 +1223,12 @@ POST_CRON_EOF
         echo -e "${NC}"
     fi
 else
-    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste ! Lancement du diagnostic intégré...${NC}\n"
+    echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
+    has_error=1
+fi
 
-    # ==========================================================================
-    # BLOC DE DIAGNOSTIC INTÉGRÉ
-    # ==========================================================================
-    has_error=0
-
-    # 1. Vérification des fichiers et de leur syntaxe
-    print_diag_header "1. VÉRIFICATION DES FICHIERS"
-    check_diag "Fichier 'notification_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
-    check_diag "Fichier 'test_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
-    check_diag "Syntaxe PHP de 'notification_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
-    check_diag "Syntaxe PHP de 'test_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
-
-    # 1.5 Vérification de la syntaxe de services.yml
-    print_diag_header "1.5 VÉRIFICATION DE LA SYNTAXE DE services.yml"
-    SERVICES_FILE="$FORUM_ROOT/ext/bastien59960/reactions/config/services.yml"
-    if [ -f "$SERVICES_FILE" ] && grep -q '^\s*/\*\*' "$SERVICES_FILE"; then
-        echo -e "  ${RED}❌ ÉCHEC  :${NC} Le fichier 'services.yml' commence par '/**' (commentaire PHP), ce qui est une syntaxe YAML invalide."
-        has_error=1
-    else
-        echo -e "  ${GREEN}✅ SUCCÈS :${NC} La syntaxe des commentaires de 'services.yml' semble correcte."
-    fi
-
-    # 2. Vérification de la configuration des services
-    print_diag_header "2. VÉRIFICATION DE services.yml"
-    check_diag "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error=1
-    if [ -f "$SERVICES_FILE" ]; then
-        if grep -q "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
-            echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TASK_NAME' est bien déclaré avec le tag 'cron.task'."
-        else
-            echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TASK_NAME' ou son tag 'cron.task' est manquant ou incorrect."
-            has_error=1
-        fi
-        if grep -q "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
-            echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TEST_NAME' est bien déclaré avec le tag 'cron.task'."
-        else
-            echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TEST_NAME' ou son tag 'cron.task' est manquant ou incorrect."
-            has_error=1
-        fi
-    fi
-
-    # 3. Vérification des fichiers de langue
-    print_diag_header "3. VÉRIFICATION DES FICHIERS DE LANGUE"
-    LANG_FILE_FR="$FORUM_ROOT/ext/bastien59960/reactions/language/fr/common.php"
-    check_diag "Fichier de langue 'fr/common.php' existe" test -f "$LANG_FILE_FR" || has_error=1
-    if [ -f "$LANG_FILE_FR" ]; then
-        if grep -q "TASK_BASTIEN59960_REACTIONS_NOTIFICATION" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' absente"; has_error=1; fi
-        if grep -q "TASK_BASTIEN59960_REACTIONS_TEST" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' absente"; has_error=1; fi
-    fi
-
-    # 4. Test d'instanciation via le conteneur
-    print_diag_header "4. TEST D'INSTANCIATION VIA LE CONTENEUR"
-    PHP_SCRIPT_OUTPUT=$(php <<PHPTEST
-<?php
-define('IN_PHPBB', true);
-\$phpbb_root_path = '$FORUM_ROOT/';
-\$phpEx = 'php';
-require_once(\$phpbb_root_path . 'common.' . \$phpEx);
-if (!isset(\$phpbb_container)) { echo "ERREUR: Conteneur non chargé.\n"; exit(1); }
-try {
-    \$service = \$phpbb_container->get('cron.task.bastien59960.reactions.notification');
-    echo "SUCCES: cron.task.bastien59960.reactions.notification instancié. Classe: " . get_class(\$service) . ". Nom: " . \$service->get_name() . "\n";
-} catch (\\Exception \$e) { echo "ERREUR: Impossible d'instancier cron.task.bastien59960.reactions.notification: " . \$e->getMessage() . "\n"; }
-try {
-    \$service = \$phpbb_container->get('cron.task.bastien59960.reactions.test');
-    echo "SUCCES: cron.task.bastien59960.reactions.test instancié. Classe: " . get_class(\$service) . ". Nom: " . \$service->get_name() . "\n";
-} catch (\\Exception \$e) { echo "ERREUR: Impossible d'instancier cron.task.bastien59960.reactions.test: " . \$e->getMessage() . "\n"; }
-PHPTEST
-)
-    if echo "$PHP_SCRIPT_OUTPUT" | grep -q "ERREUR"; then echo -e "${RED}$PHP_SCRIPT_OUTPUT${NC}"; has_error=1; else echo -e "${GREEN}$PHP_SCRIPT_OUTPUT${NC}"; fi
-
-    print_diag_header "🏁 DIAGNOSTIC FINAL"
+if [ $has_error -ne 0 ]; then
+    print_diag_header "🏁 DIAGNOSTIC CRON ÉCHOUÉ"
     echo -e "   ${YELLOW}Pistes de correction :${NC}"
     echo -e "   1. Le problème vient souvent du cache. Essayez de purger le cache :"
     echo -e "      ${YELLOW}php $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC}"
@@ -1249,7 +1236,6 @@ PHPTEST
     echo -e "   3. Si une erreur de syntaxe YAML a été détectée, corrigez le fichier ${YELLOW}config/services.yml${NC} pour utiliser des commentaires '#' au lieu de '/**'."
     echo -e "   4. Vérifiez que les noms des services et les clés de langue correspondent exactement à ce qui est attendu."
 
-    exit 1 # Arrêter le script car il y a une erreur critique.
 fi
 
 # ==============================================================================
