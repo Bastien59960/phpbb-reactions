@@ -36,9 +36,16 @@ class ucp_reactions
 
     public function handle($id, $mode)
     {
+        add_form_key('bastien59960/reactions');
+
         // Logique de traitement du formulaire UCP
         if ($this->request->is_set_post('submit'))
         {
+            if (!check_form_key('bastien59960/reactions'))
+            {
+                trigger_error('FORM_INVALID');
+            }
+
             // Traitement de la sauvegarde
             $user_reactions_notify = $this->request->variable('user_reactions_notify', 0);
             $user_reactions_cron_email = $this->request->variable('user_reactions_cron_email', 0);
