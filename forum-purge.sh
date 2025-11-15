@@ -887,10 +887,15 @@ sleep 0.2
 
 # Lancement systématique du diagnostic avancé pour avoir un état des lieux complet.
 echo -e "${YELLOW}ℹ️  Lancement du diagnostic avancé check-crons.sh...${NC}"
-SCRIPT_DIR=$(dirname "$0")
-# CORRECTION : Utiliser une méthode plus robuste pour trouver le répertoire du script.
-# Cela garantit que check-crons.sh est trouvé même si le script est appelé depuis un autre répertoire.
-bash "$(cd "$(dirname "$0")" && pwd)/check-crons.sh"
+
+# CORRECTION : Construire le chemin absolu vers le script de diagnostic en utilisant FORUM_ROOT.
+# Cela garantit que le script est trouvé, peu importe d'où forum-purge.sh est exécuté.
+DIAG_SCRIPT_PATH="$FORUM_ROOT/ext/bastien59960/reactions/check-crons.sh"
+
+# Assurer que le script de diagnostic est exécutable avant de l'appeler.
+sudo chmod +x "$DIAG_SCRIPT_PATH"
+
+bash "$DIAG_SCRIPT_PATH"
 echo -e "${YELLOW}Diagnostic avancé terminé. Poursuite de la vérification...${NC}"
 
 # Ajout d'une temporisation de 1 seconde pour laisser le temps au système de se stabiliser
