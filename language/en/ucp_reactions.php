@@ -32,4 +32,5 @@ $lang = array_merge($lang, array(
     'UCP_REACTIONS_CRON_EMAIL'           => 'Notify me of new reactions (email)',
     'UCP_REACTIONS_CRON_EMAIL_EXPLAIN'   => 'Receive a periodic email summary of new reactions on your posts.',
     'UCP_REACTIONS_SAVED'           => 'Your reaction preferences have been saved.',
+    'UCP_REACTIONS_CONTROLLER_NOT_FOUND' => 'The UCP Reactions controller could not be found. The extension may be improperly installed.',
 ));

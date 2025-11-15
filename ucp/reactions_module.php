@@ -29,6 +29,12 @@ class reactions_module
 	/** @var string URL de base pour l'action du formulaire. */
 	public $u_action;
 
+	/** @var string Nom du template à utiliser */
+	public $tpl_name;
+
+	/** @var string Titre de la page */
+	public $page_title;
+
 	/**
 	 * Méthode principale exécutée par phpBB.
 	 *
@@ -39,11 +45,27 @@ class reactions_module
 	{
 		global $template, $user, $request, $config, $phpbb_container;
 
-		// Charger le fichier de langue spécifique à ce module UCP
+		// CORRECTION : Charger TOUS les fichiers de langue nécessaires
+		$user->add_lang_ext('bastien59960/reactions', 'common');
 		$user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
 
-		// Récupérer le contrôleur depuis le conteneur de services et lui passer la main.
+		// Définir le template et le titre AVANT de passer au contrôleur
+		$this->tpl_name = 'ucp_reactions';
+		$this->page_title = 'UCP_REACTIONS_TITLE';
+
+		// Vérifier que le contrôleur existe dans le conteneur
+		if (!$phpbb_container->has('bastien59960.reactions.controller.ucp_reactions'))
+		{
+			trigger_error('UCP_REACTIONS_CONTROLLER_NOT_FOUND');
+		}
+
+		// Récupérer le contrôleur depuis le conteneur de services
 		$controller = $phpbb_container->get('bastien59960.reactions.controller.ucp_reactions');
+		
+		// Passer l'URL d'action au contrôleur
+		$controller->set_page_url($this->u_action);
+
+		// Déléguer le traitement au contrôleur
 		$controller->handle($id, $mode);
 	}
 }

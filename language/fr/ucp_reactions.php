@@ -32,4 +32,5 @@ $lang = array_merge($lang, array(
     'UCP_REACTIONS_CRON_EMAIL'      => 'Me notifier des nouvelles réactions (e-mail)',
     'UCP_REACTIONS_CRON_EMAIL_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
     'UCP_REACTIONS_SAVED'           => 'Vos préférences de réactions ont été sauvegardées.',
+    'UCP_REACTIONS_CONTROLLER_NOT_FOUND' => 'Le contrôleur UCP des réactions est introuvable. L\'extension est peut-être mal installée.',
 ));

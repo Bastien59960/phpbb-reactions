@@ -50,7 +50,7 @@ class ext extends \phpbb\extension\base
 	 */
 	public function get_version()
 	{
-		return '1.0.1'; // La version doit correspondre à la nouvelle migration
+		return '1.0.2'; // MISE À JOUR pour la nouvelle migration
 	}
 
 	/**

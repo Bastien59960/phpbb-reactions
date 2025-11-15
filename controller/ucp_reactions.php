@@ -66,11 +66,11 @@ class ucp_reactions {
 	}
 
 	/**
-	 * Définit l'URL de base pour l'action du formulaire.
+	 * Définit l'URL de la page pour l'action du formulaire.
 	 *
 	 * @param string $u_action L'URL de l'action.
 	 */
-	public function set_u_action($u_action)
+	public function set_page_url($u_action)
 	{
 		$this->u_action = $u_action;
 	}
