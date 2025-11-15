@@ -1,9 +1,18 @@
 <?php
 /**
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960) - https://github.com/bastien59960
- * @copyright  (c) 2025 Bastien59960
- * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ * Fichier : release_1_0_0.php
+ * Chemin : bastien59960/reactions/migrations/release_1_0_0.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
+ *
+ * Rôle :
+ * Fichier de migration initial pour l'extension. Il est responsable de la
+ * création de la structure de la base de données (tables, colonnes), de
+ * l'ajout des configurations par défaut, de l'enregistrement des modules
+ * (ACP, UCP) et des types de notifications.
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;

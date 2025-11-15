@@ -24,6 +24,7 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
+    'UCP_REACTIONS_SETTINGS'        => 'Reaction Preferences',
     'UCP_REACTIONS_TITLE'           => 'Reaction Preferences',
     'UCP_REACTIONS_EXPLAIN'         => 'Choose how to be notified when members react to your posts.',
     'UCP_REACTIONS_NOTIFY'          => 'Notify me of new reactions (notification)',

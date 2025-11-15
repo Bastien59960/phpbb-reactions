@@ -28,8 +28,7 @@ use phpbb\controller\helper as controller_helper;
 /**
  * Contrôleur pour la page de préférences des réactions dans l'UCP.
  */
-class ucp_reactions
-{
+class ucp_reactions {
 	/** @var \phpbb\user Instance de l'utilisateur courant. */
 	protected $user;
 	/** @var \phpbb\db\driver\driver_interface Instance de la base de données. */
@@ -84,8 +83,9 @@ class ucp_reactions
 	 */
 	public function handle($id, $mode)
 	{
-		// Charger le fichier de langue pour que les clés comme 'UCP_REACTIONS_TITLE' soient traduites.
-		$this->user->add_lang_ext('bastien59960/reactions', 'common');
+		// Charger le fichier de langue spécifique à ce module UCP.
+		// C'est la source unique pour toutes les clés UCP_REACTIONS_*.
+		$this->user->add_lang_ext('bastien59960/reactions', 'ucp_reactions');
 
 		$user_id = (int) $this->user->data['user_id'];
 

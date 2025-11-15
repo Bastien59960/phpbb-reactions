@@ -1,18 +1,18 @@
 <?php
 /**
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
- * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ * Fichier : release_1_0_1.php
+ * Chemin : bastien59960/reactions/migrations/release_1_0_1.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
- * Fichier : /migrations/release_1_0_1.php
- * --------------------------------------------------------------
  * Rôle :
  * Migration corrective et évolutive.
  * Cette migration utilise le conteneur de services pour interagir avec
  * le gestionnaire de notifications et la configuration, ce qui nécessite
  * d'hériter de `container_aware_migration`.
- * --------------------------------------------------------------
+ *
+ * @copyright (c) 2025 Bastien59960
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;
