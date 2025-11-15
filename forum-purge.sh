@@ -1336,8 +1336,9 @@ GET_REACTIONS_EOF
                     # La colonne notification_data est de type TEXT et n'est pas toujours en utf8mb4.
                     notification_data="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
                     notification_data_base64=$(echo -n "$notification_data" | base64)
-                    # Construire et exécuter la requête d'insertion
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), FROM_BASE64('${notification_data_base64}'));"
+                    # CORRECTION : Insérer la chaîne base64 BRUTE dans la colonne, sans utiliser FROM_BASE64().
+                    # La classe PHP se chargera de la décoder à l'affichage.
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_base64}');"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
