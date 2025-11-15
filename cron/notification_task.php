@@ -941,7 +941,7 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function get_name()
     {
-        return 'reactions.digest';
+        return 'bastien59960.reactions.notification';
     }
 
     /**
