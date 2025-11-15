@@ -74,8 +74,7 @@ print_diag_header() {
 check_diag() {
     local description=$1
     shift
-    local command_output
-    command_output=$("$@")
+    local command_output=$("$@" 2>&1) # Capture stdout and stderr
     local exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
@@ -83,9 +82,8 @@ check_diag() {
         return 0
     else
         echo -e "  ${RED}❌ ÉCHEC  :${NC} $description"
-        # Ne pas afficher la sortie pour les commandes simples comme `test -f`
-        if [[ "$1" != "test" ]]; then
-            echo -e "     ${YELLOW}Sortie:${NC}\n$command_output"
+        if [ -n "$command_output" ]; then
+            echo -e "     ${YELLOW}Sortie:${NC}\n$command_output" | sed 's/^/     | /'
         fi
         return 1
     fi
@@ -964,15 +962,18 @@ check_diag "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error
 if [ -f "$SERVICES_FILE" ]; then
     # CORRECTION : Chercher le nom exact du service tel que défini dans services.yml
     # et vérifier que le tag 'cron.task' est bien présent dans le bloc de ce service.
-    check_diag "Déclaration du service 'cron.task.bastien59960.reactions.notification' et tag 'cron.task'" \
-        grep -A 10 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task" || \
-        (echo "Service ou tag manquant pour 'notification' dans $SERVICES_FILE" && false)
-    if [ $? -ne 0 ]; then has_error=1; fi
-
-    check_diag "Déclaration du service 'cron.task.bastien59960.reactions.test' et tag 'cron.task'" \
-        grep -A 10 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task" || \
-        (echo "Service ou tag manquant pour 'test' dans $SERVICES_FILE" && false)
-    if [ $? -ne 0 ]; then has_error=1; fi
+    if ! grep -A 5 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+        echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' ou tag 'cron.task' manquant."
+        has_error=1
+    else
+        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' et tag 'cron.task'"
+    fi
+    if ! grep -A 5 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+        echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.test' ou tag 'cron.task' manquant."
+        has_error=1
+    else
+        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Déclaration du service 'cron.task.bastien59960.reactions.test' et tag 'cron.task'"
+    fi
 fi
 
 # 3. Vérification des fichiers de langue
