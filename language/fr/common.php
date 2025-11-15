@@ -1,111 +1,28 @@
 <?php
 /**
- * File: language/fr/common.php — bastien59960/reactions
- * @author Bastien (bastien59960)
- * @github https://github.com/bastien59960/reactions
- *
- * Rôle:
- * Ce fichier contient les chaînes de langue françaises générales pour l'interface
- * utilisateur (UI), les messages d'erreur, les info-bulles et les options de l'extension.
- * Il est chargé sur la plupart des pages où l'extension est active.
+ * Fichier : language/fr/common.php — bastien59960/reactions
+ * @author  Bastien (bastien59960)
+ * @github  https://github.com/bastien59960/reactions
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
-if (!defined('IN_PHPBB')) {
-    exit;
+if (empty($lang) || !is_array($lang)) {
+    $lang = [];
 }
 
-$lang = array_merge($lang ?? [], [
+$lang = array_merge($lang, [
     // =============================================================================
-    // MESSAGES DE L'INTERFACE UTILISATEUR
+    // UCP - PANEL DE CONTRÔLE UTILISATEUR
     // =============================================================================
-    'REACTION_ADD'              => 'Ajouter une réaction',
-    'REACTION_REMOVE'           => 'Retirer votre réaction',
-    'REACTION_MORE'             => 'Plus de réactions',
-    'REACTION_LOADING'          => 'Chargement...',
-    'REACTION_ERROR'            => 'Erreur lors de la réaction',
-    'REACTION_SUCCESS_ADD'      => 'Réaction ajoutée avec succès',
-    'REACTION_SUCCESS_REMOVE'   => 'Réaction retirée avec succès',
-    
-    // =============================================================================
-    // MESSAGES D'ERREUR ET DE VALIDATION
-    // =============================================================================
-    'REACTION_NOT_AUTHORIZED'   => 'Vous n\'êtes pas autorisé à réagir',
-    'REACTION_INVALID_POST'     => 'Message invalide',
-    'REACTION_INVALID_EMOJI'    => 'Emoji invalide',
-    'REACTION_ALREADY_ADDED'    => 'Vous avez déjà réagi avec cet emoji',
-    'REACTION_ALREADY_EXISTS'   => 'Vous avez déjà réagi avec cet emoji', // Compatibilité
-    'REACTION_NOT_FOUND'        => 'Réaction introuvable',
-    
-    // =============================================================================
-    // COMPTEURS ET AFFICHAGE
-    // =============================================================================
-    'REACTION_COUNT_SINGULAR'   => '%d réaction',
-    'REACTION_COUNT_PLURAL'     => '%d réactions',
-    'REACTIONS_TITLE'           => 'Réactions',
-    'NO_REACTIONS'              => 'Aucune réaction pour le moment',
-    'REACTIONS_BY_USERS'        => 'Réactions des utilisateurs',
-    'REACTION_BY_USER'          => 'Réaction de %s',
-    'REACTIONS_SEPARATOR'       => ', ',
-    'REACTION_AND'              => ' et ',
-    
-    // =============================================================================
-    // EMOJIS ET INTERFACE
-    // =============================================================================
-    'REACTIONS_COMMON_EMOJIS'   => 'Emojis courants',
-    'REACTIONS_LOGIN_REQUIRED'  => 'Vous devez être connecté pour réagir aux messages',
-    'REACTIONS_JSON_ERROR'      => 'Erreur de chargement des emojis',
-    'REACTIONS_FALLBACK_INFO'   => 'Fichier JSON non accessible. Seuls les emojis courants sont disponibles.',
-    
-    // =============================================================================
-    // INFO-BULLES ET AIDE CONTEXTUELLE
-    // =============================================================================
-    'REACTIONS_ADD_TOOLTIP'     => 'Ajouter une réaction',
-    'REACTIONS_MORE_TOOLTIP'    => 'Plus d\'emojis',
-    'REACTIONS_COUNT_TOOLTIP'   => '%d réaction(s)',
-    
-    // =============================================================================
-    // MESSAGES TECHNIQUES ET DE DÉBOGAGE
-    // =============================================================================
-    'REACTIONS_DEBUG_ENABLED'   => 'Mode débogage des réactions activé',
-    'REACTIONS_CSRF_ERROR'      => 'Jeton CSRF invalide',
-    'REACTIONS_SERVER_ERROR'    => 'Erreur serveur lors de la réaction',
-    
-    // =============================================================================
-    // LIMITES ET RESTRICTIONS
-    // =============================================================================
-    'REACTIONS_LIMIT_POST'      => 'Maximum %d types de réactions par message',
-    'REACTIONS_LIMIT_USER'      => 'Maximum %d types de réactions par utilisateur et par message',
-    'REACTION_LIMIT_POST'       => 'Limite de types de réactions pour ce message atteinte',
-    'REACTION_LIMIT_USER'       => 'Limite de réactions par utilisateur atteinte',
-    'REACTIONS_LIMIT_REACHED'   => 'Limite de réactions atteinte',
-
-    'NO_SUBJECT'                    => '(Pas de sujet)',
-
-    // =============================================================================
-    // TÂCHES CRON (ACP)
-    // =============================================================================
-    // Clés pour la ligne de commande (CLI) - CRUCIAL pour `cron:list`
-    // Le nom est `TASK_` + le retour de get_name() avec les points remplacés par des underscores.
-    'TASK_BASTIEN59960_REACTIONS_NOTIFICATION'   => 'Reactions : Envoi des e-mails de résumé',
-    'TASK_BASTIEN59960_REACTIONS_TEST'           => 'Reactions : Tâche de test du journal',
-
-    // Clés pour l'affichage dans l'ACP (déjà présentes, mais conservées pour clarté)
-    'BASTIEN59960_REACTIONS_TEST'              => 'Réactions : Test système',
-    'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Test périodique pour vérifier que le système de cron de l\'extension Reactions fonctionne correctement.',
-    'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Réactions : Envoyer les résumés par e-mail',
-    'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Regroupe les nouvelles réactions et envoie des résumés périodiques par e-mail aux utilisateurs.',
-    'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Cron de test des réactions exécuté</strong><br>» La tâche de test pour l\'extension Reactions s\'est exécutée avec succès.',
-
-    // =============================================================================
-    // CLÉS DE NOTIFICATION (depuis reactions.php)
-    // =============================================================================
-    'NOTIFICATION_GROUP_REACTIONS' => 'Réactions',
-    'NOTIFICATION_TYPE_REACTION'       => '<strong>%1$s</strong> a réagi à votre message avec %2$s.',
-    'NOTIFICATION_TYPE_REACTION_TITLE' => 'Réaction instantanée à un message',
-    'NOTIFICATION_TYPE_REACTION_DESC'  => 'Recevoir une notification instantanée dans la cloche du forum lorsqu\'un utilisateur réagit à l\'un de vos messages.',
-    'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE' => 'Résumé périodique des réactions par e-mail',
-    'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC'  => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
+    'UCP_REACTIONS_TITLE'           => 'Préférences des réactions',
+    'UCP_REACTIONS_SETTINGS'        => 'Paramètres des réactions',
+    'UCP_REACTIONS_EXPLAIN'         => 'Configurez comment vous souhaitez être notifié des réactions à vos messages.',
+    'UCP_REACTIONS_NOTIFY'          => 'Notifications instantanées',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification dans la cloche du forum lorsqu\'un utilisateur réagit à vos messages.',
+    'UCP_REACTIONS_CRON_EMAIL'      => 'Résumés par e-mail',
+    'UCP_REACTIONS_CRON_EMAIL_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions.',
+    'UCP_REACTIONS_SAVED'           => 'Vos préférences ont été sauvegardées.',
+    'UCP_REACTIONS_CONTROLLER_NOT_FOUND' => 'Le contrôleur des réactions est introuvable. L\'extension peut être mal installée.',
 ]);
