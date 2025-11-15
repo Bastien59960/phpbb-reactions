@@ -1,13 +1,15 @@
 <?php
 /**
- * Fichier : ucp/reactions_module_info.php — bastien59960/reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : reactions_module_info.php
+ * Chemin : bastien59960/reactions/ucp/reactions_module_info.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce fichier est le **manifeste** du module UCP. Il est lu par phpBB
- * lors de l'installation de l'extension pour savoir comment enregistrer
- * le module "Préférences des réactions" dans le panneau utilisateur.
+ * Ce fichier est le **manifeste** du module UCP. Il est lu par phpBB lors de
+ * l'installation/activation de l'extension pour savoir comment enregistrer le
+ * module "Préférences des réactions" dans le panneau utilisateur. Il définit
+ * le nom, le mode, la catégorie et le fichier contrôleur à appeler.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

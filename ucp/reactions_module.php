@@ -1,17 +1,18 @@
 <?php
 /**
- * Fichier : ucp/reactions_module.php — bastien59960/reactions
- * @author  Bastien (bastien59960)
- * @github  https://github.com/bastien59960/reactions
+ * Fichier : reactions_module.php
+ * Chemin : bastien59960/reactions/ucp/reactions_module.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
  * Rôle :
- * Ce fichier est le **point d'entrée** du module "Préférences des réactions"
- * dans le Panneau de Contrôle Utilisateur (UCP). Son rôle est de :
- *   1. Déclarer le module à phpBB pour qu'il apparaisse dans le menu de l'UCP.
- *   2. Charger les fichiers de langue nécessaires pour ce module.
- *   3. Déléguer toute la logique métier au contrôleur dédié (`controller/ucp_reactions.php`).
+ * Ce fichier est le **point d'entrée d'exécution** pour le module UCP.
+ * Lorsque l'utilisateur clique sur le lien "Préférences des réactions", phpBB
+ * instancie cette classe. Son unique rôle est de récupérer le contrôleur
+ * (`ucp_reactions`) depuis le conteneur de services et de lui déléguer
+ * l'intégralité du traitement via sa méthode `handle()`.
  *
- * Ce fichier ne contient volontairement aucune logique complexe.
+ * Il ne contient volontairement aucune logique métier.
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)
