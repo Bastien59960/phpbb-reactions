@@ -87,16 +87,15 @@ $lang = array_merge($lang ?? [], [
     // =============================================================================
     // CRON TASKS (ACP & CLI)
     // =============================================================================
-    // Keys for the command line (CLI) - CRUCIAL for `cron:list`
-    // The name is `TASK_` + the return of get_name() with dots replaced by underscores.
-    'TASK_BASTIEN59960_REACTIONS_NOTIFICATION'   => 'Reactions: Send email digests',
-    'TASK_BASTIEN59960_REACTIONS_TEST'           => 'Reactions: Log test task',
+    // Keys for the command line (CLI) - `TASK_` + get_name() with dots replaced by underscores.
+    'TASK_REACTIONS_DIGEST' => 'Reactions: Send email digests',
+    'TASK_REACTIONS_TEST'   => 'Reactions: Log test task',
 
     // Keys for the ACP display
-    'BASTIEN59960_REACTIONS_TEST'              => 'Reactions: System test',
-    'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Periodic test to verify that the Reactions extension\'s cron system is working correctly.',
-    'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Reactions: Send email digests',
-    'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Groups new reactions and sends periodic email summaries to users.',
+    'REACTIONS_DIGEST'          => 'Reactions: Send email digests',
+    'REACTIONS_DIGEST_EXPLAIN'  => 'Groups new reactions and sends periodic email summaries to users.',
+    'REACTIONS_TEST'            => 'Reactions: System test',
+    'REACTIONS_TEST_EXPLAIN'    => 'Periodic test to verify that the Reactions extension\'s cron system is working correctly.',
     'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Reactions test cron run</strong><br>» The test task for the Reactions extension has run successfully.',
 
     // =============================================================================

@@ -1,18 +1,17 @@
 <?php
 /**
- * =============================================================================
- * Fichier : /language/en/email.php
- * Extension: bastien59960/reactions
- * =============================================================================
+ * Fichier : email.php
+ * Chemin : bastien59960/reactions/language/en/email.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
- * @package   bastien59960/reactions
- * @author    Bastien (bastien59960)
+ * Rôle :
+ * Contient les chaînes de langue anglaises pour les e-mails envoyés par
+ * l'extension. Ce fichier est utilisé par la tâche cron pour construire
+ * l'e-mail de résumé des réactions.
+ *
  * @copyright (c) 2025 Bastien59960
- * @license   http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
- *
- * @description
- * Contains the English language strings for emails sent by the extension.
- * This file is used by the cron task to build the reaction digest email.
+ * @license GNU General Public License, version 2 (GPL-2.0)
  */
 
 if (!defined('IN_PHPBB'))

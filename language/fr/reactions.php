@@ -1,13 +1,14 @@
 <?php
 /**
- * ============================================================================
- * Fichier : language/fr/reactions.php
- * Extension : bastien59960/reactions
- * ============================================================================
+ * Fichier : reactions.php
+ * Chemin : bastien59960/reactions/language/fr/reactions.php
+ * Auteur : Bastien (bastien59960)
+ * GitHub : https://github.com/bastien59960/reactions
  *
- * 📘 Description:
+ * Rôle :
  * Ce fichier centralise toutes les chaînes de langue françaises pour les
- * notifications de l'extension Reactions.
+ * notifications de l'extension Reactions (notifications "cloche" et
+ * descriptions dans l'UCP).
  *
  * @copyright (c) 2025 Bastien59960
  * @license GNU General Public License, version 2 (GPL-2.0)

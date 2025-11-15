@@ -114,10 +114,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 'modes'             => array('settings'),
             ))),
 
-            array('module.add', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_TITLE')),
-            array('module.add', array('ucp', 'UCP_REACTIONS_TITLE', array(
+            array('module.add', array('ucp', 'UCP_PREFS', array(
                 'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
-                'modes'             => array('settings'),
+                'modes'             => array('settings')
             ))),
 
             array('custom', array(array($this, 'set_utf8mb4_bin'))),

@@ -87,16 +87,15 @@ $lang = array_merge($lang ?? [], [
     // =============================================================================
     // TÂCHES CRON (ACP)
     // =============================================================================
-    // Clés pour la ligne de commande (CLI) - CRUCIAL pour `cron:list`
-    // Le nom est `TASK_` + le retour de get_name() avec les points remplacés par des underscores.
-    'TASK_BASTIEN59960_REACTIONS_NOTIFICATION'   => 'Reactions : Envoi des e-mails de résumé',
-    'TASK_BASTIEN59960_REACTIONS_TEST'           => 'Reactions : Tâche de test du journal',
+    // Clés pour la ligne de commande (CLI) - `TASK_` + get_name() avec les points remplacés par des underscores.
+    'TASK_REACTIONS_DIGEST' => 'Reactions : Envoi des e-mails de résumé',
+    'TASK_REACTIONS_TEST'   => 'Reactions : Tâche de test du journal',
 
-    // Clés pour l'affichage dans l'ACP (déjà présentes, mais conservées pour clarté)
-    'BASTIEN59960_REACTIONS_TEST'              => 'Réactions : Test système',
-    'BASTIEN59960_REACTIONS_TEST_EXPLAIN'  => 'Test périodique pour vérifier que le système de cron de l\'extension Reactions fonctionne correctement.',
-    'BASTIEN59960_REACTIONS_NOTIFICATION'          => 'Réactions : Envoyer les résumés par e-mail',
-    'BASTIEN59960_REACTIONS_NOTIFICATION_EXPLAIN' => 'Regroupe les nouvelles réactions et envoie des résumés périodiques par e-mail aux utilisateurs.',
+    // Clés pour l'affichage dans l'ACP
+    'REACTIONS_DIGEST'          => 'Réactions : Envoyer les résumés par e-mail',
+    'REACTIONS_DIGEST_EXPLAIN'  => 'Regroupe les nouvelles réactions et envoie des résumés périodiques par e-mail aux utilisateurs.',
+    'REACTIONS_TEST'            => 'Réactions : Test système',
+    'REACTIONS_TEST_EXPLAIN'    => 'Test périodique pour vérifier que le système de cron de l\'extension Reactions fonctionne correctement.',
     'LOG_REACTIONS_CRON_TEST_RUN'                   => '<strong>Cron de test des réactions exécuté</strong><br>» La tâche de test pour l\'extension Reactions s\'est exécutée avec succès.',
 
     // =============================================================================
