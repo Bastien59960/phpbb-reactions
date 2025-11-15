@@ -789,10 +789,12 @@ class ajax
     
         // Cette expression régulière vérifie que la chaîne ne contient QUE des caractères graphiques Unicode.
         // \p{L} (lettres), \p{N} (nombres), \p{P} (ponctuation), \p{S} (symboles), \p{Z} (séparateurs), \p{M} (marques, pour les modificateurs).
+        // \p{Cf} (format, pour le Zero Width Joiner U+200D utilisé dans les emojis composites).
         // Le modificateur 'u' est crucial pour la gestion de l'Unicode.
         // Cela empêche l'injection de caractères de contrôle invisibles.
         // CORRECTION : Ajout de \p{M} pour accepter les modificateurs d'emoji (couleurs, tons de peau, etc.)
-        if (!preg_match('/^[\p{L}\p{N}\p{P}\p{S}\p{Z}\p{M}]+$/u', $emoji)) {
+        // CORRECTION 2 : Ajout de \p{Cf} pour supporter les emojis composites comme 😶‍🌫️
+        if (!preg_match('/^[\p{L}\p{N}\p{P}\p{S}\p{Z}\p{M}\p{Cf}]+$/u', $emoji)) {
             return false;
         }
         
