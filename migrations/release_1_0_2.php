@@ -49,7 +49,7 @@ class release_1_0_2 extends \phpbb\db\migration\container_aware_migration
                 'ucp',                                              // Type
                 'UCP_PREFS',                                       // Catégorie parent
                 array(
-                    'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
+                    'module_basename'   => '\bastien59960\reactions\ucp\main_module',
                     'module_langname'   => 'UCP_REACTIONS_SETTINGS',
                     'module_mode'       => 'settings',
                     'module_auth'       => 'ext_bastien59960/reactions',
@@ -72,7 +72,7 @@ class release_1_0_2 extends \phpbb\db\migration\container_aware_migration
                 'ucp',
                 'UCP_PREFS',
                 array(
-                    'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
+                    'module_basename'   => '\bastien59960\reactions\ucp\main_module',
                     'module_langname'   => 'UCP_REACTIONS_SETTINGS',
                     'module_mode'       => 'settings',
                 )

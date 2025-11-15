@@ -115,7 +115,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ))),
 
             array('module.add', array('ucp', 'UCP_PREFS', array(
-                'module_basename'   => '\bastien59960\reactions\ucp\reactions_module',
+                'module_basename'   => '\bastien59960\reactions\ucp\main_module',
                 'modes'             => array('settings')
             ))),
 

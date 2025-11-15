@@ -879,11 +879,11 @@ class ajax
     private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
     {
         try {
-            // Optimisation : Récupérer les informations du post et les préférences de l'auteur en une seule requête.
-            $sql = 'SELECT p.poster_id, p.topic_id, u.user_reactions_notify
-                    FROM ' . $this->posts_table . ' p
-                    LEFT JOIN ' . USERS_TABLE . ' u ON (p.poster_id = u.user_id)
-                    WHERE p.post_id = ' . (int) $post_id;
+            // Étape 1 : Récupérer les informations de base du message.
+            $sql = 'SELECT poster_id, topic_id
+                    FROM ' . $this->posts_table . '
+                    WHERE post_id = ' . (int) $post_id . '
+                    LIMIT 1';
 
             $result = $this->db->sql_query($sql);
             $post_data = $this->db->sql_fetchrow($result);
@@ -895,8 +895,6 @@ class ajax
             }
 
             $post_author_id = (int) $post_data['poster_id'];
-            $topic_id = (int) $post_data['topic_id'];
-            $notify_pref = isset($post_data['user_reactions_notify']) ? (int) $post_data['user_reactions_notify'] : 1;
 
             // On ne s'envoie pas de notification à soi-même
             if ($post_author_id === $reacter_id) {
@@ -904,8 +902,19 @@ class ajax
             }
 
             // Respecter la préférence de notification de l'auteur
-            if ($notify_pref !== 1) {
-                if (defined('DEBUG') && DEBUG) {
+            $sql_pref = 'SELECT user_reactions_notify FROM ' . USERS_TABLE . ' WHERE user_id = ' . $post_author_id;
+            $result_pref = $this->db->sql_query($sql_pref);
+            $pref_row = $this->db->sql_fetchrow($result_pref);
+            $this->db->sql_freeresult($result_pref);
+
+            // Si la préférence n'est pas dans la base (jamais définie), on la considère comme activée (1).
+            // Sinon, on utilise la valeur de la base.
+            $notify_pref = isset($pref_row['user_reactions_notify']) ? (int) $pref_row['user_reactions_notify'] : 1;
+
+            if ($notify_pref !== 1)
+            {
+                if (defined('DEBUG') && DEBUG)
+                {
                     error_log('[Reactions] Notification: Auteur ' . $post_author_id . ' a désactivé les notifications.');
                 }
                 return;
@@ -914,7 +923,7 @@ class ajax
             // Préparer les données pour le gestionnaire de notifications
             $notification_data = [
                 'post_id'          => (int) $post_id,
-                'topic_id'         => $topic_id,
+                'topic_id'         => (int) $post_data['topic_id'],
                 'post_author'      => $post_author_id,
                 'poster_id'        => $post_author_id,
                 'reacter'          => $reacter_id,
