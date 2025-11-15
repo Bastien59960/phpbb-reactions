@@ -106,8 +106,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
             array('config.add', array('bastien59960_reactions_sync_interval', 5000)),
 
-            array('custom', array(array($this, 'remove_existing_modules'))),
-            
             array('module.add', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
             array('module.add', array('acp', 'ACP_REACTIONS_SETTINGS', array(
                 'module_basename'   => '\bastien59960\reactions\acp\main_module',
@@ -128,6 +126,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function revert_data()
     {
         return array(
+            // Étape 0 : Nettoyage préventif des anciens modules (sécurité)
+            array('custom', array(array($this, 'remove_existing_modules'))),
+
             // Étape 1 : Supprimer les types de notifications via méthode custom
             array('custom', array(array($this, 'remove_notification_type'))),
 
