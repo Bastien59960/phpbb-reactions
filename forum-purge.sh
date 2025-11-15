@@ -25,6 +25,7 @@ DB_NAME="bastien-phpbb"
 # --- Couleurs ---
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 WHITE_ON_RED='\033[1;41;37m'
 NC='\033[0m'
 
@@ -962,13 +963,13 @@ check_diag "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error
 if [ -f "$SERVICES_FILE" ]; then
     # CORRECTION : Chercher le nom exact du service tel que défini dans services.yml
     # et vérifier que le tag 'cron.task' est bien présent dans le bloc de ce service.
-    if ! grep -A 5 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+    if ! grep -A 5 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name:\s*cron\.task"; then
         echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' ou tag 'cron.task' manquant."
         has_error=1
     else
         echo -e "  ${GREEN}✅ SUCCÈS :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' et tag 'cron.task'"
     fi
-    if ! grep -A 5 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+    if ! grep -A 5 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name:\s*cron\.task"; then
         echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.test' ou tag 'cron.task' manquant."
         has_error=1
     else
