@@ -62,7 +62,7 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
         // Note : On ne supprime PAS les données importées lors d'une désinstallation.
         // On supprime juste la clé de configuration qui indique que l'import a eu lieu.
         return [
-            ['config.remove', ['bastien59960_reactions_imported_from_old']],
+            ['config.remove', 'bastien59960_reactions_imported_from_old'],
         ];
     }
 
