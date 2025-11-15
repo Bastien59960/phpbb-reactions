@@ -128,15 +128,16 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function revert_data()
     {
         return array(
-            // Étape 1 : Supprimer les types de notifications
-            array('custom', array(array($this, 'remove_notification_type'))),
-
-            // Étape 2 : Supprimer les modules ACP et UCP
+            // Étape 1 : Supprimer les modules ACP et UCP
             array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
             array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
             array('module.remove', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS')),
 
-            // Étape 3 : Supprimer toutes les clés de configuration
+            // Étape 2 : Supprimer les types de notifications
+            array('notification.type.remove', array('notification.type.reaction')),
+            array('notification.type.remove', array('notification.type.reaction_email_digest')),
+
+            // Étape 3 : Supprimer les clés de configuration
             array('config.remove', array('bastien59960_reactions_max_per_post')),
             array('config.remove', array('bastien59960_reactions_max_per_user')),
             array('config.remove', array('bastien59960_reactions_enabled')),

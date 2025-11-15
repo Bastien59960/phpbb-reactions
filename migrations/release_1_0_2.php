@@ -86,6 +86,7 @@ class release_1_0_2 extends \phpbb\db\migration\container_aware_migration
                   AND module_class = 'ucp'";
         $this->db->sql_query($sql);
 
+        // CRITIQUE : Toujours retourner true pour une méthode de migration personnalisée.
         return true;
     }
 }
