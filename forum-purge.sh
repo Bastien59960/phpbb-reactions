@@ -684,7 +684,7 @@ else
     force_manual_purge
     
     # Si la purge a échoué, on donne un conseil plus précis.
-    if [ $purge_failed -ne 0 ]; then
+    if [ $purge_exit_code -ne 0 ]; then
         echo -e "${WHITE_ON_RED}   CONSEIL : L'échec de 'extension:purge' suivi de ces traces restantes pointe vers une erreur dans vos méthodes 'revert_data()' ou 'revert_schema()'. Vérifiez-les !${NC}"
     else
         echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' dans les fichiers de migration avant de relancer.${NC}"
@@ -1137,14 +1137,16 @@ RESTORE_EOF
 # ==============================================================================
 echo ""
 echo -e "───[ 18.5 PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG) ]────────"
-echo -e "${YELLOW}ℹ️  Vérification si la table des réactions est vide pour la peupler avec des données de test.${NC}"
+echo -e "${YELLOW}ℹ️  Cette étape peut remplir la table des réactions avec des données de test pour le débogage.${NC}"
 sleep 0.2
 
-# Vérifier si la table des réactions est vide
-REACTIONS_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions;" 2>/dev/null || echo 0)
+echo -e "${YELLOW}   Voulez-vous peupler la base de données avec des données de test ? (y/n)${NC}"
+read -r user_choice_seed
 
-if [ "$REACTIONS_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}   La table est vide. Lancement du peuplement avec des données aléatoires pour le débogage...${NC}"
+# Utiliser une regex pour accepter 'y', 'Y', 'yes', 'Yes', etc.
+if [[ "$user_choice_seed" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+    echo ""
+    echo -e "${GREEN}   Lancement du peuplement avec des données aléatoires pour le débogage...${NC}"
     
     # Exécuter le script SQL de peuplement et capturer la sortie
     # Exécuter le script SQL de peuplement et capturer la sortie et le code de sortie
@@ -1227,7 +1229,7 @@ SEEDING_EOF
         echo "└──────────────────────────────────────────────────┘"
     fi
 else
-    echo -e "${YELLOW}ℹ️  Peuplement ignoré : la table contient déjà ${REACTIONS_COUNT} réaction(s).${NC}"
+    echo -e "${YELLOW}ℹ️  Peuplement de la base de données ignoré par l'utilisateur.${NC}"
 fi
 
     # ==============================================================================
@@ -1272,6 +1274,84 @@ RESET_FLAGS_EOF
         fi
     else
         echo -e "${WHITE_ON_RED}⚠️  Erreur lors de la réinitialisation des flags (peut être normal si la table n'existe pas encore).${NC}"
+    fi
+
+    # ==============================================================================
+    # 19.5 GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG CLOCHE)
+    # ==============================================================================
+    echo ""
+    echo -e "───[ 19.5 GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG) ]────────"
+    echo -e "${YELLOW}ℹ️  Cette étape peut générer de fausses notifications 'cloche' pour tester leur affichage.${NC}"
+    sleep 0.2
+
+    echo -e "${YELLOW}   Voulez-vous générer de fausses notifications 'cloche' ? (y/n)${NC}"
+    read -r user_choice_notif
+
+    if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
+        echo ""
+        # Récupérer l'ID du type de notification 'reaction'
+        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'notification.type.reaction';")
+
+        if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
+            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'notification.type.reaction'. Étape ignorée.${NC}"
+        else
+            echo -e "${GREEN}   Type de notification 'reaction' trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
+
+            # Sélectionner jusqu'à 5 réactions aléatoires pour générer des notifications
+            REACTIONS_TO_NOTIFY=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<'GET_REACTIONS_EOF'
+                SELECT 
+                    r.post_id,
+                    r.topic_id,
+                    p.poster_id,      -- ID de l'auteur du post (destinataire de la notif)
+                    r.user_id,        -- ID de l'utilisateur qui réagit
+                    u.username,       -- Nom de l'utilisateur qui réagit
+                    r.reaction_emoji
+                FROM phpbb_post_reactions r
+                JOIN phpbb_posts p ON r.post_id = p.post_id
+                JOIN phpbb_users u ON r.user_id = u.user_id
+                WHERE p.poster_id != r.user_id -- Exclure les auto-réactions
+                ORDER BY RAND()
+                LIMIT 5;
+GET_REACTIONS_EOF
+            )
+
+            if [ -z "$REACTIONS_TO_NOTIFY" ]; then
+                echo -e "${YELLOW}   Aucune réaction disponible pour générer des notifications.${NC}"
+            else
+                echo -e "${GREEN}   Génération de fausses notifications pour les réactions suivantes :${NC}"
+                
+                notification_count=0
+                # Lire la sortie ligne par ligne
+                while IFS=$'\t' read -r post_id topic_id poster_id reacter_id reacter_name reaction_emoji; do
+                    # Construire la chaîne de données sérialisée pour la notification
+                    # Format: a:3:{s:10:"reacter_id";i:X;s:12:"reacter_name";s:Y:"...";s:14:"reaction_emoji";s:Z:"...";}
+                    reacter_name_len=${#reacter_name}
+                    emoji_len=${#reaction_emoji}
+                    
+                    # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
+                    reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
+
+                    notification_data="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
+
+                    # Construire et exécuter la requête d'insertion
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data}');"
+                    
+                    # Exécuter la requête
+                    MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
+                    
+                    if [ $? -eq 0 ]; then
+                        echo -e "      ✅ Notif pour le post #${post_id} (auteur #${poster_id}) : ${reaction_emoji} par ${reacter_name}"
+                        notification_count=$((notification_count + 1))
+                    else
+                        echo -e "      ❌ Échec de la création de la notif pour le post #${post_id}"
+                    fi
+                done <<< "$REACTIONS_TO_NOTIFY"
+
+                echo -e "${GREEN}   ${notification_count} fausse(s) notification(s) générée(s) avec succès.${NC}"
+            fi
+        fi
+    else
+        echo -e "${YELLOW}ℹ️  Génération de fausses notifications ignorée par l'utilisateur.${NC}"
     fi
 
     # ==============================================================================
