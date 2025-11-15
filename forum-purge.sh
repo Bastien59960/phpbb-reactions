@@ -1156,15 +1156,13 @@ RESTORE_EOF
 # ==============================================================================
 echo ""
 echo -e "───[ 18.5 PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG) ]────────"
-echo -e "${YELLOW}ℹ️  Cette étape peut remplir la table des réactions avec des données de test pour le débogage.${NC}"
+echo -e "${YELLOW}ℹ️  Vérification si la table des réactions est vide pour la peupler avec des données de test.${NC}"
 sleep 0.2
 
-echo -e "${YELLOW}   Voulez-vous peupler la base de données avec des données de test ? (y/n)${NC}"
-read -r user_choice_seed
+# Vérifier si la table des réactions est vide
+REACTIONS_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions;" 2>/dev/null || echo 0)
 
-# Utiliser une regex pour accepter 'y', 'Y', 'yes', 'Yes', etc.
-if [[ "$user_choice_seed" =~ ^[Yy]([Ee][Ss])?$ ]]; then
-    echo ""
+if [ "$REACTIONS_COUNT" -eq 0 ]; then
     echo -e "${GREEN}   Lancement du peuplement avec des données aléatoires pour le débogage...${NC}"
     
     # Exécuter le script SQL de peuplement et capturer la sortie
@@ -1204,13 +1202,12 @@ if [[ "$user_choice_seed" =~ ^[Yy]([Ee][Ss])?$ ]]; then
             SELECT
                 p.post_id, p.topic_id, u.user_id,
                 (SELECT emoji FROM temp_emojis ORDER BY RAND() LIMIT 1) AS reaction_emoji,
-                UNIX_TIMESTAMP() - FLOOR(RAND() * 172800) AS reaction_time,
+                UNIX_TIMESTAMP() - FLOOR(RAND() * 2592000) AS reaction_time, -- Réactions sur les 30 derniers jours
                 0 AS reaction_notified
             FROM temp_posts p, temp_users u
             WHERE p.poster_id != u.user_id
-            -- CORRECTION : Logique améliorée pour garantir que chaque post ait des réactions.
-            -- On donne à chaque post une chance d'avoir entre 2 et 8 réactions.
-            AND RAND() < (2 + (RAND() * 6)) / (SELECT COUNT(*) FROM temp_users)
+            -- CORRECTION : Logique ajustée pour générer entre 1 et 10 réactions par post.
+            AND RAND() < (1 + (RAND() * 9)) / (SELECT COUNT(*) FROM temp_users)
             LIMIT 400;
 
             -- Étape 5: Renvoyer un résumé de ce qui a été fait
@@ -1249,7 +1246,7 @@ SEEDING_EOF
         echo "└──────────────────────────────────────────────────┘"
     fi
 else
-    echo -e "${YELLOW}ℹ️  Peuplement de la base de données ignoré par l'utilisateur.${NC}"
+    echo -e "${GREEN}ℹ️  La table des réactions contient déjà ${REACTIONS_COUNT} réaction(s). Peuplement ignoré.${NC}"
 fi
 
     # ==============================================================================
