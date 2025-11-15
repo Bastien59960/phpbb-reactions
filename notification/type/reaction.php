@@ -412,12 +412,25 @@ class reaction extends base implements type_interface
      * @return array [clé_langue, [paramètres]]
      */
     public function get_title_for_user($user_id, $lang = null)
-    {
+    {   
+        // CORRECTION : Gérer les données encodées en base64 par le script de débogage.
+        $data = $this->notification_data;
+
+        // Si les données ne sont pas un tableau, c'est probablement une chaîne (potentiellement base64).
+        if (!is_array($data)) {
+            $decoded_data = @unserialize(base64_decode($data, true));
+            // Si le décodage et la désérialisation réussissent, on utilise les nouvelles données.
+            if (is_array($decoded_data)) {
+                $data = $decoded_data;
+            }
+        }
+
         return [
             $this->get_title(), // Clé : NOTIFICATION_TYPE_REACTION
             [
-                $this->notification_data['reacter_username'] ?? 'Quelqu\'un', // %1$s : Nom du réacteur
-                $this->notification_data['emoji'] ?? '?',             // %2$s : Emoji
+                // Utiliser les données potentiellement décodées.
+                $data['reacter_name'] ?? ($data['reacter_username'] ?? 'Quelqu\'un'), // %1$s : Nom du réacteur
+                $data['reaction_emoji'] ?? ($data['emoji'] ?? '?'),             // %2$s : Emoji
             ],
         ];
     }

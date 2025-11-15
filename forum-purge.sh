@@ -1180,7 +1180,8 @@ if [[ "$user_choice_seed" =~ ^[Yy]([Ee][Ss])?$ ]]; then
             EXECUTE stmt USING @post_limit;
             DEALLOCATE PREPARE stmt;
 
-            INSERT INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
+            -- CORRECTION : Utiliser INSERT IGNORE pour éviter les erreurs de clé dupliquée.
+            INSERT IGNORE INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
             SELECT
                 p.post_id, p.topic_id, u.user_id,
                 (SELECT emoji FROM temp_emojis ORDER BY RAND() LIMIT 1) AS reaction_emoji,
@@ -1331,10 +1332,12 @@ GET_REACTIONS_EOF
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
 
+                    # CORRECTION : Encoder les données en base64 pour éviter les problèmes d'encodage avec les emojis.
+                    # La colonne notification_data est de type TEXT et n'est pas toujours en utf8mb4.
                     notification_data="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
-
+                    notification_data_base64=$(echo -n "$notification_data" | base64)
                     # Construire et exécuter la requête d'insertion
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data}');"
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), FROM_BASE64('${notification_data_base64}'));"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
