@@ -215,6 +215,25 @@ else
     echo -e "${GREEN}✅ SUCCÈS : Connexion à la base de données établie.${NC}"
 fi
 
+# ==============================================================================
+# 0️⃣ NETTOYAGE D'URGENCE (POUR PAGE BLANCHE)
+# ==============================================================================
+echo -e "───[ 0️⃣  NETTOYAGE D'URGENCE (PAGE BLANCHE) ]────────────────────"
+echo -e "${YELLOW}ℹ️  Vidage de la table des notifications pour corriger les erreurs fatales (page blanche).${NC}"
+sleep 0.2
+
+emergency_cleanup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EMERGENCY_CLEANUP_EOF'
+-- Réinitialiser le verrou du cron en base de données, une cause possible de blocage.
+UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
+
+-- Vider complètement la table des notifications, souvent source d'erreurs fatales si corrompue.
+TRUNCATE TABLE phpbb_notifications;
+
+SELECT CONCAT('✅ Table des notifications vidée (', ROW_COUNT(), ' lignes affectées).') AS result;
+EMERGENCY_CLEANUP_EOF
+)
+check_status "Nettoyage d'urgence de la table des notifications." "$emergency_cleanup_output"
+
 
 # ==============================================================================
 # 2️⃣ SAUVEGARDE DE LA CONFIGURATION SPAM_TIME
