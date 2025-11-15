@@ -231,6 +231,41 @@ echo -e "${GREEN}✅ Valeur du délai anti-spam sauvegardée : ${SPAM_TIME_BACKU
 
 
 # ==============================================================================
+# 2.5 RESTAURATION PRÉCOCE (SI NÉCESSAIRE)
+# ==============================================================================
+echo -e "───[ 2.5 RESTAURATION PRÉCOCE (SI NÉCESSAIRE) ]─────────────────"
+echo -e "${YELLOW}ℹ️  Vérification si la table principale est vide pour une restauration précoce...${NC}"
+sleep 0.2
+
+# Vérifier si la table principale existe et si elle est vide
+MAIN_TABLE_EXISTS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions';")
+
+if [ "$MAIN_TABLE_EXISTS" -gt 0 ]; then
+    MAIN_TABLE_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions;")
+    if [ "$MAIN_TABLE_ROWS" -eq 0 ]; then
+        echo -e "${YELLOW}   La table principale 'phpbb_post_reactions' est vide. Tentative de restauration depuis la sauvegarde...${NC}"
+        
+        restore_early_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EARLY_RESTORE_EOF'
+            -- Vérifier si la table de backup existe avant de tenter la restauration
+            SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
+            
+            -- Insérer les données depuis la sauvegarde si elle existe
+            SET @sql = IF(@backup_exists > 0,
+                'INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified) SELECT reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified FROM phpbb_post_reactions_backup ON DUPLICATE KEY UPDATE post_id=VALUES(post_id);',
+                'SELECT "La table de sauvegarde n''existe pas." AS status;'
+            );
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+EARLY_RESTORE_EOF
+        )
+        check_status "Restauration précoce des réactions." "$restore_early_output"
+    else
+        echo -e "${GREEN}ℹ️  La table principale contient déjà ${MAIN_TABLE_ROWS} réaction(s). Aucune restauration précoce nécessaire.${NC}"
+    fi
+fi
+
+# ==============================================================================
 # 3️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
 # ==============================================================================
 echo -e "───[ 3️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
@@ -244,17 +279,17 @@ TABLE_EXISTS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e
 if [ "$TABLE_EXISTS" -gt 0 ]; then
     # La table existe, on exécute le bloc de sauvegarde
     backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
-        -- 1. Créer la table de backup si elle n'existe pas.
+        -- 1. Créer la table de backup si elle n'existe pas, en se basant sur la table principale.
         CREATE TABLE IF NOT EXISTS phpbb_post_reactions_backup LIKE phpbb_post_reactions;
         
-        -- 2. Vider la table de backup.
-        TRUNCATE TABLE phpbb_post_reactions_backup;
-        
-        -- 3. Copier les données.
-        INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
-        
-        -- 4. Renvoyer un statut de succès.
-        SELECT "BACKUP_DONE" AS status_code, CONCAT("✅ ", COUNT(*), " réactions sauvegardées dans phpbb_post_reactions_backup.") AS status FROM phpbb_post_reactions_backup;
+        -- 2. Compter les lignes avant l'insertion.
+        SET @before_count = (SELECT COUNT(*) FROM phpbb_post_reactions_backup);
+
+        -- 3. Insérer uniquement les nouvelles réactions (ignore les doublons basés sur la clé primaire/unique).
+        INSERT IGNORE INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
+
+        -- 4. Renvoyer un statut de succès avec le nombre de nouvelles réactions ajoutées.
+        SELECT "BACKUP_DONE" AS status_code, CONCAT("✅ ", (SELECT COUNT(*) FROM phpbb_post_reactions_backup) - @before_count, " nouvelle(s) réaction(s) ajoutée(s) à la sauvegarde. Total : ", (SELECT COUNT(*) FROM phpbb_post_reactions_backup), " réactions.") AS status;
 BACKUP_EOF
     )
     # On affiche la sortie de la commande pour le debug
