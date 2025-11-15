@@ -965,12 +965,12 @@ if [ -f "$SERVICES_FILE" ]; then
     # CORRECTION : Chercher le nom exact du service tel que défini dans services.yml
     # et vérifier que le tag 'cron.task' est bien présent dans le bloc de ce service.
     check_diag "Déclaration du service 'cron.task.bastien59960.reactions.notification' et tag 'cron.task'" \
-        grep -A 5 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task" || \
+        grep -A 10 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task" || \
         (echo "Service ou tag manquant pour 'notification' dans $SERVICES_FILE" && false)
     if [ $? -ne 0 ]; then has_error=1; fi
 
     check_diag "Déclaration du service 'cron.task.bastien59960.reactions.test' et tag 'cron.task'" \
-        grep -A 5 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task" || \
+        grep -A 10 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task" || \
         (echo "Service ou tag manquant pour 'test' dans $SERVICES_FILE" && false)
     if [ $? -ne 0 ]; then has_error=1; fi
 fi
@@ -982,6 +982,18 @@ check_diag "Fichier de langue 'fr/common.php' existe" test -f "$LANG_FILE_FR" ||
 if [ -f "$LANG_FILE_FR" ]; then
     if grep -q "TASK_BASTIEN59960_REACTIONS_NOTIFICATION" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' absente"; has_error=1; fi
     if grep -q "TASK_BASTIEN59960_REACTIONS_TEST" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' absente"; has_error=1; fi
+fi
+
+# CORRECTION LOGIQUE : Si une erreur est détectée ici, on arrête le script.
+if [ $has_error -ne 0 ]; then
+    print_diag_header "🏁 DIAGNOSTIC CRON ÉCHOUÉ"
+    echo -e "   ${YELLOW}Pistes de correction :${NC}"
+    echo -e "   1. Le problème vient souvent du cache. Essayez de purger le cache :"
+    echo -e "      ${YELLOW}php $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC}"
+    echo -e "   2. Si la purge ne suffit pas, désactivez puis réactivez l'extension pour forcer la reconstruction des services."
+    echo -e "   3. Vérifiez que les noms des services dans services.yml correspondent exactement (ex. : cron.task.bastien59960.reactions.notification)."
+    echo -e "   4. Vérifiez les clés de langue dans $LANG_FILE_FR."
+    exit 1
 fi
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
@@ -1224,17 +1236,6 @@ POST_CRON_EOF
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
     has_error=1
-fi
-
-if [ $has_error -ne 0 ]; then
-    print_diag_header "🏁 DIAGNOSTIC CRON ÉCHOUÉ"
-    echo -e "   ${YELLOW}Pistes de correction :${NC}"
-    echo -e "   1. Le problème vient souvent du cache. Essayez de purger le cache :"
-    echo -e "      ${YELLOW}php $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC}"
-    echo -e "   2. Si la purge ne suffit pas, désactivez puis réactivez l'extension pour forcer la reconstruction des services."
-    echo -e "   3. Si une erreur de syntaxe YAML a été détectée, corrigez le fichier ${YELLOW}config/services.yml${NC} pour utiliser des commentaires '#' au lieu de '/**'."
-    echo -e "   4. Vérifiez que les noms des services et les clés de langue correspondent exactement à ce qui est attendu."
-
 fi
 
 # ==============================================================================
