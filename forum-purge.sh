@@ -337,7 +337,8 @@ if [ $purge_exit_code -ne 0 ]; then
     echo -e "${YELLOW}   Voulez-vous continuer avec un nettoyage manuel forcé pour corriger l'état de la base de données ? (y/n)${NC}"
     read -r user_choice
 
-    if [[ "$user_choice" == "y" || "$user_choice" == "Y" ]]; then
+    # Utiliser une regex pour accepter 'y', 'Y', 'yes', 'Yes', etc.
+    if [[ "$user_choice" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo -e "${GREEN}   SOLUTION IMMÉDIATE : Lancement du nettoyage manuel forcé pour corriger l'état de la base de données.${NC}"
         echo ""
         force_manual_purge
