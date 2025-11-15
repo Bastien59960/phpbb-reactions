@@ -1161,9 +1161,23 @@ if [ "$REACTIONS_COUNT" -eq 0 ]; then
             -- Étape 3: Peupler les tables temporaires
             INSERT INTO temp_posts (post_id, topic_id, poster_id) SELECT post_id, topic_id, poster_id FROM phpbb_posts WHERE post_visibility = 1 ORDER BY post_time DESC LIMIT 50;
             INSERT INTO temp_users (user_id) SELECT user_id FROM phpbb_users WHERE user_type != 2 AND user_id != 1 ORDER BY RAND() LIMIT 20;
-            INSERT INTO temp_emojis (emoji) VALUES (''), ('🤡'), ('🖕'), ('🗿'), ('🐸'), ('👻'), ('🤢'), ('👽'), ('🤏'), ('💀');
+            INSERT INTO temp_emojis (emoji) VALUES ('💩'), ('🤡'), ('🖕'), ('🗿'), ('🐸'), ('👻'), ('🤢'), ('👽'), ('🤏'), ('💀');
 
             -- Étape 4: Générer les réactions
+            -- CORRECTION : La clause LIMIT n'accepte pas de sous-requête.
+            -- On calcule la limite dans une variable, puis on l'utilise dans une instruction préparée.
+            SET @post_limit = (SELECT CEIL(COUNT(*)/5) FROM temp_users);
+
+            -- Créer une table temporaire pour stocker les IDs des posts ciblés
+            DROP TEMPORARY TABLE IF EXISTS temp_target_posts;
+            CREATE TEMPORARY TABLE temp_target_posts (post_id INT);
+
+            -- Utiliser une instruction préparée pour contourner la limitation de LIMIT
+            SET @sql = 'INSERT INTO temp_target_posts SELECT post_id FROM temp_posts ORDER BY post_id ASC LIMIT ?';
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt USING @post_limit;
+            DEALLOCATE PREPARE stmt;
+
             INSERT INTO phpbb_post_reactions (post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
             SELECT
                 p.post_id, p.topic_id, u.user_id,
@@ -1172,10 +1186,7 @@ if [ "$REACTIONS_COUNT" -eq 0 ]; then
                 0 AS reaction_notified
             FROM temp_posts p, temp_users u
             WHERE p.poster_id != u.user_id
-            AND (
-                p.post_id IN (SELECT post_id FROM temp_posts ORDER BY post_id ASC LIMIT (SELECT CEIL(COUNT(*)/5) FROM temp_users))
-                OR RAND() < 0.2
-            )
+            AND (p.post_id IN (SELECT post_id FROM temp_target_posts) OR RAND() < 0.2)
             LIMIT 200;
 
             -- Étape 5: Renvoyer un résumé de ce qui a été fait
