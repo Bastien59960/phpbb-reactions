@@ -16,6 +16,7 @@
 
 namespace bastien59960\reactions\cron;
 
+
 if (!defined('IN_PHPBB'))
 {
     exit;
