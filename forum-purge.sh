@@ -962,14 +962,18 @@ fi
 print_diag_header "2. VÉRIFICATION DE services.yml"
 check_diag "Fichier 'services.yml' existe" test -f "$SERVICES_FILE" || has_error=1
 if [ -f "$SERVICES_FILE" ]; then
-    if grep -q "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
-        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TASK_NAME' est bien déclaré avec le tag 'cron.task'."
+    # CORRECTION : Vérifier la présence du service par son nom logique OU son nom de classe.
+    # phpBB peut trouver la tâche par son nom logique (cron.task.xxx) même si le service est déclaré sous un autre nom.
+    if (grep -q "cron.task.bastien59960.reactions.notification:" "$SERVICES_FILE" || grep -q "bastien59960.reactions.cron.notification_task:" "$SERVICES_FILE") && grep -A 5 "class: bastien59960\\reactions\\cron\\notification_task" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service pour la tâche '$CRON_TASK_NAME' est bien déclaré avec le tag 'cron.task'."
     else
         echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TASK_NAME' ou son tag 'cron.task' est manquant ou incorrect."
         has_error=1
     fi
-    if grep -q "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" && grep -A 4 "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" | grep -q "name: cron.task"; then
-        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service '$CRON_TEST_NAME' est bien déclaré avec le tag 'cron.task'."
+
+    # Même correction pour la tâche de test.
+    if (grep -q "cron.task.bastien59960.reactions.test:" "$SERVICES_FILE" || grep -q "bastien59960.reactions.cron.test_task:" "$SERVICES_FILE") && grep -A 5 "class: bastien59960\\reactions\\cron\\test_task" "$SERVICES_FILE" | grep -q "name: cron.task"; then
+        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Le service pour la tâche '$CRON_TEST_NAME' est bien déclaré avec le tag 'cron.task'."
     else
         echo -e "  ${RED}❌ ÉCHEC  :${NC} La déclaration du service '$CRON_TEST_NAME' ou son tag 'cron.task' est manquant ou incorrect."
         has_error=1
