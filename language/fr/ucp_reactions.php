@@ -24,11 +24,11 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-    'UCP_REACTIONS_SETTINGS'        => 'Préférences des réactions',
+    'UCP_REACTIONS_SETTINGS'        => 'Préférences de réaction',
     'UCP_REACTIONS_TITLE'           => 'Préférences des réactions',
     'UCP_REACTIONS_EXPLAIN'         => 'Choisissez comment être notifié lorsque des membres réagissent à vos messages.',
     'UCP_REACTIONS_NOTIFY'          => 'Me notifier des nouvelles réactions (notification)',
-    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification lorsque un utilisateur réagit à l\'un de vos messages.',
+    'UCP_REACTIONS_NOTIFY_EXPLAIN'  => 'Recevoir une notification lorsqu\'un utilisateur réagit à l\'un de vos messages.',
     'UCP_REACTIONS_CRON_EMAIL'      => 'Me notifier des nouvelles réactions (e-mail)',
     'UCP_REACTIONS_CRON_EMAIL_EXPLAIN' => 'Recevoir un résumé périodique par e-mail des nouvelles réactions sur vos messages.',
     'UCP_REACTIONS_SAVED'           => 'Vos préférences de réactions ont été sauvegardées.',
