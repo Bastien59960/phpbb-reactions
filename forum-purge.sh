@@ -275,17 +275,30 @@ sleep 0.2
 output_disable=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv 2>&1 || true)
 check_status "Désactivation de l'extension via phpbbcli." "$output_disable"
 
-# On purge l'extension. C'est CETTE commande qui exécute les méthodes `revert_schema()` et `revert_data()` des fichiers de migration.
+# On tente de purger l'extension. C'est CETTE commande qui exécute les méthodes `revert_*` des migrations.
 output_purge=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1)
-# On vérifie le statut, mais on n'arrête pas le script en cas d'échec.
-# La variable `purge_failed` nous servira à décider de la suite.
+
+# Vérifier si la purge a échoué (à cause d'une erreur fatale dans les migrations par exemple)
 purge_failed=0
 check_status "Purge des données de l'extension via phpbbcli (test du revert)." "$output_purge" || purge_failed=1
 
-# Si la purge a échoué, on le signale explicitement.
-# Le script continuera jusqu'au diagnostic post-purge pour montrer ce qui reste.
 if [ $purge_failed -ne 0 ]; then
-    echo -e "${WHITE_ON_RED}⚠️ La commande 'extension:purge' a échoué. Le diagnostic post-purge va révéler ce qui n'a pas été supprimé.${NC}"
+    echo ""
+    echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
+    echo -e "${WHITE_ON_RED}  ⚠️  ÉCHEC DE LA PURGE AUTOMATIQUE - ANOMALIE DANS LES MIGRATIONS DÉTECTÉE          ${NC}"
+    echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
+    echo ""
+    echo -e "${YELLOW}   EXPLICATION : La commande 'phpbbcli extension:purge' a échoué. C'est le signe d'une erreur fatale${NC}"
+    echo -e "${YELLOW}   dans une des méthodes de réversion ('revert_data()' ou 'revert_schema()') de vos fichiers de migration.${NC}"
+    echo ""
+    echo -e "${YELLOW}   POUR ÉVITER QUE CELA SE REPRODUISE :${NC}"
+    echo -e "${YELLOW}   1. Inspectez les fichiers dans le dossier 'migrations/'.${NC}"
+    echo -e "${YELLOW}   2. Assurez-vous que CHAQUE méthode 'revert_data()' et 'revert_schema()' se termine par 'return array(...);'${NC}"
+    echo -e "${YELLOW}      Même si la méthode ne fait rien, elle doit retourner un tableau vide : 'return array();'${NC}"
+    echo ""
+    echo -e "${GREEN}   SOLUTION IMMÉDIATE : Le script va maintenant lancer un nettoyage manuel forcé pour corriger l'état de la base de données.${NC}"
+    echo ""
+    force_manual_purge
 fi
 
 # ==============================================================================
