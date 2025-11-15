@@ -167,6 +167,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.remove', array('bastien59960_reactions_sync_interval')),
             array('config.remove', array('bastien59960_reactions_imported_from_old')),
             array('config.remove', array('bastien59960_reactions_version')),
+            array('config.remove', array('bastien59960_reactions_last_test_run')),
         );
     }
 

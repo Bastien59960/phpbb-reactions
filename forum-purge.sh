@@ -1146,7 +1146,7 @@ REACTIONS_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN
 if [ "$REACTIONS_COUNT" -eq 0 ]; then
     echo -e "${GREEN}   La table est vide. Lancement du peuplement avec des données aléatoires pour le débogage...${NC}"
     
-    # Exécuter le script SQL de peuplement
+    # Exécuter le script SQL de peuplement et capturer la sortie
     seeding_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'SEEDING_EOF'
         -- Étape 1: Vider les tables temporaires si elles existent (sécurité)
         DROP TEMPORARY TABLE IF EXISTS temp_posts, temp_users, temp_emojis;
@@ -1201,9 +1201,35 @@ if [ "$REACTIONS_COUNT" -eq 0 ]; then
         )
         -- Limiter le nombre total de réactions générées pour éviter de surcharger
         LIMIT 200;
+
+        -- Étape 5: Renvoyer un résumé de ce qui a été fait
+        SELECT 
+            CONCAT('Utilisateurs actifs utilisés : ', (SELECT COUNT(*) FROM temp_users)),
+            CONCAT('Messages ciblés : ', (SELECT COUNT(*) FROM temp_posts)),
+            CONCAT('Réactions générées : ', ROW_COUNT());
 SEEDING_EOF
     )
-    check_status "Peuplement de la base de données avec des réactions de test." "$seeding_output"
+
+    # Afficher une jolie sortie
+    echo -e "${GREEN}"
+    echo "            .-\"\"\"-."
+    echo "           /       \\"
+    echo "           \\.---. ./"
+    echo "           ( 🎲 🎲 )    DATABASE SEEDING"
+    echo "    _..oooO--(_)--Oooo.._"
+    echo "    \`--. .--. .--. .--'\`"
+    echo "       TEST DATA LOADED"
+    echo -e "${NC}"
+    
+    echo "┌──────────────────────────────────────────────────┐"
+    echo "│ 📊 RÉSUMÉ DU PEUPLEMENT DE LA BASE DE DONNÉES      │"
+    echo "├──────────────────────────────────────────────────┤"
+    echo "$seeding_output" | while IFS=$'\t' read -r users posts reactions; do
+        printf "│ %-48s │\n" "$users"
+        printf "│ %-48s │\n" "$posts"
+        printf "│ %-48s │\n" "$reactions"
+    done
+    echo "└──────────────────────────────────────────────────┘"
 else
     echo -e "${YELLOW}ℹ️  Peuplement ignoré : la table contient déjà ${REACTIONS_COUNT} réaction(s).${NC}"
 fi
