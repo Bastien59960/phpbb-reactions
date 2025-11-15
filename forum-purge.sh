@@ -323,7 +323,7 @@ if [ $purge_failed -ne 0 ]; then
     echo -e "${WHITE_ON_RED}  ⚠️  ÉCHEC DE LA PURGE AUTOMATIQUE - ANOMALIE DANS LES MIGRATIONS DÉTECTÉE          ${NC}"
     echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
     echo ""
-    echo -e "${YELLOW}   EXPLICATION : La commande 'phpbbcli extension:purge' a échoué. C'est le signe d'une erreur fatale${NC}"
+    echo -e "${YELLOW}   EXPLICATION : La commande 'phpbbcli extension:purge' a échoué. C'est souvent le signe d'une erreur fatale${NC}"
     echo -e "${YELLOW}   dans une des méthodes de réversion ('revert_data()' ou 'revert_schema()') de vos fichiers de migration.${NC}"
     echo ""
     echo -e "${YELLOW}   POUR ÉVITER QUE CELA SE REPRODUISE :${NC}"
@@ -331,9 +331,17 @@ if [ $purge_failed -ne 0 ]; then
     echo -e "${YELLOW}   2. Assurez-vous que CHAQUE méthode 'revert_data()' et 'revert_schema()' se termine par 'return array(...);'${NC}"
     echo -e "${YELLOW}      Même si la méthode ne fait rien, elle doit retourner un tableau vide : 'return array();'${NC}"
     echo ""
-    echo -e "${GREEN}   SOLUTION IMMÉDIATE : Le script va maintenant lancer un nettoyage manuel forcé pour corriger l'état de la base de données.${NC}"
-    echo ""
-    force_manual_purge
+    echo -e "${YELLOW}   Voulez-vous continuer avec un nettoyage manuel forcé pour corriger l'état de la base de données ? (y/n)${NC}"
+    read -r user_choice
+
+    if [[ "$user_choice" == "y" || "$user_choice" == "Y" ]]; then
+        echo -e "${GREEN}   SOLUTION IMMÉDIATE : Lancement du nettoyage manuel forcé pour corriger l'état de la base de données.${NC}"
+        echo ""
+        force_manual_purge
+    else
+        echo -e "${RED}   Opération annulée par l'utilisateur. Le script va s'arrêter.${NC}"
+        exit 1
+    fi
 fi
 
 # ==============================================================================
