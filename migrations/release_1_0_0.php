@@ -128,7 +128,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                     'module_mode'       => 'settings',
                     'module_auth'       => 'ext_bastien59960/reactions',
                 )
-            ))),
+            )),
 
             array('custom', array(array($this, 'set_utf8mb4_bin'))),
             array('custom', array(array($this, 'create_notification_type'))),
