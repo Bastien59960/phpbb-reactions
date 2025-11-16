@@ -69,23 +69,34 @@ class release_1_0_3 extends \phpbb\db\migration\migration
      */
     public function convert_notification_data_to_utf8mb4()
     {
-        // IMPORTANT : On doit d'abord convertir en BLOB (binaire) pour ne pas perdre
-        // les données lors de la conversion de charset. C'est la procédure recommandée.
-        $sql_array = [
-            // Étape 1 : Convertir en BLOB (binaire, pas de charset)
-            "ALTER TABLE {$this->table_prefix}notifications 
-             MODIFY notification_data MEDIUMBLOB",
+        try {
+            // IMPORTANT : On doit d'abord convertir en BLOB (binaire) pour ne pas perdre
+            // les données lors de la conversion de charset. C'est la procédure recommandée.
+            $sql_array = [
+                // Étape 1 : Convertir en BLOB (binaire, pas de charset)
+                "ALTER TABLE {$this->table_prefix}notifications 
+                 MODIFY notification_data MEDIUMBLOB",
+                
+                // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb4
+                "ALTER TABLE {$this->table_prefix}notifications 
+                 MODIFY notification_data MEDIUMTEXT 
+                 CHARACTER SET utf8mb4 
+                 COLLATE utf8mb4_bin",
+            ];
             
-            // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb4
-            "ALTER TABLE {$this->table_prefix}notifications 
-             MODIFY notification_data MEDIUMTEXT 
-             CHARACTER SET utf8mb4 
-             COLLATE utf8mb4_bin",
-        ];
-        
-        foreach ($sql_array as $sql)
-        {
-            $this->db->sql_query($sql);
+            // Début de la transaction
+            $this->db->sql_transaction('begin');
+
+            foreach ($sql_array as $sql)
+            {
+                $this->db->sql_query($sql);
+            }
+
+            // Valider la transaction
+            $this->db->sql_transaction('commit');
+        } catch (\phpbb\db\sql_exception $e) {
+            $this->db->sql_transaction('rollback');
+            return false; // Indique à phpBB que la migration a échoué
         }
 
         return true;
@@ -124,21 +135,32 @@ class release_1_0_3 extends \phpbb\db\migration\migration
      */
     public function revert_notification_data_to_utf8mb3()
     {
-        $sql_array = [
-            // Étape 1 : Convertir en BLOB
-            "ALTER TABLE {$this->table_prefix}notifications 
-             MODIFY notification_data MEDIUMBLOB",
-            
-            // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb3
-            "ALTER TABLE {$this->table_prefix}notifications 
-             MODIFY notification_data MEDIUMTEXT 
-             CHARACTER SET utf8 
-             COLLATE utf8_bin",
-        ];
-        
-        foreach ($sql_array as $sql)
-        {
-            $this->db->sql_query($sql);
+        try {
+            $sql_array = [
+                // Étape 1 : Convertir en BLOB
+                "ALTER TABLE {$this->table_prefix}notifications 
+                 MODIFY notification_data MEDIUMBLOB",
+                
+                // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb3
+                "ALTER TABLE {$this->table_prefix}notifications 
+                 MODIFY notification_data MEDIUMTEXT 
+                 CHARACTER SET utf8 
+                 COLLATE utf8_bin",
+            ];
+
+            // Début de la transaction
+            $this->db->sql_transaction('begin');
+
+            foreach ($sql_array as $sql)
+            {
+                $this->db->sql_query($sql);
+            }
+
+            // Valider la transaction
+            $this->db->sql_transaction('commit');
+        } catch (\phpbb\db\sql_exception $e) {
+            $this->db->sql_transaction('rollback');
+            return false; // Indique à phpBB que l'annulation a échoué
         }
 
         return true;
