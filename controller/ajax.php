@@ -523,10 +523,10 @@ class ajax
             $topic_id = (int) $row['topic_id'];
 
             // Vérifier si l'utilisateur a déjà ajouté cet emoji spécifique à ce message.
-            $dupSql = 'SELECT reaction_id FROM ' . $this->post_reactions_table . '
-            WHERE post_id = ' . $post_id . '
-              AND user_id = ' . $user_id . "
-              AND reaction_emoji COLLATE utf8mb4_bin = '" . $this->db->sql_escape($emoji) . "'";
+            $dupSql = 'SELECT reaction_id FROM ' . $this->post_reactions_table .
+                ' WHERE post_id = ' . (int)$post_id .
+                ' AND user_id = ' . (int)$user_id .
+                " AND reaction_emoji COLLATE utf8mb4_bin = '" . $this->db->sql_escape($emoji) . "'";
 
             if (defined('DEBUG') && DEBUG) {
                 error_log("[Reactions RID=$rid] duplicate SQL: $dupSql");
@@ -535,7 +535,7 @@ class ajax
             $already = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
             if (defined('DEBUG') && DEBUG) {
-                error_log("[Reactions RID=$rid] duplicate found=" . json_encode((bool)$already));
+                error_log("[Reactions RID=$rid] duplicate found=" . json_encode($already));
             }
 
             if ($already) {
@@ -941,8 +941,7 @@ class ajax
 
             // Envoyer la notification via le manager de phpBB
             $notification_ids = $this->notification_manager->add_notifications(
-                // CORRECTION : Le premier argument est un tableau de types de notifications
-                ['notification.type.reaction'],
+                'notification.type.reaction',
                 $notification_data
             );
 

@@ -917,7 +917,7 @@ function toggle_visible(id) {
 
         // Log de debug (uniquement si le mode debug de phpBB est activé)
         if (window.REACTIONS_DEBUG_MODE) {
-            console.debug('[Reactions] Envoi payload:', payload);
+            console.log('[Reactions] Envoi payload:', payload);
         }
         // =====================================================================
         // AJOUT D'UN INDICATEUR DE CHARGEMENT
