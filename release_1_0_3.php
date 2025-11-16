@@ -11,7 +11,7 @@
  * @brief      Migration pour rendre la colonne des notifications compatible avec les emojis.
  *
  * Cette migration corrige un problème fondamental où les emojis (qui sont des
- * caractères UTF-8 sur 4 bytes) ne pouvaient pas être stockés dans la colonne
+ * caractères UTF-8 sur 4 octets) ne pouvaient pas être stockés dans la colonne
  * `notification_data`, causant des erreurs SQL "Incorrect string value".
  *
  * La solution consiste à modifier cette colonne pour qu'elle utilise le jeu de
