@@ -57,8 +57,8 @@ class release_1_0_3 extends \phpbb\db\migration\migration
     {
         return [
             'custom' => [
-                // Utiliser une fonction anonyme pour exécuter du SQL personnalisé
-                [[$this, 'convert_notification_data_to_utf8mb4']],
+                // On passe directement le "callable" (un tableau [objet, 'nom_methode'])
+                [$this, 'convert_notification_data_to_utf8mb4'],
             ],
         ];
     }
