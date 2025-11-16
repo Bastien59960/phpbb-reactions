@@ -69,37 +69,23 @@ class release_1_0_3 extends \phpbb\db\migration\migration
      */
     public function convert_notification_data_to_utf8mb4()
     {
-        try {
-            // IMPORTANT : On doit d'abord convertir en BLOB (binaire) pour ne pas perdre
-            // les données lors de la conversion de charset. C'est la procédure recommandée.
-            $sql_array = [
-                // Étape 1 : Convertir en BLOB (binaire, pas de charset)
-                "ALTER TABLE {$this->table_prefix}notifications 
-                 MODIFY notification_data MEDIUMBLOB",
-                
-                // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb4
-                "ALTER TABLE {$this->table_prefix}notifications 
-                 MODIFY notification_data MEDIUMTEXT 
-                 CHARACTER SET utf8mb4 
-                 COLLATE utf8mb4_bin",
-            ];
+        // IMPORTANT : On doit d'abord convertir en BLOB (binaire) pour ne pas perdre
+        // les données lors de la conversion de charset. C'est la procédure recommandée.
+        // On ne met PAS de try/catch ici pour laisser phpBB gérer les erreurs SQL.
+        $sql_array = [
+            // Étape 1 : Convertir en BLOB (binaire, pas de charset)
+            "ALTER TABLE {$this->table_prefix}notifications MODIFY notification_data MEDIUMBLOB",
             
-            // Début de la transaction
-            $this->db->sql_transaction('begin');
-
-            foreach ($sql_array as $sql)
-            {
-                $this->db->sql_query($sql);
-            }
-
-            // Valider la transaction
-            $this->db->sql_transaction('commit');
-        } catch (\phpbb\db\sql_exception $e) {
-            $this->db->sql_transaction('rollback');
-            return false; // Indique à phpBB que la migration a échoué
+            // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb4
+            "ALTER TABLE {$this->table_prefix}notifications MODIFY notification_data MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin",
+        ];
+        
+        // La transaction est gérée par le système de migration de phpBB.
+        // On se contente d'exécuter les requêtes.
+        foreach ($sql_array as $sql)
+        {
+            $this->db->sql_query($sql);
         }
-
-        return true;
     }
     
     /**
