@@ -894,12 +894,12 @@ function toggle_visible(id) {
         const cleanEmoji = safeEmoji(String(emoji));
 
         // Recherche de l'élément réaction dans le DOM pour déterminer l'action
-        const wrapperElement = document.querySelector(
+        const reactionElement = document.querySelector(
             `.post-reactions-container[data-post-id="${postId}"] .reaction-wrapper[data-emoji="${cleanEmoji}"]`
         );
 
         // Détermine si l'utilisateur a déjà réagi (classe "active" sur le wrapper)
-        const hasReacted = wrapperElement && wrapperElement.classList.contains('active');
+        const hasReacted = reactionElement && reactionElement.classList.contains('active');
         
         // Action : 'add' si pas encore réagi, 'remove' sinon
         const action = hasReacted ? 'remove' : 'add';
@@ -922,8 +922,8 @@ function toggle_visible(id) {
         // =====================================================================
         // AJOUT D'UN INDICATEUR DE CHARGEMENT
         // =====================================================================
-        if (wrapperElement) {
-            wrapperElement.classList.add('loading');
+        if (reactionElement) {
+            reactionElement.classList.add('loading');
         }
 
         // =====================================================================
@@ -1001,8 +1001,8 @@ function toggle_visible(id) {
             }
         })
         .finally(() => {
-            if (wrapperElement) {
-                wrapperElement.classList.remove('loading');
+            if (reactionElement) {
+                reactionElement.classList.remove('loading');
             }
         })
         .catch(error => {
