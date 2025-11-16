@@ -26,8 +26,8 @@
     <div class="post-reactions">
         <!-- Boucle des réactions existantes depuis la base de données -->
         <!-- BEGIN post_reactions --> 
-        <div class="reaction-wrapper" data-emoji="{post_reactions.EMOJI}" data-count="{post_reactions.COUNT}" data-users="{post_reactions.USERS}">
-            <button type="button" class="reaction<!-- IF post_reactions.USER_REACTED --> active<!-- ENDIF -->"
+        <div class="reaction-wrapper<!-- IF post_reactions.USER_REACTED --> active<!-- ENDIF -->" data-emoji="{post_reactions.EMOJI}" data-count="{post_reactions.COUNT}" data-users="{post_reactions.USERS}">
+            <button type="button" class="reaction"
                     title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
                     aria-label="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF --> pour {post_reactions.EMOJI}"
                     <!-- IF post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>

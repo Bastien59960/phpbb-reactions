@@ -150,7 +150,7 @@ class helper
             $button_classes = ['reaction'];
 
             if ($reaction['user_reacted']) {
-                $button_classes[] = 'active';
+                $wrapper_classes[] = 'active';
             }
             if ($is_readonly) {
                 $button_classes[] = 'reaction-readonly';

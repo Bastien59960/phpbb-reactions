@@ -251,15 +251,14 @@ function toggle_visible(id) {
      */
     function handleReactionClick(event) {
         // CORRECTION : Cible l'élément .reaction, même si le clic est sur un enfant (ex: .count)
-        const reactionButton = event.target.closest('.reaction:not(.reaction-readonly)');
+        const wrapper = event.target.closest('.reaction-wrapper');
 
         // Si le clic n'est pas sur une réaction valide, on ignore.
-        if (!reactionButton) {
+        if (!wrapper || wrapper.querySelector('.reaction-readonly')) {
             return;
         }
 
         event.preventDefault(); // Empêche le comportement par défaut uniquement si c'est une réaction.
-        const wrapper = reactionButton.closest('.reaction-wrapper');
         const emoji = wrapper.getAttribute('data-emoji');
         const postId = getPostIdFromReaction(wrapper);
         
@@ -891,12 +890,12 @@ function toggle_visible(id) {
         const cleanEmoji = safeEmoji(String(emoji));
 
         // Recherche de l'élément réaction dans le DOM pour déterminer l'action
-        const reactionElement = document.querySelector(
-            `.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${cleanEmoji}"]:not(.reaction-readonly)`
+        const wrapperElement = document.querySelector(
+            `.post-reactions-container[data-post-id="${postId}"] .reaction-wrapper[data-emoji="${cleanEmoji}"]`
         );
-        
-        // Détermine si l'utilisateur a déjà réagi (classe "active")
-        const hasReacted = reactionElement && reactionElement.classList.contains('active');
+
+        // Détermine si l'utilisateur a déjà réagi (classe "active" sur le wrapper)
+        const hasReacted = wrapperElement && wrapperElement.classList.contains('active');
         
         // Action : 'add' si pas encore réagi, 'remove' sinon
         const action = hasReacted ? 'remove' : 'add';
@@ -919,11 +918,8 @@ function toggle_visible(id) {
         // =====================================================================
         // AJOUT D'UN INDICATEUR DE CHARGEMENT
         // =====================================================================
-        const clickedElement = document.querySelector(
-            `.post-reactions-container[data-post-id="${postId}"] .reaction[data-emoji="${cleanEmoji}"]`
-        );
-        if (clickedElement) {
-            clickedElement.classList.add('loading');
+        if (wrapperElement) {
+            wrapperElement.classList.add('loading');
         }
 
         // =====================================================================
@@ -1001,8 +997,8 @@ function toggle_visible(id) {
             }
         })
         .finally(() => {
-            if (clickedElement) {
-                clickedElement.classList.remove('loading');
+            if (wrapperElement) {
+                wrapperElement.classList.remove('loading');
             }
         })
         .catch(error => {
@@ -1067,58 +1063,57 @@ function toggle_visible(id) {
         }
 
         // Rechercher l'élément réaction existant
-        let reactionElement = postContainer.querySelector(
-            `.reaction[data-emoji="${emoji}"]:not(.reaction-readonly)`
+        let wrapperElement = postContainer.querySelector(
+            `.reaction-wrapper[data-emoji="${emoji}"]`
         );
 
         // =====================================================================
         // CAS 1 : LA RÉACTION N'EXISTE PAS ENCORE DANS LE DOM
         // =====================================================================
         
-        if (!reactionElement) {
-            // Créer un nouvel élément span.reaction
-            reactionElement = document.createElement('span');
-            reactionElement.classList.add('reaction');
-            reactionElement.setAttribute('data-emoji', safeEmoji(String(emoji)));
-            reactionElement.innerHTML = `${safeEmoji(String(emoji))} <span class="count">0</span>`;
+        if (!wrapperElement) {
+            wrapperElement = document.createElement('div');
+            wrapperElement.className = 'reaction-wrapper';
+            wrapperElement.setAttribute('data-emoji', safeEmoji(String(emoji)));
             
-            // Attacher l'écouteur de clic
-            reactionElement.addEventListener('click', handleReactionClick);
-
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'reaction';
+            button.innerHTML = `${safeEmoji(String(emoji))} <span class="count">0</span>`;
+            wrapperElement.appendChild(button);
+            
             // Insérer dans le DOM (avant le bouton "plus" si présent)
             const moreButton = postContainer.querySelector('.reaction-more');
             const reactionsContainer = postContainer.querySelector('.post-reactions');
             
             if (reactionsContainer) {
                 if (moreButton) {
-                    reactionsContainer.insertBefore(reactionElement, moreButton);
+                    reactionsContainer.insertBefore(wrapperElement, moreButton);
                 } else {
-                    reactionsContainer.appendChild(reactionElement);
+                    reactionsContainer.appendChild(wrapperElement);
                 }
+                // Ré-attacher les événements sur le nouveau wrapper
+                setupReactionTooltip(wrapperElement, postId, emoji);
             } else {
                 console.error('[Reactions] Impossible d\'insérer la nouvelle réaction');
                 return;
             }
         }
 
-        // =====================================================================
-        // CAS 2 : MISE À JOUR DE LA RÉACTION EXISTANTE
-        // =====================================================================
-        
         // Mettre à jour le compteur affiché
-        const countSpan = reactionElement.querySelector('.count');
+        const countSpan = wrapperElement.querySelector('.count');
         if (countSpan) {
             countSpan.textContent = newCount;
         }
 
         // Mettre à jour l'attribut data-count
-        reactionElement.setAttribute('data-count', newCount);
+        wrapperElement.setAttribute('data-count', newCount);
 
         // Gestion de l'état actif (classe CSS "active")
         if (userHasReacted) {
-            reactionElement.classList.add('active');
+            wrapperElement.classList.add('active');
         } else {
-            reactionElement.classList.remove('active');
+            wrapperElement.classList.remove('active');
         }
 
         // Masquer si compteur à zéro
@@ -1127,9 +1122,6 @@ function toggle_visible(id) {
         } else {
             reactionElement.style.display = '';
         }
-
-        // Ré-attacher le tooltip avec les nouvelles données
-        setupReactionTooltip(reactionElement, postId, emoji);
     }
 
     /* ---------------------------------------------------------------------- */
@@ -1160,7 +1152,7 @@ function toggle_visible(id) {
         reactionElement.onmouseleave = null;
 
         // Supprimer le title natif HTML (évite double affichage)
-        reactionElement.querySelector('.reaction')?.removeAttribute('title');
+        reactionElement.querySelector('.reaction')?.removeAttribute('title'); // Le title est maintenant sur le wrapper
 
         // =====================================================================
         // ÉVÉNEMENT : MOUSE ENTER (SURVOL)

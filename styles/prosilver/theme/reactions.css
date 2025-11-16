@@ -133,13 +133,12 @@
     transform: translateY(-1px);
 }
 
-.post-reactions .reaction-wrapper .reaction.active,
-.post-reactions .reaction-wrapper:hover .reaction.active {
+.post-reactions .reaction-wrapper.active {
     background: #4a90c2;
-    color: white;
     border-color: #3a7ca8;
 }
 
+.post-reactions .reaction-wrapper.active .reaction, .post-reactions .reaction-wrapper.active .count { color: white; }
 .post-reactions .reaction .count {
     margin-left: 4px;
     font-weight: 500;
@@ -326,7 +325,7 @@
     color: #0a66c2;
 }
 
-/* ========== Tooltip Utilisateurs (pas de changement) ========== */
+/* ========== Tooltip Utilisateurs (CORRIGÉ) ========== */
 .reaction-user-tooltip {
     background: white;
     border: 1px solid #ddd;
@@ -334,27 +333,28 @@
     padding: 8px 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     font-size: 13px;
-    max-width: 300px;
     z-index: 10001;
+    list-style: none; /* Supprime les puces (•) */
+    margin: 0;
+    padding: 5px;
+    text-align: left;
 }
 
-.reaction-user-link {
+.reaction-user-tooltip li {
+    padding: 2px 0;
+}
+
+.reaction-user-tooltip .reaction-user-link {
     color: #1976d2;
     text-decoration: none;
     display: inline-block;
     padding: 2px 4px;
     transition: all 0.15s;
 }
-
-.reaction-user-link:hover {
+.reaction-user-tooltip .reaction-user-link:hover {
     background: #e3f2fd;
     border-radius: 3px;
     color: #0d47a1;
-}
-
-.reaction-user-tooltip .reaction-user-link:not(:last-child)::after {
-    content: ', ';
-    color: #666;
 }
 
 .emoji-picker--no-categories .emoji-tabs,

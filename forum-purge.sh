@@ -1572,6 +1572,13 @@ POST_CRON_EOF
         echo "    \`--. .--. .--. .--'\`"
         echo "       SYSTEM READY"
         echo -e "${NC}"
+        echo ""
+        echo -e "${YELLOW}            .-''-."
+        echo -e "           /  (  )  \\"
+        echo -e "          |   o  o   |"
+        echo -e "          |  .._..   |"
+        echo -e "           \\      /  -- BUGS FIXED"
+        echo -e "            \`-..-'\`"
     fi
 else
     echo -e "\n${WHITE_ON_RED}❌ ERREUR : La tâche cron '$CRON_TASK_NAME' est ABSENTE de la liste !${NC}\n"
