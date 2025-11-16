@@ -249,29 +249,9 @@ INITIAL_DIAG_EOF
 )
 check_status "Diagnostic initial des notifications." "$initial_diag_output"
 # ==============================================================================
-# 3️⃣ NETTOYAGE D'URGENCE (POUR PAGE BLANCHE)
+# 3️⃣ SAUVEGARDE DE LA CONFIGURATION SPAM_TIME
 # ==============================================================================
-echo -e "───[ 3️⃣  NETTOYAGE D'URGENCE (PAGE BLANCHE) ]────────────────────"
-echo -e "${YELLOW}ℹ️  Vidage de la table des notifications pour corriger les erreurs fatales (page blanche).${NC}"
-sleep 0.2
-
-emergency_cleanup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EMERGENCY_CLEANUP_EOF'
--- Réinitialiser le verrou du cron en base de données, une cause possible de blocage.
-UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
-
--- Vider complètement la table des notifications, souvent source d'erreurs fatales si corrompue.
-TRUNCATE TABLE phpbb_notifications;
-
-SELECT CONCAT('✅ Table des notifications vidée (', ROW_COUNT(), ' lignes affectées).') AS result;
-EMERGENCY_CLEANUP_EOF
-)
-check_status "Nettoyage d'urgence de la table des notifications." "$emergency_cleanup_output"
-
-
-# ==============================================================================
-# 4️⃣ SAUVEGARDE DE LA CONFIGURATION SPAM_TIME
-# ==============================================================================
-echo -e "───[ 4️⃣  SAUVEGARDE DE LA CONFIGURATION SPAM_TIME ]───────────────────"
+echo -e "───[ 3️⃣  SAUVEGARDE DE LA CONFIGURATION SPAM_TIME ]───────────────────"
 echo -e "${YELLOW}ℹ️  Sauvegarde de la valeur actuelle du délai anti-spam...${NC}"
 sleep 0.2
 
@@ -284,9 +264,9 @@ echo -e "${GREEN}✅ Valeur du délai anti-spam sauvegardée : ${SPAM_TIME_BACKU
 
 
 # ==============================================================================
-# 5️⃣ RESTAURATION PRÉCOCE (SI NÉCESSAIRE)
+# 4️⃣ RESTAURATION PRÉCOCE (SI NÉCESSAIRE)
 # ==============================================================================
-echo -e "───[ 5️⃣  RESTAURATION PRÉCOCE (SI NÉCESSAIRE) ]─────────────────"
+echo -e "───[ 4️⃣  RESTAURATION PRÉCOCE (SI NÉCESSAIRE) ]─────────────────"
 echo -e "${YELLOW}ℹ️  Vérification si la table principale est vide pour une restauration précoce...${NC}"
 sleep 0.2
 
@@ -319,9 +299,9 @@ EARLY_RESTORE_EOF
 fi
 
 # ==============================================================================
-# 6️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
+# 5️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
 # ==============================================================================
-echo -e "───[ 6️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
+echo -e "───[ 5️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
 echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité de la table 'phpbb_post_reactions' avant toute modification.${NC}"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -353,9 +333,9 @@ else
 fi
 
 # ==============================================================================
-# 7️⃣ SAUVEGARDE DES NOTIFICATIONS "CLOCHE"
+# 6️⃣ SAUVEGARDE DES NOTIFICATIONS "CLOCHE"
 # ==============================================================================
-echo -e "───[ 7️⃣  SAUVEGARDE DES NOTIFICATIONS 'CLOCHE' ]──────────────────"
+echo -e "───[ 6️⃣  SAUVEGARDE DES NOTIFICATIONS 'CLOCHE' ]──────────────────"
 echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité des notifications de réaction...${NC}"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -380,9 +360,9 @@ BACKUP_NOTIF_EOF
 check_status "Sauvegarde des notifications 'cloche'." "$backup_notif_output"
 
 # ==============================================================================
-# 8️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
+# 7️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
 # ==============================================================================
-echo -e "───[ 8️⃣  DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
+echo -e "───[ 7️⃣  DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
 echo -e "${YELLOW}ℹ️  Utilisation des commandes natives de phpBB pour tester le cycle de vie de l'extension.${NC}"
 sleep 0.2
 
@@ -430,9 +410,9 @@ if [ $purge_exit_code -ne 0 ]; then
 fi
 
 # ==============================================================================
-# 9️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
+# 8️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
-echo -e "───[ 9️⃣  NETTOYAGE DES MIGRATIONS CORROMPUES ]───────────────────"
+echo -e "───[ 8️⃣  NETTOYAGE DES MIGRATIONS CORROMPUES ]───────────────────"
 sleep 0.2
 echo -e "${YELLOW}ℹ️  Certaines extensions tierces peuvent laisser des migrations corrompues qui empêchent l'activation d'autres extensions.${NC}"
 echo -e "   (Le mot de passe a été demandé au début du script.)"
@@ -488,9 +468,9 @@ CLEANUP_EOF
 check_status "Nettoyage des migrations problématiques terminé."
 
 # ==============================================================================
-# 1️⃣0️⃣ SUPPRESSION FICHIER cron.lock
+# 9️⃣ SUPPRESSION FICHIER cron.lock
 # ==============================================================================
-echo -e "───[ 1️⃣0️⃣ SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
+echo -e "───[ 9️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
 echo -e "${YELLOW}ℹ️  Un fichier de verrouillage de cron ('cron.lock') peut bloquer l'exécution des tâches planifiées.${NC}"
 sleep 0.2
 if [ -f "$FORUM_ROOT/store/cron.lock" ]; then
@@ -500,9 +480,9 @@ else
     echo -e "${GREEN}ℹ️  Aucun cron.lock trouvé (déjà absent).${NC}"
 fi
 # ==============================================================================
-# 1️⃣1️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
+# 1️⃣0️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
 # ==============================================================================
-echo -e "───[ 1️⃣1️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
+echo -e "───[ 1️⃣0️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
 echo -e "${YELLOW}ℹ️  Réinitialisation du verrou de cron en BDD et suppression de TOUTES les notifications.${NC}"
 sleep 0.2
 
@@ -517,9 +497,9 @@ FINAL_CLEANUP_EOF
 check_status "Nettoyage final de la BDD (cron_lock, toutes notifications)."
 
 # ==============================================================================
-# 1️⃣2️⃣ PURGE DU CACHE (AVANT RÉACTIVATION)
+# 1️⃣1️⃣ PURGE DU CACHE (AVANT RÉACTIVATION)
 # ==============================================================================
-echo -e "───[ 1️⃣2️⃣ PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
+echo -e "───[ 1️⃣1️⃣ PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
 echo -e "${YELLOW}ℹ️  Dernière purge pour s'assurer que le forum est dans un état parfaitement propre avant de réactiver.${NC}"
 sleep 0.2
 output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
@@ -531,7 +511,7 @@ check_status "Cache purgé avant réactivation." "$output"
 echo -e "${YELLOW}ℹ️  Pause de 1 seconde pour laisser le temps au système de se stabiliser...${NC}"
 sleep 1
 # ==============================================================================
-# DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
+# 1️⃣2️⃣ DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
 # ==============================================================================
 # Ce bloc est défini une seule fois et redirigé vers le descripteur de fichier 3.
 # Il sera réutilisé par les étapes 14 et 16.
