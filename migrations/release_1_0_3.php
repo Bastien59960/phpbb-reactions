@@ -5,8 +5,8 @@
  * @copyright  (c) 2024 Bastien59960
  * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Fichier : release_1_0_3.php
- * Chemin : /migrations/release_1_0_3.php
+ * Fichier : release_1_0_3.php 
+ * Chemin : /migrations/release_1_0_3.php 
  *
  * @brief      Migration pour rendre la colonne des notifications compatible avec les emojis.
  *
@@ -92,6 +92,19 @@ class release_1_0_3 extends \phpbb\db\migration\migration
     }
     
     /**
+     * Met à jour les données de l'extension (version).
+     */
+    public function update_data()
+    {
+        return [
+            // Met à jour le numéro de version dans la table de configuration.
+            // Le nom de la variable de configuration est déduit du nom de l'extension.
+            // Pour "bastien59960/reactions", la variable est "bastien59960_reactions_version".
+            ['config.set', ['bastien59960_reactions_version', '1.0.3']],
+        ];
+    }
+
+    /**
      * Annule les changements de schéma.
      * ATTENTION : Cette opération peut perdre les emojis déjà stockés !
      * On la met en place uniquement pour permettre la désinstallation propre.
@@ -129,5 +142,17 @@ class release_1_0_3 extends \phpbb\db\migration\migration
         }
 
         return true;
+    }
+
+    /**
+     * Annule les changements de données.
+     * Rétablit le numéro de version précédent.
+     */
+    public function revert_data()
+    {
+        return [
+            // Rétablit la version précédente lors de l'annulation de la migration.
+            ['config.set', ['bastien59960_reactions_version', '1.0.2']],
+        ];
     }
 }
