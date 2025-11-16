@@ -25,16 +25,17 @@
 <div class="post-reactions-container" data-post-id="{POST_ID}">
     <div class="post-reactions">
         <!-- Boucle des réactions existantes depuis la base de données -->
-        <!-- BEGIN post_reactions -->
-        <span class="reaction<!-- IF post_reactions.USER_REACTED --> active<!-- ENDIF -->"
-              data-emoji="{post_reactions.EMOJI}"
-              data-count="{post_reactions.COUNT}"
-              data-users="{post_reactions.USERS}"
-              title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
-              <!-- IF post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
-            {post_reactions.EMOJI}
-            <span class="count">{post_reactions.COUNT}</span>
-        </span>
+        <!-- BEGIN post_reactions --> 
+        <div class="reaction-wrapper" data-emoji="{post_reactions.EMOJI}" data-count="{post_reactions.COUNT}" data-users="{post_reactions.USERS}">
+            <button type="button" class="reaction<!-- IF post_reactions.USER_REACTED --> active<!-- ENDIF -->"
+                    title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
+                    aria-label="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF --> pour {post_reactions.EMOJI}"
+                    <!-- IF post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
+                {post_reactions.EMOJI}
+                <span class="count">{post_reactions.COUNT}</span>
+            </button>
+            <!-- Le tooltip sera généré par JavaScript ici -->
+        </div>
         <!-- END post_reactions -->
         
         <!-- Bouton pour ouvrir la palette d'emojis -->
@@ -50,16 +51,18 @@
     <div class="post-reactions">
         <!-- Boucle des réactions existantes (lecture seule) -->
         <!-- BEGIN post_reactions -->
-            <!-- Afficher seulement les réactions avec un compteur > 0 -->
-            <!-- IF post_reactions.COUNT > 0 -->
-            <span class="reaction reaction-readonly"
-                  data-emoji="{post_reactions.EMOJI}"
-                  data-count="{post_reactions.COUNT}"
-                  title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
+        <!-- Afficher seulement les réactions avec un compteur > 0 -->
+        <!-- IF post_reactions.COUNT > 0 -->
+        <div class="reaction-wrapper">
+            <button type="button" class="reaction reaction-readonly"
+                    data-emoji="{post_reactions.EMOJI}"
+                    data-count="{post_reactions.COUNT}"
+                    title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
                 {post_reactions.EMOJI}
                 <span class="count">{post_reactions.COUNT}</span>
-            </span>
-            <!-- ENDIF -->
+            </button>
+        </div>
+        <!-- ENDIF -->
         <!-- END post_reactions -->
     </div>
 </div>

@@ -191,11 +191,11 @@ function toggle_visible(id) {
      * @param {HTMLElement} context Contexte DOM de recherche
      */
     function attachReactionEvents(context) {
-        // CORRECTION : Utiliser la délégation d'événements pour les conteneurs de réactions.
+        // Utiliser la délégation d'événements pour les conteneurs de réactions.
         // C'est plus performant et robuste aux mises à jour du DOM.
-        context.querySelectorAll('.post-reactions').forEach(container => {
+        context.querySelectorAll('.post-reactions-container').forEach(container => {
             // On s'assure de ne pas attacher plusieurs fois le même listener.
-            container.removeEventListener('click', handleReactionClick);
+            if (container.dataset.eventsAttached) return;
             container.addEventListener('click', handleReactionClick);
         });
     }
@@ -223,11 +223,11 @@ function toggle_visible(id) {
      * @param {HTMLElement} context Contexte DOM de recherche
      */
     function attachTooltipEvents(context) {
-        context.querySelectorAll('.post-reactions .reaction').forEach(reaction => {
-            const emoji = reaction.getAttribute('data-emoji');
-            const postId = getPostIdFromReaction(reaction);
+        context.querySelectorAll('.post-reactions .reaction-wrapper').forEach(wrapper => {
+            const emoji = wrapper.getAttribute('data-emoji');
+            const postId = getPostIdFromReaction(wrapper);
             if (emoji && postId) {
-                setupReactionTooltip(reaction, postId, emoji);
+                setupReactionTooltip(wrapper, postId, emoji);
             }
         });
     }
@@ -251,16 +251,17 @@ function toggle_visible(id) {
      */
     function handleReactionClick(event) {
         // CORRECTION : Cible l'élément .reaction, même si le clic est sur un enfant (ex: .count)
-        const reactionElement = event.target.closest('.reaction:not(.reaction-readonly)');
+        const reactionButton = event.target.closest('.reaction:not(.reaction-readonly)');
 
         // Si le clic n'est pas sur une réaction valide, on ignore.
-        if (!reactionElement) {
+        if (!reactionButton) {
             return;
         }
 
         event.preventDefault(); // Empêche le comportement par défaut uniquement si c'est une réaction.
-        const emoji = reactionElement.getAttribute('data-emoji');
-        const postId = getPostIdFromReaction(reactionElement);
+        const wrapper = reactionButton.closest('.reaction-wrapper');
+        const emoji = wrapper.getAttribute('data-emoji');
+        const postId = getPostIdFromReaction(wrapper);
         
         // Validation des données
         if (!emoji || !postId) { // Sécurité : ne rien faire si les données sont invalides
@@ -1152,23 +1153,23 @@ function toggle_visible(id) {
      * @param {string} emoji Emoji de la réaction
      */
     function setupReactionTooltip(reactionElement, postId, emoji) {
-        let tooltipTimeout;
+        let tooltipTimeout, leaveTimeout;
 
         // Nettoyer les anciens listeners (idempotence)
         reactionElement.onmouseenter = null;
         reactionElement.onmouseleave = null;
 
         // Supprimer le title natif HTML (évite double affichage)
-        reactionElement.removeAttribute('title');
+        reactionElement.querySelector('.reaction')?.removeAttribute('title');
 
         // =====================================================================
         // ÉVÉNEMENT : MOUSE ENTER (SURVOL)
         // =====================================================================
         
         reactionElement.addEventListener('mouseenter', function(e) {
+            clearTimeout(leaveTimeout);
             // Délai de 300ms avant affichage (évite les survols rapides)
             tooltipTimeout = setTimeout(() => {
-                
                 // Vérifier si data-users est pré-rempli (optimisation)
                 const usersData = reactionElement.getAttribute('data-users');
                 
@@ -1228,8 +1229,10 @@ function toggle_visible(id) {
         // =====================================================================
         
         reactionElement.addEventListener('mouseleave', function() {
-            clearTimeout(tooltipTimeout);
-            hideUserTooltip();
+            clearTimeout(tooltipTimeout); // Annule l'ouverture si pas encore affiché
+            leaveTimeout = setTimeout(() => {
+                hideUserTooltip();
+            }, 200); // Délai avant de cacher
         });
     }
 
@@ -1249,11 +1252,11 @@ function toggle_visible(id) {
         hideUserTooltip();
 
         const tooltip = document.createElement('div');
-        tooltip.className = 'reaction-user-tooltip';
+        tooltip.className = 'reaction-tooltip'; // Utiliser la nouvelle classe CSS
 
         // Construction HTML sécurisée (escape XSS)
         const userLinks = users.map(user =>
-            `<a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a>`
+            `<li><a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a></li>`
         ).join('');
 
         tooltip.innerHTML = userLinks || '<span class="no-users">Personne</span>';
@@ -1263,12 +1266,15 @@ function toggle_visible(id) {
         // Positionnement sous l'élément
         const rect = element.getBoundingClientRect();
         tooltip.style.position = 'absolute';
-        tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
-        tooltip.style.left = `${rect.left + window.scrollX}px`;
+        tooltip.style.top = `${rect.bottom + window.scrollY}px`; // Collé en dessous
+        tooltip.style.left = `${rect.left + window.scrollX + (rect.width / 2)}px`; // Centré
+        tooltip.style.transform = 'translateX(-50%)';
         tooltip.style.zIndex = '10001';
 
         // Garder visible si l'utilisateur survole le tooltip
-        tooltip.addEventListener('mouseenter', () => {});
+        tooltip.addEventListener('mouseenter', () => {
+            clearTimeout(leaveTimeout);
+        });
         tooltip.addEventListener('mouseleave', () => {
             hideUserTooltip();
         });

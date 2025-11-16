@@ -320,6 +320,33 @@ else
 fi
 
 # ==============================================================================
+# 3.5 SAUVEGARDE DES NOTIFICATIONS "CLOCHE"
+# ==============================================================================
+echo -e "───[ 3.5 SAUVEGARDE DES NOTIFICATIONS 'CLOCHE' ]──────────────────"
+echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité des notifications de réaction...${NC}"
+sleep 0.2
+echo -e "   (Le mot de passe a été demandé au début du script.)"
+
+backup_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'BACKUP_NOTIF_EOF'
+    -- Créer la table de backup si elle n'existe pas, en se basant sur la table principale.
+    CREATE TABLE IF NOT EXISTS phpbb_notifications_backup LIKE phpbb_notifications;
+
+    -- Vider la sauvegarde précédente pour avoir un backup frais.
+    TRUNCATE TABLE phpbb_notifications_backup;
+
+    -- Insérer les notifications de type 'reaction' dans la sauvegarde.
+    INSERT INTO phpbb_notifications_backup
+    SELECT n.*
+    FROM phpbb_notifications n
+    JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
+    WHERE t.notification_type_name = 'notification.type.reaction';
+
+    SELECT CONCAT("✅ ", ROW_COUNT(), " notification(s) de réaction sauvegardée(s).") AS status;
+BACKUP_NOTIF_EOF
+)
+check_status "Sauvegarde des notifications 'cloche'." "$backup_notif_output"
+
+# ==============================================================================
 # 4️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
 # ==============================================================================
 echo -e "───[ 4️⃣  DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
@@ -1164,6 +1191,27 @@ RESTORE_EOF
             echo -e "${GREEN}ℹ️  Restauration ignorée : la table de sauvegarde est vide ou absente.${NC}"
         fi
     fi
+
+# ==============================================================================
+# 18.5 RESTAURATION DES NOTIFICATIONS
+# ==============================================================================
+echo -e "───[ 18.5 RESTAURATION DES NOTIFICATIONS 'CLOCHE' ]─────────"
+echo -e "${YELLOW}ℹ️  Réinjection des notifications 'cloche' depuis la sauvegarde...${NC}"
+sleep 0.2
+echo -e "   (Le mot de passe a été demandé au début du script.)"
+
+BACKUP_NOTIF_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications_backup;" 2>/dev/null || echo 0)
+
+if [ "$BACKUP_NOTIF_ROWS" -gt 0 ]; then
+    restore_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_NOTIF_EOF'
+        -- Insérer les notifications sauvegardées, en ignorant les doublons si certains existent déjà.
+        INSERT IGNORE INTO phpbb_notifications SELECT * FROM phpbb_notifications_backup;
+RESTORE_NOTIF_EOF
+    )
+    check_status "Restauration des notifications depuis 'phpbb_notifications_backup'." "$restore_notif_output"
+else
+    echo -e "${GREEN}ℹ️  Restauration des notifications ignorée : la sauvegarde est vide ou absente.${NC}"
+fi
 
 
 # ==============================================================================

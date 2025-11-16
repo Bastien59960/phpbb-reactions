@@ -98,8 +98,10 @@
 }
 
 /* ========== RÉACTIONS ========== */
-.post-reactions .reaction {
-    display: inline-flex;
+.post-reactions .reaction-wrapper {
+    position: relative; /* Contexte de positionnement pour le tooltip */
+    display: inline-block;
+    vertical-align: middle;
     align-items: center;
     background: #f3f3f3;
     border: 1px solid #d1d1d1;
@@ -115,19 +117,19 @@
     order: 1;
 }
 
-.post-reactions .reaction:hover {
+.post-reactions .reaction-wrapper:hover .reaction {
     background: #e8e8e8;
     border-color: #b8b8b8;
     transform: translateY(-1px);
 }
 
-.post-reactions .reaction.active {
+.post-reactions .reaction-wrapper .reaction.active {
     background: #4a90c2;
     color: white;
     border-color: #3a7ca8;
 }
 
-.post-reactions .reaction.active:hover {
+.post-reactions .reaction-wrapper .reaction.active:hover {
     background: #3a7ca8;
 }
 
@@ -319,35 +321,45 @@
     color: #0a66c2;
 }
 
-/* ========== Tooltip Utilisateurs (pas de changement) ========== */
-.reaction-user-tooltip {
+/* ========== Tooltip Utilisateurs (NOUVEAU STYLE) ========== */
+.reaction-tooltip {
+    position: absolute;
+    bottom: 100%; /* Se positionne juste au-dessus du bouton */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 5px; /* Petit espace entre le bouton et le tooltip */
+    z-index: 1050;
+    min-width: 150px;
+    max-width: 250px;
     background: white;
     border: 1px solid #ddd;
     border-radius: 6px;
     padding: 8px 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     font-size: 13px;
-    max-width: 300px;
-    z-index: 10001;
 }
 
-.reaction-user-link {
+.reaction-tooltip ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.reaction-tooltip li {
+    padding: 2px 0;
+}
+
+.reaction-tooltip .reaction-user-link {
     color: #1976d2;
     text-decoration: none;
     display: inline-block;
     padding: 2px 4px;
     transition: all 0.15s;
 }
-
-.reaction-user-link:hover {
+.reaction-tooltip .reaction-user-link:hover {
     background: #e3f2fd;
     border-radius: 3px;
     color: #0d47a1;
-}
-
-.reaction-user-tooltip .reaction-user-link:not(:last-child)::after {
-    content: ', ';
-    color: #666;
 }
 
 /*

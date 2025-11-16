@@ -143,38 +143,48 @@ class helper
 
         $html = '<div class="post-reactions">';
 
+        $is_readonly = !$is_logged_in;
+
         foreach ($reactions as $reaction) {
-            $classes = ['reaction'];
+            $wrapper_classes = ['reaction-wrapper'];
+            $button_classes = ['reaction'];
+
             if ($reaction['user_reacted']) {
-                $classes[] = 'active';
+                $button_classes[] = 'active';
             }
-            if (!$is_logged_in) {
-                $classes[] = 'reaction-readonly';
+            if ($is_readonly) {
+                $button_classes[] = 'reaction-readonly';
             }
 
-            $class_attr = implode(' ', $classes);
+            $wrapper_class_attr = implode(' ', $wrapper_classes);
+            $button_class_attr = implode(' ', $button_classes);
             $emoji_attr = htmlspecialchars($reaction['emoji'], ENT_QUOTES, 'UTF-8');
             $users_json = htmlspecialchars(json_encode($reaction['users'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+            $count_attr = (int) $reaction['count'];
+            $title_attr = htmlspecialchars($count_attr . ' réaction' . ($count_attr !== 1 ? 's' : ''), ENT_QUOTES, 'UTF-8');
+            $style_attr = ($count_attr === 0) ? ' style="display: none;"' : '';
 
+            $html .= '<div class="' . $wrapper_class_attr . '" data-emoji="' . $emoji_attr . '" data-count="' . $count_attr . '" data-users="' . $users_json . '">';
             $html .= sprintf(
-                '<span class="%s" data-emoji="%s" data-count="%d" data-users="%s">%s <span class="count">%d</span></span>',
-                $class_attr,
+                '<button type="button" class="%s" title="%s"%s>%s <span class="count">%d</span></button>',
+                $button_class_attr,
+                $title_attr,
+                $style_attr,
                 $emoji_attr,
-                (int) $reaction['count'],
-                $users_json,
-                $reaction['emoji'],
-                (int) $reaction['count']
+                $count_attr
             );
+            $html .= '</div>';
         }
 
         if ($is_logged_in) {
             $tooltip = htmlspecialchars($this->language->lang('REACTIONS_ADD_TOOLTIP'), ENT_QUOTES, 'UTF-8');
-            $html .= '<span class="reaction-more" role="button" title="' . $tooltip . '" aria-label="' . $tooltip . '">&#128077;</span>';
+            $html .= '<span class="reaction-more" role="button" title="' . $tooltip . '" aria-label="' . $tooltip . '">+</span>';
         }
 
         $html .= '</div>';
 
-        return $html;
+        // Encapsuler dans le conteneur parent pour un remplacement complet
+        return '<div class="post-reactions-container" data-post-id="' . $post_id . '">' . $html . '</div>';
     }
 
     /**
