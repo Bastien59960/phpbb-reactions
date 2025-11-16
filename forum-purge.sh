@@ -1699,6 +1699,28 @@ $stmt = $pdo->query("
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
 foreach ($notifications as $notif) {
+    // === DÉBUT DU DIAGNOSTIC ===
+    $raw_data = $notif['notification_data'];
+    
+    echo "\n=== DEBUG NOTIFICATION #{$notif['notification_id']} ===\n";
+    echo "Longueur: " . strlen($raw_data) . " caractères\n";
+    echo "Premiers 50 caractères: " . substr($raw_data, 0, 50) . "\n";
+    echo "Type détecté: ";
+    
+    // Vérifier le format exact
+    if (ctype_xdigit($raw_data) && strlen($raw_data) % 2 === 0) {
+        echo "HEXADECIMAL pur\n";
+    } elseif (preg_match('/^a:\d+:\{/', $raw_data)) {
+        echo "SERIALIZED PHP direct\n";
+    } elseif (preg_match('/^[A-Za-z0-9+\/]+=*$/', $raw_data)) {
+        echo "BASE64\n";
+    } else {
+        echo "FORMAT INCONNU\n";
+    }
+    echo "===============================\n\n";
+    // === FIN DU DIAGNOSTIC ===
+    
+    // Puis le code de décodage existant...
     // CORRECTION : Les données sont stockées en HEX, il faut les décoder avant de les désérialiser.
     $serialized_data = $notif['notification_data'];
     
@@ -1780,29 +1802,25 @@ while true; do
     case $REPLY in
         [Yy]* )
             echo "Lancement de la commande de purge des notifications..."
-            # CORRECTION : Utiliser le chemin absolu ET changer de répertoire
-            if [ -f "$FORUM_ROOT/bin/phpbbcli.php" ]; then
-                # Sauvegarder le répertoire actuel
-                CURRENT_DIR=$(pwd)
-                
-                # Se déplacer dans la racine du forum
-                cd "$FORUM_ROOT" || {
-                    echo -e "${RED}❌ ERREUR : Impossible d'accéder à $FORUM_ROOT${NC}"
-                    break
-                }
-                
-                # Exécuter la commande depuis la racine
-                purge_output=$(php bin/phpbbcli.php reactions:purge_notifications --force 2>&1)
-                purge_exit_code=$?
-                
-                # Retourner au répertoire d'origine
-                cd "$CURRENT_DIR" || true
-                
-                # Vérifier le résultat
-                (exit $purge_exit_code); check_status "Nettoyage des notifications de l'extension Reactions." "$purge_output"
-            else
-                echo -e "${RED}❌ ERREUR : Impossible de trouver $FORUM_ROOT/bin/phpbbcli.php. Commande ignorée.${NC}"
-            fi
+            # CORRECTION : Remplacement de la commande CLI par une requête SQL directe.
+            # C'est plus simple et évite les problèmes de chemin ou de service non trouvé.
+            
+            purge_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
+-- Récupérer les IDs des types de notification de l'extension
+SET @type_ids := (
+    SELECT GROUP_CONCAT(notification_type_id) 
+    FROM phpbb_notification_types 
+    WHERE notification_type_name LIKE 'notification.type.reaction%'
+);
+
+-- Supprimer les notifications correspondantes si des types ont été trouvés
+DELETE FROM phpbb_notifications 
+WHERE FIND_IN_SET(notification_type_id, @type_ids);
+
+SELECT CONCAT(ROW_COUNT(), ' notification(s) de réaction supprimée(s).') AS result;
+MANUAL_PURGE_EOF
+)
+            check_status "Nettoyage manuel des notifications de l'extension Reactions." "$purge_output"
             break
             ;;
         [Nn]* )
