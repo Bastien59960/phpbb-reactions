@@ -1756,7 +1756,7 @@ draw_table(
     $notif_rows
 );
 
- PHP_DIAG_EOF
+PHP_DIAG_EOF
  
  # Exporter les variables et exécuter le script PHP
  export DB_USER DB_NAME MYSQL_PASSWORD
