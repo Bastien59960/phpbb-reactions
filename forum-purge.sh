@@ -1417,12 +1417,12 @@ GET_REACTIONS_EOF
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
                     
-                    # CORRECTION: Encoder la chaîne en HEX pour contourner les problèmes de charset de la colonne.
-                    # MySQL va décoder la chaîne HEX avec UNHEX() avant de l'insérer.
+                    # CORRECTION FINALE : Stocker les données en HEXADÉCIMAL pour une compatibilité maximale.
+                    # La colonne n'étant pas en utf8mb4, on stocke une chaîne HEX (ASCII) et on la décode en PHP.
                     notification_data_serialized="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
                     notification_data_hex=$(echo -n "$notification_data_serialized" | xxd -p | tr -d '\n')
 
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), UNHEX('${notification_data_hex}'));"
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_hex}');"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
@@ -1699,7 +1699,12 @@ $stmt = $pdo->query("
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
 foreach ($notifications as $notif) {
-    $data = @unserialize($notif['notification_data']); // phpBB stores serialized data directly
+    // CORRECTION : Les données sont stockées en HEX, il faut les décoder avant de les désérialiser.
+    $serialized_data = @hex2bin($notif['notification_data']);
+    if ($serialized_data === false) {
+        $serialized_data = $notif['notification_data']; // Fallback pour les anciennes données non-HEX
+    }
+    $data = @unserialize($serialized_data);
     if ($data === false) {
         $reacter_id = 'ERREUR';
         $reacter_name = 'DECODAGE';
@@ -1719,7 +1724,7 @@ foreach ($notifications as $notif) {
         'reacter_id' => $reacter_id,
         'reacter_name' => $reacter_name,
         'emoji' => $reaction_emoji,
-        'data' => substr($notif['notification_data'], 0, 20) . '...', // Afficher les 20 premiers caractères de la donnée sérialisée
+        'data' => substr($notif['notification_data'], 0, 20) . '...', // Afficher les 20 premiers caractères de la donnée HEX
     ];
 }
 draw_table(
@@ -1767,8 +1772,8 @@ while true; do
     case $REPLY in
         [Yy]* )
             echo "Lancement de la commande de purge des notifications..."
-            if [ -f "bin/phpbbcli.php" ]; then
-                # CORRECTION : Utiliser le chemin absolu vers phpbbcli.php
+            # CORRECTION : Utiliser le chemin absolu vers phpbbcli.php
+            if [ -f "$FORUM_ROOT/bin/phpbbcli.php" ]; then
                 php "$FORUM_ROOT/bin/phpbbcli.php" reactions:purge_notifications --force
                 check_status "Nettoyage des notifications de l'extension Reactions."
             else
