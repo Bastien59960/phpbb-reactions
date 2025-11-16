@@ -10,9 +10,13 @@
  *
  * @brief      Migration pour rendre la colonne des notifications compatible avec les emojis.
  *
- * Cette migration corrige un problème fondamental où les emojis (qui sont des
- * caractères UTF-8 sur 4 octets) ne pouvaient pas être stockés dans la colonne
- * `notification_data`, causant des erreurs SQL "Incorrect string value".
+ * EXPLICATION DU PROBLÈME :
+ * Par défaut, de nombreuses colonnes MySQL/MariaDB sont en encodage `utf8` (aussi appelé `utf8mb3`),
+ * qui ne peut stocker que des caractères sur 3 octets maximum. Or, les emojis modernes sont
+ * des caractères UTF-8 qui nécessitent 4 octets.
+ *
+ * Cette migration corrige ce problème en convertissant la colonne `notification_data`
+ * vers l'encodage `utf8mb4`, qui supporte les caractères sur 4 octets.
  *
  * CORRECTION : Utilise une requête SQL directe au lieu de change_columns car
  * le DBAL de phpBB ne gère pas bien la conversion de charset/collation.
@@ -90,6 +94,21 @@ class release_1_0_3 extends \phpbb\db\migration\migration
         foreach ($sql_array as $sql)
         {
             $this->db->sql_query($sql);
+        }
+
+        // VÉRIFICATION POST-CONVERSION : S'assurer que le changement a bien été appliqué.
+        // On lève une exception pour faire échouer la migration proprement et éviter un échec silencieux.
+        $sql_check = "SELECT CHARACTER_SET_NAME 
+                      FROM information_schema.COLUMNS 
+                      WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME = '{$this->table_prefix}notifications' 
+                        AND COLUMN_NAME = 'notification_data'";
+        $result = $this->db->sql_query($sql_check);
+        $charset = $this->db->sql_fetchfield('CHARACTER_SET_NAME');
+        $this->db->sql_freeresult($result);
+
+        if ($charset !== 'utf8mb4') {
+            throw new \phpbb\db\migration\exception('Échec de la conversion vers utf8mb4. Charset actuel : ' . $charset);
         }
     }
     
