@@ -775,18 +775,18 @@ echo -e "${YELLOW}ℹ️  Vérification de l'absence de traces avant la réactiv
 sleep 0.2
 
 PRE_ENABLE_CHECK=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'PRE_ENABLE_CHECK_EOF'
--- Recherche large de toute trace liée à l'extension
-SELECT 'CONFIG' FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%' LIMIT 1
+-- Recherche large de toute trace liée à l'extension (avec parenthèses pour la compatibilité UNION + LIMIT)
+(SELECT 'CONFIG' FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%' LIMIT 1)
 UNION ALL
-SELECT 'MODULE' FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' LIMIT 1
+(SELECT 'MODULE' FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' LIMIT 1)
 UNION ALL
-SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%' LIMIT 1
+(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%' LIMIT 1)
 UNION ALL
-SELECT 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions' LIMIT 1
+(SELECT 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions' LIMIT 1)
 UNION ALL
-SELECT 'MIGRATION' FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%' LIMIT 1
+(SELECT 'MIGRATION' FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%' LIMIT 1)
 UNION ALL
-SELECT 'EXT_ENTRY' FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions' LIMIT 1;
+(SELECT 'EXT_ENTRY' FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions' LIMIT 1);
 PRE_ENABLE_CHECK_EOF
 )
 
