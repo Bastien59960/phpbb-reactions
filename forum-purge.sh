@@ -1473,6 +1473,12 @@ GET_REACTIONS_EOF
 
     output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
     check_status "Exécution de toutes les tâches cron prêtes." "$output"
+
+    # ==============================================================================
+    # PAUSE STRATÉGIQUE POUR ÉVITER UNE RACE CONDITION
+    # ==============================================================================
+    echo -e "${YELLOW}ℹ️  Pause de 2 secondes pour laisser le temps à la base de données de se synchroniser...${NC}"
+    sleep 2
     # ==============================================================================
     # 2️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
     # ==============================================================================
