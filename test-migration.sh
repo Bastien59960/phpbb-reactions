@@ -113,44 +113,63 @@ fi
 echo -e "\n───[ 4. EXÉCUTION DES REQUÊTES SQL DE TEST (MIGRATION 1.0.3) ]─────"
 echo -e "${YELLOW}ℹ️  Exécution du bloc de requêtes défini dans le script...${NC}"
 log_to_file "Exécution des requêtes de test pour la migration 1.0.3."
+echo ""
 
-sql_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t --default-character-set=utf8mb4 <<'SQL_TEST_EOF'
+# --- Détection de l'état actuel ---
+CURRENT_CHARSET=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT CHARACTER_SET_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_notifications' AND COLUMN_NAME = 'notification_data';")
 
--- ########################################################################## --
--- ##                                                                      ## --
--- ##    TEST DE LA MIGRATION release_1_0_3.php (conversion utf8mb4)       ## --
--- ##                                                                      ## --
--- ########################################################################## --
+echo -e "   État actuel de la colonne 'notification_data' : ${GREEN}${CURRENT_CHARSET}${NC}"
+echo ""
 
+# --- Menu interactif ---
+echo -e "${YELLOW}Que souhaitez-vous faire ?${NC}"
+echo "   [U]pdate  : Convertir la colonne vers utf8mb4 (action de la migration)."
+echo "   [R]evert  : Revenir à l'état précédent utf8 (action de revert_schema)."
+echo "   [Q]uitter : Ne rien faire."
+read -p "Votre choix : " -n 1 -r
+echo ""
+
+SQL_TO_EXECUTE=""
+
+if [[ $REPLY =~ ^[Uu]$ ]]; then
+    echo -e "\n${GREEN}▶️  Action sélectionnée : UPDATE vers utf8mb4.${NC}"
+    log_to_file "Action sélectionnée : UPDATE vers utf8mb4."
+    SQL_TO_EXECUTE=$(cat <<'SQL_UPDATE_EOF'
 -- ============================================================================
--- ÉTAPE 0 : DIAGNOSTIC AVANT MODIFICATION
--- ============================================================================
-SELECT '--- DIAGNOSTIC AVANT MODIFICATION ---' AS 'INFO';
-SELECT 
-    CHARACTER_SET_NAME,
-    COLLATION_NAME,
-    COLUMN_TYPE
-FROM information_schema.COLUMNS 
-WHERE TABLE_SCHEMA = DATABASE() 
-  AND TABLE_NAME = 'phpbb_notifications' 
-  AND COLUMN_NAME = 'notification_data';
-
--- ============================================================================
--- ÉTAPE 1 : CONVERSION EN BLOB (pour préserver les données)
+-- ACTION : UPDATE (vers utf8mb4)
 -- ============================================================================
 SELECT '--- ÉTAPE 1 : Conversion en MEDIUMBLOB ---' AS 'INFO';
 ALTER TABLE phpbb_notifications MODIFY notification_data MEDIUMBLOB;
 
--- ============================================================================
--- ÉTAPE 2 : CONVERSION EN MEDIUMTEXT utf8mb4 (cible de la migration)
--- ============================================================================
 SELECT '--- ÉTAPE 2 : Conversion en MEDIUMTEXT utf8mb4 ---' AS 'INFO';
 ALTER TABLE phpbb_notifications MODIFY notification_data MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+SQL_UPDATE_EOF
+    )
+elif [[ $REPLY =~ ^[Rr]$ ]]; then
+    echo -e "\n${YELLOW}▶️  Action sélectionnée : REVERT vers utf8.${NC}"
+    log_to_file "Action sélectionnée : REVERT vers utf8."
+    SQL_TO_EXECUTE=$(cat <<'SQL_REVERT_EOF'
+-- ============================================================================
+-- ACTION : REVERT (vers utf8)
+-- ============================================================================
+SELECT '--- ÉTAPE 1 : Conversion en MEDIUMBLOB ---' AS 'INFO';
+ALTER TABLE phpbb_notifications MODIFY notification_data MEDIUMBLOB;
 
+SELECT '--- ÉTAPE 2 : Conversion en MEDIUMTEXT utf8 ---' AS 'INFO';
+ALTER TABLE phpbb_notifications MODIFY notification_data MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin;
+SQL_REVERT_EOF
+    )
+else
+    echo -e "\n${RED}⏹️  Action annulée. Le script va s'arrêter.${NC}"
+    log_to_file "Action annulée par l'utilisateur."
+    exit 0
+fi
+
+# --- Bloc de diagnostic (avant et après) ---
+SQL_DIAGNOSTIC=$(cat <<'SQL_DIAG_EOF'
 -- ============================================================================
--- ÉTAPE 3 : DIAGNOSTIC APRÈS MODIFICATION
+-- DIAGNOSTIC
 -- ============================================================================
-SELECT '--- DIAGNOSTIC APRÈS MODIFICATION ---' AS 'INFO';
 SELECT 
     CHARACTER_SET_NAME,
     COLLATION_NAME,
@@ -159,17 +178,27 @@ FROM information_schema.COLUMNS
 WHERE TABLE_SCHEMA = DATABASE() 
   AND TABLE_NAME = 'phpbb_notifications' 
   AND COLUMN_NAME = 'notification_data';
-
-SQL_TEST_EOF
+SQL_DIAG_EOF
 )
+
+echo -e "\n───[ DIAGNOSTIC AVANT MODIFICATION ]───────────────────────────────"
+sql_output_before=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t --default-character-set=utf8mb4 -e "$SQL_DIAGNOSTIC")
+echo "$sql_output_before"
+
+echo -e "\n───[ EXÉCUTION DE L'ACTION SQL ]───────────────────────────────────"
+sql_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t --default-character-set=utf8mb4 -e "$SQL_TO_EXECUTE")
 
 check_status "Exécution des requêtes SQL de test." "$sql_output"
 
-echo -e "\n${YELLOW}--- RÉSULTAT DES REQUÊTES ---${NC}"
-log_to_file "Résultat des requêtes SQL :"
+echo -e "\n${YELLOW}--- RÉSULTAT DE L'ACTION ---${NC}"
+log_to_file "Résultat de l'action SQL :"
 log_to_file "$sql_output"
 echo "$sql_output"
 echo -e "${YELLOW}----------------------------${NC}"
+
+echo -e "\n───[ DIAGNOSTIC APRÈS MODIFICATION ]────────────────────────────────"
+sql_output_after=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t --default-character-set=utf8mb4 -e "$SQL_DIAGNOSTIC")
+echo "$sql_output_after"
 
 echo -e "\n${GREEN}🎉 Script de test terminé.${NC}"
 log_to_file "SCRIPT END: Le script test-migration.sh s'est terminé."
