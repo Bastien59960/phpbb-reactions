@@ -1772,3 +1772,37 @@ PHP_DIAG_EOF
  if [ $? -eq 0 ]; then
      echo "$final_diag_output"
  fi
+
+# ==============================================================================
+# 3️⃣3️⃣ NETTOYAGE OPTIONNEL DES NOTIFICATIONS (POST-DIAGNOSTIC)
+# ==============================================================================
+echo ""
+echo -e "───[ 3️⃣3️⃣ NETTOYAGE OPTIONNEL DES NOTIFICATIONS ]────────"
+echo -e "${YELLOW}ℹ️  Cette étape peut résoudre des erreurs si des données de notification sont corrompues.${NC}"
+echo ""
+
+# Boucle pour s'assurer d'obtenir une réponse valide (y/n)
+while true; do
+    read -p "Voulez-vous nettoyer les notifications de l'extension Reactions ? (y/n) " -n 1 -r REPLY
+    echo "" # Saut de ligne après la saisie
+    case $REPLY in
+        [Yy]* )
+            echo "Lancement de la commande de purge des notifications..."
+            if [ -f "bin/phpbbcli.php" ]; then
+                # Lance la commande CLI avec l'option --force pour ne pas redemander
+                php bin/phpbbcli.php reactions:purge_notifications --force
+                check_status "Nettoyage des notifications de l'extension Reactions."
+            else
+                echo -e "${RED}❌ ERREUR : Impossible de trouver bin/phpbbcli.php. Commande ignorée.${NC}"
+            fi
+            break
+            ;;
+        [Nn]* )
+            echo "ℹ️  Nettoyage des notifications ignoré."
+            break
+            ;;
+        * )
+            echo "Veuillez répondre par 'y' (oui) ou 'n' (non)."
+            ;;
+    esac
+done
