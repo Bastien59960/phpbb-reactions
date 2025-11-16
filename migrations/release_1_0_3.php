@@ -115,66 +115,10 @@ class release_1_0_3 extends \phpbb\db\migration\migration
         ];
     }
 
-    /**
-     * Annule les changements de schéma.
-     * ATTENTION : Cette opération peut perdre les emojis déjà stockés !
-     * On la met en place uniquement pour permettre la désinstallation propre.
-     */
-    public function revert_schema()
-    {
-        return [
-            'custom' => [
-                [[$this, 'revert_notification_data_to_utf8mb3']],
-            ],
-        ];
-    }
-    
-    /**
-     * Fonction de revert personnalisée.
-     * Reconvertit la colonne en utf8mb3 (utf8 classique).
-     */
-    public function revert_notification_data_to_utf8mb3()
-    {
-        try {
-            $sql_array = [
-                // Étape 1 : Convertir en BLOB
-                "ALTER TABLE {$this->table_prefix}notifications 
-                 MODIFY notification_data MEDIUMBLOB",
-                
-                // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb3
-                "ALTER TABLE {$this->table_prefix}notifications 
-                 MODIFY notification_data MEDIUMTEXT 
-                 CHARACTER SET utf8 
-                 COLLATE utf8_bin",
-            ];
-
-            // Début de la transaction
-            $this->db->sql_transaction('begin');
-
-            foreach ($sql_array as $sql)
-            {
-                $this->db->sql_query($sql);
-            }
-
-            // Valider la transaction
-            $this->db->sql_transaction('commit');
-        } catch (\phpbb\db\sql_exception $e) {
-            $this->db->sql_transaction('rollback');
-            return false; // Indique à phpBB que l'annulation a échoué
-        }
-
-        return true;
-    }
-
-    /**
-     * Annule les changements de données.
-     * Rétablit le numéro de version précédent.
-     */
-    public function revert_data()
-    {
-        return [
-            // Rétablit la version précédente lors de l'annulation de la migration.
-            ['config.set', ['bastien59960_reactions_version', '1.0.2']],
-        ];
-    }
+    // NOTE : Il n'y a pas de méthodes revert_schema() ou revert_data() ici.
+    // C'est un choix délibéré. La conversion de la colonne `notification_data`
+    // en utf8mb4 est une amélioration non destructive pour la base de données
+    // de phpBB. Il n'y a aucun avantage à revenir en arrière, même si
+    // l'extension est désinstallée. Laisser la colonne en utf8mb4 est plus
+    // robuste pour l'avenir.
 }
