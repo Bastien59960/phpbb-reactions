@@ -21,6 +21,7 @@
 FORUM_ROOT="/home/bastien/www/forum"
 DB_USER="phpmyadmin"
 DB_NAME="bastien-phpbb"
+PHP_ERROR_LOG="/var/log/php/debug.err" # Fichier pour les erreurs et les logs du script
 
 # --- Couleurs ---
 GREEN='\033[0;32m'
@@ -49,6 +50,11 @@ check_status() {
     fi
 }
 
+# Fonction de logging
+log_to_file() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] - $1" >> "$PHP_ERROR_LOG"
+}
+
 # ==============================================================================
 # DÉBUT DU SCRIPT
 # ==============================================================================
@@ -59,47 +65,100 @@ echo -e "║   🔬  TEST DE REQUÊTES SQL DE MIGRATION                      ║
 echo -e "╚══════════════════════════════════════════════════════════════╝"
 echo -e "🚀 Lancement du script de test SQL.\n"
 
+
 # ==============================================================================
-# 1. DEMANDE DU MOT DE PASSE MYSQL
+# 1. INITIALISATION DU FICHIER DE LOG
+# ==============================================================================
+echo -e "───[ 1. INITIALISATION DU FICHIER DE LOG ]────────────────────────"
+echo -e "${YELLOW}ℹ️  Initialisation du fichier de log : $PHP_ERROR_LOG${NC}"
+echo -e "${YELLOW}   Cela peut nécessiter les droits sudo.${NC}"
+
+if ! sudo mkdir -p "$(dirname "$PHP_ERROR_LOG")"; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Impossible de créer le répertoire de log $(dirname "$PHP_ERROR_LOG").${NC}"
+fi
+
+if ! sudo touch "$PHP_ERROR_LOG" || ! sudo chown "$USER":"$(id -g -n "$USER")" "$PHP_ERROR_LOG"; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Impossible de créer ou de définir les permissions pour le fichier de log.${NC}"
+else
+    > "$PHP_ERROR_LOG" # Vider le fichier
+    log_to_file "SCRIPT START: Le script test-migration.sh a démarré."
+    check_status "Initialisation et permissions du fichier de log."
+fi
+
+# ==============================================================================
+# 2. DEMANDE DU MOT DE PASSE MYSQL
 # ==============================================================================
 echo -e "🔑 Veuillez entrer le mot de passe MySQL pour l'utilisateur ${YELLOW}$DB_USER${NC} :"
 read -s MYSQL_PASSWORD
 echo ""
 
 # ==============================================================================
-# 2. VÉRIFICATION DE LA CONNEXION MYSQL
+# 3. VÉRIFICATION DE LA CONNEXION MYSQL
 # ==============================================================================
-echo -e "───[ 1. VÉRIFICATION DE LA CONNEXION MYSQL ]────────────────────────"
+echo -e "───[ 3. VÉRIFICATION DE LA CONNEXION MYSQL ]────────────────────────"
+log_to_file "Vérification de la connexion MySQL..."
 mysql_test_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT 1;" 2>&1)
 if echo "$mysql_test_output" | grep -q "Access denied"; then
+    log_to_file "ERREUR: Connexion refusée. Mot de passe incorrect."
     echo -e "${WHITE_ON_RED}❌ ERREUR : Connexion refusée. Mot de passe incorrect.${NC}"
     exit 1
 else
+    log_to_file "Connexion à la base de données établie."
     echo -e "${GREEN}✅ Connexion à la base de données établie.${NC}"
 fi
 
 # ==============================================================================
-# 3. EXÉCUTION DES REQUÊTES DE TEST
+# 4. EXÉCUTION DES REQUÊTES DE TEST (MIGRATION 1.0.3)
 # ==============================================================================
-echo -e "\n───[ 2. EXÉCUTION DES REQUÊTES SQL DE TEST ]──────────────────────"
+echo -e "\n───[ 4. EXÉCUTION DES REQUÊTES SQL DE TEST (MIGRATION 1.0.3) ]─────"
 echo -e "${YELLOW}ℹ️  Exécution du bloc de requêtes défini dans le script...${NC}"
+log_to_file "Exécution des requêtes de test pour la migration 1.0.3."
 
-sql_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'SQL_TEST_EOF'
+sql_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t --default-character-set=utf8mb4 <<'SQL_TEST_EOF'
 
 -- ########################################################################## --
 -- ##                                                                      ## --
--- ##    ⬇️   COPIEZ-COLLEZ VOS REQUÊTES SQL DE TEST CI-DESSOUS   ⬇️     ## --
+-- ##    TEST DE LA MIGRATION release_1_0_3.php (conversion utf8mb4)       ## --
 -- ##                                                                      ## --
 -- ########################################################################## --
 
-SELECT 'Exemple de requête : comptage des utilisateurs' AS 'INFO';
-SELECT COUNT(*) FROM phpbb_users;
+-- ============================================================================
+-- ÉTAPE 0 : DIAGNOSTIC AVANT MODIFICATION
+-- ============================================================================
+SELECT '--- DIAGNOSTIC AVANT MODIFICATION ---' AS 'INFO';
+SELECT 
+    CHARACTER_SET_NAME,
+    COLLATION_NAME,
+    COLUMN_TYPE
+FROM information_schema.COLUMNS 
+WHERE TABLE_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'phpbb_notifications' 
+  AND COLUMN_NAME = 'notification_data';
 
--- Vous pouvez ajouter ici des ALTER TABLE, des INSERT, des SELECT, etc.
--- Par exemple, pour tester une nouvelle colonne :
--- ALTER TABLE phpbb_users ADD COLUMN IF NOT EXISTS user_test_col INT(11) DEFAULT 0;
--- SELECT user_id, username, user_test_col FROM phpbb_users LIMIT 5;
+-- ============================================================================
+-- ÉTAPE 1 : CONVERSION EN BLOB (pour préserver les données)
+-- ============================================================================
+SELECT '--- ÉTAPE 1 : Conversion en MEDIUMBLOB ---' AS 'INFO';
+ALTER TABLE phpbb_notifications MODIFY notification_data MEDIUMBLOB;
 
+-- ============================================================================
+-- ÉTAPE 2 : CONVERSION EN MEDIUMTEXT utf8mb4 (cible de la migration)
+-- ============================================================================
+SELECT '--- ÉTAPE 2 : Conversion en MEDIUMTEXT utf8mb4 ---' AS 'INFO';
+ALTER TABLE phpbb_notifications MODIFY notification_data MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+-- ============================================================================
+-- ÉTAPE 3 : DIAGNOSTIC APRÈS MODIFICATION
+-- ============================================================================
+SELECT '--- DIAGNOSTIC APRÈS MODIFICATION ---' AS 'INFO';
+SELECT 
+    CHARACTER_SET_NAME,
+    COLLATION_NAME,
+    COLUMN_TYPE
+FROM information_schema.COLUMNS 
+WHERE TABLE_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'phpbb_notifications' 
+  AND COLUMN_NAME = 'notification_data';
 
 SQL_TEST_EOF
 )
@@ -107,7 +166,10 @@ SQL_TEST_EOF
 check_status "Exécution des requêtes SQL de test." "$sql_output"
 
 echo -e "\n${YELLOW}--- RÉSULTAT DES REQUÊTES ---${NC}"
+log_to_file "Résultat des requêtes SQL :"
+log_to_file "$sql_output"
 echo "$sql_output"
 echo -e "${YELLOW}----------------------------${NC}"
 
 echo -e "\n${GREEN}🎉 Script de test terminé.${NC}"
+log_to_file "SCRIPT END: Le script test-migration.sh s'est terminé."
