@@ -11,20 +11,17 @@
  * @brief      Migration pour rendre la colonne des notifications compatible avec les emojis.
  *
  * Cette migration corrige un problème fondamental où les emojis (qui sont des
- * caractères UTF-8 sur 4 bytes) ne pouvaient pas être stockés dans la colonne
+ * caractères UTF-8 sur 4 octets) ne pouvaient pas être stockés dans la colonne
  * `notification_data`, causant des erreurs SQL "Incorrect string value".
  *
- * La solution consiste à modifier cette colonne pour qu'elle utilise le jeu de
- * caractères `utf8mb4`, qui est la norme pour un support complet d'Unicode,
- * y compris les emojis. Cette modification est sûre et recommandée pour la
- * compatibilité avec le contenu moderne.
+ * CORRECTION : Utilise une requête SQL directe au lieu de change_columns car
+ * le DBAL de phpBB ne gère pas bien la conversion de charset/collation.
  */
 namespace bastien59960\reactions\migrations;
 
 class release_1_0_3 extends \phpbb\db\migration\migration
 {
     /**
-     * Dépendances de cette migration.
      * Elle ne s'exécutera qu'après la migration de la version 1.0.2.
      */
     public static function depends_on()
@@ -33,26 +30,104 @@ class release_1_0_3 extends \phpbb\db\migration\migration
     }
     
     /**
-     * Applique les changements de schéma.
-     * Convertit la colonne notification_data en MTEXT_UNI pour supporter utf8mb4.
+     * Vérifie si la migration doit être effectuée.
+     * On vérifie si la colonne est déjà en utf8mb4 pour éviter de la reconvertir.
+     */
+    public function effectively_installed()
+    {
+        // Récupérer les infos de la colonne
+        $sql = "SELECT CHARACTER_SET_NAME 
+                FROM information_schema.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = '{$this->table_prefix}notifications' 
+                AND COLUMN_NAME = 'notification_data'";
+        $result = $this->db->sql_query($sql);
+        $charset = $this->db->sql_fetchfield('CHARACTER_SET_NAME');
+        $this->db->sql_freeresult($result);
+        
+        // Si déjà en utf8mb4, la migration est déjà effectuée
+        return ($charset === 'utf8mb4');
+    }
+    
+    /**
+     * Applique les changements de schéma via SQL direct.
+     * C'est la seule méthode fiable pour changer le charset d'une colonne.
      */
     public function update_schema()
     {
         return [
-            'change_columns' => [
-                $this->table_prefix . 'notifications' => [
-                    'notification_data' => ['MTEXT_UNI', null],
-                ],
+            'custom' => [
+                // Utiliser une fonction anonyme pour exécuter du SQL personnalisé
+                [[$this, 'convert_notification_data_to_utf8mb4']],
             ],
         ];
     }
     
     /**
-     * Annule les changements de schéma (si nécessaire).
-     * On laisse vide car revenir à latin1 casserait les emojis déjà stockés.
+     * Fonction de conversion personnalisée.
+     * Convertit la colonne notification_data en utf8mb4 pour supporter les emojis.
+     */
+    public function convert_notification_data_to_utf8mb4()
+    {
+        // IMPORTANT : On doit d'abord convertir en BLOB (binaire) pour ne pas perdre
+        // les données lors de la conversion de charset. C'est la procédure recommandée.
+        $sql_array = [
+            // Étape 1 : Convertir en BLOB (binaire, pas de charset)
+            "ALTER TABLE {$this->table_prefix}notifications 
+             MODIFY notification_data MEDIUMBLOB",
+            
+            // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb4
+            "ALTER TABLE {$this->table_prefix}notifications 
+             MODIFY notification_data MEDIUMTEXT 
+             CHARACTER SET utf8mb4 
+             COLLATE utf8mb4_bin",
+        ];
+        
+        foreach ($sql_array as $sql)
+        {
+            $this->db->sql_query($sql);
+        }
+
+        return true;
+    }
+    
+    /**
+     * Annule les changements de schéma.
+     * ATTENTION : Cette opération peut perdre les emojis déjà stockés !
+     * On la met en place uniquement pour permettre la désinstallation propre.
      */
     public function revert_schema()
     {
-        return [];
+        return [
+            'custom' => [
+                [[$this, 'revert_notification_data_to_utf8mb3']],
+            ],
+        ];
+    }
+    
+    /**
+     * Fonction de revert personnalisée.
+     * Reconvertit la colonne en utf8mb3 (utf8 classique).
+     */
+    public function revert_notification_data_to_utf8mb3()
+    {
+        $sql_array = [
+            // Étape 1 : Convertir en BLOB
+            "ALTER TABLE {$this->table_prefix}notifications 
+             MODIFY notification_data MEDIUMBLOB",
+            
+            // Étape 2 : Convertir de BLOB vers MEDIUMTEXT utf8mb3
+            "ALTER TABLE {$this->table_prefix}notifications 
+             MODIFY notification_data MEDIUMTEXT 
+             CHARACTER SET utf8 
+             COLLATE utf8_bin",
+        ];
+        
+        foreach ($sql_array as $sql)
+        {
+            $this->db->sql_query($sql);
+        }
+
+        return true;
     }
 }
