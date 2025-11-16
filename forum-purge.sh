@@ -1700,12 +1700,20 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
 foreach ($notifications as $notif) {
     // CORRECTION : Les données sont stockées en HEX, il faut les décoder avant de les désérialiser.
-    $serialized_data = @hex2bin($notif['notification_data']);
-    if ($serialized_data === false) {
-        $serialized_data = $notif['notification_data']; // Fallback pour les anciennes données non-HEX
+    $serialized_data = $notif['notification_data'];
+    
+    // Tentative 1 : Décoder depuis HEX (nouveau format)
+    $decoded_data = @hex2bin($serialized_data);
+    
+    // Si hex2bin échoue (retourne false), c'est peut-être l'ancien format non-HEX
+    if ($decoded_data === false) {
+        $decoded_data = $serialized_data; // Fallback pour compatibilité
     }
-    $data = @unserialize($serialized_data);
-    if ($data === false) {
+    
+    // Désérialiser les données décodées
+    $data = @unserialize($decoded_data);
+    
+    if ($data === false || !is_array($data)) {
         $reacter_id = 'ERREUR';
         $reacter_name = 'DECODAGE';
         $reaction_emoji = '!!';
@@ -1724,7 +1732,7 @@ foreach ($notifications as $notif) {
         'reacter_id' => $reacter_id,
         'reacter_name' => $reacter_name,
         'emoji' => $reaction_emoji,
-        'data' => substr($notif['notification_data'], 0, 20) . '...', // Afficher les 20 premiers caractères de la donnée HEX
+        'data' => substr($notif['notification_data'], 0, 20) . '...',
     ];
 }
 draw_table(
@@ -1772,12 +1780,28 @@ while true; do
     case $REPLY in
         [Yy]* )
             echo "Lancement de la commande de purge des notifications..."
-            # CORRECTION : Utiliser le chemin absolu vers phpbbcli.php
+            # CORRECTION : Utiliser le chemin absolu ET changer de répertoire
             if [ -f "$FORUM_ROOT/bin/phpbbcli.php" ]; then
-                php "$FORUM_ROOT/bin/phpbbcli.php" reactions:purge_notifications --force
-                check_status "Nettoyage des notifications de l'extension Reactions."
+                # Sauvegarder le répertoire actuel
+                CURRENT_DIR=$(pwd)
+                
+                # Se déplacer dans la racine du forum
+                cd "$FORUM_ROOT" || {
+                    echo -e "${RED}❌ ERREUR : Impossible d'accéder à $FORUM_ROOT${NC}"
+                    break
+                }
+                
+                # Exécuter la commande depuis la racine
+                purge_output=$(php bin/phpbbcli.php reactions:purge_notifications --force 2>&1)
+                purge_exit_code=$?
+                
+                # Retourner au répertoire d'origine
+                cd "$CURRENT_DIR" || true
+                
+                # Vérifier le résultat
+                (exit $purge_exit_code); check_status "Nettoyage des notifications de l'extension Reactions." "$purge_output"
             else
-                echo -e "${RED}❌ ERREUR : Impossible de trouver bin/phpbbcli.php. Commande ignorée.${NC}"
+                echo -e "${RED}❌ ERREUR : Impossible de trouver $FORUM_ROOT/bin/phpbbcli.php. Commande ignorée.${NC}"
             fi
             break
             ;;
