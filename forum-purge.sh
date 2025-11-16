@@ -299,65 +299,38 @@ EARLY_RESTORE_EOF
 fi
 
 # ==============================================================================
-# 5️⃣ SAUVEGARDE DES DONNÉES DE RÉACTIONS
+# 5️⃣ SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS)
 # ==============================================================================
-echo -e "───[ 5️⃣  SAUVEGARDE DES RÉACTIONS EXISTANTES ]────────────────────────"
-echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité de la table 'phpbb_post_reactions' avant toute modification.${NC}"
+echo -e "───[ 5️⃣  SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS) ]─────────"
+echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité des réactions et des notifications avant toute modification.${NC}"
 sleep 0.2
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 
-# Vérifier si la table existe en utilisant une commande shell séparée
-TABLE_EXISTS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions';")
+backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
+    -- Sauvegarde des réactions
+    CREATE TABLE IF NOT EXISTS phpbb_post_reactions_backup LIKE phpbb_post_reactions;
+    SET @before_reactions = (SELECT COUNT(*) FROM phpbb_post_reactions_backup);
+    INSERT IGNORE INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
+    SET @after_reactions = (SELECT COUNT(*) FROM phpbb_post_reactions_backup);
 
-if [ "$TABLE_EXISTS" -gt 0 ]; then
-    # La table existe, on exécute le bloc de sauvegarde
-    backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
-        -- 1. Créer la table de backup si elle n'existe pas, en se basant sur la table principale.
-        CREATE TABLE IF NOT EXISTS phpbb_post_reactions_backup LIKE phpbb_post_reactions;
-        
-        -- 2. Compter les lignes avant l'insertion.
-        SET @before_count = (SELECT COUNT(*) FROM phpbb_post_reactions_backup);
-
-        -- 3. Insérer uniquement les nouvelles réactions (ignore les doublons basés sur la clé primaire/unique).
-        INSERT IGNORE INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
-
-        -- 4. Renvoyer un statut de succès avec le nombre de nouvelles réactions ajoutées.
-        SELECT "BACKUP_DONE" AS status_code, CONCAT("✅ ", (SELECT COUNT(*) FROM phpbb_post_reactions_backup) - @before_count, " nouvelle(s) réaction(s) ajoutée(s) à la sauvegarde. Total : ", (SELECT COUNT(*) FROM phpbb_post_reactions_backup), " réactions.") AS status;
-BACKUP_EOF
-    )
-    # On affiche la sortie de la commande pour le debug
-    echo "$backup_output"
-    check_status "Sauvegarde de la table 'phpbb_post_reactions'." "$backup_output"
-else
-    echo -e "${GREEN}ℹ️  Sauvegarde non nécessaire (table source absente).${NC}"
-fi
-
-# ==============================================================================
-# 6️⃣ SAUVEGARDE DES NOTIFICATIONS "CLOCHE"
-# ==============================================================================
-echo -e "───[ 6️⃣  SAUVEGARDE DES NOTIFICATIONS 'CLOCHE' ]──────────────────"
-echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité des notifications de réaction...${NC}"
-sleep 0.2
-echo -e "   (Le mot de passe a été demandé au début du script.)"
-
-backup_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'BACKUP_NOTIF_EOF'
-    -- Créer la table de backup si elle n'existe pas, en se basant sur la table principale.
+    -- Sauvegarde des notifications
     CREATE TABLE IF NOT EXISTS phpbb_notifications_backup LIKE phpbb_notifications;
-
-    -- Vider la sauvegarde précédente pour avoir un backup frais.
     TRUNCATE TABLE phpbb_notifications_backup;
-
-    -- Insérer les notifications de type 'reaction' dans la sauvegarde.
     INSERT INTO phpbb_notifications_backup
     SELECT n.*
     FROM phpbb_notifications n
     JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
     WHERE t.notification_type_name = 'notification.type.reaction';
+    SET @notif_count = ROW_COUNT();
 
-    SELECT CONCAT("✅ ", ROW_COUNT(), " notification(s) de réaction sauvegardée(s).") AS status;
+    -- Affichage du résumé
+    SELECT 'Réactions' AS 'Type de sauvegarde', CONCAT('Total: ', @after_reactions, ' (', @after_reactions - @before_reactions, ' nouvelle(s))') AS 'Statut';
+    SELECT 'Notifications' AS 'Type de sauvegarde', CONCAT('Total: ', @notif_count) AS 'Statut';
 BACKUP_NOTIF_EOF
 )
-check_status "Sauvegarde des notifications 'cloche'." "$backup_notif_output"
+
+echo "$backup_output"
+check_status "Sauvegarde des données (réactions et notifications)." "$backup_output"
 
 # ==============================================================================
 # 7️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
@@ -1409,20 +1382,23 @@ GET_REACTIONS_EOF
                 notification_count=0
                 # Lire la sortie ligne par ligne
                 while IFS=$'\t' read -r post_id topic_id poster_id reacter_id reacter_name reaction_emoji; do
-                    # Construire la chaîne de données sérialisée pour la notification
-                    # Format: a:3:{s:10:"reacter_id";i:X;s:12:"reacter_name";s:Y:"...";s:14:"reaction_emoji";s:Z:"...";}
-                    reacter_name_len=${#reacter_name}
-                    emoji_len=${#reaction_emoji}
-                    
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
                     
-                    # CORRECTION FINALE : Stocker les données en HEXADÉCIMAL pour une compatibilité maximale.
-                    # La colonne n'étant pas en utf8mb4, on stocke une chaîne HEX (ASCII) et on la décode en PHP.
-                    notification_data_serialized="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
-                    notification_data_hex=$(echo -n "$notification_data_serialized" | xxd -p | tr -d '\n')
+                    # CORRECTION : Calculer la longueur en BYTES, pas en caractères
+                    # Pour bash, on utilise un sous-shell avec printf qui gère UTF-8
+                    reacter_name_bytes=$(printf '%s' "$reacter_name" | wc -c)
+                    emoji_bytes=$(printf '%s' "$reaction_emoji" | wc -c)
 
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_hex}');"
+                    # Construire la chaîne sérialisée avec les longueurs en bytes
+                    notification_data_serialized="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_bytes}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_bytes}:\"${reaction_emoji}\";}"
+
+                    # NOUVEAU CODE (sérialisé direct - compatible phpBB) :
+                    # Échapper les caractères spéciaux pour MySQL (' et \)
+                    notification_data_escaped=$(printf '%s' "$notification_data_serialized" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")
+
+                    # La requête insère la chaîne sérialisée et échappée directement.
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_escaped}');"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
@@ -1699,46 +1675,22 @@ $stmt = $pdo->query("
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
 foreach ($notifications as $notif) {
-    // === DÉBUT DU DIAGNOSTIC ===
+    // CORRECTION : Le script insère maintenant du PHP sérialisé direct.
+    // Le diagnostic tente donc de désérialiser directement, comme le ferait phpBB.
     $raw_data = $notif['notification_data'];
+    $data = @unserialize($raw_data);
     
-    echo "\n=== DEBUG NOTIFICATION #{$notif['notification_id']} ===\n";
-    echo "Longueur: " . strlen($raw_data) . " caractères\n";
-    echo "Premiers 50 caractères: " . substr($raw_data, 0, 50) . "\n";
-    echo "Type détecté: ";
-    
-    // Vérifier le format exact
-    if (ctype_xdigit($raw_data) && strlen($raw_data) % 2 === 0) {
-        echo "HEXADECIMAL pur\n";
-    } elseif (preg_match('/^a:\d+:\{/', $raw_data)) {
-        echo "SERIALIZED PHP direct\n";
-    } elseif (preg_match('/^[A-Za-z0-9+\/]+=*$/', $raw_data)) {
-        echo "BASE64\n";
-    } else {
-        echo "FORMAT INCONNU\n";
-    }
-    echo "===============================\n\n";
-    // === FIN DU DIAGNOSTIC ===
-    
-    // Puis le code de décodage existant...
-    // CORRECTION : Les données sont stockées en HEX, il faut les décoder avant de les désérialiser.
-    $serialized_data = $notif['notification_data'];
-    
-    // Tentative 1 : Décoder depuis HEX (nouveau format)
-    $decoded_data = @hex2bin($serialized_data);
-    
-    // Si hex2bin échoue (retourne false), c'est peut-être l'ancien format non-HEX
-    if ($decoded_data === false) {
-        $decoded_data = $serialized_data; // Fallback pour compatibilité
-    }
-    
-    // Désérialiser les données décodées
-    $data = @unserialize($decoded_data);
-    
+    // Extraire les valeurs
     if ($data === false || !is_array($data)) {
         $reacter_id = 'ERREUR';
         $reacter_name = 'DECODAGE';
         $reaction_emoji = '!!';
+
+        // Afficher un diagnostic en cas d'échec
+        echo "\n=== DEBUG NOTIFICATION #{$notif['notification_id']} ===\n";
+        echo "❌ Échec de la désérialisation.\n";
+        echo "   Données brutes (100 premiers caractères): " . substr($raw_data, 0, 100) . "\n";
+        echo "===============================\n\n";
     } else {
         $reacter_id = $data['reacter_id'] ?? 'N/A';
         $reacter_name = $data['reacter_name'] ?? 'N/A';
