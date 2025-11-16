@@ -1707,7 +1707,7 @@ foreach ($types as $type) {
         'enabled' => $type['notification_type_enabled'] ? 'Oui' : 'Non',
     ];
 }
-draw_table(['ID', 'Nom', 'Activé'], $type_rows);
+draw_table(['id' => 'ID', 'name' => 'Nom', 'enabled' => 'Activé'], $type_rows);
 
 // 2. Vérifier et décoder les 10 dernières notifications
 echo "\n🔔 Analyse détaillée des 10 dernières notifications 'cloche'\n";
@@ -1740,18 +1740,20 @@ foreach ($notifications as $notif) {
         'reacter_id' => $reacter_id,
         'reacter_name' => $reacter_name,
         'emoji' => $reaction_emoji,
+        'data' => substr($notif['notification_data'], 0, 20) . '...',
     ];
 }
 draw_table(
     [
-        'Notif ID',
-        'Dest. ID',
-        'Post ID',
-        'Lue',
-        'Heure',
-        'Réact. ID',
-        'Réact. Nom',
-        'Emoji'
+        'notif_id' => 'Notif ID',
+        'dest_id' => 'Dest. ID',
+        'post_id' => 'Post ID',
+        'read' => 'Lue',
+        'time' => 'Heure',
+        'reacter_id' => 'Réact. ID',
+        'reacter_name' => 'Réact. Nom',
+        'emoji' => 'Emoji',
+        'data' => 'Data (Base64)'
     ],
     $notif_rows
 );

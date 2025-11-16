@@ -1,15 +1,17 @@
 /**
  * @package    bastien59960/reactions
  * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
+ * @copyright  (c) 2024 Bastien59960
  * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  * 
- * Fichier : /styles/prosilver/template/js/reactions.js
- * Rôle : Gère toute l'interactivité côté client pour les réactions aux messages.
+ * Fichier : reactions.js
+ * Chemin : /styles/prosilver/template/js/reactions.js
+ * 
+ * @brief      Gère toute l'interactivité côté client pour l'extension "Post Reactions".
  *
- * Ce fichier est le pendant client du contrôleur AJAX. Il gère :
- * - L'affichage de la palette d'emojis (picker) avec recherche et catégories.
- * - Les requêtes AJAX pour ajouter, supprimer ou synchroniser les réactions.
+ * Ce script est le cœur de l'expérience utilisateur. Il prend en charge :
+ * - L'affichage et l'interaction avec la palette d'emojis (picker), incluant la recherche et les catégories.
+ * - L'envoi des requêtes AJAX pour ajouter, retirer et synchroniser les réactions.
  * - La mise à jour dynamique du DOM sans rechargement de page.
  * - L'affichage des tooltips listant les utilisateurs qui ont réagi.
  * - La synchronisation en temps réel des réactions sur la page.
@@ -19,14 +21,12 @@
 /* ========================= FONCTIONS UTILITAIRES ========================== */
 /* ========================================================================== */
 
-/**
- * Basculer la visibilité d'un élément (usage utilitaire)
- * 
- * Cette fonction simple permet de montrer/cacher un élément par son ID.
- * Utilisée principalement pour les tests manuels.
- * 
- * @param {string} id ID de l'élément DOM à basculer
- */
+// Note : La fonction `toggle_visible` a été retirée car elle n'était pas utilisée
+// dans le code de production et servait principalement au débogage.
+// Si vous en avez besoin pour des tests, vous pouvez la réintégrer ici.
+
+// Exemple de la fonction retirée pour référence :
+/*
 function toggle_visible(id) {
     var x = document.getElementById(id);
     if (!x) {
@@ -38,6 +38,7 @@ function toggle_visible(id) {
         x.style.display = "block";
     }
 }
+*/
 
 /* ========================================================================== */
 /* ========================= MODULE PRINCIPAL ============================== */
@@ -47,22 +48,22 @@ function toggle_visible(id) {
     'use strict';
 
     /* ---------------------------------------------------------------------- */
-    /* --------------------------- VARIABLES GLOBALES ----------------------  */
+    /* ---------------------- ÉTAT ET CONFIGURATION GLOBALE ----------------- */
     /* ---------------------------------------------------------------------- */
 
-    /** @type {HTMLElement|null} Palette d'emojis actuellement ouverte */
+    /** @type {HTMLElement|null} Référence vers la palette d'emojis (picker) actuellement ouverte. `null` si aucune n'est affichée. */
     let currentPicker = null;
 
-    /** @type {HTMLElement|null} Tooltip affichant les utilisateurs ayant réagi */
+    /** @type {HTMLElement|null} Référence vers le tooltip des utilisateurs actuellement affiché. */
     let currentTooltip = null;
 
-    /** @type {number|null} Timer pour la fermeture du tooltip */
+    /** @type {number|null} ID du timer (setTimeout) pour la fermeture différée du tooltip, afin de permettre à l'utilisateur de le survoler. */
     let leaveTimeout = null;
 
-    /** @type {Object|null} Données JSON chargées depuis categories.json */
+    /** @type {Object|null} Cache pour les données des emojis chargées depuis `categories.json`, afin d'éviter des chargements multiples. */
     let allEmojisData = null;
 
-    /** Intervalle (ms) entre deux synchronisations automatiques */
+    /** @const {Object} Options par défaut de l'extension. Elles peuvent être surchargées par l'objet `window.REACTIONS_OPTIONS`. */
     const DEFAULT_OPTIONS = {
         postEmojiSize: 24,
         pickerWidth: 320,
@@ -74,6 +75,7 @@ function toggle_visible(id) {
         syncInterval: 5000,
     };
     
+    /** @const {Object} Chaînes de langue pour l'interface JavaScript. Surchargées par `window.REACTIONS_LANG`. */
     const L = (typeof window.REACTIONS_LANG === 'object') ? window.REACTIONS_LANG : {
         SEARCH: 'Rechercher...',
         CLOSE: 'Fermer',
@@ -82,10 +84,15 @@ function toggle_visible(id) {
         LOGIN_REQUIRED: 'Vous devez être connecté pour réagir aux messages.',
     };
 
+    /** @const {Object} Fusionne les options par défaut avec les options personnalisées fournies par le template phpBB. */
     const options = (typeof window !== 'undefined' && typeof window.REACTIONS_OPTIONS === 'object')
         ? Object.assign({}, DEFAULT_OPTIONS, window.REACTIONS_OPTIONS)
         : Object.assign({}, DEFAULT_OPTIONS);
 
+    /**
+     * Applique les options de dimensionnement en tant que variables CSS sur l'élément racine (`:root`).
+     * Permet de contrôler le style des composants (picker, emojis) directement depuis le CSS.
+     */
     function applyOptionStyles() {
         const root = document.documentElement;
         root.style.setProperty('--reactions-post-emoji-size', options.postEmojiSize + 'px');
@@ -96,28 +103,26 @@ function toggle_visible(id) {
 
     applyOptionStyles();
 
-    /** Identifiant de l'intervalle de synchronisation */
+    /** @type {number|null} ID de l'intervalle (setInterval) pour la synchronisation en temps réel. */
     let liveSyncTimer = null;
 
-    /** Flag pour éviter les requêtes concurrentes */
+    /** @type {boolean} Indicateur pour éviter les requêtes de synchronisation concurrentes. `true` si une requête est en cours. */
     let liveSyncInFlight = false;
 
     /**
-     * Liste des 10 emojis courantes affichées par défaut
+     * @const {string[]} Liste des emojis affichés dans la section "Utilisé fréquemment" du picker.
      * 
-     * IMPORTANT : Ces emojis doivent être synchronisés avec la configuration
-     * serveur (ajax.php, ligne 98) pour une cohérence totale.
-     * 
-     * @type {string[]}
+     * @important Cette liste doit idéalement être synchronisée avec une configuration côté serveur
+     *            pour garantir la cohérence, surtout si elle devient personnalisable.
      */
     const COMMON_EMOJIS = ['👍', '👎', '❤️', '😂', '😮', '😢', '😡', '🔥', '👌', '🥳'];
 
     /* ---------------------------------------------------------------------- */
-    /* ------------------------- FONCTIONS D'AIDE EMOJI ---------------------- */
+    /* ------------------------- SÉCURITÉ ET NETTOYAGE ----------------------- */
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Nettoie une chaîne emoji pour retirer les caractères de contrôle
+     * Nettoie une chaîne (potentiellement un emoji) pour retirer les caractères de contrôle invisibles.
      * 
      * Cette fonction est CRITIQUE pour éviter les erreurs 400 côté serveur.
      * Elle retire les caractères de contrôle ASCII qui peuvent corrompre
@@ -125,16 +130,10 @@ function toggle_visible(id) {
      * 
      * PLAGE NETTOYÉE :
      * - 0x00-0x08 : NULL, SOH, STX, ETX, EOT, ENQ, ACK, BEL, BS
-     * - 0x0B : Tabulation verticale
-     * - 0x0C : Form feed
-     * - 0x0E-0x1F : Caractères de contrôle
-     * - 0x7F : DEL
+     * - 0x0B, 0x0C, 0x0E-0x1F, 0x7F : Autres caractères de contrôle.
+     * Elle ne touche pas aux séquences UTF-8 valides qui composent les emojis modernes.
      * 
-     * NE TOUCHE PAS :
-     * - Les séquences UTF-8 valides (ZWJ, modificateurs de skin tone, etc.)
-     * - Les emojis composés (famille, drapeaux, etc.)
-     * 
-     * @param {string} e Chaîne pouvant contenir un emoji
+     * @param {string} e La chaîne à nettoyer.
      * @returns {string} Chaîne nettoyée
      */
     function safeEmoji(e) {
@@ -142,7 +141,7 @@ function toggle_visible(id) {
             e = String(e || ''); // Forcer conversion en string
         }
         // Regex : retire caractères de contrôle ASCII dangereux
-        return e.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        return e.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
     }
 
     /* ---------------------------------------------------------------------- */
@@ -150,15 +149,13 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Point d'entrée principal : initialisation de l'extension
+     * Point d'entrée pour l'initialisation des fonctionnalités sur une portion du DOM.
      * 
-     * Cette fonction est appelée au DOMContentLoaded et attache tous les
-     * écouteurs d'événements nécessaires. Elle peut aussi être appelée
-     * manuellement après une mise à jour AJAX du DOM pour réattacher les listeners.
-     * 
-     * IDEMPOTENCE : Cette fonction peut être appelée plusieurs fois sans risque
-     * grâce à removeEventListener() avant chaque addEventListener().
-     * 
+     * Cette fonction est appelée au chargement de la page (`DOMContentLoaded`) et après
+     * chaque mise à jour AJAX du contenu des réactions (par `sendReaction` et `applyLiveSyncPayload`).
+     * Elle attache les écouteurs nécessaires pour les boutons "plus" et les tooltips.
+     * Note : Les clics sur les réactions elles-mêmes sont gérés par un écouteur global (délégation).
+     *
      * @param {HTMLElement} [context=document] Contexte DOM (document ou sous-élément)
      */
     function initReactions(context) {
@@ -167,9 +164,6 @@ function toggle_visible(id) {
             console.warn('[Reactions] initReactions: paramètre context invalide', context);
             return;
         }
-
-        // Attache événements sur les réactions affichées
-        attachReactionEvents(context);
 
         // Attache événements sur les boutons "plus" (ouverture picker)
         attachMoreButtonEvents(context);
@@ -184,31 +178,11 @@ function toggle_visible(id) {
     }
 
     /**
-     * Attache les écouteurs de clic sur les réactions existantes
-     * 
-     * Recherche tous les éléments .reaction (sauf .reaction-readonly) dans le
-     * contexte fourni et attache handleReactionClick.
-     * 
-     * PATTERN IDEMPOTENT : retire puis ajoute pour éviter doublons.
-     * 
-     * @param {HTMLElement} context Contexte DOM de recherche
-     */
-    function attachReactionEvents(context) {
-        // Utiliser la délégation d'événements pour les conteneurs de réactions.
-        // C'est plus performant et robuste aux mises à jour du DOM.
-        context.querySelectorAll('.post-reactions-container').forEach(container => {
-            // On s'assure de ne pas attacher plusieurs fois le même listener.
-            if (container.dataset.eventsAttached) return;
-            container.addEventListener('click', handleReactionClick);
-        });
-    }
-
-    /**
      * Attache les écouteurs de clic sur les boutons "plus"
      * 
      * Le bouton "plus" (+) ouvre la palette d'emojis pour ajouter une nouvelle réaction.
-     * 
-     * @param {HTMLElement} context Contexte DOM de recherche
+     * La fonction est idempotente : elle retire l'ancien écouteur avant d'en ajouter un nouveau pour éviter les doublons.
+     * @param {HTMLElement} context Le conteneur DOM dans lequel chercher les boutons.
      */
     function attachMoreButtonEvents(context) {
         context.querySelectorAll('.reaction-more').forEach(button => {
@@ -218,12 +192,11 @@ function toggle_visible(id) {
     }
 
     /**
-     * Attache les tooltips sur chaque réaction
+     * Attache les écouteurs de survol pour afficher les tooltips des utilisateurs.
      * 
-     * Au survol d'une réaction, un tooltip affiche la liste des utilisateurs
-     * ayant utilisé cet emoji (avec appel AJAX get_users si nécessaire).
-     * 
-     * @param {HTMLElement} context Contexte DOM de recherche
+     * Pour chaque réaction, un survol déclenche l'affichage d'un tooltip listant
+     * les utilisateurs qui ont réagi. Les données sont lues depuis `data-users` ou récupérées via AJAX.
+     * @param {HTMLElement} context Le conteneur DOM dans lequel chercher les réactions.
      */
     function attachTooltipEvents(context) {
         context.querySelectorAll('.post-reactions .reaction-wrapper').forEach(wrapper => {
@@ -240,27 +213,24 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Gère le clic sur une réaction existante
+     * Gère les clics sur les réactions via la DÉLÉGATION D'ÉVÉNEMENTS.
      * 
-     * COMPORTEMENT :
-     * - Si l'utilisateur a déjà réagi : retire la réaction (action='remove')
-     * - Sinon : ajoute la réaction (action='add')
+     * Un seul écouteur est attaché à `document`. Il intercepte tous les clics et agit
+     * uniquement si la cible est un bouton de réaction (`.reaction`). Cette approche est
+     * robuste et performante, car elle fonctionne même si les réactions sont
+     * ajoutées/supprimées dynamiquement, sans avoir besoin de ré-attacher des écouteurs.
      * 
-     * SÉCURITÉ :
-     * - Vérifie que l'utilisateur est connecté avant envoi
-     * - Empêche la propagation de l'événement pour éviter conflits
-     * 
-     * @param {MouseEvent} event Événement de clic
+     * @param {MouseEvent} event L'événement de clic global.
      */
-    function handleReactionClick(event) {
-        // CORRECTION : Cible l'élément .reaction, même si le clic est sur un enfant (ex: .count)
+    document.addEventListener('click', function(event) {
+        // Cible le bouton de réaction, même si le clic a eu lieu sur un de ses enfants (ex: <span>).
         const reactionButton = event.target.closest('.reaction:not(.reaction-readonly)');
-
-        // Si le clic n'est pas sur une réaction valide, on ignore.
+    
+        // Si le clic n'est pas sur un bouton de réaction, on arrête tout.
         if (!reactionButton) {
             return;
         }
-
+    
         event.preventDefault(); // Empêche le comportement par défaut uniquement si c'est une réaction.
         const wrapper = reactionButton.closest('.reaction-wrapper');
         const emoji = wrapper.getAttribute('data-emoji');
@@ -271,28 +241,29 @@ function toggle_visible(id) {
             console.warn('[Reactions] Données manquantes sur la réaction cliquée');
             return;
         }
-
+    
         // Vérification authentification
         if (!isUserLoggedIn()) {
             showLoginMessage(L.LOGIN_REQUIRED);
             return;
         }
-
+    
         // Envoi de la réaction au serveur
         sendReaction(postId, emoji); // Appel unique et centralisé
-    }
-
+    });
+    
     /**
      * Gère le clic sur le bouton "plus" (ouverture du picker)
      * 
      * COMPORTEMENT :
      * 1. Ferme tout picker déjà ouvert (un seul à la fois)
-     * 2. Crée un nouveau picker
-     * 3. Charge categories.json pour la liste complète d'emojis
-     * 4. Si échec, affiche un picker restreint (COMMON_EMOJIS)
-     * 5. Positionne le picker sous le bouton
+     * 2. Vérifie que l'utilisateur est connecté.
+     * 3. Crée et affiche un nouveau picker d'emojis.
+     * 4. Tente de charger la liste complète d'emojis depuis `categories.json`.
+     * 5. En cas d'échec, affiche un picker de secours avec les emojis les plus courants.
+     * 6. Positionne le picker sous le bouton cliqué.
      * 
-     * @param {MouseEvent} event Événement de clic
+     * @param {MouseEvent} event L'événement de clic sur le bouton "+".
      */
     function handleMoreButtonClick(event) {
         event.preventDefault(); // Garder pour éviter le comportement par défaut si c'est un lien
@@ -360,7 +331,11 @@ function toggle_visible(id) {
     }
     
     /**
-     * Gère le clic sur un emoji dans le picker (via délégation)
+     * Gère le clic sur un emoji DANS le picker.
+     * 
+     * Cet écouteur est attaché au conteneur du picker et utilise la délégation
+     * pour capturer les clics sur les cellules d'emoji (`.emoji-cell`).
+     * 
      * @param {MouseEvent} event 
      */
     function handlePickerEmojiClick(event) {
@@ -377,23 +352,23 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Construit le DOM complet du picker d'emojis (version complète)
+     * Construit l'interface complète du picker d'emojis.
      * 
      * STRUCTURE DU PICKER :
-     * 1. Onglets de catégories (Smileys, Animaux, Nourriture, etc.)
-     * 2. Header avec champ de recherche et bouton fermeture
-     * 3. Section "Utilisé fréquemment" (COMMON_EMOJIS)
-     * 4. Contenu principal scrollable avec toutes les catégories
-     * 5. Zone de résultats de recherche (masquée par défaut)
+     * 1. Header : Champ de recherche et bouton de fermeture.
+     * 2. Onglets de catégories : Permettent de naviguer rapidement entre les sections.
+     * 3. Corps :
+     *    - Section "Utilisé fréquemment".
+     *    - Conteneur principal scrollable avec toutes les catégories d'emojis.
+     *    - Conteneur pour les résultats de recherche (affiché/masqué dynamiquement).
      * 
      * RECHERCHE :
-     * - Support des mots-clés français via EMOJI_KEYWORDS_FR
-     * - Filtre en temps réel pendant la saisie
-     * - Limite à 100 résultats pour les performances
+     * - La recherche se fait sur les noms d'emojis et sur les mots-clés français (via `EMOJI_KEYWORDS_FR`).
+     * - Les résultats sont affichés en temps réel.
      * 
-     * @param {HTMLElement} picker Conteneur du picker
-     * @param {number|string} postId ID du message cible
-     * @param {Object} emojiData Données JSON des emojis
+     * @param {HTMLElement} picker Le conteneur du picker à remplir.
+     * @param {number|string} postId L'ID du message auquel la réaction sera associée.
+     * @param {Object} emojiData Les données JSON des emojis, structurées par catégories.
      */
     function buildEmojiPicker(picker, postId, emojiData) {
         const hasEmojiData = emojiData && typeof emojiData === 'object' && emojiData.emojis && Object.keys(emojiData.emojis).length > 0;
@@ -601,18 +576,15 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Crée une cellule d'emoji cliquable pour le picker
+     * Crée une cellule d'emoji (<button>) cliquable pour le picker.
      * 
      * SÉCURITÉ :
-     * - Applique safeEmoji() pour nettoyer l'emoji
-     * - Stocke l'emoji nettoyé dans data-emoji pour cohérence
+     * - L'emoji est nettoyé avec `safeEmoji()` avant d'être utilisé.
+     * - Les attributs `data-emoji` et `data-post-id` sont utilisés pour la délégation d'événements.
      * 
-     * COMPORTEMENT :
-     * - Au clic : envoie la réaction et ferme le picker
-     * 
-     * @param {string} emoji Emoji à afficher
-     * @param {number|string} postId ID du message cible
-     * @param {string} [name=''] Nom descriptif (affiché au survol)
+     * @param {string} emoji L'emoji à afficher.
+     * @param {number|string} postId L'ID du message cible.
+     * @param {string} [name=''] Le nom descriptif de l'emoji (pour le `title` au survol).
      * @returns {HTMLElement} Bouton de la cellule emoji
      */
     function createEmojiCell(emoji, postId, name = '') {
@@ -632,19 +604,19 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Recherche des emojis selon une requête textuelle
+     * Filtre la liste complète des emojis en fonction d'une requête textuelle.
      * 
      * SOURCES DE RECHERCHE (par ordre de priorité) :
-     * 1. Mots-clés français (EMOJI_KEYWORDS_FR) si disponible
-     * 2. Nom anglais de l'emoji (emojiObj.name)
-     * 3. Emoji littéral (utile si copier-coller)
+     * 1. Mots-clés français (depuis `EMOJI_KEYWORDS_FR` si disponible).
+     * 2. Nom officiel anglais de l'emoji (ex: "grinning face").
+     * 3. L'emoji lui-même (permet de rechercher en collant un emoji dans le champ).
      * 
      * OPTIMISATIONS :
-     * - Limite à 100 résultats pour performances
-     * - Utilise Set pour éviter les doublons
+     * - La recherche est limitée à 100 résultats pour garantir de bonnes performances.
+     * - Un `Set` est utilisé pour s'assurer que chaque emoji n'apparaît qu'une seule fois dans les résultats.
      * 
-     * @param {string} query Texte de recherche (déjà en minuscules)
-     * @param {Object} emojiData Données JSON des emojis
+     * @param {string} query Le texte de recherche (doit être en minuscules).
+     * @param {Object} emojiData L'objet contenant toutes les données des emojis.
      * @returns {Array} Tableau d'objets {emoji, name}
      */
     function searchEmojis(query, emojiData) {
@@ -694,11 +666,11 @@ function toggle_visible(id) {
     }
 
     /**
-     * Affiche les résultats de recherche dans le picker
+     * Affiche les résultats de la recherche dans le conteneur approprié du picker.
      * 
-     * @param {HTMLElement} container Conteneur des résultats
-     * @param {Array} results Tableau d'objets {emoji, name}
-     * @param {number|string} postId ID du message cible
+     * @param {HTMLElement} container L'élément DOM où afficher les résultats.
+     * @param {Array} results Le tableau d'objets emoji retourné par `searchEmojis`.
+     * @param {number|string} postId L'ID du message, nécessaire pour créer les cellules d'emoji.
      */
     function displaySearchResults(container, results, postId) {
         container.innerHTML = '';
@@ -722,12 +694,12 @@ function toggle_visible(id) {
     }
 
     /**
-     * Construit un picker restreint (fallback si categories.json inaccessible)
+     * Construit un picker de secours si `categories.json` n'a pas pu être chargé.
      * 
-     * Affiche uniquement les COMMON_EMOJIS avec un message d'information.
-     * 
-     * @param {HTMLElement} picker Conteneur du picker
-     * @param {number|string} postId ID du message cible
+     * Ce picker affiche uniquement les emojis de la liste `COMMON_EMOJIS` et un message
+     * informant l'utilisateur que la liste complète n'est pas disponible.
+     * @param {HTMLElement} picker Le conteneur du picker à remplir.
+     * @param {number|string} postId L'ID du message cible.
      */
     function buildFallbackPicker(picker, postId) {
         // CORRECTION : Réutiliser la délégation d'événement pour la cohérence.
@@ -757,13 +729,12 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Ferme tous les pickers ouverts
+     * Ferme le picker d'emojis actuellement ouvert.
      * 
-     * COMPORTEMENT :
-     * - Si event fourni : vérifie que le clic est en dehors du picker
-     * - Sinon : ferme inconditionnellement (fermeture programmée)
-     * 
-     * @param {MouseEvent} [event] Événement de clic (optionnel)
+     * Cette fonction est appelée par un écouteur global sur `document`.
+     * Si un événement de clic est fourni, elle vérifie que le clic a eu lieu
+     * en dehors du picker avant de le fermer.
+     * @param {MouseEvent} [event] L'événement de clic qui a déclenché la fermeture (optionnel).
      */
     function closeAllPickers(event) {
         if (currentPicker && (!event || !currentPicker.contains(event.target))) {
@@ -777,15 +748,12 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Vérifie si l'utilisateur est connecté
+     * Vérifie si l'utilisateur est considéré comme connecté côté client.
      * 
-     * MÉTHODE :
-     * - Lecture de la variable globale REACTIONS_SID (injectée par phpBB)
-     * - Si vide ou undefined : non connecté
-     * 
-     * IMPORTANT : Cette vérification est doublée côté serveur (sécurité).
-     * 
-     * @returns {boolean} True si connecté, False sinon
+     * La vérification se base sur la présence de la variable globale `REACTIONS_SID`,
+     * qui est injectée dans la page par phpBB pour les utilisateurs connectés.
+     * @important Cette vérification est une première barrière côté client ; la véritable validation d'authentification est effectuée côté serveur.
+     * @returns {boolean} `true` si l'utilisateur est connecté, `false` sinon.
      */
     function isUserLoggedIn() {
         return typeof REACTIONS_SID !== 'undefined' && REACTIONS_SID !== '';
@@ -793,11 +761,11 @@ function toggle_visible(id) {
 
     /**
      * Affiche un message modal demandant la connexion
-     * 
-     * AFFICHAGE :
-     * - Modal centré avec overlay transparent
-     * - Fermeture au clic sur bouton OK
-     * - Auto-fermeture après 5 secondes
+     *
+     * Crée et affiche une boîte de dialogue modale simple pour informer les utilisateurs
+     * non connectés qu'ils doivent se connecter pour interagir.
+     * Le message se ferme automatiquement après 5 secondes ou lors d'un clic sur "OK".
+     * @param {string} text Le message à afficher.
      */
     function showLoginMessage(text) {
         // Vérifier qu'il n'y a pas déjà un message affiché
@@ -846,28 +814,22 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Envoie une requête AJAX pour ajouter ou retirer une réaction
+     * Envoie la requête AJAX pour ajouter ou retirer une réaction.
      * 
      * PROCESSUS :
-     * 1. Vérification authentification
-     * 2. Nettoyage de l'emoji avec safeEmoji()
-     * 3. Détermination de l'action (add ou remove selon état actuel)
-     * 4. Construction du payload JSON
-     * 5. Envoi via fetch() avec headers appropriés
-     * 6. Traitement de la réponse et mise à jour du DOM
+     * 1. Vérifie l'authentification de l'utilisateur.
+     * 2. Détermine l'action ('add' ou 'remove') en fonction de l'état actuel de la réaction dans le DOM.
+     * 3. Prépare le payload JSON avec `post_id`, `emoji` (nettoyé), `action` et `sid`.
+     * 4. Affiche un indicateur de chargement sur la réaction concernée.
+     * 5. Envoie la requête `fetch` à l'endpoint AJAX.
+     * 6. Traite la réponse :
+     *    - Si succès et `data.html` est fourni, remplace le conteneur des réactions (méthode préférée).
+     *    - Sinon, tente une mise à jour manuelle (fallback).
+     * 7. Gère les erreurs (403, 400, 500, etc.) en affichant des messages appropriés.
+     * 8. Retire l'indicateur de chargement.
      * 
-     * GESTION DES ERREURS :
-     * - 403 : Affiche message de connexion
-     * - 400 : Log console (données invalides)
-* - 500 : Log console (erreur serveur)
-     * - Network error : Log console (problème réseau)
-     * 
-     * MISE À JOUR DOM :
-     * - Si data.html fourni : remplacement complet du bloc (méthode privilégiée)
-     * - Sinon : mise à jour manuelle compteur (fallback)
-     * 
-     * @param {number|string} postId ID du message
-     * @param {string} emoji Emoji de la réaction
+     * @param {number|string} postId L'ID du message concerné.
+     * @param {string} emoji L'emoji de la réaction.
      */
     function sendReaction(postId, emoji) {
         // =====================================================================
@@ -1038,22 +1000,23 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Met à jour manuellement l'affichage d'une réaction (fallback)
+     * Met à jour manuellement l'affichage d'une seule réaction (méthode de secours).
      * 
-     * UTILISATION :
-     * - Appelée uniquement si le serveur ne renvoie pas de HTML complet
-     * - Crée l'élément réaction s'il n'existe pas
-     * - Met à jour le compteur et l'état "active"
-     * - Masque si compteur = 0
+     * Cette fonction est utilisée en fallback si la réponse AJAX ne contient pas
+     * le bloc HTML complet (`data.html`). Elle modifie directement le DOM pour
+     * refléter le nouvel état de la réaction.
      * 
-     * IMPORTANT :
-     * - Cette méthode est moins fiable que le remplacement HTML complet
-     * - Préférer toujours la méthode avec data.html du serveur
+     * ÉTAPES :
+     * 1. Localise le conteneur de la réaction.
+     * 2. Crée l'élément de réaction s'il n'existe pas.
+     * 3. Met à jour le compteur et l'attribut `data-count`.
+     * 4. Ajoute ou retire la classe `active` pour indiquer si l'utilisateur a réagi.
+     * 5. Masque la réaction si son compteur tombe à zéro.
      * 
-     * @param {number|string} postId ID du message
-     * @param {string} emoji Emoji de la réaction
-     * @param {number} newCount Nouveau compteur
-     * @param {boolean} userHasReacted Si l'utilisateur actuel a réagi
+     * @param {number|string} postId L'ID du message.
+     * @param {string} emoji L'emoji de la réaction.
+     * @param {number} newCount Le nouveau nombre total de cette réaction.
+     * @param {boolean} userHasReacted `true` si l'utilisateur courant a réagi.
      */
     function updateSingleReactionDisplay(postId, emoji, newCount, userHasReacted) {
         // Localiser le conteneur des réactions
@@ -1133,20 +1096,21 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Configure le tooltip affichant les utilisateurs ayant réagi
+     * Configure les événements de survol pour afficher le tooltip des utilisateurs.
      * 
      * COMPORTEMENT :
-     * - Au survol (300ms de délai pour éviter flicker)
-     * - Affiche la liste des utilisateurs
-     * - Appel AJAX get_users si data-users vide
+     * - `mouseenter` : Après un court délai (300ms) pour éviter les affichages intempestifs,
+     *   le tooltip est affiché.
+     * - `mouseleave` : Le tooltip est masqué après un court délai, sauf si la souris
+     *   se déplace sur le tooltip lui-même.
      * 
      * OPTIMISATION :
-     * - Si data-users pré-rempli : utilisation directe (pas d'appel AJAX)
-     * - Sinon : appel AJAX avec cache côté serveur
+     * - Si l'attribut `data-users` est déjà présent sur l'élément, ses données sont utilisées directement.
+     * - Sinon, une requête AJAX (`action: 'get_users'`) est envoyée pour récupérer la liste des utilisateurs.
      * 
-     * @param {HTMLElement} reactionElement Élément réaction
-     * @param {number|string} postId ID du message
-     * @param {string} emoji Emoji de la réaction
+     * @param {HTMLElement} reactionElement L'élément `.reaction-wrapper` sur lequel attacher les événements.
+     * @param {number|string} postId L'ID du message.
+     * @param {string} emoji L'emoji concerné.
      */
     function setupReactionTooltip(reactionElement, postId, emoji) {
         let tooltipTimeout;
@@ -1233,15 +1197,14 @@ function toggle_visible(id) {
     }
 
     /**
-     * Affiche le tooltip avec la liste des utilisateurs
+     * Crée et affiche le tooltip avec la liste des utilisateurs.
      * 
-     * AFFICHAGE :
-     * - Positionné sous l'élément réaction
-     * - Liste de liens cliquables vers les profils
-     * - Reste visible si survolé
+     * Le tooltip est une liste `<ul>` positionnée de manière absolue sous la réaction.
+     * Chaque utilisateur est un lien vers son profil. Le tooltip reste visible
+     * si l'utilisateur déplace sa souris dessus.
      * 
-     * @param {HTMLElement} element Élément réaction
-     * @param {Array} users Tableau d'objets {user_id, username}
+     * @param {HTMLElement} element L'élément de réaction de référence pour le positionnement.
+     * @param {Array} users Un tableau d'objets `{user_id, username}`.
      */
     function showUserTooltip(element, users) {
         // Supprimer tout tooltip existant (un seul à la fois)
@@ -1277,7 +1240,7 @@ function toggle_visible(id) {
     }
 
     /**
-     * Masque le tooltip actuellement affiché
+     * Masque et supprime le tooltip actuellement affiché.
      */
     function hideUserTooltip() {
         if (currentTooltip) {
@@ -1291,14 +1254,12 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Échappe les caractères HTML pour prévenir XSS
+     * Échappe les caractères HTML d'une chaîne de texte pour prévenir les attaques XSS.
      * 
-     * MÉTHODE :
-     * - Utilise textContent d'un élément temporaire
-     * - Plus sûr que les regex manuelles
-     * 
-     * @param {string} text Texte à échapper
-     * @returns {string} Texte échappé
+     * Cette méthode robuste utilise les capacités natives du navigateur pour
+     * convertir les caractères spéciaux (`<`, `>`, `&`, etc.) en leurs entités HTML.
+     * @param {string} text Le texte à sécuriser.
+     * @returns {string} Le texte sécurisé.
      */
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -1307,14 +1268,12 @@ function toggle_visible(id) {
     }
 
     /**
-     * Récupère le post_id depuis un élément du DOM
+     * Récupère l'ID du message (`post_id`) à partir d'un élément enfant.
      * 
-     * MÉTHODE :
-     * - Remonte l'arbre DOM jusqu'à .post-reactions-container
-     * - Lit l'attribut data-post-id
-     * 
-     * @param {HTMLElement} el Élément DOM de départ
-     * @returns {string|null} post_id ou null si introuvable
+     * La fonction remonte l'arbre DOM depuis l'élément fourni jusqu'à trouver
+     * le conteneur principal `.post-reactions-container` et lit son attribut `data-post-id`.
+     * @param {HTMLElement} element L'élément DOM de départ (ex: un bouton de réaction).
+     * @returns {string|null} L'ID du message, ou `null` s'il n'est pas trouvé.
      */
     function getPostIdFromReaction(element) {
         const container = element.closest('.post-reactions-container');
@@ -1326,10 +1285,10 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Initialisation au chargement de la page
+     * Point d'entrée principal au chargement de la page.
      * 
-     * ÉVÉNEMENT : DOMContentLoaded
-     * - Garanti que le DOM est prêt avant d'attacher les écouteurs
+     * Une fois le DOM entièrement chargé, cette fonction initialise les réactions
+     * sur toute la page et démarre le mécanisme de synchronisation en temps réel.
      */
     document.addEventListener('DOMContentLoaded', () => {
         initReactions();
@@ -1341,7 +1300,10 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
-     * Démarre la synchronisation automatique.
+     * Démarre le processus de synchronisation automatique en temps réel.
+     * 
+     * Cette fonction configure un `setInterval` qui appellera `performLiveSync`
+     * à un intervalle régulier défini dans les options (`syncInterval`).
      */
     function startLiveSync() {
         if (typeof REACTIONS_AJAX_URL === 'undefined') {
@@ -1358,7 +1320,10 @@ function toggle_visible(id) {
     }
 
     /**
-     * Récupère les identifiants des messages présents sur la page.
+     * Collecte tous les ID de messages visibles sur la page.
+     * 
+     * Scanne le DOM à la recherche de conteneurs de réactions et extrait
+     * les `data-post-id` pour les envoyer au serveur lors de la synchronisation.
      * @returns {number[]}
      */
     function collectLiveSyncPostIds() {
@@ -1373,7 +1338,11 @@ function toggle_visible(id) {
     }
 
     /**
-     * Interroge l'API pour récupérer les réactions actualisées.
+     * Exécute une requête de synchronisation vers le serveur.
+     * 
+     * Collecte les ID des messages visibles, envoie-les au serveur via une requête AJAX
+     * (`action: 'sync'`), et met à jour le DOM avec les données fraîches reçues
+     * en réponse. Empêche les requêtes concurrentes avec le flag `liveSyncInFlight`.
      */
     function performLiveSync() {
         if (liveSyncInFlight) {
@@ -1422,7 +1391,10 @@ function toggle_visible(id) {
     }
 
     /**
-     * Met à jour le DOM avec les informations renvoyées par l'API.
+     * Applique les données de synchronisation à un conteneur de réaction spécifique.
+     * 
+     * Si le HTML reçu du serveur est différent du contenu actuel, il le remplace
+     * et ré-initialise les écouteurs d'événements sur ce conteneur.
      * @param {string|number} postId
      * @param {{html?: string}} payload
      */
@@ -1451,39 +1423,25 @@ function toggle_visible(id) {
     /**
      * NOTES DE DÉBOGAGE ET MAINTENANCE
      * 
-     * === PROBLÈMES COURANTS ET SOLUTIONS ===
+     * ### Problèmes courants et solutions
      * 
-     * 1. ERREUR 400 LORS DE L'ENVOI :
-     *    - Vérifier que safeEmoji() nettoie bien l'emoji
-     *    - Console réseau → Request payload → vérifier les octets
-     *    - Vérifier REACTIONS_AJAX_URL et REACTIONS_SID
+     * 1.  **Erreur 400 (Bad Request) lors de l'envoi :**
+     *     - Cause probable : L'emoji contient des caractères invalides.
+     *     - Solution : Vérifier que `safeEmoji()` est bien appliquée et nettoie correctement l'emoji. Inspecter le payload de la requête dans l'onglet "Réseau".
      * 
-     * 2. ERREUR 500 AVEC EMOJIS 4-OCTETS :
-     *    - Vérifier collation table : utf8mb4_unicode_ci
-     *    - ALTER TABLE phpbb_post_reactions CONVERT TO CHARACTER SET utf8mb4
-     *    - Vérifier LONGEUR reaction_emoji : VARCHAR(191) minimum
+     * 2.  **Les écouteurs d'événements ne fonctionnent plus après un clic :**
+     *     - Cause probable : Le DOM a été mis à jour par AJAX, mais les nouveaux éléments n'ont pas eu leurs écouteurs attachés.
+     *     - Solution : S'assurer que `initReactions(container)` est appelé après chaque remplacement de `innerHTML`.
      * 
-     * 3. RÉACTION NE S'AFFICHE PAS APRÈS CLIC :
-     *    - Console : vérifier data.html dans la réponse
-     *    - Console : vérifier logs "[Reactions] HTML reçu"
-     *    - Vérifier que helper.php renvoie bien du HTML
+     * 3.  **Le picker d'emojis ne s'affiche pas ou est vide :**
+     *     - Cause probable : Échec du chargement de `categories.json` (erreur 404, JSON invalide).
+     *     - Solution : Vérifier le chemin `REACTIONS_JSON_PATH` et la validité du fichier JSON.
      * 
-     * 4. ÉCOUTEURS NE FONCTIONNENT PLUS APRÈS AJAX :
-     *    - Vérifier que initReactions() est appelé après mise à jour DOM
-     *    - Vérifier le contexte passé à initReactions(context)
+     * ### Optimisations possibles
      * 
-     * 5. TOOLTIP N'APPARAÃŽT PAS :
-     *    - Vérifier que setupReactionTooltip() est appelé
-     *    - Console réseau → action get_users → vérifier réponse
-     *    - Vérifier styles CSS .reaction-user-tooltip
-     * 
-     * === OPTIMISATIONS POSSIBLES ===
-     * 
-     * - Debounce sur la recherche du picker (déjà présent via input)
-     * - Cache côté client pour get_users (localStorage avec TTL)
-     * - Spinner/loading indicator pendant requêtes AJAX
-     * - Compression gzip du fichier JS en production
-     * - Minification en production (uglify-js, terser)
+     * -   **Indicateur de chargement :** Ajouter un spinner visuel pendant les requêtes AJAX pour améliorer le retour utilisateur.
+     * -   **Cache pour les tooltips :** Utiliser `localStorage` pour mettre en cache les listes d'utilisateurs et réduire les appels AJAX `get_users`.
+     * -   **Virtual Scrolling :** Pour le picker d'emojis, si la liste devient très grande, utiliser une technique de "virtual scrolling" pour n'afficher que les éléments visibles.
      * 
      * === COMPATIBILITÉ ===
      * 
@@ -1493,10 +1451,8 @@ function toggle_visible(id) {
      * 
      * === SÉCURITÉ ===
      * 
-     * - Toutes les vérifications côté client sont DOUBLÉES côté serveur
-     * - Ne JAMAIS faire confiance au sid côté client
-     * - escapeHtml() systématique pour contenu utilisateur
-     * - safeEmoji() systématique avant envoi AJAX
-     */
-
+     * - Toute logique côté client (ex: `isUserLoggedIn`) est une commodité pour l'UX, mais la VRAIE sécurité est assurée côté serveur.
+     * - `escapeHtml()` est utilisé pour tout contenu généré par l'utilisateur (noms d'utilisateur) afin de prévenir les attaques XSS.
+     * - `safeEmoji()` est utilisé pour nettoyer les données avant de les envoyer au serveur.
+     */    
 })(); // Fin IIFE (Immediately Invoked Function Expression)
