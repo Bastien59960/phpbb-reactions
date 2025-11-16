@@ -1664,6 +1664,39 @@ foreach ($types as $type) {
 }
 draw_table(['id' => 'ID', 'name' => 'Nom', 'enabled' => 'Activé'], $type_rows);
 
+// 3. Vérifier le charset de la colonne notification_data
+echo "\n⚙️  Vérification du format de la colonne 'notification_data'\n";
+$stmt = $pdo->prepare("
+    SELECT 
+        COLUMN_NAME,
+        CHARACTER_SET_NAME,
+        COLLATION_NAME,
+        COLUMN_TYPE
+    FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = :db_name
+      AND TABLE_NAME = 'phpbb_notifications' 
+      AND COLUMN_NAME = 'notification_data'
+");
+$stmt->execute(['db_name' => $db_name]);
+$column_info = $stmt->fetchAll(PDO::FETCH_ASSOC);
+draw_table(
+    [
+        'COLUMN_NAME' => 'Colonne',
+        'CHARACTER_SET_NAME' => 'Charset',
+        'COLLATION_NAME' => 'Collation',
+        'COLUMN_TYPE' => 'Type'
+    ],
+    $column_info
+);
+
+// Vérifier si le charset est correct et afficher une erreur si ce n'est pas le cas
+if (isset($column_info[0]) && $column_info[0]['CHARACTER_SET_NAME'] !== 'utf8mb4') {
+    echo "\n\033[1;41;37m⚠️  ATTENTION : La colonne 'notification_data' n'est PAS en utf8mb4 ! \033[0m";
+    echo "\n\033[1;33m   La migration n'a pas fonctionné correctement. Les emojis risquent de ne pas être stockés.\033[0m\n";
+} else if (isset($column_info[0])) {
+    echo "\n\033[0;32m✅ Le format de la colonne est correct (utf8mb4).\033[0m\n";
+}
+
 // 2. Vérifier et décoder les 10 dernières notifications
 echo "\n🔔 Analyse détaillée des 10 dernières notifications 'cloche'\n";
 $stmt = $pdo->query("
