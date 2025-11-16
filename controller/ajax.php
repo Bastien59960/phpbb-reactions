@@ -879,9 +879,10 @@ class ajax
     private function trigger_immediate_notification($post_id, $reacter_id, $emoji)
     {
         try {
-            // Étape 1 : Récupérer les informations de base du message.
-            $sql = 'SELECT poster_id, topic_id
-                    FROM ' . $this->posts_table . '
+            // Étape 1 : Récupérer TOUTES les informations nécessaires du message
+            $sql = 'SELECT p.poster_id, p.topic_id, p.forum_id, u.username as author_username
+                    FROM ' . $this->posts_table . ' p
+                    LEFT JOIN ' . USERS_TABLE . ' u ON p.poster_id = u.user_id
                     WHERE post_id = ' . (int) $post_id . '
                     LIMIT 1';
 
@@ -895,41 +896,53 @@ class ajax
             }
 
             $post_author_id = (int) $post_data['poster_id'];
+            $topic_id = (int) $post_data['topic_id'];
+            $forum_id = (int) $post_data['forum_id'];
 
             // On ne s'envoie pas de notification à soi-même
             if ($post_author_id === $reacter_id) {
+                if (defined('DEBUG') && DEBUG) {
+                    error_log('[Reactions] Notification: Auto-réaction ignorée (post_id=' . $post_id . ')');
+                }
                 return;
             }
 
-            // Respecter la préférence de notification de l'auteur
+            // Vérifier la préférence de notification de l'auteur
             $sql_pref = 'SELECT user_reactions_notify FROM ' . USERS_TABLE . ' WHERE user_id = ' . $post_author_id;
             $result_pref = $this->db->sql_query($sql_pref);
             $pref_row = $this->db->sql_fetchrow($result_pref);
             $this->db->sql_freeresult($result_pref);
 
-            // Si la préférence n'est pas dans la base (jamais définie), on la considère comme activée (1).
-            // Sinon, on utilise la valeur de la base.
             $notify_pref = isset($pref_row['user_reactions_notify']) ? (int) $pref_row['user_reactions_notify'] : 1;
 
-            if ($notify_pref !== 1)
-            {
-                if (defined('DEBUG') && DEBUG)
-                {
+            if ($notify_pref !== 1) {
+                if (defined('DEBUG') && DEBUG) {
                     error_log('[Reactions] Notification: Auteur ' . $post_author_id . ' a désactivé les notifications.');
                 }
                 return;
             }
 
-            // Préparer les données pour le gestionnaire de notifications
+            // Récupérer le nom d'utilisateur du réacteur
+            $reacter_username = $this->user->data['username'] ?? 'Utilisateur';
+
+            // Préparer les données COMPLÈTES pour le gestionnaire de notifications
             $notification_data = [
                 'post_id'          => (int) $post_id,
-                'topic_id'         => (int) $post_data['topic_id'],
+                'topic_id'         => $topic_id,
+                'forum_id'         => $forum_id,
                 'post_author'      => $post_author_id,
                 'poster_id'        => $post_author_id,
                 'reacter'          => $reacter_id,
-                'reacter_username' => $this->user->data['username'] ?? '',
+                'reacter_id'       => $reacter_id,
+                'reacter_username' => $reacter_username,
+                'reacter_name'     => $reacter_username,
                 'emoji'            => $emoji,
+                'reaction_emoji'   => $emoji,
             ];
+
+            if (defined('DEBUG') && DEBUG) {
+                error_log('[Reactions] Notification DATA: ' . json_encode($notification_data, JSON_UNESCAPED_UNICODE));
+            }
 
             // Envoyer la notification via le manager de phpBB
             $notification_ids = $this->notification_manager->add_notifications(
@@ -937,13 +950,10 @@ class ajax
                 $notification_data
             );
 
-            if (!empty($notification_ids)) {
-                $log_suffix = is_array($notification_ids) ? implode(',', $notification_ids) : $notification_ids;
-            } else {
-                $log_suffix = 'none';
-            }
-
             if (defined('DEBUG') && DEBUG) {
+                $log_suffix = !empty($notification_ids) 
+                    ? (is_array($notification_ids) ? implode(',', $notification_ids) : $notification_ids) 
+                    : 'none';
                 error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id . ', ids=' . $log_suffix);
             }
         } catch (\Exception $e) {
