@@ -1634,24 +1634,133 @@ echo ""
 echo -e "───[ 3️⃣2️⃣ DIAGNOSTIC FINAL ]────────────────────"
 echo -e "${YELLOW}ℹ️  État final des notifications et des types de notifications après toutes les opérations...${NC}"
 sleep 0.2
+ 
+ # Créer un script PHP temporaire pour le diagnostic
+ PHP_DIAG_SCRIPT=$(mktemp)
+ cat > "$PHP_DIAG_SCRIPT" <<'PHP_DIAG_EOF'
+<?php
 
-final_diag_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'FINAL_DIAG_EOF'
--- S'assurer que le type est bien enregistré et activé
-SELECT '--- Types de notifications de réaction ---' AS 'Diagnostic';
-SELECT * FROM phpbb_notification_types 
-WHERE notification_type_name LIKE '%reaction%';
+function draw_table(array $headers, array $rows) {
+    $widths = [];
+    foreach ($headers as $key => $header) {
+        $widths[$key] = mb_strlen($header);
+    }
+    foreach ($rows as $row) {
+        foreach ($row as $key => $cell) {
+            $widths[$key] = max($widths[$key], mb_strlen($cell));
+        }
+    }
 
--- Vérifier que la notification a bien été créée
-SELECT '--- Dernières 50 notifications de réaction ---' AS 'Diagnostic';
-SELECT * FROM phpbb_notifications 
-WHERE notification_type_id = (
-    SELECT notification_type_id 
-    FROM phpbb_notification_types 
-    WHERE notification_type_name = 'notification.type.reaction'
-    LIMIT 1
-)
-ORDER BY notification_time DESC 
-LIMIT 50;
-FINAL_DIAG_EOF
-)
-check_status "Diagnostic final des notifications." "$final_diag_output"
+    $separator = '+';
+    $header_line = '|';
+    foreach ($headers as $key => $header) {
+        $separator .= str_repeat('-', $widths[$key] + 2) . '+';
+        $header_line .= ' ' . str_pad($header, $widths[$key]) . ' |';
+    }
+
+    echo $separator . "\n";
+    echo $header_line . "\n";
+    echo $separator . "\n";
+
+    if (empty($rows)) {
+        echo '| ' . str_pad('Aucune donnée', mb_strlen($separator) - 5) . " |\n";
+    } else {
+        foreach ($rows as $row) {
+            $row_line = '|';
+            foreach ($row as $key => $cell) {
+                $row_line .= ' ' . str_pad($cell, $widths[$key]) . ' |';
+            }
+            echo $row_line . "\n";
+        }
+    }
+    echo $separator . "\n";
+}
+
+$db_user = getenv('DB_USER');
+$db_name = getenv('DB_NAME');
+$db_pass = getenv('MYSQL_PASSWORD');
+$db_host = 'localhost';
+
+try {
+    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo "Erreur de connexion : " . $e->getMessage();
+    exit(1);
+}
+
+// 1. Vérifier les types de notifications
+echo "\n📊 Types de notifications de réaction\n";
+$stmt = $pdo->query("SELECT * FROM phpbb_notification_types WHERE notification_type_name LIKE '%reaction%'");
+$types = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$type_rows = [];
+foreach ($types as $type) {
+    $type_rows[] = [
+        'id' => $type['notification_type_id'],
+        'name' => $type['notification_type_name'],
+        'enabled' => $type['notification_type_enabled'] ? 'Oui' : 'Non',
+    ];
+}
+draw_table(['ID', 'Nom', 'Activé'], $type_rows);
+
+// 2. Vérifier et décoder les 10 dernières notifications
+echo "\n🔔 Analyse détaillée des 10 dernières notifications 'cloche'\n";
+$stmt = $pdo->query("
+    SELECT * FROM phpbb_notifications 
+    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'notification.type.reaction' LIMIT 1)
+    ORDER BY notification_time DESC 
+    LIMIT 10
+");
+$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$notif_rows = [];
+foreach ($notifications as $notif) {
+    $data = @unserialize(base64_decode($notif['notification_data']));
+    if ($data === false) {
+        $reacter_id = 'ERREUR';
+        $reacter_name = 'DECODAGE';
+        $reaction_emoji = '!!';
+    } else {
+        $reacter_id = $data['reacter_id'] ?? 'N/A';
+        $reacter_name = $data['reacter_name'] ?? 'N/A';
+        $reaction_emoji = $data['reaction_emoji'] ?? 'N/A';
+    }
+
+    $notif_rows[] = [
+        'notif_id' => $notif['notification_id'],
+        'dest_id' => $notif['user_id'],
+        'post_id' => $notif['item_id'],
+        'read' => $notif['notification_read'] ? 'Oui' : 'Non',
+        'time' => date('Y-m-d H:i:s', $notif['notification_time']),
+        'reacter_id' => $reacter_id,
+        'reacter_name' => $reacter_name,
+        'emoji' => $reaction_emoji,
+    ];
+}
+draw_table(
+    [
+        'Notif ID',
+        'Dest. ID',
+        'Post ID',
+        'Lue',
+        'Heure',
+        'Réact. ID',
+        'Réact. Nom',
+        'Emoji'
+    ],
+    $notif_rows
+);
+
+ PHP_DIAG_EOF
+ 
+ # Exporter les variables et exécuter le script PHP
+ export DB_USER DB_NAME MYSQL_PASSWORD
+ final_diag_output=$(php "$PHP_DIAG_SCRIPT" 2>&1)
+ 
+ # Nettoyer le script temporaire
+ rm -f "$PHP_DIAG_SCRIPT"
+ 
+ # Vérifier et afficher le résultat
+ check_status "Diagnostic final détaillé des notifications." "$final_diag_output"
+ if [ $? -eq 0 ]; then
+     echo "$final_diag_output"
+ fi
