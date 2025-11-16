@@ -115,10 +115,24 @@ class release_1_0_3 extends \phpbb\db\migration\migration
         ];
     }
 
-    // NOTE : Il n'y a pas de méthodes revert_schema() ou revert_data() ici.
-    // C'est un choix délibéré. La conversion de la colonne `notification_data`
-    // en utf8mb4 est une amélioration non destructive pour la base de données
-    // de phpBB. Il n'y a aucun avantage à revenir en arrière, même si
-    // l'extension est désinstallée. Laisser la colonne en utf8mb4 est plus
-    // robuste pour l'avenir.
+    /**
+     * Indique explicitement qu'il n'y a pas d'action de réversion pour le schéma.
+     * C'est un choix délibéré. La conversion de la colonne `notification_data`
+     * en utf8mb4 est une amélioration non destructive pour la base de données
+     * de phpBB. Il n'y a aucun avantage à revenir en arrière.
+     * Retourner `false` empêche l'erreur "UNDEFINED_METHOD" lors d'une purge.
+     */
+    public function revert_schema()
+    {
+        return false;
+    }
+
+    /**
+     * Indique explicitement qu'il n'y a pas de réversion de données.
+     * Retourner `false` est la manière propre de signaler au migrateur d'ignorer cette étape.
+     */
+    public function revert_data()
+    {
+        return false;
+    }
 }
