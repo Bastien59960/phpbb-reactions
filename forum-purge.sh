@@ -1416,14 +1416,10 @@ GET_REACTIONS_EOF
                     
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
-
-                    # CORRECTION : Encoder les données en base64 pour éviter les problèmes d'encodage avec les emojis.
-                    # La colonne notification_data est de type TEXT et n'est pas toujours en utf8mb4.
-                    notification_data="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
-                    notification_data_base64=$(echo -n "$notification_data" | base64)
-                    # CORRECTION : Insérer la chaîne base64 BRUTE dans la colonne, sans utiliser FROM_BASE64().
-                    # La classe PHP se chargera de la décoder à l'affichage.
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_base64}');"
+                    
+                    # Insérer la chaîne sérialisée BRUTE dans la colonne. phpBB s'attend à un tableau sérialisé.
+                    notification_data_serialized="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_serialized}');"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
@@ -1700,7 +1696,7 @@ $stmt = $pdo->query("
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
 foreach ($notifications as $notif) {
-    $data = @unserialize(base64_decode($notif['notification_data']));
+    $data = @unserialize($notif['notification_data']); // phpBB stores serialized data directly
     if ($data === false) {
         $reacter_id = 'ERREUR';
         $reacter_name = 'DECODAGE';
@@ -1720,7 +1716,7 @@ foreach ($notifications as $notif) {
         'reacter_id' => $reacter_id,
         'reacter_name' => $reacter_name,
         'emoji' => $reaction_emoji,
-        'data' => substr($notif['notification_data'], 0, 20) . '...',
+        'data' => substr($notif['notification_data'], 0, 20) . '...', // Afficher les 20 premiers caractères de la donnée sérialisée
     ];
 }
 draw_table(
@@ -1769,8 +1765,8 @@ while true; do
         [Yy]* )
             echo "Lancement de la commande de purge des notifications..."
             if [ -f "bin/phpbbcli.php" ]; then
-                # Lance la commande CLI avec l'option --force pour ne pas redemander
-                php bin/phpbbcli.php reactions:purge_notifications --force
+                # Lance la commande CLI avec l'option --force pour ne pas redemander, en utilisant le chemin absolu
+                php "$FORUM_ROOT/bin/phpbbcli.php" reactions:purge_notifications --force
                 check_status "Nettoyage des notifications de l'extension Reactions."
             else
                 echo -e "${RED}❌ ERREUR : Impossible de trouver bin/phpbbcli.php. Commande ignorée.${NC}"
