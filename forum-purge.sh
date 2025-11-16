@@ -639,6 +639,21 @@ LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_
 WHERE t.notification_type_id IS NULL;
 
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
+SELECT '🔔 DERNIÈRES 5 NOTIFICATIONS "RÉACTION" CRÉÉES' AS '';
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
+
+-- Vérifier que la notification a bien été créée
+SELECT 
+    notification_id,
+    notification_read,
+    notification_time,
+    user_id
+FROM phpbb_notifications 
+WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'notification.type.reaction' LIMIT 1)
+ORDER BY notification_time DESC 
+LIMIT 5;
+
+SELECT '═══════════════════════════════════════════════════════════════' AS '';
 SELECT '✅ DIAGNOSTIC TERMINÉ' AS '';
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 DIAGNOSTIC_EOF
