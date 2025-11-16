@@ -1417,9 +1417,12 @@ GET_REACTIONS_EOF
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
                     
-                    # Insérer la chaîne sérialisée BRUTE dans la colonne. phpBB s'attend à un tableau sérialisé.
+                    # CORRECTION: Encoder la chaîne en HEX pour contourner les problèmes de charset de la colonne.
+                    # MySQL va décoder la chaîne HEX avec UNHEX() avant de l'insérer.
                     notification_data_serialized="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_len}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_len}:\"${reaction_emoji}\";}"
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_serialized}');"
+                    notification_data_hex=$(echo -n "$notification_data_serialized" | xxd -p | tr -d '\n')
+
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), UNHEX('${notification_data_hex}'));"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
@@ -1765,7 +1768,7 @@ while true; do
         [Yy]* )
             echo "Lancement de la commande de purge des notifications..."
             if [ -f "bin/phpbbcli.php" ]; then
-                # Lance la commande CLI avec l'option --force pour ne pas redemander, en utilisant le chemin absolu
+                # CORRECTION : Utiliser le chemin absolu vers phpbbcli.php
                 php "$FORUM_ROOT/bin/phpbbcli.php" reactions:purge_notifications --force
                 check_status "Nettoyage des notifications de l'extension Reactions."
             else
