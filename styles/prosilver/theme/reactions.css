@@ -98,39 +98,46 @@
 }
 
 /* ========== RÉACTIONS ========== */
-.post-reactions .reaction-wrapper {
-    position: relative; /* Contexte de positionnement pour le tooltip */
-    display: inline-block;
-    vertical-align: middle;
+.post-reactions .reaction-wrapper,
+.post-reactions .reaction-more {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     background: #f3f3f3;
     border: 1px solid #d1d1d1;
     border-radius: 15px;
-    padding: 8px 8px;
+    padding: 4px 8px;
     cursor: pointer;
     font-size: var(--reactions-post-emoji-size, 24px);
-    min-height: calc(var(--reactions-post-emoji-size, 24px) + 12px);
+    line-height: 1;
     transition: all 0.2s ease;
     user-select: none;
-    min-width: 40px;
-    justify-content: center;
+}
+
+.post-reactions .reaction-wrapper {
+    position: relative; /* Contexte de positionnement pour le tooltip */
+    vertical-align: middle;
     order: 1;
 }
 
-.post-reactions .reaction-wrapper:hover .reaction {
+.post-reactions .reaction-more {
+    order: -1; /* Toujours à gauche */
+    border-style: dashed;
+    color: #6c757d;
+    font-weight: bold;
+}
+
+.post-reactions .reaction-wrapper:hover {
     background: #e8e8e8;
     border-color: #b8b8b8;
     transform: translateY(-1px);
 }
 
-.post-reactions .reaction-wrapper .reaction.active {
+.post-reactions .reaction-wrapper .reaction.active,
+.post-reactions .reaction-wrapper:hover .reaction.active {
     background: #4a90c2;
     color: white;
     border-color: #3a7ca8;
-}
-
-.post-reactions .reaction-wrapper .reaction.active:hover {
-    background: #3a7ca8;
 }
 
 .post-reactions .reaction .count {
@@ -139,16 +146,14 @@
     font-size: 12px;
 }
 
-/* ========== RÉACTIONS EN LECTURE SEULE ========== */
-.post-reactions-readonly .reaction {
+/* ========== LECTURE SEULE ========== */
+.post-reactions-readonly .reaction-wrapper {
     cursor: default !important;
     opacity: 0.8;
-}
-
-.post-reactions-readonly .reaction:hover {
     background: #f3f3f3 !important;
     transform: none !important;
 }
+
 
 .reaction-readonly {
     cursor: default !important;
@@ -320,217 +325,6 @@
     background: #e8f5ff;
     color: #0a66c2;
 }
-
-/* ========== Tooltip Utilisateurs (NOUVEAU STYLE) ========== */
-.reaction-tooltip {
-    position: absolute;
-    bottom: 100%; /* Se positionne juste au-dessus du bouton */
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 5px; /* Petit espace entre le bouton et le tooltip */
-    z-index: 1050;
-    min-width: 150px;
-    max-width: 250px;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 8px 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    font-size: 13px;
-}
-
-.reaction-tooltip ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.reaction-tooltip li {
-    padding: 2px 0;
-}
-
-.reaction-tooltip .reaction-user-link {
-    color: #1976d2;
-    text-decoration: none;
-    display: inline-block;
-    padding: 2px 4px;
-    transition: all 0.15s;
-}
-.reaction-tooltip .reaction-user-link:hover {
-    background: #e3f2fd;
-    border-radius: 3px;
-    color: #0d47a1;
-}
-
-/*
-=============================================================================
- PICKER D'EMOJIS - NOUVEAU STYLE INSPIRÉ DE LINKEDIN (v3)
-=============================================================================
-*/
-
-.emoji-picker {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-    width: var(--reactions-picker-width, 320px);
-    max-width: var(--reactions-picker-width, 320px);
-    max-height: var(--reactions-picker-height, 280px);
-    height: 450px; /* Augmenté un peu pour la section fixe */
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-/* ========== ONGLETS EN HAUT ========== */
-.emoji-tabs {
-    display: flex;
-    justify-content: space-around;
-    padding: 4px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    background: white;
-    flex-shrink: 0; /* Empêche de rétrécir */
-}
-
-.emoji-tab {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: calc(var(--reactions-picker-emoji-size, 24px) + 16px);
-    height: calc(var(--reactions-picker-emoji-size, 24px) + 16px);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: var(--reactions-picker-emoji-size, 24px);
-    line-height: var(--reactions-picker-emoji-size, 24px);
-    transition: background-color 0.15s ease;
-    background: transparent;
-    border: none;
-    color: #666;
-}
-.emoji-tab:hover { background: #f3f6f8; }
-.emoji-tab.active { background: #e8f5ff; color: #0a66c2; }
-
-/* ========== HEADER (Recherche) ========== */
-.emoji-picker-header {
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-.emoji-search-input {
-    flex-grow: 1;
-    padding: 8px 12px 8px 36px;
-    border: 1px solid #e0e0e0;
-    border-radius: 20px;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s ease;
-    background: #f3f6f8 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') no-repeat 10px center;
-    background-size: 16px;
-}
-.emoji-search-input:focus {
-    border-color: #0a66c2;
-    background-color: white;
-    box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.2);
-}
-
-.emoji-picker-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    color: #666;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
-.emoji-picker-close:hover { background: #f3f6f8; }
-.emoji-picker-close::before { content: '✕'; }
-
-/* ========== NOUVEAU : CORPS DU PICKER ========== */
-.emoji-picker-body {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Important */
-}
-
-/* ========== NOUVEAU : SECTION "FRÉQUEMMENT UTILISÉ" (FIXE) ========== */
-.emoji-frequent-section {
-    padding: 8px 16px 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    flex-shrink: 0;
-}
-
-/* ========== CONTENU PRINCIPAL (SCROLLABLE) ========== */
-.emoji-picker-main {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 0 8px;
-    scrollbar-width: thin; /* Standard pour Firefox et accepté partout */
-    scrollbar-color: #e0e0e0 white; /* Couleur du thumb et du track (standard moderne) */
-}
-
-/* ========== TITRES DE CATÉGORIE (Commun aux deux sections) ========== */
-.emoji-category-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-    padding: 8px;
-    background: white;
-    position: sticky;
-    top: -1px; /* Colle au haut du conteneur scrollable */
-    z-index: 5;
-}
-.emoji-frequent-section .emoji-category-title {
-    position: static; /* Pas besoin d'être sticky */
-}
-
-
-/* ========== GRILLES D'EMOJIS ========== */
-.emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 2px;
-}
-
-.emoji-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-    font-size: 16px;
-    border: none;
-    background: transparent;
-}
-.emoji-cell:hover {
-    background: #f3f6f8;
-}
-
-/* ========== RÉSULTATS DE RECHERCHE ========== */
-.emoji-search-results {
-    padding: 8px;
-    height: 100%;
-    overflow-y: auto; /* Permet le scroll dans les résultats */
-}
-
-.emoji-no-results {
-    text-align: center;
-    padding: 40px 15px;
-    color: #757575;
-    font-size: 14px;
-}
-
 
 /* ========== Tooltip Utilisateurs (pas de changement) ========== */
 .reaction-user-tooltip {

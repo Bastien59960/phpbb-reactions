@@ -1251,15 +1251,15 @@ function toggle_visible(id) {
         // Supprimer tout tooltip existant (un seul à la fois)
         hideUserTooltip();
 
-        const tooltip = document.createElement('div');
-        tooltip.className = 'reaction-tooltip'; // Utiliser la nouvelle classe CSS
+        const tooltip = document.createElement('ul');
+        tooltip.className = 'reaction-user-tooltip';
 
         // Construction HTML sécurisée (escape XSS)
         const userLinks = users.map(user =>
             `<li><a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a></li>`
         ).join('');
 
-        tooltip.innerHTML = userLinks || '<span class="no-users">Personne</span>';
+        tooltip.innerHTML = userLinks || '<li><span class="no-users">Personne</span></li>';
         document.body.appendChild(tooltip);
         currentTooltip = tooltip;
 
@@ -1267,8 +1267,8 @@ function toggle_visible(id) {
         const rect = element.getBoundingClientRect();
         tooltip.style.position = 'absolute';
         tooltip.style.top = `${rect.bottom + window.scrollY}px`; // Collé en dessous
-        tooltip.style.left = `${rect.left + window.scrollX + (rect.width / 2)}px`; // Centré
-        tooltip.style.transform = 'translateX(-50%)';
+        tooltip.style.left = `${rect.left + window.scrollX}px`; // Alignement à gauche
+        tooltip.style.transform = 'none'; // Pas de transformation
         tooltip.style.zIndex = '10001';
 
         // Garder visible si l'utilisateur survole le tooltip
