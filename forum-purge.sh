@@ -21,6 +21,7 @@
 FORUM_ROOT="/home/bastien/www/forum"
 DB_USER="phpmyadmin"
 DB_NAME="bastien-phpbb"
+PHP_ERROR_LOG="/var/log/php/debug.err" # Fichier pour les erreurs PHP et les logs du script
 
 # --- Couleurs ---
 GREEN='\033[0;32m'
@@ -28,6 +29,10 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 WHITE_ON_RED='\033[1;41;37m'
 NC='\033[0m'
+
+# --- Commande PHP avec logging ---
+# Utilise des directives pour forcer la journalisation des erreurs dans un fichier spécifique.
+PHP_CLI="php -d error_reporting=E_ALL -d display_errors=0 -d log_errors=1 -d error_log=\"$PHP_ERROR_LOG\""
 
 # ==============================================================================
 # FUNCTION
@@ -173,6 +178,10 @@ EMERGENCY_RESTORE_EOF
         echo -e "${GREEN}ℹ️  Restauration d'urgence non nécessaire (pas de sauvegarde ou sauvegarde vide).${NC}"
     fi
 }
+
+log_to_file() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] - $1" >> "$PHP_ERROR_LOG"
+}
 # ==============================================================================
 # START
 # ==============================================================================
@@ -219,6 +228,27 @@ if echo "$mysql_test_output" | grep -q "Access denied"; then
     exit 1
 else
     echo -e "${GREEN}✅ SUCCÈS : Connexion à la base de données établie.${NC}"
+fi
+
+# ==============================================================================
+# 1.5 INITIALISATION DU FICHIER DE LOG
+# ==============================================================================
+echo -e "───[ 1.5 INITIALISATION DU FICHIER DE LOG ]───────────────────────"
+echo -e "${YELLOW}ℹ️  Tentative d'initialisation du fichier de log à l'emplacement : $PHP_ERROR_LOG${NC}"
+echo -e "${YELLOW}   Cela peut nécessiter les droits sudo.${NC}"
+
+# Créer le répertoire parent si nécessaire
+if ! sudo mkdir -p "$(dirname "$PHP_ERROR_LOG")"; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Impossible de créer le répertoire de log $(dirname "$PHP_ERROR_LOG").${NC}"
+fi
+
+# Créer le fichier, donner les permissions et vider le contenu
+if ! sudo touch "$PHP_ERROR_LOG" || ! sudo chown "$USER":"$(id -g -n "$USER")" "$PHP_ERROR_LOG"; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Impossible de créer ou de définir les permissions pour le fichier de log $PHP_ERROR_LOG.${NC}"
+else
+    > "$PHP_ERROR_LOG"
+    log_to_file "SCRIPT START: Le script de purge a démarré."
+    check_status "Initialisation et permissions du fichier de log."
 fi
 
 # ==============================================================================
@@ -1761,7 +1791,7 @@ PHP_DIAG_EOF
  
  # Exporter les variables et exécuter le script PHP
  export DB_USER DB_NAME MYSQL_PASSWORD
- final_diag_output=$(php "$PHP_DIAG_SCRIPT" 2>&1)
+ final_diag_output=$($PHP_CLI "$PHP_DIAG_SCRIPT" 2>&1)
  
  # Nettoyer le script temporaire
  rm -f "$PHP_DIAG_SCRIPT"
@@ -1817,3 +1847,5 @@ MANUAL_PURGE_EOF
             ;;
     esac
 done
+
+log_to_file "SCRIPT END: Le script de purge s'est terminé avec succès."
