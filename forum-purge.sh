@@ -146,11 +146,14 @@ MANUAL_PURGE_EOF
 cleanup() {
     local exit_code=$? # Capture le code de sortie du script
 
-    # Ne rien faire si le script s'est terminé normalement (code 0)
+    # Si le script s'est terminé normalement (code 0), on logue la fin et on sort.
     if [ $exit_code -eq 0 ]; then
+        log_to_file "SCRIPT END: Le script de purge s'est terminé avec succès."
         return
     fi
 
+    # Si le script est interrompu (code non-nul), on logue l'échec.
+    log_to_file "SCRIPT ABORTED: Le script a été interrompu avec le code de sortie $exit_code."
     echo ""
     echo -e "${WHITE_ON_RED}                                                                                   ${NC}"
     echo -e "${WHITE_ON_RED}  ⚠️  INTERRUPTION DU SCRIPT (CODE ${exit_code}) - LANCEMENT DE LA RESTAURATION D'URGENCE  ⚠️    ${NC}"
@@ -370,11 +373,11 @@ echo -e "${YELLOW}ℹ️  Utilisation des commandes natives de phpBB pour tester
 sleep 0.2
 
 # On tente de désactiver proprement. On ignore les erreurs avec `|| true` car si l'extension est cassée, cette commande échouera.
-output_disable=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv 2>&1 || true)
+output_disable=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv 2>&1 || true)
 check_status "Désactivation de l'extension via phpbbcli." "$output_disable"
 
 # On tente de purger l'extension. C'est CETTE commande qui exécute les méthodes `revert_*` des migrations.
-output_purge=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1)
+output_purge=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:purge bastien59960/reactions -vvv 2>&1)
 
 # Vérifier si la purge a échoué (à cause d'une erreur fatale dans les migrations par exemple)
 purge_exit_code=0
@@ -505,7 +508,7 @@ check_status "Nettoyage final de la BDD (cron_lock, toutes notifications)."
 echo -e "───[ 1️⃣1️⃣ PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
 echo -e "${YELLOW}ℹ️  Dernière purge pour s'assurer que le forum est dans un état parfaitement propre avant de réactiver.${NC}"
 sleep 0.2
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+output=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
 
 # ==============================================================================
@@ -771,7 +774,7 @@ echo -e "───[ 1️⃣4️⃣ RÉACTIVATION DE L'EXTENSION (bastien59960/re
 echo -e "${YELLOW}ℹ️  Lancement de la réactivation. C'est ici que les méthodes 'update_*' des migrations sont exécutées.${NC}"
 echo -e "${YELLOW}   Première tentative...${NC}"
 sleep 0.2
-output_enable=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
+output_enable=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Première tentative d'activation de l'extension." "$output_enable"
 
 # ==============================================================================
@@ -792,11 +795,11 @@ if [ $? -ne 0 ]; then
     
     echo "   Nettoyage agressif du cache à nouveau..."
     rm -vrf "$FORUM_ROOT/cache/production/"* > /dev/null
-    php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
+    $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
     check_status "Cache purgé après nettoyage manuel."
     
     echo -e "${YELLOW}   Seconde tentative d'activation...${NC}"
-    output_enable=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
+    output_enable=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
     check_status "Seconde tentative d'activation de l'extension." "$output_enable"
 fi
 
@@ -1017,7 +1020,7 @@ echo -e "───[ 1️⃣8️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
 sleep 0.2
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
-EXT_STATUS=$(php "$FORUM_ROOT/bin/phpbbcli.php" extension:show | grep "bastien59960/reactions" || true)
+EXT_STATUS=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:show | grep "bastien59960/reactions" || true)
 
 # NOUVELLE VÉRIFICATION : On regarde si la ligne commence par un astérisque,
 # ce qui signifie "Activé".
@@ -1034,7 +1037,7 @@ echo ""
 echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
 echo -e "───[ 1️⃣9️⃣ PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
 sleep 0.2
-output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
+output=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
@@ -1055,7 +1058,7 @@ CRON_TASK_NAME="bastien59960.reactions.notification"
 
 CRON_TEST_NAME="bastien59960.reactions.test"
 
-CRON_LIST_OUTPUT=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
+CRON_LIST_OUTPUT=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cron:list -vvv)
 
 echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
 echo "$CRON_LIST_OUTPUT"
@@ -1074,8 +1077,8 @@ has_error=0
 print_diag_header "1. VÉRIFICATION DES FICHIERS"
 check_diag "Fichier 'notification_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
 check_diag "Fichier 'test_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
-check_diag "Syntaxe PHP de 'notification_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
-check_diag "Syntaxe PHP de 'test_task.php' est valide" php -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
+check_diag "Syntaxe PHP de 'notification_task.php' est valide" $PHP_CLI -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
+check_diag "Syntaxe PHP de 'test_task.php' est valide" $PHP_CLI -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
 
 # 1.5 Vérification de la syntaxe de services.yml
 print_diag_header "1.5 VÉRIFICATION DE LA SYNTAXE DE services.yml"
@@ -1137,7 +1140,7 @@ if [ $has_error -ne 0 ]; then
     print_diag_header "🏁 DIAGNOSTIC CRON ÉCHOUÉ"
     echo -e "   ${YELLOW}Pistes de correction :${NC}"
     echo -e "   1. Le problème vient souvent du cache. Essayez de purger le cache :"
-    echo -e "      ${YELLOW}php $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC}"
+    echo -e "      ${YELLOW}$PHP_CLI $FORUM_ROOT/bin/phpbbcli.php cache:purge${NC}"
     echo -e "   2. Si la purge ne suffit pas, désactivez puis réactivez l'extension pour forcer la reconstruction des services."
     echo -e "   3. Vérifiez que les noms des services dans services.yml correspondent exactement (ex. : cron.task.bastien59960.reactions.notification)."
     echo -e "   4. Vérifiez les clés de langue dans $LANG_FILE_FR."
@@ -1456,7 +1459,7 @@ GET_REACTIONS_EOF
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.2
 
-    output=$(php "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
+    output=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
     check_status "Exécution de toutes les tâches cron prêtes." "$output"
 
     # ==============================================================================
@@ -1847,5 +1850,3 @@ MANUAL_PURGE_EOF
             ;;
     esac
 done
-
-log_to_file "SCRIPT END: Le script de purge s'est terminé avec succès."
