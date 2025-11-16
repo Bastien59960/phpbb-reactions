@@ -927,16 +927,11 @@ class ajax
 
             // Préparer les données COMPLÈTES pour le gestionnaire de notifications
             $notification_data = [
-                'post_id'          => (int) $post_id,
                 'topic_id'         => $topic_id,
                 'forum_id'         => $forum_id,
-                'post_author'      => $post_author_id,
                 'poster_id'        => $post_author_id,
-                'reacter'          => $reacter_id,
                 'reacter_id'       => $reacter_id,
-                'reacter_username' => $reacter_username,
                 'reacter_name'     => $reacter_username,
-                'emoji'            => $emoji,
                 'reaction_emoji'   => $emoji,
             ];
 
@@ -946,7 +941,8 @@ class ajax
 
             // Envoyer la notification via le manager de phpBB
             $notification_ids = $this->notification_manager->add_notifications(
-                'notification.type.reaction',
+                // CORRECTION : Le premier argument est un tableau de types de notifications
+                ['notification.type.reaction'],
                 $notification_data
             );
 

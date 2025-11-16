@@ -56,6 +56,9 @@ function toggle_visible(id) {
     /** @type {HTMLElement|null} Tooltip affichant les utilisateurs ayant réagi */
     let currentTooltip = null;
 
+    /** @type {number|null} Timer pour la fermeture du tooltip */
+    let leaveTimeout = null;
+
     /** @type {Object|null} Données JSON chargées depuis categories.json */
     let allEmojisData = null;
 
@@ -251,14 +254,15 @@ function toggle_visible(id) {
      */
     function handleReactionClick(event) {
         // CORRECTION : Cible l'élément .reaction, même si le clic est sur un enfant (ex: .count)
-        const wrapper = event.target.closest('.reaction-wrapper');
+        const reactionButton = event.target.closest('.reaction:not(.reaction-readonly)');
 
         // Si le clic n'est pas sur une réaction valide, on ignore.
-        if (!wrapper || wrapper.querySelector('.reaction-readonly')) {
+        if (!reactionButton) {
             return;
         }
 
         event.preventDefault(); // Empêche le comportement par défaut uniquement si c'est une réaction.
+        const wrapper = reactionButton.closest('.reaction-wrapper');
         const emoji = wrapper.getAttribute('data-emoji');
         const postId = getPostIdFromReaction(wrapper);
         
@@ -275,7 +279,7 @@ function toggle_visible(id) {
         }
 
         // Envoi de la réaction au serveur
-        sendReaction(postId, emoji);
+        sendReaction(postId, emoji); // Appel unique et centralisé
     }
 
     /**
@@ -1145,7 +1149,7 @@ function toggle_visible(id) {
      * @param {string} emoji Emoji de la réaction
      */
     function setupReactionTooltip(reactionElement, postId, emoji) {
-        let tooltipTimeout, leaveTimeout;
+        let tooltipTimeout;
 
         // Nettoyer les anciens listeners (idempotence)
         reactionElement.onmouseenter = null;
