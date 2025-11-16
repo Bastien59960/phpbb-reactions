@@ -326,7 +326,7 @@ backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<
     -- Affichage du résumé
     SELECT 'Réactions' AS 'Type de sauvegarde', CONCAT('Total: ', @after_reactions, ' (', @after_reactions - @before_reactions, ' nouvelle(s))') AS 'Statut';
     SELECT 'Notifications' AS 'Type de sauvegarde', CONCAT('Total: ', @notif_count) AS 'Statut';
-BACKUP_NOTIF_EOF
+BACKUP_EOF
 )
 
 echo "$backup_output"
