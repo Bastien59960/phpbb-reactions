@@ -100,9 +100,9 @@ class release_1_0_3 extends \phpbb\db\migration\migration
     {
         return [
             // Met à jour le numéro de version dans la table de configuration.
-            // Le nom de la variable de configuration est déduit du nom de l'extension.
-            // Pour "bastien59960/reactions", la variable est "bastien59960_reactions_version".
-            ['config.set', ['bastien59960_reactions_version', '1.0.3']],
+            // Utilisation de 'config.add' pour être cohérent avec les autres migrations.
+            // Cette méthode ajoute la clé si elle n'existe pas.
+            ['config.add', ['bastien59960_reactions_version', '1.0.3']],
         ];
     }
 
@@ -115,15 +115,15 @@ class release_1_0_3 extends \phpbb\db\migration\migration
      */
     public function revert_schema()
     {
-        return false;
+        return [];  // Tableau vide : pas de réversion du schéma.
     }
 
     /**
      * Indique explicitement qu'il n'y a pas de réversion de données.
-     * Retourner `false` est la manière propre de signaler au migrateur d'ignorer cette étape.
+     * Retourner un tableau vide est la manière standard de signaler qu'il n'y a rien à faire.
      */
     public function revert_data()
     {
-        return false;
+        return [];
     }
 }
