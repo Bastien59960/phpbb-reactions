@@ -768,6 +768,38 @@ else
 fi
 
 # ==============================================================================
+# 1️⃣3️⃣.5 VÉRIFICATION PRÉ-ACTIVATION
+# ==============================================================================
+echo -e "───[ 1️⃣3️⃣.5 VÉRIFICATION PRÉ-ACTIVATION ]────────────────────────"
+echo -e "${YELLOW}ℹ️  Vérification de l'absence de traces avant la réactivation...${NC}"
+sleep 0.2
+
+PRE_ENABLE_CHECK=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'PRE_ENABLE_CHECK_EOF'
+-- Recherche large de toute trace liée à l'extension
+SELECT 'CONFIG' FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%' LIMIT 1
+UNION ALL
+SELECT 'MODULE' FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' LIMIT 1
+UNION ALL
+SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%' LIMIT 1
+UNION ALL
+SELECT 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions' LIMIT 1
+UNION ALL
+SELECT 'MIGRATION' FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%' LIMIT 1
+UNION ALL
+SELECT 'EXT_ENTRY' FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions' LIMIT 1;
+PRE_ENABLE_CHECK_EOF
+)
+
+if [ -n "$PRE_ENABLE_CHECK" ]; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Des traces de l'extension ont été trouvées avant la réactivation. L'état n'est pas propre.${NC}"
+    echo -e "${YELLOW}   Traces détectées : $(echo $PRE_ENABLE_CHECK | tr '\n' ' ')${NC}"
+    echo -e "${WHITE_ON_RED}   Le script va s'arrêter pour éviter une erreur d'activation.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ Aucune trace trouvée. L'environnement est propre pour la réactivation.${NC}"
+fi
+
+# ==============================================================================
 # 1️⃣4️⃣ RÉACTIVATION EXTENSION
 # ==============================================================================
 echo -e "───[ 1️⃣4️⃣ RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────"

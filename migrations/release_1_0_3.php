@@ -58,7 +58,7 @@ class release_1_0_3 extends \phpbb\db\migration\migration
         return [
             'custom' => [
                 // On passe directement le "callable" (un tableau [objet, 'nom_methode'])
-                [$this, 'convert_notification_data_to_utf8mb4'],
+                [$this, 'convert_notification_data_to_utf8mb4']
             ],
         ];
     }
