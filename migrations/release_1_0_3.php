@@ -26,7 +26,12 @@ class release_1_0_3 extends \phpbb\db\migration\migration
      */
     public static function depends_on()
     {
-        return ['\bastien59960\reactions\migrations\release_1_0_2'];
+        return [
+            '\bastien59960\reactions\migrations\release_1_0_2',
+            // DÉPENDANCE CRUCIALE : On déclare que cette migration dépend de celle
+            // qui crée la table 'phpbb_notifications' que nous allons modifier.
+            '\phpbb\db\migration\data\v310\notifications',
+        ];
     }
     
     /**
