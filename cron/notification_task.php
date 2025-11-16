@@ -444,11 +444,13 @@ class notification_task extends \phpbb\cron\task\base
             if ($result['status'] === 'sent')
             {
                 $sent_reactions += $reaction_total_for_author;
+                $this->log("   [CRON] Marquage de " . count($data['mark_ids']) . " réactions comme notifiées pour l'auteur #{$author_id}.");
                 $this->mark_reactions_as_handled($data['mark_ids']);
             }
             elseif ($result['status'] === 'skipped_empty')
             {
                 $skipped_empty += $reaction_total_for_author;
+                $this->log("   [CRON] Marquage de " . count($data['mark_ids']) . " réactions (contenu vide) pour l'auteur #{$author_id}.");
                 $this->mark_reactions_as_handled($data['mark_ids']);
             }
             else

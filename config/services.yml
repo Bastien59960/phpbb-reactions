@@ -113,7 +113,7 @@ services:
     # =========================================================================
     # TYPE DE NOTIFICATION : RÉACTION (CLIC CLOCHE)
     # =========================================================================
-    notification.type.reaction:
+    bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
         arguments:
             - '@dbal.conn'
@@ -129,7 +129,7 @@ services:
             - '@request'
             - '@template'
         tags:
-            - { name: notification.type }
+            - { name: notification.type.driver }
 
     # =========================================================================
     # TYPE DE NOTIFICATION : DIGEST COURRIEL

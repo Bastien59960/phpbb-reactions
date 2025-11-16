@@ -941,8 +941,12 @@ class ajax
 
             // Envoyer la notification via le manager de phpBB
             $notification_ids = $this->notification_manager->add_notifications(
-                'notification.type.reaction',
-                $notification_data
+                'bastien59960.reactions.notification.type.reaction', // Utiliser le nom complet du service
+                $notification_data,
+                [
+                    // CORRECTION CRITIQUE : Passer le destinataire de la notification.
+                    'users' => [$post_author_id],
+                ]
             );
 
             if (defined('DEBUG') && DEBUG) {
