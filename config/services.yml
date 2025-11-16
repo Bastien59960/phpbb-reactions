@@ -51,6 +51,15 @@ services:
             - { name: event.listener }
 
     # =========================================================================
+    # CONTRÔLEUR DE TEST
+    # =========================================================================
+    bastien59960.reactions.test:
+        class: bastien59960\reactions\controller\test
+        arguments:
+            - '@dbal.conn'
+            - '%tables.post_reactions%'
+
+    # =========================================================================
     # CONTRÔLEUR AJAX
     # =========================================================================
     bastien59960.reactions.ajax:
@@ -87,6 +96,17 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%core.table_prefix%'
+        tags:
+            - { name: cron.task }
+
+    # =========================================================================
+    # TÂCHE CRON DE TEST
+    # =========================================================================
+    cron.task.bastien59960.reactions.test:
+        class: bastien59960\reactions\cron\test_task
+        arguments:
+            - '@config'
+            - '@log'
         tags:
             - { name: cron.task }
 

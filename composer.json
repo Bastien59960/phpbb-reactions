@@ -48,11 +48,6 @@
             "bastien59960\\reactions\\": "./"
         }
     },
-    "autoload-dev": {
-        "psr-4": {
-            "bastien59960\\reactions\\tests\\": "./tests/"
-        }
-    },
     "scripts": {
         "test": "phpunit",
         "cs": "phpcs --standard=PSR12 ./",
