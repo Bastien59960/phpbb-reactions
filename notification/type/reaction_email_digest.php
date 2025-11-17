@@ -22,6 +22,11 @@ if (!defined('IN_PHPBB'))
 }
 
 use phpbb\notification\type\type_interface;
+// Ajout des dépendances manquantes pour correspondre à services.yml
+use phpbb\user_loader;
+use bastien59960\reactions\controller\helper as reactions_helper;
+use phpbb\controller\helper as controller_helper;
+use phpbb\template\template;
 
 class reaction_email_digest extends \phpbb\notification\type\base implements type_interface
 {
@@ -31,21 +36,27 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
     /** @var \phpbb\config\config */
     protected $config;
 
+    /** @var \phpbb\template\template */
+    protected $template;
+
     public function __construct(
         // Dépendances pour le parent
         \phpbb\db\driver\driver_interface $db,
         \phpbb\language\language $language,
         \phpbb\user $user,
         \phpbb\auth\auth $auth,
-        $phpbb_root_path,                   // ✅ SANS type hint
-        $php_ext,                           // ✅ SANS type hint
-        $notifications_table,               // ✅ SANS type hint
-        \phpbb\config\config $config // 8. Injection de @config
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table,
+        // Dépendances spécifiques
+        \phpbb\config\config $config,
+        \phpbb\template\template $template // Ajout de la dépendance au template
     ) {
         parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
         // On assigne manuellement les dépendances non gérées par le parent.
         $this->config = $config;
         $this->language = $language;
+        $this->template = $template;
     }
 
     /**

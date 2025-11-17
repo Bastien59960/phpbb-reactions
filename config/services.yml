@@ -146,6 +146,7 @@ services:
             - '%core.php_ext%'
             - '%tables.notifications%'
             - '@config'
+            - '@template'
         tags:
             - { name: notification.type.driver }
 
