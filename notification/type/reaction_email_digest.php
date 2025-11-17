@@ -101,6 +101,17 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
         return 'NOTIFICATION_REACTION_EMAIL_DIGEST_DESC';
     }
 
+	/**
+	 * Définit les méthodes de notification par défaut pour les nouveaux utilisateurs.
+	 *
+	 * @return array Méthodes par défaut (ex: 'notification.method.email')
+	 */
+	public function get_default_methods()
+	{
+		// Activer par défaut les notifications par e-mail pour le digest
+		return array('notification.method.email');
+	}
+
     /**
      * Spécifie le fichier de langue à charger.
      * CORRECTION : On retourne `false` pour unifier le comportement avec la classe `reaction`.

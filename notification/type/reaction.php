@@ -332,6 +332,17 @@ class reaction extends base implements type_interface
     public static function get_item_type_description()
     {
         return 'NOTIFICATION_TYPE_REACTION_DESC';
+	}
+
+	/**
+	 * Définit les méthodes de notification par défaut pour les nouveaux utilisateurs.
+	 * 
+	 * @return array Méthodes par défaut (ex: 'notification.method.board')
+	 */
+	public function get_default_methods()
+	{
+		// Activer par défaut les notifications sur le forum (cloche)
+		return array('notification.method.board');
     }
 
     // =========================================================================

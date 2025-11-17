@@ -4,7 +4,7 @@
  * Chemin : bastien59960/reactions/ext.php
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions
- * @version 1.0.3
+ * @version 1.0.4
  *
  * Rôle :
  * Ce fichier est la classe principale et le point d'entrée de l'extension pour
@@ -51,14 +51,15 @@ class ext extends \phpbb\extension\base
 	 */
 	public function get_version()
 	{
-		return '1.0.3';
+		return '1.0.4';
 	}
 
 	/**
 	 * Étape d'activation de l'extension
 	 * 
-	 * Cette méthode est appelée par phpBB lors de l'activation de l'extension.
-	 * Elle enregistre les types de notifications auprès du système de notifications phpBB.
+	 * RÔLE SIMPLIFIÉ : Cette méthode se contente d'enregistrer les types de notifications
+	 * auprès du notification_manager. La création des préférences utilisateur est gérée
+	 * par la migration release_1_0_4.php, ce qui est plus propre et plus maintenable.
 	 * 
 	 * L'extension Reactions possède DEUX types de notifications :
 	 * 
@@ -70,13 +71,8 @@ class ext extends \phpbb\extension\base
 	 *    - Défini dans : notification/type/reaction_email_digest.php
 	 *    - Utilisé pour : Envoyer un résumé périodique par email (cron)
 	 * 
-	 * Ces noms DOIVENT correspondre EXACTEMENT à ce qui est :
-	 * - Retourné par la méthode get_type() de chaque classe
-	 * - Stocké dans phpbb_notification_types (colonne notification_type_name)
-	 * - Créé par la migration (migrations/release_1_0_0.php)
-	 * 
-	 * @param mixed $old_state État précédent de l'extension (false = première activation)
-	 * @return string|mixed 'notification' si première activation, sinon résultat parent
+	 * @param mixed $old_state État précédent de l'extension
+	 * @return mixed État de l'étape suivante
 	 */
 	public function enable_step($old_state)
 	{
@@ -91,13 +87,7 @@ class ext extends \phpbb\extension\base
 			// Ignorer l'exception si les types sont déjà activés.
 		}
 		
-		// Si c'est la toute première activation, on retourne l'étape 'notification'
-		// pour que phpBB peuple les préférences pour tous les utilisateurs.
-		if ($old_state === false)
-		{
-			return 'notification';
-		}
-		// Pour une simple réactivation, on appelle la méthode parente pour finaliser.
+		// Laisser les migrations gérer la création des préférences utilisateur
 		return parent::enable_step($old_state);
 	}
 
@@ -107,6 +97,10 @@ class ext extends \phpbb\extension\base
 	 * Cette méthode est appelée par phpBB lors de la désactivation de l'extension.
 	 * Elle désactive les types de notifications pour éviter les erreurs.
 	 *
+	 * NOTE : On ne supprime PAS les préférences utilisateur lors de la désactivation,
+	 * seulement lors de la purge. Ainsi, si l'utilisateur réactive l'extension,
+	 * ses préférences sont conservées.
+	 *
 	 * @param mixed $old_state État précédent de l'extension
 	 * @return mixed Résultat de l'étape de désactivation parente
 	 */
@@ -115,11 +109,15 @@ class ext extends \phpbb\extension\base
 		// Récupérer le gestionnaire de notifications phpBB
 		$notification_manager = $this->container->get('notification_manager');
 		
-		// Désactiver la notification cloche
-		$notification_manager->disable_notifications('bastien59960.reactions.notification.type.reaction');
-	
-		// Désactiver la notification email digest
-		$notification_manager->disable_notifications('bastien59960.reactions.notification.type.reaction_email_digest');
+		try {
+			// Désactiver la notification cloche
+			$notification_manager->disable_notifications('bastien59960.reactions.notification.type.reaction');
+		
+			// Désactiver la notification email digest
+			$notification_manager->disable_notifications('bastien59960.reactions.notification.type.reaction_email_digest');
+		} catch (\Exception $e) {
+			// Ignorer les erreurs (par exemple si déjà désactivé)
+		}
 		
 		return parent::disable_step($old_state);
 	}
@@ -130,17 +128,40 @@ class ext extends \phpbb\extension\base
 	 * Cette méthode est appelée par phpBB lors de la purge de l'extension.
 	 * Elle est responsable de la suppression de toutes les données de l'extension.
 	 *
+	 * La logique de purge (suppression des tables, configs, modules, préférences, etc.)
+	 * est gérée par les fichiers de migration dans le dossier `migrations/`.
+	 * La méthode `revert_data()` et `revert_schema()` de chaque fichier de migration
+	 * est appelée dans l'ordre inverse des dépendances.
+	 *
 	 * @param mixed $old_state État précédent de l'extension
 	 * @return mixed Résultat de l'étape de purge parente
 	 */
 	public function purge_step($old_state)
 	{
-		// La logique de purge (suppression des tables, configs, modules, etc.)
-		// est gérée par les fichiers de migration dans le dossier `migrations/`.
-		// La méthode `revert()` de chaque fichier de migration est appelée.
-		// Il est crucial que chaque méthode `revert()` retourne un tableau,
-		// même s'il est vide, pour éviter une erreur fatale.
+		switch ($old_state)
+		{
+			case '': // Première étape : nettoyage des préférences utilisateur
+				$db = $this->container->get('dbal.conn');
+				$tables = $this->container->getParameter('tables');
+				
+				try {
+					// Supprimer toutes les préférences de notification liées à l'extension
+					$sql = 'DELETE FROM ' . $tables['user_notifications'] . "
+						WHERE item_type LIKE 'bastien59960.reactions.notification.type.%'";
+					$db->sql_query($sql);
+				} catch (\Exception $e) {
+					// Ignorer les erreurs (table peut ne pas exister)
+				}
+				
+				// Passer à l'étape suivante (migrations)
+				return 'migrations';
+			
+			case 'migrations': // Deuxième étape : exécution des revert des migrations
+				// Les migrations vont supprimer les tables, colonnes, configs, modules, etc.
+				return parent::purge_step($old_state);
+		}
+		
+		// Finalisation
 		return parent::purge_step($old_state);
 	}
-
 }
