@@ -113,7 +113,8 @@ force_manual_purge() {
     SET @type_ids_to_delete := (
         SELECT GROUP_CONCAT(notification_type_id) 
         FROM phpbb_notification_types 
-        WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
+        -- CORRECTION : Le nettoyage manuel doit être exhaustif et supprimer TOUTES les formes de traces.
+        WHERE notification_type_name LIKE '%reaction%'
     );
 
     -- Étape 2 : Supprimer les notifications qui dépendent de ces types
@@ -122,7 +123,7 @@ force_manual_purge() {
 
     -- Étape 3 : Supprimer les types de notifications
     SELECT '--- Purge des types de notifications...' AS '';
-    DELETE FROM phpbb_notification_types WHERE FIND_IN_SET(notification_type_id, @type_ids_to_delete);
+    DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE '%reaction%';
 
     -- Étape 4 : Purge des autres éléments (config, modules, etc.)
     SELECT '--- Purge des configurations...' AS '';
@@ -371,8 +372,15 @@ SET @notif_count = ROW_COUNT();
 
 -- Affichage du résumé
 -- Utiliser une sous-requête pour afficher le bon nombre même si la table n'existait pas
-SELECT 'Réactions' AS 'Type de sauvegarde', 
-       (SELECT COUNT(*) FROM phpbb_post_reactions_backup) AS 'Total';
+-- CORRECTION : Rendre la requête de résumé plus robuste pour éviter l'erreur "table doesn't exist".
+SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
+SET @sql_summary = IF(@backup_exists > 0, 
+    'SELECT \'Réactions\' AS `Type de sauvegarde`, COUNT(*) AS `Total` FROM phpbb_post_reactions_backup;', 
+    'SELECT \'Réactions\' AS `Type de sauvegarde`, \'0 (source absente)\' AS `Total`;'
+);
+PREPARE stmt_summary FROM @sql_summary;
+EXECUTE stmt_summary;
+DEALLOCATE PREPARE stmt_summary;
 SELECT 'Notifications' AS 'Type de sauvegarde', CONCAT('Total: ', @notif_count) AS 'Statut';
 BACKUP_EOF
 )
