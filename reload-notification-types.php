@@ -36,8 +36,40 @@ try {
     global $phpbb_container;
     $notification_manager = $phpbb_container->get('notification_manager');
     
+    // Vérifier que le service est bien enregistré dans le container
+    echo "Vérification de l'enregistrement des services...\n";
+    
+    // Vérifier si le service existe dans le container
+    $service_found = false;
+    try {
+        $reaction_service = $phpbb_container->get('bastien59960.reactions.notification.type.reaction');
+        $type_name = $reaction_service->get_type();
+        echo "✅ Service 'bastien59960.reactions.notification.type.reaction' trouvé dans le container\n";
+        echo "   get_type() retourne : '$type_name'\n";
+        $service_found = true;
+    } catch (\Exception $e) {
+        echo "❌ ERREUR : Service 'bastien59960.reactions.notification.type.reaction' NON trouvé dans le container\n";
+        echo "   Message : " . $e->getMessage() . "\n";
+        echo "   Le service doit être enregistré dans services.yml avec le tag 'notification.type.driver'\n";
+        
+        // Essayer de lister tous les services avec le tag notification.type.driver
+        echo "\n   Tentative de liste des services avec tag 'notification.type.driver'...\n";
+        try {
+            // Cette méthode peut ne pas exister, donc on l'essaie dans un try/catch
+            if (method_exists($phpbb_container, 'findTaggedServiceIds')) {
+                $tagged_services = $phpbb_container->findTaggedServiceIds('notification.type.driver');
+                echo "   Services trouvés avec tag 'notification.type.driver' : " . count($tagged_services) . "\n";
+                foreach ($tagged_services as $service_id) {
+                    echo "     - $service_id\n";
+                }
+            }
+        } catch (\Exception $e2) {
+            // Ignorer si la méthode n'existe pas
+        }
+    }
+    
     // Forcer le rechargement des types de notifications
-    echo "Rechargement des types de notifications...\n";
+    echo "\nRechargement des types de notifications...\n";
     
     try {
         $notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction');
@@ -51,6 +83,16 @@ try {
         echo "✅ Type 'reaction_email_digest' réenregistré\n";
     } catch (\Exception $e) {
         echo "⚠️  Type 'reaction_email_digest' : " . $e->getMessage() . "\n";
+    }
+    
+    // Vérifier à nouveau que le service est accessible après enable_notifications
+    try {
+        $reaction_service = $phpbb_container->get('bastien59960.reactions.notification.type.reaction');
+        $type_name = $reaction_service->get_type();
+        echo "✅ Service accessible après enable_notifications (get_type() = '$type_name')\n";
+    } catch (\Exception $e) {
+        echo "❌ ERREUR : Service toujours inaccessible après enable_notifications\n";
+        echo "   Message : " . $e->getMessage() . "\n";
     }
     
     // Vider le cache pour forcer la reconstruction du container
