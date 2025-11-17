@@ -1466,13 +1466,30 @@ RESET_FLAGS_EOF
 
 
     # ==============================================================================
+    # 29. VÉRIFICATION DE L'INTÉGRITÉ DES NOTIFICATIONS
+    # ==============================================================================
+    echo ""
+    echo -e "───[ 29. VÉRIFICATION DE L'INTÉGRITÉ DES NOTIFICATIONS ]────────"
+    echo -e "${YELLOW}ℹ️  Exécution d'un script PHP pour vérifier les préférences et les données orphelines.${NC}"
+    sleep 0.1
+
+    # Exécuter le script PHP dédié et capturer sa sortie
+    integrity_check_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI check-notifications-integrity.php 2>&1)
+    integrity_check_exit_code=$?
+
+    # Afficher la sortie du script PHP
+    echo "$integrity_check_output"
+    (exit $integrity_check_exit_code); check_status "Vérification de l'intégrité des notifications." "$integrity_check_output"
+
+
+    # ==============================================================================
     # 29. GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG CLOCHE)
     # ==============================================================================
     # EXPLICATION : Cette étape permet de générer des notifications "cloche" de test.
     # Elle est utile pour vérifier que l'affichage des notifications fonctionne correctement
     # après le cycle de réinstallation. Elle utilise l'ID de type de notification valide et nouvellement créé.
     echo ""
-    echo -e "───[ 29. GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG) ]────────"
+    echo -e "───[ 30. GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG) ]────────"
     echo -e "${YELLOW}ℹ️  Cette étape peut générer de fausses notifications 'cloche' pour tester leur affichage.${NC}"
     sleep 0.1
 
@@ -1617,7 +1634,7 @@ RESET_FLAGS_EOF
     # ==============================================================================
     # 30. TEST DE L'EXÉCUTION DU CRON
     # ==============================================================================
-    echo -e "───[ 30. TEST FINAL DU CRON ]───────────────────────────────────"
+    echo -e "───[ 31. TEST FINAL DU CRON ]───────────────────────────────────"
     echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
     sleep 0.1
@@ -1633,7 +1650,7 @@ RESET_FLAGS_EOF
     # ==============================================================================
     # 31. VÉRIFICATION POST-CRON (LA PREUVE)
     # ==============================================================================
-    echo -e "───[ 31. VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
+    echo -e "───[ 32. VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
     echo -e "${YELLOW}ℹ️  Vérification de l'état des réactions dans la base de données après l'exécution du cron.${NC}"
     sleep 0.1
 
@@ -1709,7 +1726,7 @@ POST_CRON_EOF
     # 32. VALIDATION FINALE DU TRAITEMENT CRON
     # ==============================================================================
     echo ""
-    echo -e "───[ 32. VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
+    echo -e "───[ 33. VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
     echo -e "${YELLOW}ℹ️  Vérification qu'il ne reste aucune réaction éligible non traitée.${NC}"
     sleep 0.1
 
@@ -1771,7 +1788,7 @@ fi
 # 33. CORRECTION FINALE ET DÉFINITIVE DES PERMISSIONS
 # ==============================================================================
 echo ""
-echo -e "───[ 33. CORRECTION FINALE DES PERMISSIONS ]────────────────────"
+echo -e "───[ 34. CORRECTION FINALE DES PERMISSIONS ]────────────────────"
 echo -e "${YELLOW}ℹ️  Application des permissions correctes en toute fin de script pour garantir l'accès au forum.${NC}"
 
 WEB_USER="www-data"
@@ -1788,7 +1805,7 @@ check_status "Permissions de lecture/écriture (777/666) appliquées."
 # 34. DIAGNOSTIC FINAL (APRÈS TOUTES LES OPÉRATIONS)
 # ==============================================================================
 echo ""
-echo -e "───[ 34. DIAGNOSTIC FINAL ]────────────────────"
+echo -e "───[ 35. DIAGNOSTIC FINAL ]────────────────────"
 echo -e "${YELLOW}ℹ️  État final des notifications et des types de notifications après toutes les opérations...${NC}"
 sleep 0.1
  
