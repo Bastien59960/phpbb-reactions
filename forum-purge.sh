@@ -229,10 +229,12 @@ fi
 DB_USER=$(grep '$dbuser =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
 MYSQL_PASSWORD=$(grep '$dbpasswd =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
 DB_NAME=$(grep '$dbname =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
+DB_HOST=$(grep '$dbhost =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
+TABLE_PREFIX=$(grep '$table_prefix =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
 
-if [ -z "$DB_USER" ] || [ -z "$MYSQL_PASSWORD" ] || [ -z "$DB_NAME" ]; then
+if [ -z "$DB_USER" ] || [ -z "$MYSQL_PASSWORD" ] || [ -z "$DB_NAME" ] || [ -z "$DB_HOST" ] || [ -z "$TABLE_PREFIX" ]; then
     echo -e "${WHITE_ON_RED}❌ ERREUR : Impossible de lire les identifiants depuis '$CONFIG_PHP_PATH'.${NC}"
-    echo -e "${YELLOW}   Vérifiez que le fichier contient bien les variables \$dbuser, \$dbpasswd, et \$dbname.${NC}"
+    echo -e "${YELLOW}   Vérifiez que le fichier contient bien les variables \$dbhost, \$dbuser, \$dbpasswd, \$dbname, et \$table_prefix.${NC}"
     exit 1
 fi
 
@@ -1473,8 +1475,16 @@ RESET_FLAGS_EOF
     echo -e "${YELLOW}ℹ️  Exécution d'un script PHP pour vérifier les préférences et les données orphelines.${NC}"
     sleep 0.1
 
+    # Exporter les variables de BDD pour que le script PHP puisse les lire
+    export DB_HOST
+    export DB_USER
+    export DB_NAME
+    export MYSQL_PASSWORD
+    export TABLE_PREFIX
+
     # Exécuter le script PHP dédié et capturer sa sortie
-    integrity_check_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI check-notifications-integrity.php 2>&1)
+    # L'option --fix est passée pour permettre la correction automatique
+    integrity_check_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI check-notifications-integrity.php --fix 2>&1)
     integrity_check_exit_code=$?
 
     # Afficher la sortie du script PHP
