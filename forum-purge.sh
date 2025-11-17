@@ -1487,6 +1487,7 @@ SELECT
     r.post_id,
     r.topic_id,
     p.poster_id,
+    p.forum_id,
     r.user_id,
     u.username,
     r.reaction_emoji
@@ -1512,7 +1513,7 @@ SELECT
     CONCAT(
         'a:6:{',
         's:8:"topic_id";i:', t.topic_id, ';',
-        's:8:"forum_id";i:', p.forum_id, ';',
+        's:8:"forum_id";i:', t.forum_id, ';',
         's:9:"poster_id";i:', t.poster_id, ';',
         's:10:"reacter_id";i:', t.user_id, ';',
         's:12:"reacter_name";s:', LENGTH(t.username), ':"', t.username, '";',
