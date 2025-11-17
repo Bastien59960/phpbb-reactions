@@ -120,7 +120,7 @@ class listener implements EventSubscriberInterface
         $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 0);
 
         // Lire la valeur en secondes depuis l'ACP (défaut 5s) et la convertir en millisecondes pour le JS.
-        $sync_interval_seconds = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5);
+        $sync_interval_seconds = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 20);
         $sync_interval_ms = $sync_interval_seconds * 1000;
         
         // CORRECTION : Utiliser un chemin web relatif au lieu d'un chemin de fichier serveur.
