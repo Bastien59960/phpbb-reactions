@@ -1482,14 +1482,29 @@ RESET_FLAGS_EOF
 
     if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo ""
-        # On recherche l'ID en utilisant le nom LONG (canonique), ce qui est la méthode correcte.
-        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1;")
-
-        if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
-            # Message d'erreur mis à jour pour refléter la recherche du nom long.
-            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'bastien59960.reactions.notification.type.reaction'. Étape ignorée.${NC}"
+        # Étape 1 : Vérifier que l'extension est bien activée
+        EXT_ACTIVE=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT ext_active FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions' LIMIT 1;")
+        if [ -z "$EXT_ACTIVE" ] || [ "$EXT_ACTIVE" != "1" ]; then
+            echo -e "${RED}❌ ERREUR : L'extension 'bastien59960/reactions' n'est pas activée. Activez-la d'abord.${NC}"
         else
-            echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID). Génération via SQL direct...${NC}"
+            # Étape 2 : Vider le cache avant de créer les notifications (pour forcer le rechargement des services)
+            echo -e "${YELLOW}   Vidage du cache phpBB pour forcer le rechargement des types de notifications...${NC}"
+            $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
+            
+            # Étape 2.5 : Attendre un peu pour que le cache soit complètement vidé
+            sleep 0.5
+            
+            # Étape 3 : On recherche l'ID en utilisant le nom LONG (canonique), ce qui est la méthode correcte.
+            # IMPORTANT : On vérifie aussi que notification_type_enabled = 1
+            REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' AND notification_type_enabled = 1 LIMIT 1;")
+
+            if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
+                # Message d'erreur mis à jour pour refléter la recherche du nom long.
+                echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'bastien59960.reactions.notification.type.reaction' (ou il n'est pas enabled).${NC}"
+                echo -e "${YELLOW}   Vérification de l'état du type de notification...${NC}"
+                MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT notification_type_id, notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name LIKE '%reaction%';"
+            else
+                echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID). Génération via SQL direct...${NC}"
             
             # CORRECTION FINALE : Construire la requête SQL dans une variable, puis l'exécuter.
             # Cela évite d'exécuter la sortie formatée d'une première requête et gère les erreurs.
@@ -1525,17 +1540,14 @@ SELECT
     0, -- non lue
     UNIX_TIMESTAMP(),
     CONCAT(
-        'a:7:{', -- CORRECTION : Le nombre d'éléments était correct, mais les clés manquantes étaient le problème.
-        's:8:"topic_id";i:', t.topic_id, ';',
+        'a:7:{', -- 7 éléments : topic_id, forum_id, poster_id, reacter_id, reacter_name, reaction_emoji, post_id
+        's:7:"post_id";i:', t.post_id, ';', -- CRITIQUE : Doit être en premier car utilisé par get_item_id()
+        's:8:"topic_id";i:', t.topic_id, ';', -- Utilisé par get_item_parent_id()
         's:8:"forum_id";i:', t.forum_id, ';',
-        's:9:"poster_id";i:', t.poster_id, ';',
+        's:9:"poster_id";i:', t.poster_id, ';', -- Utilisé par get_item_author_id() (fallback sur post_author)
         's:10:"reacter_id";i:', t.user_id, ';',
         's:12:"reacter_name";s:', LENGTH(t.username), ':"', t.username, '";',
         's:14:"reaction_emoji";s:', LENGTH(t.reaction_emoji), ':"', t.reaction_emoji, '";',
-        -- CORRECTION CRITIQUE : Ajouter post_id, qui est requis par la méthode statique get_item_id().
-        -- C'est l'absence de cette clé qui causait l'erreur NOTIFICATION_TYPE_NOT_EXIST car phpBB ne pouvait
-        -- pas identifier l'objet parent de la notification.
-        's:7:"post_id";i:', t.post_id, ';',
         '}'
     )
 FROM temp_reactions_for_notif t;
@@ -1549,17 +1561,26 @@ FROM temp_reactions_for_notif;
 SELECT CONCAT('   ', ROW_COUNT(), ' fausse(s) notification(s) générée(s) avec succès.');
 SQL_EOF
 )
-            # Exécuter le bloc SQL et capturer la sortie et les erreurs
-            generation_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<< "$SQL_GENERATE_NOTIFS" 2>&1)
-            generation_exit_code=$?
+                # Exécuter le bloc SQL et capturer la sortie et les erreurs
+                generation_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<< "$SQL_GENERATE_NOTIFS" 2>&1)
+                generation_exit_code=$?
 
-            # GESTION D'ERREUR : Vérifier si la commande mysql a échoué
-            if [ $generation_exit_code -ne 0 ]; then
-                echo -e "${WHITE_ON_RED}❌ ERREUR lors de la génération des fausses notifications :${NC}"
-                echo "$generation_output" | sed 's/^/   | /'
-            else
-                # Afficher la sortie (qui est maintenant juste le log)
-                echo "$generation_output"
+                # GESTION D'ERREUR : Vérifier si la commande mysql a échoué
+                if [ $generation_exit_code -ne 0 ]; then
+                    echo -e "${WHITE_ON_RED}❌ ERREUR lors de la génération des fausses notifications :${NC}"
+                    echo "$generation_output" | sed 's/^/   | /'
+                else
+                    # Afficher la sortie (qui est maintenant juste le log)
+                    echo "$generation_output"
+                    
+                    # Étape 4 : Vider le cache APRÈS la création des notifications pour forcer phpBB à les recharger
+                    echo -e "${YELLOW}   Vidage du cache phpBB après création des notifications...${NC}"
+                    $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
+                    
+                    # Étape 5 : Vérifier que les notifications ont bien été créées
+                    NOTIF_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;")
+                    echo -e "${GREEN}✅ $NOTIF_COUNT notification(s) créée(s) et cache vidé.${NC}"
+                fi
             fi
         fi
     else
