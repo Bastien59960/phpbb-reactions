@@ -1506,97 +1506,119 @@ RESET_FLAGS_EOF
             else
                 echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
                 
-                # CORRECTION CRITIQUE : Utiliser un script PHP pour générer les notifications
-                # avec serialize() de PHP, garantissant le format exact utilisé par phpBB.
-                # La sérialisation manuelle SQL peut créer des formats légèrement différents.
-                echo -e "${YELLOW}   Génération via script PHP (format serialize() identique à phpBB)...${NC}"
-                
-                # Exporter les variables d'environnement pour le script PHP
-                export DB_USER="$DB_USER"
-                export DB_NAME="$DB_NAME"
-                export MYSQL_PASSWORD="$MYSQL_PASSWORD"
-                export DEBUG_NOTIF_COUNT="$DEBUG_NOTIF_COUNT"
-                export PHPBB_ROOT_PATH="$FORUM_ROOT"
-                
-                # Exécuter le script PHP de génération
-                # Le script doit être exécuté depuis le répertoire de l'extension
-                generation_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI generate-test-notifications.php 2>&1)
-                generation_exit_code=$?
-
-                # GESTION D'ERREUR : Vérifier si le script PHP a échoué
-                if [ $generation_exit_code -ne 0 ]; then
-                    echo -e "${WHITE_ON_RED}❌ ERREUR lors de la génération des fausses notifications :${NC}"
-                    echo "$generation_output" | sed 's/^/   | /'
-                else
-                    # Afficher la sortie (qui est maintenant juste le log)
-                    echo "$generation_output"
+                    # Le problème est que si des notifications existent avec un type qui n'est pas encore chargé,
+                    # phpBB plantera. Il faut les supprimer d'abord, puis vérifier que le service est chargé.
+                    echo -e "${YELLOW}   Suppression de toutes les notifications existantes de ce type pour éviter le crash...${NC}"
+                    MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "
+                        DELETE FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;
+                    " > /dev/null 2>&1
+                    echo -e "${GREEN}   ✅ Notifications existantes supprimées${NC}"
                     
-                    # Étape 4 : Supprimer les notifications orphelines AVANT de forcer le rechargement
-                    # CRITIQUE : Si des notifications existent avec un type qui n'est pas encore chargé,
-                    # phpBB plantera. Il faut les supprimer d'abord.
-                    echo -e "${YELLOW}   Nettoyage des notifications orphelines avant rechargement...${NC}"
+                    # Étape 5 : Supprimer les notifications orphelines (types inexistants)
+                    echo -e "${YELLOW}   Nettoyage des notifications orphelines...${NC}"
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "
                         DELETE n FROM phpbb_notifications n
                         LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
                         WHERE t.notification_type_id IS NULL;
                     " > /dev/null 2>&1
                     
-                    # Étape 5 : Forcer le rechargement des types de notifications dans phpBB
+                    # Étape 6 : Forcer le rechargement des types de notifications dans phpBB
                     echo -e "${YELLOW}   Forçage du rechargement des types de notifications dans phpBB...${NC}"
                     reload_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI reload-notification-types.php 2>&1)
                     reload_exit_code=$?
-                    if [ $reload_exit_code -eq 0 ]; then
-                        echo "$reload_output" | sed 's/^/   | /'
-                        
-                        # Vérifier si le service est bien chargé
-                        if echo "$reload_output" | grep -q "Service.*trouvé dans le container"; then
-                            echo -e "${GREEN}   ✅ Service correctement enregistré dans le container DI${NC}"
-                        else
-                            echo -e "${RED}   ⚠️  ATTENTION : Le service n'est peut-être pas correctement enregistré${NC}"
-                        fi
-                    else
-                        echo -e "${YELLOW}   ⚠️  Le rechargement a échoué, mais on continue...${NC}"
-                        echo "$reload_output" | sed 's/^/   | /'
-                    fi
                     
-                    # Étape 6 : Vérifier si le service est bien chargé
-                    # Si le service n'est pas trouvé, supprimer les notifications créées pour éviter le crash
+                    # Afficher la sortie du script de rechargement
+                    echo "$reload_output" | sed 's/^/   | /'
+                    
+                    # Étape 7 : Vérifier si le service est bien chargé AVANT de créer les notifications
                     if ! echo "$reload_output" | grep -q "Service.*trouvé dans le container"; then
-                        echo -e "${RED}   ⚠️  Le service n'est pas chargé dans le container DI.${NC}"
-                        echo -e "${YELLOW}   Suppression des notifications créées pour éviter le crash du forum...${NC}"
-                        MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "
-                            DELETE FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;
-                        " > /dev/null 2>&1
-                        echo -e "${YELLOW}   Les notifications ont été supprimées. Le problème vient du chargement du service.${NC}"
-                        echo -e "${YELLOW}   Vérifiez que services.yml est correct et que le tag 'notification.type.driver' est présent.${NC}"
+                        echo ""
+                        echo -e "${WHITE_ON_RED}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
+                        echo -e "${WHITE_ON_RED}║                    ❌ ÉCHEC : SERVICE NON CHARGÉ                               ║${NC}"
+                        echo -e "${WHITE_ON_RED}╚══════════════════════════════════════════════════════════════════════════════╝${NC}"
+                        echo ""
+                        echo -e "${RED}   ❌ ERREUR CRITIQUE : Le service 'bastien59960.reactions.notification.type.reaction'${NC}"
+                        echo -e "${RED}      n'est PAS chargé dans le container DI de phpBB.${NC}"
+                        echo ""
+                        echo -e "${RED}   🚫 Les notifications ne seront PAS créées pour éviter le crash du forum.${NC}"
+                        echo ""
+                        echo -e "${YELLOW}   📋 DIAGNOSTIC :${NC}"
+                        echo -e "${YELLOW}      Le problème vient du chargement du service depuis le container DI.${NC}"
+                        echo -e "${YELLOW}      phpBB ne peut pas trouver le service même s'il est enregistré dans services.yml.${NC}"
+                        echo ""
+                        echo -e "${YELLOW}   🔍 VÉRIFICATIONS À FAIRE :${NC}"
+                        echo -e "${YELLOW}      1. ✅ services.yml est correct et contient le tag 'notification.type.driver'${NC}"
+                        echo -e "${YELLOW}      2. ✅ L'extension est bien activée (vérifiez avec 'phpbbcli extension:list')${NC}"
+                        echo -e "${YELLOW}      3. ✅ Le cache phpBB a été vidé (vérifiez avec 'phpbbcli cache:purge')${NC}"
+                        echo -e "${YELLOW}      4. ✅ Le container DI a été reconstruit (peut prendre quelques secondes)${NC}"
+                        echo ""
+                        echo -e "${YELLOW}   💡 SOLUTIONS POSSIBLES :${NC}"
+                        echo -e "${YELLOW}      • Attendez 5-10 secondes puis relancez le script${NC}"
+                        echo -e "${YELLOW}      • Videz manuellement le cache : phpbbcli cache:purge${NC}"
+                        echo -e "${YELLOW}      • Désactivez puis réactivez l'extension via l'ACP${NC}"
+                        echo -e "${YELLOW}      • Vérifiez les logs d'erreur PHP pour plus de détails${NC}"
+                        echo ""
+                        echo -e "${WHITE_ON_RED}   ⚠️  Le forum ne plantera PAS car aucune notification n'a été créée.${NC}"
+                        echo ""
                     else
-                        # Étape 7 : Vider le cache APRÈS le rechargement pour forcer phpBB à reconstruire le container
+                        echo -e "${GREEN}   ✅ Service correctement enregistré dans le container DI${NC}"
+                        
+                        # Étape 8 : Vider le cache APRÈS le rechargement pour forcer phpBB à reconstruire le container
                         echo -e "${YELLOW}   Vidage du cache phpBB après rechargement des types...${NC}"
                         $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
                         
-                        # Étape 8 : Attendre un peu pour que le cache soit complètement vidé
-                        sleep 1
+                        # Étape 9 : Attendre un peu pour que le cache soit complètement vidé et le container reconstruit
+                        echo -e "${YELLOW}   Attente de 2 secondes pour laisser le temps au container DI de se reconstruire...${NC}"
+                        sleep 2
                         
-                        # Étape 9 : Vérifier que les notifications ont bien été créées
-                        NOTIF_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;")
-                        echo -e "${GREEN}✅ $NOTIF_COUNT notification(s) créée(s), types rechargés et cache vidé.${NC}"
+                        # Étape 10 : MAINTENANT créer les notifications (le service est chargé)
+                        echo -e "${YELLOW}   Génération via script PHP (format serialize() identique à phpBB)...${NC}"
                         
-                        # Étape 10 : Vérification finale - s'assurer qu'il n'y a pas de notifications orphelines
-                        ORPHAN_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "
-                            SELECT COUNT(*) FROM phpbb_notifications n
-                            LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
-                            WHERE t.notification_type_id IS NULL;
-                        ")
-                        if [ "$ORPHAN_COUNT" -gt 0 ]; then
-                            echo -e "${RED}   ⚠️  ATTENTION : $ORPHAN_COUNT notification(s) orpheline(s) détectée(s)${NC}"
-                            echo -e "${YELLOW}      Suppression automatique des notifications orphelines...${NC}"
-                            MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "
-                                DELETE n FROM phpbb_notifications n
+                        # Exporter les variables d'environnement pour le script PHP
+                        export DB_USER="$DB_USER"
+                        export DB_NAME="$DB_NAME"
+                        export MYSQL_PASSWORD="$MYSQL_PASSWORD"
+                        export DEBUG_NOTIF_COUNT="$DEBUG_NOTIF_COUNT"
+                        export PHPBB_ROOT_PATH="$FORUM_ROOT"
+                        
+                        # Exécuter le script PHP de génération
+                        # Le script doit être exécuté depuis le répertoire de l'extension
+                        generation_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI generate-test-notifications.php 2>&1)
+                        generation_exit_code=$?
+
+                        # GESTION D'ERREUR : Vérifier si le script PHP a échoué
+                        if [ $generation_exit_code -ne 0 ]; then
+                            echo -e "${WHITE_ON_RED}❌ ERREUR lors de la génération des fausses notifications :${NC}"
+                            echo "$generation_output" | sed 's/^/   | /'
+                        else
+                            # Afficher la sortie (qui est maintenant juste le log)
+                            echo "$generation_output"
+                            
+                            # Étape 11 : Vérifier que les notifications ont bien été créées
+                            NOTIF_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;")
+                            echo -e "${GREEN}✅ $NOTIF_COUNT notification(s) créée(s), types rechargés et cache vidé.${NC}"
+                            
+                            # Étape 12 : Vérification finale - s'assurer qu'il n'y a pas de notifications orphelines
+                            ORPHAN_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "
+                                SELECT COUNT(*) FROM phpbb_notifications n
                                 LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
                                 WHERE t.notification_type_id IS NULL;
-                            " > /dev/null 2>&1
-                        else
-                            echo -e "${GREEN}   ✅ Aucune notification orpheline détectée${NC}"
+                            ")
+                            if [ "$ORPHAN_COUNT" -gt 0 ]; then
+                                echo -e "${RED}   ⚠️  ATTENTION : $ORPHAN_COUNT notification(s) orpheline(s) détectée(s)${NC}"
+                                echo -e "${YELLOW}      Suppression automatique des notifications orphelines...${NC}"
+                                MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "
+                                    DELETE n FROM phpbb_notifications n
+                                    LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
+                                    WHERE t.notification_type_id IS NULL;
+                                " > /dev/null 2>&1
+                            else
+                                echo -e "${GREEN}   ✅ Aucune notification orpheline détectée${NC}"
+                            fi
+                            
+                            echo -e "${YELLOW}   ⚠️  Si vous voyez encore l'erreur NOTIFICATION_TYPE_NOT_EXIST,${NC}"
+                            echo -e "${YELLOW}      le problème vient du chargement du service depuis le container DI.${NC}"
+                            echo -e "${YELLOW}      Essayez de recharger la page du forum après quelques secondes.${NC}"
                         fi
                     fi
                 fi

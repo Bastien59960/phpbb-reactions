@@ -49,22 +49,49 @@ try {
         $service_found = true;
     } catch (\Exception $e) {
         echo "❌ ERREUR : Service 'bastien59960.reactions.notification.type.reaction' NON trouvé dans le container\n";
-        echo "   Message : " . $e->getMessage() . "\n";
+        echo "   Message d'erreur : " . $e->getMessage() . "\n";
+        echo "   Type d'exception : " . get_class($e) . "\n";
         echo "   Le service doit être enregistré dans services.yml avec le tag 'notification.type.driver'\n";
         
         // Essayer de lister tous les services avec le tag notification.type.driver
-        echo "\n   Tentative de liste des services avec tag 'notification.type.driver'...\n";
+        echo "\n   🔍 Tentative de liste des services avec tag 'notification.type.driver'...\n";
         try {
             // Cette méthode peut ne pas exister, donc on l'essaie dans un try/catch
             if (method_exists($phpbb_container, 'findTaggedServiceIds')) {
                 $tagged_services = $phpbb_container->findTaggedServiceIds('notification.type.driver');
-                echo "   Services trouvés avec tag 'notification.type.driver' : " . count($tagged_services) . "\n";
-                foreach ($tagged_services as $service_id) {
-                    echo "     - $service_id\n";
+                $count = count($tagged_services);
+                echo "   Services trouvés avec tag 'notification.type.driver' : $count\n";
+                if ($count > 0) {
+                    foreach ($tagged_services as $service_id) {
+                        echo "     - $service_id\n";
+                    }
+                    echo "   ⚠️  Le service 'bastien59960.reactions.notification.type.reaction' n'est PAS dans cette liste !\n";
+                } else {
+                    echo "   ⚠️  AUCUN service trouvé avec le tag 'notification.type.driver' !\n";
+                    echo "   Cela indique un problème plus grave : le tag n'est peut-être pas reconnu.\n";
                 }
+            } else {
+                echo "   ⚠️  La méthode 'findTaggedServiceIds' n'est pas disponible dans le container.\n";
             }
         } catch (\Exception $e2) {
-            // Ignorer si la méthode n'existe pas
+            echo "   ⚠️  Impossible de lister les services taggés : " . $e2->getMessage() . "\n";
+        }
+        
+        // Essayer de vérifier si le service existe avec un nom différent
+        echo "\n   🔍 Vérification alternative : test du service avec différents noms...\n";
+        $alternative_names = [
+            'bastien59960.reactions.notification.type.reaction',
+            'reaction',
+            'notification.type.reaction',
+        ];
+        foreach ($alternative_names as $alt_name) {
+            try {
+                $test_service = $phpbb_container->get($alt_name);
+                echo "   ✅ Service trouvé avec le nom : '$alt_name'\n";
+                break;
+            } catch (\Exception $e3) {
+                // Ignorer, on continue
+            }
         }
     }
     
