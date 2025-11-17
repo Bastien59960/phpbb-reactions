@@ -1984,52 +1984,6 @@ PHP_DIAG_EOF
  fi
 
 # ==============================================================================
-# 35. NETTOYAGE OPTIONNEL DES NOTIFICATIONS (POST-DIAGNOSTIC)
-# ==============================================================================
-echo ""
-echo -e "───[ 35. NETTOYAGE OPTIONNEL DES NOTIFICATIONS ]────────"
-echo -e "${YELLOW}ℹ️  Cette étape peut résoudre des erreurs si des données de notification sont corrompues.${NC}"
-echo ""
-
-# Boucle pour s'assurer d'obtenir une réponse valide (y/n)
-while true; do
-    read -p "Voulez-vous nettoyer les notifications de l'extension Reactions ? (y/n) " -n 1 -r REPLY
-    echo "" # Saut de ligne après la saisie
-    case $REPLY in
-        [Yy]* )
-            echo "Lancement de la commande de purge des notifications..."
-            # CORRECTION : Remplacement de la commande CLI par une requête SQL directe.
-            # C'est plus simple et évite les problèmes de chemin ou de service non trouvé.
-            
-            purge_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
--- Récupérer les IDs des types de notification de l'extension
-SET @type_ids := (
-    SELECT GROUP_CONCAT(notification_type_id) 
-    FROM phpbb_notification_types
-    WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
-);
-
--- Supprimer les notifications correspondantes si des types ont été trouvés
-DELETE FROM phpbb_notifications 
-WHERE FIND_IN_SET(notification_type_id, @type_ids);
-
-SELECT CONCAT(ROW_COUNT(), ' notification(s) de réaction supprimée(s).') AS result;
-MANUAL_PURGE_EOF
-)
-            check_status "Nettoyage manuel des notifications de l'extension Reactions." "$purge_output"
-            break
-            ;;
-        [Nn]* )
-            echo "ℹ️  Nettoyage des notifications ignoré."
-            break
-            ;;
-        * )
-            echo "Veuillez répondre par 'y' (oui) ou 'n' (non)."
-            ;;
-    esac
-done
-
-# ==============================================================================
 # 36. REDÉMARRAGE DU SERVICE PHP-FPM (CRUCIAL)
 # ==============================================================================
 echo ""
@@ -2059,3 +2013,52 @@ else
     echo -e "${YELLOW}   Vous devez le redémarrer manuellement pour que les changements soient pris en compte par le serveur web.${NC}"
     echo -e "${YELLOW}   Exemple de commande : ${GREEN}sudo systemctl restart php8.2-fpm${NC}"
 fi
+
+# ==============================================================================
+# 37. NETTOYAGE OPTIONNEL DES NOTIFICATIONS (POST-REDÉMARRAGE)
+# ==============================================================================
+echo ""
+echo -e "───[ 37. NETTOYAGE OPTIONNEL DES NOTIFICATIONS ]────────"
+echo -e "${YELLOW}ℹ️  Si le forum affiche toujours une erreur, cette étape peut le rendre fonctionnel.${NC}"
+echo ""
+
+# Boucle pour s'assurer d'obtenir une réponse valide (y/n)
+while true; do
+    read -p "Voulez-vous nettoyer les notifications de l'extension Reactions ? (y/n) " -n 1 -r REPLY
+    echo "" # Saut de ligne après la saisie
+    case $REPLY in
+        [Yy]* )
+            echo "Lancement de la commande de purge des notifications..."
+            # CORRECTION : Remplacement de la commande CLI par une requête SQL directe.
+            # C'est plus simple et évite les problèmes de chemin ou de service non trouvé.
+            
+            purge_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
+-- Récupérer les IDs des types de notification de l'extension
+SET @type_ids := (
+    SELECT GROUP_CONCAT(notification_type_id) 
+    FROM phpbb_notification_types
+    WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
+);
+
+-- Supprimer les notifications correspondantes si des types ont été trouvés
+DELETE FROM phpbb_notifications 
+WHERE FIND_IN_SET(notification_type_id, @type_ids);
+
+SELECT CONCAT(ROW_COUNT(), ' notification(s) de réaction supprimée(s).') AS result;
+MANUAL_PURGE_EOF
+)
+            check_status "Nettoyage manuel des notifications de l'extension Reactions." "$purge_output"
+            
+            echo -e "${GREEN}✅ Notifications purgées. Le forum devrait maintenant être accessible.${NC}"
+            
+            break
+            ;;
+        [Nn]* )
+            echo "ℹ️  Nettoyage des notifications ignoré."
+            break
+            ;;
+        * )
+            echo "Veuillez répondre par 'y' (oui) ou 'n' (non)."
+            ;;
+    esac
+done
