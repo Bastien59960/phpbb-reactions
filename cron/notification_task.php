@@ -870,13 +870,13 @@ class notification_task extends \phpbb\cron\task\base
         // - U+1F900–U+1F9FF (Supplemental Symbols and Pictographs)
         // - U+1F1E0–U+1F1FF (Regional Indicator Symbols)
         
-        // Vérifier que la chaîne contient au moins un caractère emoji
-        if (preg_match('/[\x{1F300}-\x{1F9FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE00}-\x{FE0F}\x{1F900}-\x{1F9FF}\x{1F1E0}-\x{1F1FF}]/u', $emoji_utf8))
-        {
-            return $emoji_utf8;
-        }
+        // CORRECTION : La regex doit vérifier la présence d'au moins un caractère graphique (\p{S}, \p{P}, \p{N})
+        // mais autoriser l'ensemble des caractères valides pour un emoji composite (\p{M}, \p{Cf}, etc.).
+        // L'ancienne regex pouvait rejeter des emojis valides comme ❤️ (U+2764 + U+FE0F).
+        if (preg_match('/[\p{S}\p{P}\p{N}]/u', $emoji_utf8)) {
+			return $emoji_utf8;
+		}
 
-        // Si ce n'est pas un emoji valide, retourner '?'
         // Utiliser 'XXX' comme placeholder intentionnel.
         // Cela permet de distinguer clairement une donnée invalide d'un bug d'encodage (qui afficherait '?' ou un losange).
         return 'XXX';

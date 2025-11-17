@@ -433,8 +433,8 @@ class reaction extends base implements type_interface
         return [
             $this->get_title(), // Clé : NOTIFICATION_TYPE_REACTION
             [
-                $data['reacter_name'] ?? ($data['reacter_username'] ?? 'Quelqu\'un'), // %1$s : Nom du réacteur
-                !empty($data['reaction_emoji']) ? $data['reaction_emoji'] : 'XXX', // %2$s : Emoji
+                $data['reacter_name'] ?? 'Quelqu\'un', // %1$s : Nom du réacteur
+                !empty($data['reaction_emoji']) ? $data['reaction_emoji'] : 'XXX', // %2$s : Emoji (placeholder)
             ],
         ];
     }

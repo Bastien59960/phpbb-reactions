@@ -483,11 +483,13 @@ class ajax
      */
     private function add_reaction($post_id, $emoji)
     {
-        // Normalisation de l'emoji côté serveur
+        // Normalisation et nettoyage de l'emoji côté serveur
         $emoji = (string) $emoji;
+        // Supprimer les caractères de contrôle invisibles (sauf tabulation, nouvelle ligne, etc.)
         $emoji = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $emoji);
 
         if (extension_loaded('intl') && class_exists('\Normalizer')) {
+            // Normaliser en Forme C (Composition) pour standardiser les caractères composites.
             $emoji = \Normalizer::normalize($emoji, \Normalizer::FORM_C);
         }
 

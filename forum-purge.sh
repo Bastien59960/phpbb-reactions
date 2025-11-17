@@ -1476,41 +1476,39 @@ RESET_FLAGS_EOF
             echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'bastien59960.reactions.notification.type.reaction'. Étape ignorée.${NC}"
         else
             echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID). Génération via SQL direct...${NC}"
-
-            # CORRECTION MAJEURE : Utiliser une seule requête SQL pour générer les notifications.
-            # Cela évite complètement les problèmes d'encodage de bash en construisant la donnée sérialisée
-            # directement dans MySQL, qui gère parfaitement l'UTF-8.
-            generation_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -t <<'GENERATE_NOTIFS_EOF'
+            
+            # CORRECTION FINALE : Construire la requête SQL dans une variable, puis l'exécuter.
+            # Cela évite d'exécuter la sortie formatée d'une première requête et gère les erreurs.
+            SQL_GENERATE_NOTIFS=$(cat <<SQL_EOF
 -- Étape 1 : Créer une table temporaire avec des réactions aléatoires valides
 DROP TEMPORARY TABLE IF EXISTS temp_reactions_for_notif;
 CREATE TEMPORARY TABLE temp_reactions_for_notif AS
 SELECT 
     r.post_id,
     r.topic_id,
-    p.poster_id,      -- ID de l'auteur du post (destinataire)
-    r.user_id,        -- ID de l'utilisateur qui réagit
-    u.username,       -- Nom de l'utilisateur qui réagit
+    p.poster_id,
+    r.user_id,
+    u.username,
     r.reaction_emoji
 FROM phpbb_post_reactions r
 JOIN phpbb_posts p ON r.post_id = p.post_id
 JOIN phpbb_users u ON r.user_id = u.user_id
 WHERE 
-    p.poster_id != r.user_id -- Exclure les auto-réactions
+    p.poster_id != r.user_id
     AND r.reaction_emoji IS NOT NULL
     AND r.reaction_emoji != ''
 ORDER BY RAND()
-LIMIT 15;
+LIMIT ${DEBUG_NOTIF_COUNT};
 
--- Étape 2 : Insérer les notifications en construisant la chaîne sérialisée directement en SQL
+-- Étape 2 : Insérer les notifications en construisant la chaîne sérialisée
 INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data)
 SELECT
-    1, -- ID du type de notification (sera remplacé par le script)
+    ${REACTION_NOTIF_TYPE_ID}, -- ID réel injecté par le script
     t.post_id,
     t.topic_id,
     t.poster_id,
     0, -- non lue
     UNIX_TIMESTAMP(),
-    -- Construction de la chaîne PHP sérialisée directement en SQL
     CONCAT(
         'a:3:{',
         's:10:"reacter_id";i:', t.user_id, ';',
@@ -1520,24 +1518,27 @@ SELECT
     )
 FROM temp_reactions_for_notif t;
 
--- Étape 3 : Afficher ce qui a été généré pour le log
+-- Étape 3 : Afficher un log de ce qui a été généré
 SELECT 
-    CONCAT('Notif pour post #', post_id, ' (auteur #', poster_id, ') : ', reaction_emoji, ' par ', username) as '✅ Résultat'
+    CONCAT('      ✅ Notif pour le post #', post_id, ' (auteur #', poster_id, ') : ', reaction_emoji, ' par ', username)
 FROM temp_reactions_for_notif;
 
 -- Étape 4 : Renvoyer le nombre de notifications créées
-SELECT CONCAT(ROW_COUNT(), ' fausse(s) notification(s) générée(s) avec succès.') as 'Statut final';
-GENERATE_NOTIFS_EOF
-            )
+SELECT CONCAT('   ', ROW_COUNT(), ' fausse(s) notification(s) générée(s) avec succès.');
+SQL_EOF
+)
+            # Exécuter le bloc SQL et capturer la sortie et les erreurs
+            generation_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<< "$SQL_GENERATE_NOTIFS" 2>&1)
+            generation_exit_code=$?
 
-            # Remplacer l'ID de notification placeholder par le vrai ID
-            generation_output_final=$(echo "$generation_output" | sed "s/VALUES (1,/VALUES (${REACTION_NOTIF_TYPE_ID},/g")
-
-            # Exécuter la requête finale
-            final_result=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -t <<< "$generation_output_final")
-            
-            # Afficher le résultat
-            echo "$final_result"
+            # GESTION D'ERREUR : Vérifier si la commande mysql a échoué
+            if [ $generation_exit_code -ne 0 ]; then
+                echo -e "${WHITE_ON_RED}❌ ERREUR lors de la génération des fausses notifications :${NC}"
+                echo "$generation_output" | sed 's/^/   | /'
+            else
+                # Afficher la sortie (qui est maintenant juste le log)
+                echo "$generation_output"
+            fi
         fi
     else
         echo -e "${YELLOW}ℹ️  Génération de fausses notifications ignorée par l'utilisateur.${NC}"
