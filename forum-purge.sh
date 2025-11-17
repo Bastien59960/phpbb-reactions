@@ -21,6 +21,7 @@
 # ==============================================================================
 FORUM_ROOT="/home/bastien/www/forum" # Chemin vers la racine de votre forum phpBB
 PHP_ERROR_LOG="/var/log/php/debug.err" # Fichier pour les erreurs PHP et les logs du script
+DEBUG_NOTIF_COUNT=15 # Nombre de notifications de test à générer et à afficher
 
 # --- Couleurs ---
 GREEN='\033[0;32m'
@@ -727,8 +728,8 @@ SELECT '════════════════════════
 SELECT '🔔 DERNIÈRES 5 NOTIFICATIONS "RÉACTION" CRÉÉES' AS '';
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 
--- CORRECTION : Ce diagnostic doit chercher le nom long attendu.
-SELECT 
+-- CORRECTION : Augmenter la limite pour afficher toutes les notifications générées.
+SELECT
     notification_id,
     notification_read,
     notification_time,
@@ -736,7 +737,7 @@ SELECT
 FROM phpbb_notifications -- Utilisation du nom long pour le diagnostic
 WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1)
 ORDER BY notification_time DESC 
-LIMIT 5;
+LIMIT ${DEBUG_NOTIF_COUNT};
 
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 SELECT '✅ DIAGNOSTIC TERMINÉ' AS '';
@@ -1330,7 +1331,8 @@ if [ "$REACTIONS_COUNT" -eq 0 ]; then
     # Exécuter le script SQL de peuplement et capturer la sortie
     # Exécuter le script SQL de peuplement et capturer la sortie et le code de sortie
     {
-        seeding_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 <<'SEEDING_EOF'
+        # CORRECTION : Utiliser l'option -N pour ne pas afficher les en-têtes de colonnes (les requêtes CONCAT)
+        seeding_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -N <<'SEEDING_EOF'
             -- Étape 1: Vider les tables temporaires si elles existent (sécurité)
             DROP TEMPORARY TABLE IF EXISTS temp_posts, temp_users, temp_emojis;
 
@@ -1489,7 +1491,7 @@ RESET_FLAGS_EOF
                 JOIN phpbb_users u ON r.user_id = u.user_id
                 WHERE p.poster_id != r.user_id -- Exclure les auto-réactions
                 ORDER BY RAND()
-                LIMIT 15;
+                LIMIT ${DEBUG_NOTIF_COUNT};
 GET_REACTIONS_EOF
             )
 
@@ -1814,7 +1816,7 @@ $stmt = $pdo->query("
     SELECT * FROM phpbb_notifications 
     WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1)
     ORDER BY notification_time DESC 
-    LIMIT 10
+    LIMIT " . getenv('DEBUG_NOTIF_COUNT') . "
 ");
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
@@ -1871,6 +1873,7 @@ PHP_DIAG_EOF
  
  # Exporter les variables et exécuter le script PHP
  export DB_USER DB_NAME MYSQL_PASSWORD
+ export DEBUG_NOTIF_COUNT
  final_diag_output=$($PHP_CLI "$PHP_DIAG_SCRIPT" 2>&1)
  
  # Nettoyer le script temporaire
