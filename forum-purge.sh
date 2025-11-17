@@ -1511,14 +1511,16 @@ SELECT
     0, -- non lue
     UNIX_TIMESTAMP(),
     CONCAT(
-        'a:7:{',
+        'a:7:{', -- CORRECTION : Le nombre d'éléments était correct, mais les clés manquantes étaient le problème.
         's:8:"topic_id";i:', t.topic_id, ';',
         's:8:"forum_id";i:', t.forum_id, ';',
         's:9:"poster_id";i:', t.poster_id, ';',
         's:10:"reacter_id";i:', t.user_id, ';',
         's:12:"reacter_name";s:', LENGTH(t.username), ':"', t.username, '";',
         's:14:"reaction_emoji";s:', LENGTH(t.reaction_emoji), ':"', t.reaction_emoji, '";',
-        -- CORRECTION CRITIQUE : Ajouter post_id, qui est requis par la méthode statique get_item_id()
+        -- CORRECTION CRITIQUE : Ajouter post_id, qui est requis par la méthode statique get_item_id().
+        -- C'est l'absence de cette clé qui causait l'erreur NOTIFICATION_TYPE_NOT_EXIST car phpBB ne pouvait
+        -- pas identifier l'objet parent de la notification.
         's:7:"post_id";i:', t.post_id, ';',
         '}'
     )
