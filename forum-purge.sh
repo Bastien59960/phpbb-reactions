@@ -1511,7 +1511,7 @@ SELECT
     0, -- non lue
     UNIX_TIMESTAMP(),
     CONCAT(
-        'a:6:{',
+        'a:7:{',
         's:8:"topic_id";i:', t.topic_id, ';',
         's:8:"forum_id";i:', t.forum_id, ';',
         's:9:"poster_id";i:', t.poster_id, ';',
