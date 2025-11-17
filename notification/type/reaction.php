@@ -444,44 +444,4 @@ class reaction extends base implements type_interface
         ];
     }
 
-    // =========================================================================
-    // PERSISTANCE EN BASE DE DONNÉES
-    // =========================================================================
-
-    /**
-     * Définit les colonnes supplémentaires pour cette notification
-     * 
-     * phpBB va AUTOMATIQUEMENT créer une colonne `reaction_emoji`
-     * dans la table `phpbb_notifications` si elle n'existe pas.
-     * 
-     * @return array Définition des colonnes personnalisées
-     */
-    public function get_insert_sql() 
-    {
-        return [
-            'reaction_emoji' => ['VCHAR_UNI', 191], // VARCHAR UNICODE, 191 pour supporter les emojis composés
-        ];
-    }
-
-    /**
-     * Prépare les données à insérer en base pour cette notification
-     * 
-     * Fusionne les données standards (créées par parent::create_insert_array)
-     * avec nos données personnalisées (l'emoji)
-     * 
-     * @param array $type_data      Données de la réaction
-     * @param array $pre_create_data Données pré-calculées (optionnel)
-     * @return array Tableau complet à insérer en BDD
-     */
-    public function create_insert_array($type_data, $pre_create_data = array())
-    {
-        // Créer le tableau de base avec les champs standards
-        $insert_array = parent::create_insert_array($type_data, $pre_create_data);
-        
-        // Ajouter notre champ personnalisé : l'emoji
-        $insert_array['reaction_emoji'] = $type_data['emoji'] ?? '';
-        
-        return $insert_array;
-    }
-    
 }
