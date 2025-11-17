@@ -137,17 +137,15 @@ services:
     bastien59960.reactions.notification.type.reaction_email_digest:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         arguments:
+            # Ordre corrigé pour correspondre au constructeur parent
             - '@dbal.conn'
-            - '@config'
             - '@language'
             - '@user'
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%tables.notifications%'
-            - '@user_loader'
-            - '@bastien59960.reactions.helper'
-            - '@controller.helper'
+            - '@config'
         tags:
             - { name: notification.type.driver }
 
