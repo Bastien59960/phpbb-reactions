@@ -45,8 +45,8 @@ $lang = array_merge($lang ?? [], [
     'REACTIONS_PICKER_SHOW_SEARCH_EXPLAIN' => 'Décochez pour retirer le champ de recherche de la palette.',
     'REACTIONS_PICKER_USE_JSON'          => 'Charger l\'ensemble complet d\'emojis',
     'REACTIONS_PICKER_USE_JSON_EXPLAIN'  => 'Décochez pour ne pas charger le fichier JSON externe et n\'afficher que les 10 emojis fréquents.',
-    'REACTIONS_SYNC_INTERVAL'            => 'Intervalle de rafraîchissement',
-    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Temps (en millisecondes) entre deux actualisations automatiques des réactions.',
+    'REACTIONS_SYNC_INTERVAL'            => 'Intervalle de rafraîchissement (en secondes)',
+    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Temps (en secondes) entre deux actualisations automatiques des réactions.',
 
     // --- Messages pour le journal d'administration ---
     'LOG_REACTIONS_IMPORT_START'         => '<strong>Tentative d\'importation des réactions</strong><br>• Recherche des données d\'une ancienne extension de réactions.',

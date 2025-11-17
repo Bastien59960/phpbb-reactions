@@ -118,7 +118,10 @@ class listener implements EventSubscriberInterface
         $picker_show_categories = (int) ($this->config['bastien59960_reactions_picker_show_categories'] ?? 1);
         $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 0);
         $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 0);
-        $sync_interval = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5000);
+
+        // Lire la valeur en secondes depuis l'ACP (défaut 5s) et la convertir en millisecondes pour le JS.
+        $sync_interval_seconds = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 5);
+        $sync_interval_ms = $sync_interval_seconds * 1000;
         
         // CORRECTION : Utiliser un chemin web relatif au lieu d'un chemin de fichier serveur.
         // Le JavaScript (fetch) a besoin d'une URL, pas d'un chemin de disque dur.
@@ -140,7 +143,7 @@ class listener implements EventSubscriberInterface
             'REACTIONS_PICKER_SHOW_CATEGORIES' => $picker_show_categories,
             'REACTIONS_PICKER_SHOW_SEARCH'     => $picker_show_search,
             'REACTIONS_PICKER_USE_JSON'        => $picker_use_json,
-            'REACTIONS_SYNC_INTERVAL'          => $sync_interval,
+            'REACTIONS_SYNC_INTERVAL'          => $sync_interval_seconds, // On passe la valeur en secondes au template ACP
         ]);
         
         // Traductions pour JavaScript
@@ -168,7 +171,7 @@ class listener implements EventSubscriberInterface
                 'showCategories:' . ($picker_show_categories ? 'true' : 'false') . ',' .
                 'showSearch:' . ($picker_show_search ? 'true' : 'false') . ',' .
                 'useJson:' . ($picker_use_json ? 'true' : 'false') . ',' .
-                'syncInterval:' . (int) $sync_interval . ',' .
+                'syncInterval:' . (int) $sync_interval_ms . ',' .
             '};' .
             'window.REACTIONS_LANG = ' . json_encode($js_lang, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS) . ';'
         );

@@ -45,8 +45,8 @@ $lang = array_merge($lang ?? [], [
     'REACTIONS_PICKER_SHOW_SEARCH_EXPLAIN' => 'Uncheck to remove the search field from the picker.',
     'REACTIONS_PICKER_USE_JSON'          => 'Load full emoji set',
     'REACTIONS_PICKER_USE_JSON_EXPLAIN'  => 'Uncheck to not load the external JSON file and only show the 10 common emojis.',
-    'REACTIONS_SYNC_INTERVAL'            => 'Refresh interval',
-    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Time (in milliseconds) between automatic reaction updates.',
+    'REACTIONS_SYNC_INTERVAL'            => 'Refresh interval (in seconds)',
+    'REACTIONS_SYNC_INTERVAL_EXPLAIN'    => 'Time (in seconds) between automatic reaction updates.',
 
     // --- Admin Log Messages ---
     'LOG_REACTIONS_IMPORT_START'         => '<strong>Attempting to import reactions</strong><br>• Searching for data from an old reactions extension.',
