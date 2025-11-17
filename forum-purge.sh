@@ -1470,10 +1470,12 @@ RESET_FLAGS_EOF
 
     if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo ""
-        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1;")
+        # CORRECTION CRITIQUE : On doit rechercher l'ID en utilisant le nom COURT, car c'est ce que la migration insère maintenant.
+        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' LIMIT 1;")
 
         if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
-            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'bastien59960.reactions.notification.type.reaction'. Étape ignorée.${NC}"
+            # Message d'erreur mis à jour pour refléter la recherche du nom court.
+            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'reaction'. Étape ignorée.${NC}"
         else
             echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID). Génération via SQL direct...${NC}"
             
