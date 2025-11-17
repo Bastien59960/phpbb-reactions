@@ -143,11 +143,8 @@ services:
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '%core.table_prefix%notifications' # Argument manquant
             - '@config'
-            - '@user_loader'
-            - '@bastien59960.reactions.helper'
-            - '@request'
-            - '@template'
         tags: # Le tag correct pour un type de notification est "notification.type.driver"
             - { name: notification.type.driver }
 
