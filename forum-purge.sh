@@ -391,13 +391,17 @@ fi
 # ==============================================================================
 # EXPLICATION : Avant de purger l'extension (ce qui supprime toutes ses données),
 # on crée une copie de sécurité des tables `phpbb_post_reactions` et `phpbb_notifications`.
-# Ces sauvegardes seront utilisées pour restaurer l'état du forum après la réinstallation.
+# Pour les notifications, on ne sauvegarde que les données brutes, pas la ligne entière,
+# pour pouvoir les recréer proprement plus tard.
 echo -e "───[ 7. SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS) ]─────────"
 echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité des réactions et des notifications avant toute modification.${NC}"
 sleep 0.1
 echo -e "   (Le mot de passe a été fourni au début du script.)"
 
 backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
+-- ============================================================================
+-- SAUVEGARDE DES RÉACTIONS
+-- ============================================================================
 -- Sauvegarde des réactions (méthode sécurisée)
 -- CORRECTION : Une instruction PREPARE ne peut contenir qu'une seule requête.
 -- On sépare la création de la table et l'insertion des données.
@@ -414,10 +418,23 @@ PREPARE stmt_insert FROM @sql_insert; EXECUTE stmt_insert; DEALLOCATE PREPARE st
 
 SET @reactions_count = IF(@source_table_exists > 0, ROW_COUNT(), 0);
 
--- Sauvegarde des notifications
+-- ============================================================================
+-- SAUVEGARDE DES NOTIFICATIONS (DONNÉES BRUTES UNIQUEMENT)
+-- ============================================================================
+-- EXPLICATION : On ne sauvegarde plus la ligne entière pour éviter les conflits d'ID.
+-- On ne stocke que les informations métier essentielles pour pouvoir recréer
+-- des notifications propres plus tard.
 DROP TABLE IF EXISTS phpbb_notifications_backup;
-CREATE TABLE phpbb_notifications_backup LIKE phpbb_notifications;
-INSERT INTO phpbb_notifications_backup SELECT * FROM phpbb_notifications;
+CREATE TABLE phpbb_notifications_backup (
+    `item_id`           int(10) unsigned NOT NULL,
+    `item_parent_id`    int(10) unsigned NOT NULL,
+    `user_id`           int(10) unsigned NOT NULL,
+    `notification_data` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin
+);
+INSERT INTO phpbb_notifications_backup (item_id, item_parent_id, user_id, notification_data)
+SELECT n.item_id, n.item_parent_id, n.user_id, n.notification_data FROM phpbb_notifications n
+JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
+WHERE t.notification_type_name = 'bastien59960.reactions.notification.type.reaction';
 SET @notif_count = ROW_COUNT();
 
 -- Affichage du résumé
@@ -1486,42 +1503,34 @@ RESET_FLAGS_EOF
     BACKUP_NOTIF_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications_backup;" 2>/dev/null || echo 0)
 
     if [ "$BACKUP_NOTIF_ROWS" -gt 0 ]; then
-        # EXPLICATION : C'est la deuxième étape de la "jonglerie des ID".
-        # 1. On récupère les NOUVEAUX ID que phpBB vient de créer pour nos types de notifications.
-        # 2. On exécute une requête UPDATE sur notre table de SAUVEGARDE (`phpbb_notifications_backup`)
-        #    pour remplacer les ANCIENS ID par les NOUVEAUX.
-        # 3. Ce n'est qu'après cette mise à jour que l'on peut réinsérer les notifications. Elles sont
-        #    maintenant synchronisées avec les nouveaux types et ne seront plus orphelines.
-        echo -e "${YELLOW}   Mise à jour des ID de type de notification dans la sauvegarde...${NC}"
+        # EXPLICATION : On recrée les notifications proprement.
+        # On lit les données sauvegardées et on génère de nouvelles notifications avec le nouvel ID de type.
+        echo -e "${YELLOW}   Recréation des notifications depuis les données brutes sauvegardées...${NC}"
         
         # Récupérer les nouveaux ID depuis la base de données fraîchement migrée.
         NEW_REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1;")
-        NEW_DIGEST_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction_email_digest' LIMIT 1;")
 
-        echo -e "${GREEN}   Nouvel ID 'reaction' détecté : ${NEW_REACTION_NOTIF_TYPE_ID:-'non trouvé'}${NC}"
-        echo -e "${GREEN}   Nouvel ID 'digest' détecté : ${NEW_DIGEST_NOTIF_TYPE_ID:-'non trouvé'}${NC}"
+        if [ -z "$NEW_REACTION_NOTIF_TYPE_ID" ]; then
+            echo -e "${RED}   ERREUR : Impossible de trouver le nouvel ID pour le type 'reaction'. Restauration annulée.${NC}"
+        else
+            echo -e "${GREEN}   Nouvel ID 'reaction' détecté : ${NEW_REACTION_NOTIF_TYPE_ID}${NC}"
 
-        # Construire dynamiquement la requête de mise à jour.
-        UPDATE_SQL=""
-        # On ne met à jour que si un ancien ET un nouvel ID ont été trouvés.
-        if [ -n "$OLD_REACTION_NOTIF_TYPE_ID" ] && [ -n "$NEW_REACTION_NOTIF_TYPE_ID" ]; then
-            UPDATE_SQL+="UPDATE phpbb_notifications_backup SET notification_type_id = ${NEW_REACTION_NOTIF_TYPE_ID} WHERE notification_type_id = ${OLD_REACTION_NOTIF_TYPE_ID};"
-        fi
-        if [ -n "$OLD_DIGEST_NOTIF_TYPE_ID" ] && [ -n "$NEW_DIGEST_NOTIF_TYPE_ID" ]; then
-            UPDATE_SQL+="UPDATE phpbb_notifications_backup SET notification_type_id = ${NEW_DIGEST_NOTIF_TYPE_ID} WHERE notification_type_id = ${OLD_DIGEST_NOTIF_TYPE_ID};"
-        fi
-
-        # Exécuter la mise à jour sur la table de sauvegarde.
-        MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "$UPDATE_SQL"
-        check_status "Mise à jour des ID dans la table de sauvegarde."
-
-        # Maintenant que les ID sont corrigés, on peut restaurer.
-        restore_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_NOTIF_EOF'
-            -- Insérer les notifications sauvegardées, en ignorant les doublons si certains existent déjà.
-            INSERT IGNORE INTO phpbb_notifications SELECT * FROM phpbb_notifications_backup;
+            # On utilise une seule requête SQL pour recréer les notifications.
+            restore_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<RESTORE_NOTIF_EOF
+                INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data)
+                SELECT
+                    ${NEW_REACTION_NOTIF_TYPE_ID},
+                    b.item_id,
+                    b.item_parent_id,
+                    b.user_id,
+                    0, -- Marquer comme non lue
+                    UNIX_TIMESTAMP(),
+                    b.notification_data
+                FROM phpbb_notifications_backup b;
 RESTORE_NOTIF_EOF
-        )
-        check_status "Restauration des notifications depuis 'phpbb_notifications_backup'." "$restore_notif_output"
+            )
+            check_status "Restauration des notifications depuis la sauvegarde." "$restore_notif_output"
+        fi
     else
         echo -e "${GREEN}ℹ️  Restauration des notifications ignorée : la sauvegarde est vide ou absente.${NC}"
     fi
