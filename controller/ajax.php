@@ -959,11 +959,9 @@ class ajax
             ];
 
             if (defined('DEBUG') && DEBUG) {
-                error_log('[Reactions] Notification DATA: ' . json_encode($notification_data, JSON_UNESCAPED_UNICODE));
+                error_log('[Reactions] Notification DATA: ' . json_encode($notification_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             }
 
-            // Envoyer la notification via le manager de phpBB
-            // La méthode add_notifications attend 2 arguments : le nom du type et les données brutes.
             // phpBB se charge de trouver les destinataires, de construire la notification et de la sérialiser.
             // Le tableau de données doit contenir toutes les informations nécessaires pour que les méthodes
             // statiques de la classe de notification (get_item_id, get_item_parent_id, etc.) puissent fonctionner.
