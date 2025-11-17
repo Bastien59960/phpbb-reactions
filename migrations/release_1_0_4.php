@@ -44,7 +44,9 @@ class release_1_0_4 extends \phpbb\db\migration\container_aware_migration
     public function update_data()
     {
         return [
-            ['custom', [$this, 'create_missing_notification_preferences']],
+            // CORRECTION : Le callable doit être encapsulé dans un tableau supplémentaire.
+            // Format correct : ['custom', [[$this, 'nom_de_la_methode']]]
+            ['custom', [[$this, 'create_missing_notification_preferences']]],
             ['config.update', ['bastien59960_reactions_version', '1.0.4']],
         ];
     }

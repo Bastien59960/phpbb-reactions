@@ -58,7 +58,9 @@ class test_task extends \phpbb\cron\task\base
      */
     public function get_name()
     {
-        return 'bastien59960.reactions.test';
+        // CORRECTION : Utiliser le nom complet du service pour une meilleure cohérence,
+        // même si phpBB le raccourcit. Cela évite toute confusion.
+        return 'cron.task.bastien59960.reactions.test';
     }
 
     /**
