@@ -35,7 +35,7 @@ NC='\033[0m'
 
 # --- Commande PHP avec logging ---
 # Utilise des directives pour forcer la journalisation des erreurs dans un fichier spécifique.
-PHP_CLI="php -d error_reporting=E_ALL -d display_errors=0 -d log_errors=1 -d error_log=\"$PHP_ERROR_LOG\""
+PHP_CLI="php -d error_reporting=E_ALL -d display_errors=1 -d log_errors=1 -d error_log=\"$PHP_ERROR_LOG\""
 
 # ==============================================================================
 # FUNCTION

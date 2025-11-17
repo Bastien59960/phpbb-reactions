@@ -28,6 +28,19 @@ $user->session_begin();
 $auth->acl($user->data);
 $user->setup();
 
+/**
+ * Gère les erreurs et termine le script.
+ * @param string $message Le message d'erreur.
+ * @param \Exception|null $exception L'exception capturée.
+ */
+function handle_error($message, \Exception $exception = null) {
+    fwrite(STDERR, COLOR_RED . 'ERREUR FATALE: ' . $message . COLOR_NC . "\n");
+    if ($exception) {
+        fwrite(STDERR, 'Détails: ' . $exception->getMessage() . "\n");
+    }
+    exit(1);
+}
+
 // Constantes pour les couleurs dans la console
 const COLOR_GREEN = "\033[0;32m";
 const COLOR_YELLOW = "\033[1;33m";
@@ -49,15 +62,19 @@ $digest_notification_type = 'bastien59960.reactions.notification.type.reaction_e
 $sql = 'SELECT user_id, username
     FROM ' . USERS_TABLE . '
     WHERE user_type <> ' . USER_IGNORE . '
-    AND user_id <> ' . ANONYMOUS;
-$result = $db->sql_query($sql);
+    AND user_id <> ' . ANONYMOUS . '
+    ORDER BY user_id';
 
-$all_users = $db->sql_fetchrowset($result);
-$db->sql_freeresult($result);
+try {
+    $result = $db->sql_query($sql);
+    $all_users = $db->sql_fetchrowset($result);
+    $db->sql_freeresult($result);
+} catch (\phpbb\db\driver\exception $e) {
+    handle_error('Impossible de récupérer la liste des utilisateurs.', $e);
+}
 
 $total_users = count($all_users);
 $errors_found = 0;
-
 echo "Vérification des préférences pour " . $total_users . " utilisateurs...\n\n";
 
 foreach ($all_users as $i => $user_data) {
@@ -81,10 +98,13 @@ foreach ($all_users as $i => $user_data) {
                 AND method = "' . $db->sql_escape($pref['method']) . '"
                 AND item_id = 0';
 
-        $result_pref = $db->sql_query($sql);
-        $notification_setting = $db->sql_fetchrow($result_pref);
-        $db->sql_freeresult($result_pref);
-
+        try {
+            $result_pref = $db->sql_query($sql);
+            $notification_setting = $db->sql_fetchrow($result_pref);
+            $db->sql_freeresult($result_pref);
+        } catch (\phpbb\db\driver\exception $e) {
+            handle_error("Erreur lors de la vérification de la préférence '{$pref['type']}' pour l'utilisateur ID {$user_id}.", $e);
+        }
         $method_short_name = str_replace('notification.method.', '', $pref['method']);
 
         if (!$notification_setting) {
@@ -125,9 +145,13 @@ $sql = 'SELECT DISTINCT un.user_id
     LEFT JOIN ' . USERS_TABLE . ' AS u ON un.user_id = u.user_id
     WHERE u.user_id IS NULL';
 
-$result = $db->sql_query($sql);
-$orphan_user_ids = array_map('intval', array_column($db->sql_fetchrowset($result), 'user_id'));
-$db->sql_freeresult($result);
+try {
+    $result = $db->sql_query($sql);
+    $orphan_user_ids = array_map('intval', array_column($db->sql_fetchrowset($result), 'user_id'));
+    $db->sql_freeresult($result);
+} catch (\phpbb\db\driver\exception $e) {
+    handle_error('Impossible de vérifier les notifications orphelines.', $e);
+}
 
 if (empty($orphan_user_ids)) {
     echo COLOR_GREEN . "[OK] Aucune préférence de notification orpheline n'a été trouvée." . COLOR_NC . "\n";
