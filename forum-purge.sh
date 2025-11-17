@@ -1516,9 +1516,11 @@ RESET_FLAGS_EOF
                 export DB_NAME="$DB_NAME"
                 export MYSQL_PASSWORD="$MYSQL_PASSWORD"
                 export DEBUG_NOTIF_COUNT="$DEBUG_NOTIF_COUNT"
+                export PHPBB_ROOT_PATH="$FORUM_ROOT"
                 
                 # Exécuter le script PHP de génération
-                generation_output=$($PHP_CLI "$FORUM_ROOT/ext/bastien59960/reactions/generate-test-notifications.php" 2>&1)
+                # Le script doit être exécuté depuis le répertoire de l'extension
+                generation_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI generate-test-notifications.php 2>&1)
                 generation_exit_code=$?
 
                 # GESTION D'ERREUR : Vérifier si le script PHP a échoué
