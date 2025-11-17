@@ -413,13 +413,13 @@ class reaction extends base implements type_interface
      */
     public function get_title_for_user($user_id, $lang = null)
     {   
-        // CORRECTION : Gérer les données encodées en base64 par le script de débogage.
+        // CORRECTION : Gérer les données brutes (tableau) et les données encodées en base64 par le script de débogage.
         $data = $this->notification_data;
 
-        // Si les données ne sont pas un tableau, c'est probablement une chaîne (potentiellement base64).
+        // Si les données ne sont pas un tableau, c'est probablement une chaîne (potentiellement base64 depuis le script de purge).
         if (!is_array($data)) {
             $decoded_data = @unserialize(base64_decode($data, true));
-            // Si le décodage et la désérialisation réussissent, on utilise les nouvelles données.
+            // Si le décodage et la désérialisation réussissent, on utilise les données décodées.
             if (is_array($decoded_data)) {
                 $data = $decoded_data;
             }
