@@ -20,11 +20,6 @@ use phpbb\notification\type\base;
 use phpbb\user;
 use phpbb\auth\auth;
 use phpbb\db\driver\driver_interface;
-use phpbb\config\config;
-use phpbb\template\template;
-use bastien59960\reactions\controller\helper as reactions_helper;
-use phpbb\user_loader;
-use phpbb\request\request_interface;
 use phpbb\notification\type\type_interface;
 use phpbb\language\language;
 
@@ -42,21 +37,6 @@ class reaction extends base implements type_interface
     // PROPRIÉTÉS DE LA CLASSE
     // =========================================================================
     
-    /** @var config|null Configuration du forum */
-    protected $config;
-
-    /** @var helper|null Helper de contrôleur pour les URLs */
-    protected $reactions_helper; // C'est notre helper personnalisé
-
-    /** @var template|null Moteur de templates */
-    protected $template;
-
-    /** @var user_loader Chargeur d'utilisateurs */
-    protected $user_loader;
-
-    /** @var \phpbb\language\language */
-    protected $language;
-
     /** @var string Nom de la table des notifications */
     protected $notifications_table;
 
@@ -65,36 +45,15 @@ class reaction extends base implements type_interface
      * 
      * IMPORTANT : L'ORDRE DES ARGUMENTS DOIT CORRESPONDRE À services.yml
      * 
-     * Les 7 premiers arguments sont requis par la classe parente (base) :
-     * 1. db                  → Base de données
-     * 2. language            → @language
-     * 3. user                → @user
-     * 4. auth                → @auth
-     * 5. phpbb_root_path     → %core.root_path%
-     * 6. php_ext             → %core.php_ext%
-     * 7. notifications_table → %core.table_prefix%notifications
-     * 
-     * Les 5 suivants sont spécifiques à cette classe :
-     * 8. config            → @config
-     * 9. user_loader       → @user_loader
-     * 10. reactions_helper → @bastien59960.reactions.helper
-     * 11. request          → @request
-     * 12. template         → @template
-     * 
      */
     public function __construct(
-        driver_interface $db,               // 1. @dbal.conn
-        language $language,                 // 2. @language
-        user $user,                         // 3. @user
-        auth $auth,                         // 4. @auth
-        $phpbb_root_path,                   // 5. %core.root_path% - ✅ SANS type hint
-        $php_ext,                           // 6. %core.php_ext% - ✅ SANS type hint
-        $notifications_table,               // 7. %core.table_prefix%notifications - ✅ SANS type hint
-        config $config,                     // 8. @config
-        user_loader $user_loader,           // 9. @user_loader
-        reactions_helper $reactions_helper, // 10. @bastien59960.reactions.helper
-        request_interface $request,         // 11. @request (non utilisé, mais requis par services.yml)
-        template $template                  // 12. @template
+        driver_interface $db,
+        language $language,
+        user $user,
+        auth $auth,
+        $phpbb_root_path,
+        $php_ext,
+        $notifications_table
     ) {
         // Appeler le constructeur de la classe parente
         // L'ordre attendu par \phpbb\notification\type\base est : db, language, user, auth, root_path, php_ext, notifications_table
@@ -107,14 +66,6 @@ class reaction extends base implements type_interface
             $php_ext,
             $notifications_table
         );
-
-        // Stocker les dépendances spécifiques à cette classe
-        $this->config = $config;
-        $this->language = $language;
-        $this->user_loader = $user_loader;
-		$this->template = $template;
-        $this->reactions_helper = $reactions_helper;
-        // Note : $request est injecté mais non utilisé dans cette classe. Nous l'acceptons pour correspondre à services.yml.
 
         try
         {

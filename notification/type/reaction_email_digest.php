@@ -26,9 +26,6 @@ use phpbb\template\template; // Seule dépendance supplémentaire nécessaire
 
 class reaction_email_digest extends \phpbb\notification\type\base implements type_interface
 {
-    /** @var \phpbb\language\language */
-    protected $language;
-
     /** @var \phpbb\config\config */
     protected $config;
 
@@ -51,7 +48,6 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
         parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
         // On assigne manuellement les dépendances non gérées par le parent.
         $this->config = $config;
-        $this->language = $language;
         $this->template = $template;
     }
 

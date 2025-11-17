@@ -123,11 +123,6 @@ services:
             - '%core.root_path%'
             - '%core.php_ext%'
             - '%core.table_prefix%notifications'
-            - '@config'
-            - '@user_loader'
-            - '@bastien59960.reactions.helper'
-            - '@request'
-            - '@template'
         tags:
             - { name: notification.type.driver }
 
