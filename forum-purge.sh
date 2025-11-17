@@ -1510,10 +1510,15 @@ SELECT
     0, -- non lue
     UNIX_TIMESTAMP(),
     CONCAT(
-        'a:3:{',
+        'a:6:{',
+        's:8:"topic_id";i:', t.topic_id, ';',
+        's:8:"forum_id";i:', p.forum_id, ';',
+        's:9:"poster_id";i:', t.poster_id, ';',
         's:10:"reacter_id";i:', t.user_id, ';',
         's:12:"reacter_name";s:', LENGTH(t.username), ':"', t.username, '";',
         's:14:"reaction_emoji";s:', LENGTH(t.reaction_emoji), ':"', t.reaction_emoji, '";',
+        -- CORRECTION CRITIQUE : Ajouter post_id, qui est requis par la méthode statique get_item_id()
+        's:7:"post_id";i:', t.post_id, ';',
         '}'
     )
 FROM temp_reactions_for_notif t;
@@ -1881,6 +1886,21 @@ draw_table(
     ],
     $notif_rows
 );
+
+// 4. Affichage brut des notifications
+echo "\n📋 Contenu brut des " . getenv('DEBUG_NOTIF_COUNT') . " dernières notifications 'cloche' (données complètes)\n";
+foreach ($notifications as $notif) {
+    echo "\n" . str_repeat('─', 70) . "\n";
+    echo "🔔 Notification ID: " . $notif['notification_id'] . "\n";
+    echo str_repeat('─', 70) . "\n";
+    foreach ($notif as $key => $value) {
+        // Tronquer les données longues pour la lisibilité
+        if ($key === 'notification_data' && mb_strlen($value) > 150) {
+            $value = mb_substr($value, 0, 150) . '...';
+        }
+        printf("   %-25s : %s\n", $key, $value);
+    }
+}
 
 PHP_DIAG_EOF
  

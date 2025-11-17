@@ -963,19 +963,15 @@ class ajax
             }
 
             // Envoyer la notification via le manager de phpBB
-            // La méthode add_notifications attend 2 arguments : le nom du type et un tableau de données.
-            $notifications_to_add = [
-                [
-                    'item_id'           => $post_id,
-                    'item_parent_id'    => $topic_id,
-                    'user_id'           => $post_author_id, // L'utilisateur à notifier
-                    'notification_data' => $notification_data, // CORRECTION : Passer le tableau brut, phpBB s'occupe de la sérialisation.
-                ]
-            ];
+            // La méthode add_notifications attend 2 arguments : le nom du type et les données brutes.
+            // phpBB se charge de trouver les destinataires, de construire la notification et de la sérialiser.
+            // Le tableau de données doit contenir toutes les informations nécessaires pour que les méthodes
+            // statiques de la classe de notification (get_item_id, get_item_parent_id, etc.) puissent fonctionner.
+            $notification_data['post_id'] = $post_id; // Ajout crucial pour get_item_id
 
             // CORRECTION CRITIQUE : Utiliser le nom COURT du type de notification.
             // phpBB fera le lien avec le service 'bastien59960.reactions.notification.type.reaction' grâce à la méthode get_type().
-            $this->notification_manager->add_notifications('reaction', $notifications_to_add);
+            $this->notification_manager->add_notifications('reaction', $notification_data);
 
             if (defined('DEBUG') && DEBUG) {
                 error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id);
