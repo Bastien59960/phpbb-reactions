@@ -25,3 +25,6 @@ parameters:
 
     # Table des forums (référence)
     tables.forums: '%core.table_prefix%forums'
+
+    # Table des notifications (référence)
+    tables.notifications: '%core.table_prefix%notifications'

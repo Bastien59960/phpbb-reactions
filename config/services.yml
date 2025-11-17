@@ -138,14 +138,17 @@ services:
         class: bastien59960\reactions\notification\type\reaction_email_digest
         arguments:
             - '@dbal.conn'
+            - '@config'
             - '@language'
             - '@user'
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%core.table_prefix%notifications' # Argument manquant
-            - '@config'
-        tags: # Le tag correct pour un type de notification est "notification.type.driver"
+            - '%tables.notifications%'
+            - '@user_loader'
+            - '@bastien59960.reactions.helper'
+            - '@controller.helper'
+        tags:
             - { name: notification.type.driver }
 
     # =========================================================================
