@@ -1489,7 +1489,7 @@ RESET_FLAGS_EOF
                 JOIN phpbb_users u ON r.user_id = u.user_id
                 WHERE p.poster_id != r.user_id -- Exclure les auto-réactions
                 ORDER BY RAND()
-                LIMIT 5;
+                LIMIT 15;
 GET_REACTIONS_EOF
             )
 
