@@ -86,10 +86,10 @@ class ext extends \phpbb\extension\base
 			$notification_manager = $this->container->get('notification_manager');
 
 			// Enregistrer la notification cloche
-			$notification_manager->enable_notifications('reaction');
+			$notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction');
 
 			// Enregistrer la notification email digest
-			$notification_manager->enable_notifications('reaction_email_digest');
+			$notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction_email_digest');
 
 			return 'notification'; // Indique à phpBB que des types de notifs ont été gérés
 		}
@@ -111,10 +111,10 @@ class ext extends \phpbb\extension\base
 		$notification_manager = $this->container->get('notification_manager');
 		
 		// Désactiver la notification cloche
-		$notification_manager->disable_notifications('reaction');
+		$notification_manager->disable_notifications('bastien59960.reactions.notification.type.reaction');
 	
 		// Désactiver la notification email digest
-		$notification_manager->disable_notifications('reaction_email_digest');
+		$notification_manager->disable_notifications('bastien59960.reactions.notification.type.reaction_email_digest');
 		
 		return parent::disable_step($old_state);
 	}

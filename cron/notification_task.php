@@ -727,7 +727,7 @@ class notification_task extends \phpbb\cron\task\base
             $this->log("     📤 [Messenger] Envoi de l'email...");
             $send_result = $messenger->send(NOTIFY_EMAIL);
             
-            if ($send_result)
+            if ($send_result === true || $send_result === 1)
             {
                 $this->log("     ✅ [Messenger] Email envoyé avec succès.");
             } else {

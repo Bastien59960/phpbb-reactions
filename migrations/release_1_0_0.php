@@ -25,7 +25,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         $types_table = $this->table_prefix . 'notification_types';
         $sql = 'SELECT notification_type_id
                 FROM ' . $types_table . " 
-                WHERE notification_type_name = 'notification.type.reaction'";
+                WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'";
         $result = $this->db->sql_query($sql);
         $type_exists = (bool) $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
@@ -214,16 +214,16 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function create_notification_type()
     {
         $types_table = $this->table_prefix . 'notification_types';
-
+    
         try {
             // Cleanup old malformed entries
-            $malformed_name = 'bastien59960.reactions.notification.type.reaction';
+            $malformed_names = ['reaction', 'reaction_email_digest'];
             $sql = 'DELETE FROM ' . $types_table . "
-                WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
+                WHERE " . $this->db->sql_in_set('notification_type_name', $malformed_names);
             $this->db->sql_query($sql);
-
+    
             // Type 1: reaction (nom court déduit par phpBB)
-            $canonical_name = 'reaction';
+            $canonical_name = 'bastien59960.reactions.notification.type.reaction';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
                 LIMIT 1";
@@ -231,7 +231,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             $row = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
 
-            if (!$row) {
+            if (!$row) { // phpcs:ignore
                 $insert_data = array(
                     'notification_type_name'    => $canonical_name,
                     'notification_type_enabled' => 1,
@@ -239,8 +239,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
             }
 
-            // Type 2: reaction_email_digest (nom court déduit par phpBB)
-            $digest_name = 'reaction_email_digest';
+            // Type 2: reaction_email_digest
+            $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
                 LIMIT 1";
@@ -248,7 +248,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             $row = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
 
-            if (!$row) {
+            if (!$row) { // phpcs:ignore
                 $insert_data = array(
                     'notification_type_name'    => $digest_name,
                     'notification_type_enabled' => 1,
@@ -267,8 +267,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         $notifications_table = $this->table_prefix . 'notifications';
         
         $names = array(
-            'reaction',
-            'reaction_email_digest',
+            'bastien59960.reactions.notification.type.reaction',
+            'bastien59960.reactions.notification.type.reaction_email_digest',
         );
 
         try {

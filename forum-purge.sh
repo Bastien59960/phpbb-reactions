@@ -109,32 +109,37 @@ force_manual_purge() {
     echo -e "   (Le mot de passe a été demandé au début du script.)"
     
     output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'MANUAL_PURGE_EOF'
-    -- Supprimer de force l'extension et ses migrations
-    SELECT '--- Purge des tables ext et migrations...' AS '';
-    DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
-    DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
+    -- Étape 1 : Récupérer les IDs des types de notification avant de les supprimer
+    SET @type_ids_to_delete := (
+        SELECT GROUP_CONCAT(notification_type_id) 
+        FROM phpbb_notification_types 
+        WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
+    );
 
-    -- Purge des configurations
+    -- Étape 2 : Supprimer les notifications qui dépendent de ces types
+    SELECT '--- Purge des notifications...' AS '';
+    DELETE FROM phpbb_notifications WHERE FIND_IN_SET(notification_type_id, @type_ids_to_delete);
+
+    -- Étape 3 : Supprimer les types de notifications
+    SELECT '--- Purge des types de notifications...' AS '';
+    DELETE FROM phpbb_notification_types WHERE FIND_IN_SET(notification_type_id, @type_ids_to_delete);
+
+    -- Étape 4 : Purge des autres éléments (config, modules, etc.)
     SELECT '--- Purge des configurations...' AS '';
     DELETE FROM phpbb_config WHERE config_name LIKE 'bastien59960_reactions_%';
 
-    -- Purge des modules
     SELECT '--- Purge des modules...' AS '';
-    DELETE FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%';
-    DELETE FROM phpbb_modules WHERE module_langname LIKE '%REACTIONS%';
+    DELETE FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' OR module_langname LIKE '%REACTIONS%';
 
-    -- Purge des types de notifications
-    SELECT '--- Purge des types de notifications...' AS '';
-    DELETE FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest');
+    SELECT '--- Purge des entrées d''extension et de migration...' AS '';
+    DELETE FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
+    DELETE FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%';
 
-    -- Purge du schéma (colonnes et tables)
+    -- Étape 5 : Purge du schéma (colonnes et tables)
     SELECT '--- Purge du schéma (colonnes et tables)...' AS '';
     ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
-    -- Suppression des notifications restantes pour éviter les erreurs
-    DELETE FROM phpbb_notifications WHERE notification_type_id IN (
-        SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
-    );
     DROP TABLE IF EXISTS phpbb_post_reactions;
+    DROP TABLE IF EXISTS phpbb_post_reactions_backup;
 MANUAL_PURGE_EOF
     )
     check_status "Nettoyage manuel forcé de la base de données." "$output"
@@ -167,14 +172,16 @@ cleanup() {
     if [ "$BACKUP_ROWS" -gt 0 ]; then
         echo -e "${YELLOW}ℹ️  ${BACKUP_ROWS} réactions trouvées dans la sauvegarde. Tentative de restauration...${NC}"
         
-        restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EMERGENCY_RESTORE_EOF'
-            -- Vider la table avant de la remplir pour éviter les doublons
-            TRUNCATE TABLE phpbb_post_reactions;
+        restore_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'EMERGENCY_RESTORE_EOF'
+            -- S'assurer que la table principale existe avant de la restaurer
+            CREATE TABLE IF NOT EXISTS phpbb_post_reactions LIKE phpbb_post_reactions_backup;
+
+            -- Vider la table avant de la remplir pour éviter les doublons (plus sûr que TRUNCATE)
+            DELETE FROM phpbb_post_reactions;
             
-            -- Insérer les données depuis la sauvegarde en forçant reaction_notified à 0
-            INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified)
-            SELECT reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified
-            FROM phpbb_post_reactions_backup;
+            -- Insérer les données depuis la sauvegarde
+            INSERT INTO phpbb_post_reactions SELECT * FROM phpbb_post_reactions_backup;
+            SELECT CONCAT(ROW_COUNT(), ' réaction(s) restaurée(s) d''urgence.') as status;
 EMERGENCY_RESTORE_EOF
         )
         check_status "Restauration d'urgence des réactions." "$restore_output"
@@ -216,11 +223,11 @@ read -s MYSQL_PASSWORD # -s pour masquer l'entrée. Le mot de passe sera utilis�
 echo "" # Nouvelle ligne après l'entrée masquée
 
 # ==============================================================================
-# 1️⃣ VÉRIFICATION DE LA CONNEXION MYSQL (SÉCURITÉ)
+# 1. VÉRIFICATION DE LA CONNEXION MYSQL (SÉCURITÉ)
 # ==============================================================================
-echo -e "───[ 1️⃣  VÉRIFICATION DE LA CONNEXION MYSQL ]────────────────────────"
+echo -e "───[ 1. VÉRIFICATION DE LA CONNEXION MYSQL ]────────────────────────"
 echo -e "${YELLOW}ℹ️  Test de la connexion à la base de données avec le mot de passe fourni...${NC}"
-sleep 0.2
+sleep 0.1
 
 # Tente une commande simple. Redirige la sortie d'erreur vers la sortie standard.
 mysql_test_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT 1;" 2>&1)
@@ -235,9 +242,9 @@ else
 fi
 
 # ==============================================================================
-# 1.5 INITIALISATION DU FICHIER DE LOG
+# 2. INITIALISATION DU FICHIER DE LOG
 # ==============================================================================
-echo -e "───[ 1.5 INITIALISATION DU FICHIER DE LOG ]───────────────────────"
+echo -e "───[ 2. INITIALISATION DU FICHIER DE LOG ]───────────────────────"
 echo -e "${YELLOW}ℹ️  Tentative d'initialisation du fichier de log à l'emplacement : $PHP_ERROR_LOG${NC}"
 echo -e "${YELLOW}   Cela peut nécessiter les droits sudo.${NC}"
 
@@ -256,12 +263,12 @@ else
 fi
 
 # ==============================================================================
-# 2️⃣ DIAGNOSTIC INITIAL (AVANT TOUTE MODIFICATION)
+# 3. DIAGNOSTIC INITIAL (AVANT TOUTE MODIFICATION)
 # ==============================================================================
-echo -e "───[ 2️⃣  DIAGNOSTIC INITIAL ]────────────────────────"
+echo -e "───[ 3. DIAGNOSTIC INITIAL ]────────────────────────"
 echo -e "${YELLOW}ℹ️  État des notifications et des types de notifications avant toute opération...${NC}"
-sleep 0.2
-
+sleep 0.1
+ 
 initial_diag_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'INITIAL_DIAG_EOF'
 -- S'assurer que le type est bien enregistré et activé
 SELECT '--- Types de notifications de réaction ---' AS 'Diagnostic';
@@ -273,8 +280,8 @@ SELECT '--- Dernières 50 notifications de réaction ---' AS 'Diagnostic';
 SELECT * FROM phpbb_notifications 
 WHERE notification_type_id = (
     SELECT notification_type_id 
-    FROM phpbb_notification_types
-    WHERE notification_type_name = 'reaction'
+    FROM phpbb_notification_types -- Utilisation du nom long pour le diagnostic
+    WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'
     LIMIT 1
 )
 ORDER BY notification_time DESC 
@@ -283,12 +290,12 @@ INITIAL_DIAG_EOF
 )
 check_status "Diagnostic initial des notifications." "$initial_diag_output"
 # ==============================================================================
-# 3️⃣ SAUVEGARDE DE LA CONFIGURATION SPAM_TIME
+# 4. SAUVEGARDE DE LA CONFIGURATION SPAM_TIME
 # ==============================================================================
-echo -e "───[ 3️⃣  SAUVEGARDE DE LA CONFIGURATION SPAM_TIME ]───────────────────"
+echo -e "───[ 4. SAUVEGARDE DE LA CONFIGURATION SPAM_TIME ]───────────────────"
 echo -e "${YELLOW}ℹ️  Sauvegarde de la valeur actuelle du délai anti-spam...${NC}"
-sleep 0.2
-
+sleep 0.1
+ 
 # Lire la valeur actuelle et la stocker.
 # Si la clé n'existe pas (première exécution), la variable sera vide, ce qui est géré à la restauration.
 SPAM_TIME_BACKUP=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT config_value FROM phpbb_config WHERE config_name = 'bastien59960_reactions_spam_time';" 2>/dev/null)
@@ -298,12 +305,12 @@ echo -e "${GREEN}✅ Valeur du délai anti-spam sauvegardée : ${SPAM_TIME_BACKU
 
 
 # ==============================================================================
-# 4️⃣ RESTAURATION PRÉCOCE (SI NÉCESSAIRE)
+# 5. RESTAURATION PRÉCOCE (SI NÉCESSAIRE)
 # ==============================================================================
-echo -e "───[ 4️⃣  RESTAURATION PRÉCOCE (SI NÉCESSAIRE) ]─────────────────"
+echo -e "───[ 5. RESTAURATION PRÉCOCE (SI NÉCESSAIRE) ]─────────────────"
 echo -e "${YELLOW}ℹ️  Vérification si la table principale est vide pour une restauration précoce...${NC}"
-sleep 0.2
-
+sleep 0.1
+ 
 # Vérifier si la table principale existe et si elle est vide
 MAIN_TABLE_EXISTS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions';")
 
@@ -311,19 +318,18 @@ if [ "$MAIN_TABLE_EXISTS" -gt 0 ]; then
     MAIN_TABLE_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions;")
     if [ "$MAIN_TABLE_ROWS" -eq 0 ]; then
         echo -e "${YELLOW}   La table principale 'phpbb_post_reactions' est vide. Tentative de restauration depuis la sauvegarde...${NC}"
-        
-        restore_early_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'EARLY_RESTORE_EOF'
-            -- Vérifier si la table de backup existe avant de tenter la restauration
-            SET @backup_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
-            
-            -- Insérer les données depuis la sauvegarde si elle existe
-            SET @sql = IF(@backup_exists > 0,
-                'INSERT INTO phpbb_post_reactions (reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified) SELECT reaction_id, post_id, topic_id, user_id, reaction_emoji, reaction_time, reaction_notified FROM phpbb_post_reactions_backup ON DUPLICATE KEY UPDATE post_id=VALUES(post_id);',
-                'SELECT "La table de sauvegarde n''existe pas." AS status;'
-            );
-            PREPARE stmt FROM @sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
+
+        restore_early_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'EARLY_RESTORE_EOF'
+            -- Vérifier si la table de backup existe
+            SET @backup_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions_backup');
+
+            -- Si la sauvegarde existe, insérer les données
+            -- INSERT IGNORE est plus sûr que ON DUPLICATE KEY UPDATE ici.
+            INSERT IGNORE INTO phpbb_post_reactions 
+            SELECT * FROM phpbb_post_reactions_backup
+            WHERE @backup_exists > 0;
+
+            SELECT CONCAT(ROW_COUNT(), ' réaction(s) restaurée(s) (restauration précoce).') as status;
 EARLY_RESTORE_EOF
         )
         check_status "Restauration précoce des réactions." "$restore_early_output"
@@ -333,33 +339,29 @@ EARLY_RESTORE_EOF
 fi
 
 # ==============================================================================
-# 5️⃣ SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS)
+# 6. SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS)
 # ==============================================================================
-echo -e "───[ 5️⃣  SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS) ]─────────"
+echo -e "───[ 6. SAUVEGARDE DES DONNÉES (RÉACTIONS & NOTIFICATIONS) ]─────────"
 echo -e "${YELLOW}ℹ️  Création d'une copie de sécurité des réactions et des notifications avant toute modification.${NC}"
-sleep 0.2
-echo -e "   (Le mot de passe a été demandé au début du script.)"
+sleep 0.1
+echo -e "   (Le mot de passe a été fourni au début du script.)"
 
 backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
-    -- Sauvegarde des réactions
-    CREATE TABLE IF NOT EXISTS phpbb_post_reactions_backup LIKE phpbb_post_reactions;
-    SET @before_reactions = (SELECT COUNT(*) FROM phpbb_post_reactions_backup);
-    INSERT IGNORE INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
-    SET @after_reactions = (SELECT COUNT(*) FROM phpbb_post_reactions_backup);
+-- Sauvegarde des réactions
+DROP TABLE IF EXISTS phpbb_post_reactions_backup;
+CREATE TABLE phpbb_post_reactions_backup LIKE phpbb_post_reactions;
+INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
+SET @reactions_count = ROW_COUNT();
 
-    -- Sauvegarde des notifications
-    CREATE TABLE IF NOT EXISTS phpbb_notifications_backup LIKE phpbb_notifications;
-    TRUNCATE TABLE phpbb_notifications_backup;
-    INSERT INTO phpbb_notifications_backup
-    SELECT n.*
-    FROM phpbb_notifications n
-    JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
-    WHERE t.notification_type_name = 'reaction';
-    SET @notif_count = ROW_COUNT();
+-- Sauvegarde des notifications
+DROP TABLE IF EXISTS phpbb_notifications_backup;
+CREATE TABLE phpbb_notifications_backup LIKE phpbb_notifications;
+INSERT INTO phpbb_notifications_backup SELECT * FROM phpbb_notifications;
+SET @notif_count = ROW_COUNT();
 
-    -- Affichage du résumé
-    SELECT 'Réactions' AS 'Type de sauvegarde', CONCAT('Total: ', @after_reactions, ' (', @after_reactions - @before_reactions, ' nouvelle(s))') AS 'Statut';
-    SELECT 'Notifications' AS 'Type de sauvegarde', CONCAT('Total: ', @notif_count) AS 'Statut';
+-- Affichage du résumé
+SELECT 'Réactions' AS 'Type de sauvegarde', CONCAT('Total: ', @reactions_count) AS 'Statut';
+SELECT 'Notifications' AS 'Type de sauvegarde', CONCAT('Total: ', @notif_count) AS 'Statut';
 BACKUP_EOF
 )
 
@@ -367,11 +369,11 @@ echo "$backup_output"
 check_status "Sauvegarde des données (réactions et notifications)." "$backup_output"
 
 # ==============================================================================
-# 7️⃣ DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
+# 7. DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT)
 # ==============================================================================
-echo -e "───[ 7️⃣  DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
+echo -e "───[ 7. DÉSACTIVATION & PURGE PROPRE (TEST DU REVERT) ]──────────────"
 echo -e "${YELLOW}ℹ️  Utilisation des commandes natives de phpBB pour tester le cycle de vie de l'extension.${NC}"
-sleep 0.2
+sleep 0.1
 
 # On tente de désactiver proprement. On ignore les erreurs avec `|| true` car si l'extension est cassée, cette commande échouera.
 output_disable=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:disable bastien59960/reactions -vvv 2>&1 || true)
@@ -417,11 +419,11 @@ if [ $purge_exit_code -ne 0 ]; then
 fi
 
 # ==============================================================================
-# 8️⃣ NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
+# 8. NETTOYAGE DES MIGRATIONS PROBLÉMATIQUES (TOUTES EXTENSIONS)
 # ==============================================================================
-echo -e "───[ 8️⃣  NETTOYAGE DES MIGRATIONS CORROMPUES ]───────────────────"
-sleep 0.2
-echo -e "${YELLOW}ℹ️  Certaines extensions tierces peuvent laisser des migrations corrompues qui empêchent l'activation d'autres extensions.${NC}"
+echo -e "───[ 8. NETTOYAGE DES MIGRATIONS CORROMPUES ]───────────────────"
+sleep 0.1
+echo -e "${YELLOW}ℹ️  Certaines extensions peuvent laisser des migrations corrompues qui bloquent la réactivation.${NC}"
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 echo "🔍 Recherche de migrations avec dépendances non-array (cause array_merge error)..."
 echo ""
@@ -475,11 +477,11 @@ CLEANUP_EOF
 check_status "Nettoyage des migrations problématiques terminé."
 
 # ==============================================================================
-# 9️⃣ SUPPRESSION FICHIER cron.lock
+# 9. SUPPRESSION FICHIER cron.lock
 # ==============================================================================
-echo -e "───[ 9️⃣  SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
+echo -e "───[ 9. SUPPRESSION DU FICHIER cron.lock ]──────────────────────"
 echo -e "${YELLOW}ℹ️  Un fichier de verrouillage de cron ('cron.lock') peut bloquer l'exécution des tâches planifiées.${NC}"
-sleep 0.2
+sleep 0.1
 if [ -f "$FORUM_ROOT/store/cron.lock" ]; then
     rm -f "$FORUM_ROOT/store/cron.lock"
     check_status "Fichier cron.lock supprimé."
@@ -487,12 +489,12 @@ else
     echo -e "${GREEN}ℹ️  Aucun cron.lock trouvé (déjà absent).${NC}"
 fi
 # ==============================================================================
-# 1️⃣0️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
+# 10. NETTOYAGE FINAL DE LA BASE DE DONNÉES (CRON & NOTIFS ORPHELINES)
 # ==============================================================================
-echo -e "───[ 1️⃣0️⃣ NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
+echo -e "───[ 10. NETTOYAGE FINAL DE LA BASE DE DONNÉES ]──────────────────────"
 echo -e "${YELLOW}ℹ️  Réinitialisation du verrou de cron en BDD et suppression de TOUTES les notifications.${NC}"
-sleep 0.2
-
+sleep 0.1
+ 
 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'FINAL_CLEANUP_EOF' > /dev/null
 -- Réinitialiser le verrou du cron en base de données
 UPDATE phpbb_config SET config_value = 0 WHERE config_name = 'cron_lock';
@@ -504,21 +506,21 @@ FINAL_CLEANUP_EOF
 check_status "Nettoyage final de la BDD (cron_lock, toutes notifications)."
 
 # ==============================================================================
-# 1️⃣1️⃣ PURGE DU CACHE (AVANT RÉACTIVATION)
+# 11. PURGE DU CACHE (AVANT RÉACTIVATION)
 # ==============================================================================
-echo -e "───[ 1️⃣1️⃣ PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
+echo -e "───[ 11. PURGE DU CACHE (AVANT RÉACTIVATION) ]────────────────────"
 echo -e "${YELLOW}ℹ️  Dernière purge pour s'assurer que le forum est dans un état parfaitement propre avant de réactiver.${NC}"
-sleep 0.2
+sleep 0.1
 output=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé avant réactivation." "$output"
 
 # ==============================================================================
 # PAUSE STRATÉGIQUE
 # ==============================================================================
-echo -e "${YELLOW}ℹ️  Pause de 1 seconde pour laisser le temps au système de se stabiliser...${NC}"
-sleep 1
+echo -e "${YELLOW}ℹ️  Pause de 0.5 seconde pour laisser le temps au système de se stabiliser...${NC}"
+sleep 0.5
 # ==============================================================================
-# 1️⃣2️⃣ DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
+# 12. DÉFINITION DU BLOC DE DIAGNOSTIC SQL (HEREDOC)
 # ==============================================================================
 # Ce bloc est défini une seule fois et redirigé vers le descripteur de fichier 3.
 # Il sera réutilisé par les étapes 14 et 16.
@@ -689,8 +691,8 @@ SELECT
     notification_read,
     notification_time,
     user_id
-FROM phpbb_notifications
-WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' LIMIT 1)
+FROM phpbb_notifications -- Utilisation du nom long pour le diagnostic
+WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1)
 ORDER BY notification_time DESC 
 LIMIT 5;
 
@@ -700,13 +702,13 @@ SELECT '════════════════════════
 DIAGNOSTIC_EOF
 
 # ==============================================================================
-# 1️⃣3️⃣ DIAGNOSTIC SQL POST-PURGE
+# 13. DIAGNOSTIC SQL POST-PURGE
 # ==============================================================================
-echo -e "───[ 1️⃣3️⃣ DIAGNOSTIC POST-PURGE ]────────────────────────────"
+echo -e "───[ 13. DIAGNOSTIC POST-PURGE ]────────────────────────────"
 echo -e "${YELLOW}ℹ️  Validation de la purge. Recherche de toute trace restante de l'extension...${NC}"
-sleep 0.2
+sleep 0.1
 echo -e "   (Le mot de passe a été demandé au début du script.)"
-echo ""
+echo "" 
 
 REMAINING_TRACES=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'POST_PURGE_CHECK_EOF'
 -- Ce bloc vérifie toutes les traces que l'extension aurait pu laisser.
@@ -729,7 +731,7 @@ SELECT 'EXT_ENTRY_REMAINING', ext_name, ext_active FROM phpbb_ext WHERE ext_name
 POST_PURGE_CHECK_EOF
 )
 
-if [ -z "$REMAINING_TRACES" ]; then
+if [ -z "$REMAINING_TRACES" ] || [ "$(echo "$REMAINING_TRACES" | wc -l)" -eq 0 ]; then
     echo -e "${GREEN}✅ VALIDATION RÉUSSIE : Aucune trace de l'extension n'a été trouvée après la purge.${NC}"
     echo -e "${GREEN}   Les méthodes 'revert_*' des migrations semblent fonctionner correctement.${NC}"
     echo ""
@@ -767,11 +769,11 @@ else
 fi
 
 # ==============================================================================
-# 1️⃣3️⃣.5 VÉRIFICATION PRÉ-ACTIVATION
+# 14. VÉRIFICATION PRÉ-ACTIVATION
 # ==============================================================================
-echo -e "───[ 1️⃣3️⃣.5 VÉRIFICATION PRÉ-ACTIVATION ]────────────────────────"
+echo -e "───[ 14. VÉRIFICATION PRÉ-ACTIVATION ]────────────────────────"
 echo -e "${YELLOW}ℹ️  Vérification de l'absence de traces avant la réactivation...${NC}"
-sleep 0.2
+sleep 0.1
 
 PRE_ENABLE_CHECK=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN <<'PRE_ENABLE_CHECK_EOF'
 -- Recherche large de toute trace liée à l'extension (avec parenthèses pour la compatibilité UNION + LIMIT)
@@ -779,7 +781,7 @@ PRE_ENABLE_CHECK=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -s
 UNION ALL
 (SELECT 'MODULE' FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' LIMIT 1)
 UNION ALL
-(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest') LIMIT 1)
+(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%' LIMIT 1)
 UNION ALL
 (SELECT 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions' LIMIT 1)
 UNION ALL
@@ -799,17 +801,17 @@ else
 fi
 
 # ==============================================================================
-# 1️⃣4️⃣ RÉACTIVATION EXTENSION
+# 15. RÉACTIVATION EXTENSION
 # ==============================================================================
-echo -e "───[ 1️⃣4️⃣ RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────"
+echo -e "───[ 15. RÉACTIVATION DE L'EXTENSION (bastien59960/reactions) ]─────────"
 echo -e "${YELLOW}ℹ️  Lancement de la réactivation. C'est ici que les méthodes 'update_*' des migrations sont exécutées.${NC}"
 echo -e "${YELLOW}   Première tentative...${NC}"
-sleep 0.2
+sleep 0.1
 output_enable=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:enable bastien59960/reactions -vvv 2>&1)
 check_status "Première tentative d'activation de l'extension." "$output_enable"
 
 # ==============================================================================
-# 1️⃣5️⃣ NETTOYAGE BRUTAL ET 2ÈME TENTATIVE (SI ÉCHEC)
+# 16. NETTOYAGE BRUTAL ET 2ÈME TENTATIVE (SI ÉCHEC)
 # ==============================================================================
 # La fonction check_status retourne un code d'erreur si elle échoue.
 if [ $? -ne 0 ]; then
@@ -821,8 +823,8 @@ if [ $? -ne 0 ]; then
     # --------------------------------------------------------------------------
     # NOUVELLE PURGE DU CACHE ET SECONDE TENTATIVE
     # --------------------------------------------------------------------------
-    echo -e "───[ 1️⃣5️⃣ PURGE CACHE ET SECONDE TENTATIVE D'ACTIVATION ]──────────"
-    sleep 0.2
+    echo -e "───[ 16. PURGE CACHE ET SECONDE TENTATIVE D'ACTIVATION ]──────────"
+    sleep 0.1
     
     echo "   Nettoyage agressif du cache à nouveau..."
     rm -vrf "$FORUM_ROOT/cache/production/"* > /dev/null
@@ -835,11 +837,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # ==============================================================================
-# 1️⃣6️⃣ DIAGNOSTIC SQL POST-RÉACTIVATION
+# 17. DIAGNOSTIC SQL POST-RÉACTIVATION
 # ==============================================================================
 # On ne lance ce diagnostic que si l'activation a réussi (code de sortie 0)
 if [ $? -eq 0 ]; then
-    echo -e "───[ 1️⃣6️⃣ DIAGNOSTIC POST-RÉACTIVATION (SUCCÈS) ]────────────"
+    echo -e "───[ 17. DIAGNOSTIC POST-RÉACTIVATION (SUCCÈS) ]────────────"
     echo -e "${YELLOW}ℹ️  Vérification de l'état de la base de données après réactivation réussie.${NC}"
     echo -e "${GREEN}ℹ️  Vérification que les migrations ont correctement recréé les structures.${NC}"
     echo ""
@@ -847,13 +849,13 @@ if [ $? -eq 0 ]; then
     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <&3
 fi
 # ==============================================================================
-# 1️⃣7️⃣ DIAGNOSTIC APPROFONDI POST-ERREUR
+# 18. DIAGNOSTIC APPROFONDI POST-ERREUR
 # ==============================================================================
 if echo "$output_enable" | grep -q -E "PHP Fatal error|PHP Parse error|array_merge"; then
     echo ""
-    echo -e "───[ 1️⃣7️⃣ DIAGNOSTIC APPROFONDI APRÈS ERREUR ]───────────────────────"
+    echo -e "───[ 18. DIAGNOSTIC APPROFONDI APRÈS ERREUR ]───────────────────────"
     echo -e "${YELLOW}ℹ️  Une erreur critique a été détectée. Lancement d'une série de diagnostics pour en trouver la cause.${NC}"
-    sleep 0.2
+    sleep 0.1
     echo -e "${YELLOW}⚠️  Une erreur a été détectée. Diagnostic approfondi...${NC}"
     echo ""
     
@@ -977,13 +979,13 @@ SELECT '🔍 Vérification des noms de types problématiques' AS '';
 SELECT '───────────────────────────────────────────────────────────────' AS '';
 
 SELECT 
-    notification_type_id,
-    notification_type_name,
-    CASE 
-        WHEN notification_type_name LIKE 'bastien59960%' THEN '⚠️  NOM INCORRECT (contient namespace)'
-        WHEN notification_type_name NOT LIKE 'reaction%' THEN '⚠️  FORMAT INATTENDU'
-        ELSE '✅ Format correct'
-    END AS status
+    notification_type_id, 
+    notification_type_name, 
+    CASE
+        WHEN notification_type_name = 'bastien59960.reactions.notification.type.reaction' THEN '✅ NOM LONG CORRECT (cloche)'
+        WHEN notification_type_name = 'bastien59960.reactions.notification.type.reaction_email_digest' THEN '✅ NOM LONG CORRECT (email)'
+        ELSE '❌ NOM INVALIDE'
+    END as status
 FROM phpbb_notification_types
 WHERE notification_type_name LIKE '%reaction%';
 
@@ -1043,12 +1045,12 @@ ERROR_DIAGNOSTIC_EOF
 fi
 
 # ==============================================================================
-# 1️⃣8️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
+# 19. VÉRIFICATION FINALE DU STATUT DE L'EXTENSION
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que phpBB considère bien l'extension comme active.${NC}"
-echo -e "───[ 1️⃣8️⃣ VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
-sleep 0.2
+echo -e "───[ 19. VÉRIFICATION FINALE DU STATUT DE L'EXTENSION ]───────────"
+sleep 0.1
 
 # On utilise bien "extension:show" et on isole la ligne de notre extension
 EXT_STATUS=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" extension:show | grep "bastien59960/reactions" || true)
@@ -1062,22 +1064,22 @@ else
 fi
 
 # ==============================================================================
-# 1️⃣9️⃣ PURGE DU CACHE FINALE (CRUCIAL POUR LES CRONS)
+# 20. PURGE DU CACHE FINALE (CRUCIAL POUR LES CRONS)
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Purge finale pour forcer phpBB à reconstruire son conteneur de services avec l'extension activée.${NC}"
-echo -e "───[ 1️⃣9️⃣ PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
-sleep 0.2
+echo -e "───[ 20. PURGE DU CACHE (APRÈS) - reconstruction services ]───────"
+sleep 0.1
 output=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv 2>&1)
 check_status "Cache purgé et container reconstruit." "$output"
 
 # ==============================================================================
-# 2️⃣0️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON
+# 21. VÉRIFICATION FINALE DE LA TÂCHE CRON
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Vérification finale pour confirmer que la tâche cron de l'extension est bien enregistrée et visible par phpBB.${NC}"
-echo -e "───[ 2️⃣0️⃣ VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
-sleep 0.2
+echo -e "───[ 21. VÉRIFICATION FINALE DE LA TÂCHE CRON ]────────────────────"
+sleep 0.1
 
 # Ajout d'une temporisation de 1 seconde pour laisser le temps au système de se stabiliser
 echo -e "${YELLOW}ℹ️  Attente de 1 seconde avant la vérification...${NC}"
@@ -1095,12 +1097,12 @@ echo -e "${YELLOW}ℹ️  Liste des tâches cron disponibles :${NC}"
 echo "$CRON_LIST_OUTPUT"
 
 # ==============================================================================
-# 2️⃣1️⃣ DIAGNOSTIC SYSTÉMATIQUE DES TÂCHES CRON
+# 22. DIAGNOSTIC SYSTÉMATIQUE DES TÂCHES CRON
 # ==============================================================================
 echo ""
 echo -e "${YELLOW}ℹ️  Lancement du diagnostic systématique des tâches cron pour valider leur configuration.${NC}"
-echo -e "───[ 2️⃣1️⃣ DIAGNOSTIC SYSTÉMATIQUE DES TÂCHES CRON ]───────────"
-sleep 0.2
+echo -e "───[ 22. DIAGNOSTIC SYSTÉMATIQUE DES TÂCHES CRON ]───────────"
+sleep 0.1
 
 has_error=0
 
@@ -1180,14 +1182,14 @@ fi
 
 if echo "$CRON_LIST_OUTPUT" | grep -q "$CRON_TASK_NAME"; then
     # ==============================================================================
-    # 2️⃣2️⃣ RESTAURATION DE LA CONFIGURATION
+    # 23. RESTAURATION DE LA CONFIGURATION
     # ==============================================================================
     # On ne restaure que si une valeur a été sauvegardée.
     if [ -n "$SPAM_TIME_BACKUP" ]; then
         echo ""
-        echo -e "───[ 2️⃣2️⃣ RESTAURATION DE LA CONFIGURATION ]──────────"
+        echo -e "───[ 23. RESTAURATION DE LA CONFIGURATION ]──────────"
         echo -e "${YELLOW}ℹ️  Restauration de la valeur du délai anti-spam à ${GREEN}${SPAM_TIME_BACKUP} minutes${NC}..."
-        sleep 0.2
+        sleep 0.1
 
         # Utiliser INSERT ... ON DUPLICATE KEY UPDATE pour être sûr que la clé existe.
         restore_spam_time_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<RESTORE_SPAM_EOF
@@ -1200,14 +1202,14 @@ RESTORE_SPAM_EOF
     fi
 
     # ==============================================================================
-    # 2️⃣3️⃣ RESTAURATION DES DONNÉES
+    # 24. RESTAURATION DES DONNÉES
     # ==============================================================================
     # Cette étape est cruciale. Elle restaure les données sauvegardées au début du script
     # dans la table fraîchement recréée par la réactivation de l'extension.
     if echo "$EXT_STATUS" | grep -q "^\s*\*"; then
-        echo -e "───[ 2️⃣3️⃣ RESTAURATION DES RÉACTIONS ]─────────"
+        echo -e "───[ 24. RESTAURATION DES RÉACTIONS ]─────────"
         echo -e "${YELLOW}ℹ️  L'extension est active. Réinjection des données depuis la sauvegarde...${NC}"
-        sleep 0.2
+        sleep 0.1
         echo -e "   (Le mot de passe a été demandé au début du script.)"
         
         # Vérifier si la table de backup existe et contient des données.
@@ -1236,11 +1238,11 @@ RESTORE_EOF
     fi
 
 # ==============================================================================
-# 2️⃣4️⃣ RESTAURATION DES NOTIFICATIONS
+# 25. RESTAURATION DES NOTIFICATIONS
 # ==============================================================================
-echo -e "───[ 2️⃣4️⃣ RESTAURATION DES NOTIFICATIONS 'CLOCHE' ]─────────"
+echo -e "───[ 25. RESTAURATION DES NOTIFICATIONS 'CLOCHE' ]─────────"
 echo -e "${YELLOW}ℹ️  Réinjection des notifications 'cloche' depuis la sauvegarde...${NC}"
-sleep 0.2
+sleep 0.1
 echo -e "   (Le mot de passe a été demandé au début du script.)"
 
 BACKUP_NOTIF_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications_backup;" 2>/dev/null || echo 0)
@@ -1258,12 +1260,12 @@ fi
 
 
 # ==============================================================================
-# 2️⃣5️⃣ PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG)
+# 26. PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG)
 # ==============================================================================
 echo ""
-echo -e "───[ 2️⃣5️⃣ PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG) ]────────"
+echo -e "───[ 26. PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG) ]────────"
 echo -e "${YELLOW}ℹ️  Vérification si la table des réactions est vide pour la peupler avec des données de test.${NC}"
-sleep 0.2
+sleep 0.1
 
 # Vérifier si la table des réactions est vide
 REACTIONS_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_post_reactions;" 2>/dev/null || echo 0)
@@ -1356,13 +1358,13 @@ else
 fi
 
     # ==============================================================================
-    # 2️⃣6️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (POUR DEBUG)
+    # 27. RÉINITIALISATION DES FLAGS DE NOTIFICATION (POUR DEBUG)
     # ==============================================================================
     echo ""
-    echo -e "───[ 2️⃣6️⃣ RÉINITIALISATION DES FLAGS DE NOTIFICATION (DEBUG) ]────────"
+    echo -e "───[ 27. RÉINITIALISATION DES FLAGS DE NOTIFICATION (DEBUG) ]────────"
     echo -e "${YELLOW}ℹ️  Remise à zéro de tous les flags 'reaction_notified' pour forcer l'envoi d'un email de test.${NC}"
     echo -e "${YELLOW}   Cela permet de tester les corrections UTF-8 sur les emojis et les caractères accentués.${NC}"
-    sleep 0.2
+    sleep 0.1
     echo -e "   (Le mot de passe a été demandé au début du script.)"
     
     # Remettre tous les flags reaction_notified à 0 pour forcer le traitement par le cron
@@ -1400,25 +1402,24 @@ RESET_FLAGS_EOF
     fi
 
     # ==============================================================================
-    # 2️⃣7️⃣ GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG CLOCHE)
+    # 28. GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG CLOCHE)
     # ==============================================================================
     echo ""
-    echo -e "───[ 2️⃣7️⃣ GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG) ]────────"
+    echo -e "───[ 28. GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG) ]────────"
     echo -e "${YELLOW}ℹ️  Cette étape peut générer de fausses notifications 'cloche' pour tester leur affichage.${NC}"
-    sleep 0.2
+    sleep 0.1
 
     echo -e "${YELLOW}   Voulez-vous générer de fausses notifications 'cloche' ? (y/n)${NC}"
     read -r user_choice_notif
 
     if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo ""
-        # Récupérer l'ID du type de notification 'reaction'
-        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' OR notification_type_name = 'notification.type.reaction' LIMIT 1;")
+        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1;")
 
         if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
-            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'reaction' ou 'notification.type.reaction'. Étape ignorée.${NC}"
+            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'bastien59960.reactions.notification.type.reaction'. Étape ignorée.${NC}"
         else
-            echo -e "${GREEN}   Type de notification 'reaction' trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
+            echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
 
             # Sélectionner jusqu'à 5 réactions aléatoires pour générer des notifications
             REACTIONS_TO_NOTIFY=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<'GET_REACTIONS_EOF'
@@ -1483,12 +1484,12 @@ GET_REACTIONS_EOF
     fi
 
     # ==============================================================================
-    # 2️⃣8️⃣ TEST DE L'EXÉCUTION DU CRON
+    # 29. TEST DE L'EXÉCUTION DU CRON
     # ==============================================================================
-    echo -e "───[ 2️⃣8️⃣ TEST FINAL DU CRON ]───────────────────────────────────"
+    echo -e "───[ 29. TEST FINAL DU CRON ]───────────────────────────────────"
     echo -e "${YELLOW}ℹ️  Tentative d'exécution de toutes les tâches cron pour vérifier que le système est fonctionnel.${NC}"
     echo -e "${YELLOW}   Les réactions restaurées devraient maintenant être traitées.${NC}"
-    sleep 0.2
+    sleep 0.1
 
     output=$($PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cron:run -vvv 2>&1)
     check_status "Exécution de toutes les tâches cron prêtes." "$output"
@@ -1496,14 +1497,14 @@ GET_REACTIONS_EOF
     # ==============================================================================
     # PAUSE STRATÉGIQUE POUR ÉVITER UNE RACE CONDITION
     # ==============================================================================
-    echo -e "${YELLOW}ℹ️  Pause de 2 secondes pour laisser le temps à la base de données de se synchroniser...${NC}"
-    sleep 2
+    echo -e "${YELLOW}ℹ️  Pause de 1 seconde pour laisser le temps à la base de données de se synchroniser...${NC}"
+    sleep 1
     # ==============================================================================
-    # 2️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE)
+    # 30. VÉRIFICATION POST-CRON (LA PREUVE)
     # ==============================================================================
-    echo -e "───[ 2️⃣9️⃣ VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
+    echo -e "───[ 30. VÉRIFICATION POST-CRON (LA PREUVE) ]───────────────────"
     echo -e "${YELLOW}ℹ️  Vérification de l'état des réactions dans la base de données après l'exécution du cron.${NC}"
-    sleep 0.2
+    sleep 0.1
 
     # Récupérer la valeur de la fenêtre de spam (en minutes) depuis la config phpBB
     # CORRECTION : Utiliser la valeur sauvegardée au début du script, car la clé a été purgée.
@@ -1574,12 +1575,12 @@ POST_CRON_EOF
     echo "└───────────────────────────────────┴──────────┘"
 
     # ==============================================================================
-    # 3️⃣0️⃣ VALIDATION FINALE DU TRAITEMENT CRON
+    # 31. VALIDATION FINALE DU TRAITEMENT CRON
     # ==============================================================================
     echo ""
-    echo -e "───[ 3️⃣0️⃣ VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
+    echo -e "───[ 31. VALIDATION FINALE DU TRAITEMENT CRON ]─────────────────"
     echo -e "${YELLOW}ℹ️  Vérification qu'il ne reste aucune réaction éligible non traitée.${NC}"
-    sleep 0.2
+    sleep 0.1
 
     # Si la variable 'eligibles_cron' (calculée à l'étape 19) est supérieure à 0,
     # cela signifie que le cron a échoué à traiter des réactions qui étaient prêtes.
@@ -1636,10 +1637,10 @@ else
 fi
 
 # ==============================================================================
-# 3️⃣1️⃣ CORRECTION FINALE ET DÉFINITIVE DES PERMISSIONS
+# 32. CORRECTION FINALE ET DÉFINITIVE DES PERMISSIONS
 # ==============================================================================
 echo ""
-echo -e "───[ 3️⃣1️⃣ CORRECTION FINALE DES PERMISSIONS ]────────────────────"
+echo -e "───[ 32. CORRECTION FINALE DES PERMISSIONS ]────────────────────"
 echo -e "${YELLOW}ℹ️  Application des permissions correctes en toute fin de script pour garantir l'accès au forum.${NC}"
 
 WEB_USER="www-data"
@@ -1653,12 +1654,12 @@ sudo find "$FORUM_ROOT/cache" "$FORUM_ROOT/store" "$FORUM_ROOT/files" "$FORUM_RO
 check_status "Permissions de lecture/écriture (777/666) appliquées."
 
 # ==============================================================================
-# 3️⃣2️⃣ DIAGNOSTIC FINAL (APRÈS TOUTES LES OPÉRATIONS)
+# 33. DIAGNOSTIC FINAL (APRÈS TOUTES LES OPÉRATIONS)
 # ==============================================================================
 echo ""
-echo -e "───[ 3️⃣2️⃣ DIAGNOSTIC FINAL ]────────────────────"
+echo -e "───[ 33. DIAGNOSTIC FINAL ]────────────────────"
 echo -e "${YELLOW}ℹ️  État final des notifications et des types de notifications après toutes les opérations...${NC}"
-sleep 0.2
+sleep 0.1
  
  # Créer un script PHP temporaire pour le diagnostic
  PHP_DIAG_SCRIPT=$(mktemp)
@@ -1765,7 +1766,7 @@ if (isset($column_info[0]) && $column_info[0]['CHARACTER_SET_NAME'] !== 'utf8mb4
 echo "\n🔔 Analyse détaillée des 10 dernières notifications 'cloche'\n";
 $stmt = $pdo->query("
     SELECT * FROM phpbb_notifications 
-    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'notification.type.reaction') LIMIT 1)
+    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1)
     ORDER BY notification_time DESC 
     LIMIT 10
 ");
@@ -1837,10 +1838,10 @@ PHP_DIAG_EOF
  fi
 
 # ==============================================================================
-# 3️⃣3️⃣ NETTOYAGE OPTIONNEL DES NOTIFICATIONS (POST-DIAGNOSTIC)
+# 34. NETTOYAGE OPTIONNEL DES NOTIFICATIONS (POST-DIAGNOSTIC)
 # ==============================================================================
 echo ""
-echo -e "───[ 3️⃣3️⃣ NETTOYAGE OPTIONNEL DES NOTIFICATIONS ]────────"
+echo -e "───[ 34. NETTOYAGE OPTIONNEL DES NOTIFICATIONS ]────────"
 echo -e "${YELLOW}ℹ️  Cette étape peut résoudre des erreurs si des données de notification sont corrompues.${NC}"
 echo ""
 
@@ -1859,7 +1860,7 @@ while true; do
 SET @type_ids := (
     SELECT GROUP_CONCAT(notification_type_id) 
     FROM phpbb_notification_types
-    WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
+    WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
 );
 
 -- Supprimer les notifications correspondantes si des types ont été trouvés
