@@ -269,6 +269,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         $names = array(
             'bastien59960.reactions.notification.type.reaction',
             'bastien59960.reactions.notification.type.reaction_email_digest',
+            'reaction', // Ancien nom court à nettoyer
+            'reaction_email_digest', // Ancien nom court à nettoyer
         );
 
         try {
