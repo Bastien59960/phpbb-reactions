@@ -944,7 +944,7 @@ class ajax
             // phpBB se charge de trouver le service complet correspondant grâce au tag dans services.yml.
             // Le nom court est défini par la clé du service dans le tableau passé au manager.
             $this->notification_manager->add_notifications([
-                'bastien59960.reactions.notification.type.reaction' => [
+                'reaction' => [
                     $post_author_id => $notification_data,
                 ],
             ]);
