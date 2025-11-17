@@ -19,9 +19,7 @@
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================
-FORUM_ROOT="/home/bastien/www/forum"
-DB_USER="phpmyadmin"
-DB_NAME="bastien-phpbb"
+FORUM_ROOT="/home/bastien/www/forum" # Chemin vers la racine de votre forum phpBB
 PHP_ERROR_LOG="/var/log/php/debug.err" # Fichier pour les erreurs PHP et les logs du script
 
 # --- Couleurs ---
@@ -212,12 +210,31 @@ echo -e "╚══════════════════════�
 echo -e "🚀 Lancement du script de maintenance (ordre validé).\n"
 sleep 0.2
 
-# Enregistrer la fonction de nettoyage pour qu'elle soit appelée à la sortie du script
-# EXIT : Se déclenche à la fin normale ou via `exit`
-# INT : Se déclenche sur Ctrl+C
-trap cleanup EXIT INT
 # ==============================================================================
-# DEMANDE DU MOT DE PASSE MYSQL (UNE SEULE FOIS)
+# LECTURE AUTOMATIQUE DE LA CONFIGURATION PHPBB
+# ==============================================================================
+echo -e "───[ ⚙️  LECTURE DE LA CONFIGURATION PHPBB ]────────────────────────"
+CONFIG_PHP_PATH="$FORUM_ROOT/config.php"
+
+if [ ! -f "$CONFIG_PHP_PATH" ]; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Le fichier de configuration '$CONFIG_PHP_PATH' n'a pas été trouvé.${NC}"
+    exit 1
+fi
+
+# Utiliser grep et sed pour extraire les valeurs des variables PHP
+DB_USER=$(grep '$dbuser =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
+MYSQL_PASSWORD=$(grep '$dbpasswd =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
+DB_NAME=$(grep '$dbname =' "$CONFIG_PHP_PATH" | sed "s/^.*'\(.*\)'.*$/\1/")
+
+if [ -z "$DB_USER" ] || [ -z "$MYSQL_PASSWORD" ] || [ -z "$DB_NAME" ]; then
+    echo -e "${WHITE_ON_RED}❌ ERREUR : Impossible de lire les identifiants depuis '$CONFIG_PHP_PATH'.${NC}"
+    echo -e "${YELLOW}   Vérifiez que le fichier contient bien les variables \$dbuser, \$dbpasswd, et \$dbname.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Identifiants de base de données lus avec succès depuis config.php.${NC}"
+echo -e "   Utilisateur : ${YELLOW}$DB_USER${NC} | Base de données : ${YELLOW}$DB_NAME${NC}"
+
 # ==============================================================================
 echo -e "🔑 Veuillez entrer le mot de passe MySQL pour l'utilisateur ${YELLOW}$DB_USER${NC} :"
 read -s MYSQL_PASSWORD # -s pour masquer l'entrée. Le mot de passe sera utilisé via la variable d'environnement MYSQL_PWD.
@@ -225,6 +242,12 @@ echo "" # Nouvelle ligne après l'entrée masquée
 
 # ==============================================================================
 # 1. VÉRIFICATION DE LA CONNEXION MYSQL (SÉCURITÉ)
+# Enregistrer la fonction de nettoyage pour qu'elle soit appelée à la sortie du script
+# EXIT : Se déclenche à la fin normale ou via `exit`
+# INT : Se déclenche sur Ctrl+C
+trap cleanup EXIT INT
+# ==============================================================================
+# DEMANDE DU MOT DE PASSE MYSQL (UNE SEULE FOIS)
 # ==============================================================================
 echo -e "───[ 1. VÉRIFICATION DE LA CONNEXION MYSQL ]────────────────────────"
 echo -e "${YELLOW}ℹ️  Test de la connexion à la base de données avec le mot de passe fourni...${NC}"
@@ -776,17 +799,27 @@ else
     done
     
     echo "└─────────────────────────────┴────────────────────────────────────────────┴─────────────┘"
-    # Lancer le nettoyage manuel forcé car la purge a échoué
-    force_manual_purge
     
     # Si la purge a échoué, on donne un conseil plus précis.
     if [ $purge_exit_code -ne 0 ]; then
         echo -e "${WHITE_ON_RED}   CONSEIL : L'échec de 'extension:purge' suivi de ces traces restantes pointe vers une erreur dans vos méthodes 'revert_data()' ou 'revert_schema()'. Vérifiez-les !${NC}"
     else
-        echo -e "${WHITE_ON_RED}   Le script va s'arrêter. Corrigez vos méthodes 'revert_*' dans les fichiers de migration avant de relancer.${NC}"
+        echo -e "${WHITE_ON_RED}   CONSEIL : Corrigez vos méthodes 'revert_*' dans les fichiers de migration pour que la purge automatique soit complète.${NC}"
     fi
     echo ""
-    exit 1 # Arrêter le script car l'état est incohérent
+
+    # CORRECTION : Lancer le nettoyage manuel AVANT de s'arrêter.
+    echo -e "${YELLOW}   Le script va maintenant effectuer un nettoyage manuel forcé pour corriger l'état de la base de données...${NC}"
+    echo ""
+    force_manual_purge
+    
+    # CORRECTION : Afficher un message clair indiquant que le script s'arrête après le nettoyage.
+    # L'appel à `exit 1` déclenchera ensuite le `trap` qui gère la restauration d'urgence.
+    echo ""
+    echo -e "${WHITE_ON_RED}   Nettoyage manuel terminé. Le script va maintenant s'arrêter pour vous permettre de corriger les migrations.${NC}"
+    echo ""
+    
+    exit 1 # Arrêter le script. Le trap `cleanup` prendra le relais pour la restauration.
 fi
 
 # ==============================================================================
