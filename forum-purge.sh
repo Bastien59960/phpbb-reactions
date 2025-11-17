@@ -2028,3 +2028,34 @@ MANUAL_PURGE_EOF
             ;;
     esac
 done
+
+# ==============================================================================
+# 36. REDÉMARRAGE DU SERVICE PHP-FPM (CRUCIAL)
+# ==============================================================================
+echo ""
+echo -e "───[ 36. REDÉMARRAGE DU SERVICE PHP-FPM ]────────────────────"
+echo -e "${YELLOW}ℹ️  C'est l'étape la plus importante pour résoudre l'erreur 'NOTIFICATION_TYPE_NOT_EXIST'.${NC}"
+echo -e "${YELLOW}   Elle force le serveur web à vider son cache mémoire (OPcache) et à recharger les nouveaux services.${NC}"
+echo -e "${YELLOW}   Cela peut nécessiter les droits sudo.${NC}"
+
+# Tenter de trouver le nom du service PHP-FPM (les noms varient selon les versions de PHP)
+PHP_FPM_SERVICE=$(systemctl list-units --type=service | grep -o 'php[0-9]\.[0-9]-fpm\.service' | head -n 1)
+
+if [ -n "$PHP_FPM_SERVICE" ]; then
+    echo -e "   Service PHP-FPM détecté : ${GREEN}$PHP_FPM_SERVICE${NC}"
+    echo -e "   Redémarrage en cours..."
+    
+    # Exécuter la commande de redémarrage et vérifier son statut
+    restart_output=$(sudo systemctl restart "$PHP_FPM_SERVICE" 2>&1)
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ SUCCÈS : Le service $PHP_FPM_SERVICE a été redémarré.${NC}"
+        echo -e "${GREEN}   Le cache OPcache du serveur web est maintenant vidé. Le forum devrait fonctionner sans erreur.${NC}"
+    else
+        echo -e "${WHITE_ON_RED}❌ ERREUR lors du redémarrage du service $PHP_FPM_SERVICE :${NC}"
+        echo "$restart_output" | sed 's/^/   | /'
+    fi
+else
+    echo -e "${WHITE_ON_RED}⚠️ ATTENTION : Impossible de trouver automatiquement le service PHP-FPM (ex: php8.2-fpm.service).${NC}"
+    echo -e "${YELLOW}   Vous devez le redémarrer manuellement pour que les changements soient pris en compte par le serveur web.${NC}"
+    echo -e "${YELLOW}   Exemple de commande : ${GREEN}sudo systemctl restart php8.2-fpm${NC}"
+fi
