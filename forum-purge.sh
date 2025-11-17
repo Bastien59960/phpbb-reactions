@@ -1503,15 +1503,13 @@ GET_REACTIONS_EOF
                 while IFS=$'\t' read -r post_id topic_id poster_id reacter_id reacter_name reaction_emoji; do
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
+                    reaction_emoji_escaped=$(echo "$reaction_emoji" | sed "s/'/''/g")
 
-                    # CORRECTION : Ne plus construire la chaîne sérialisée manuellement.
-                    # On crée un tableau PHP, on le sérialise, puis on l'encode en base64.
-                    # C'est un format que la classe de notification saura décoder.
-                    php_code="echo base64_encode(serialize(['reacter_id' => ${reacter_id}, 'reacter_name' => '${reacter_name_escaped}', 'reaction_emoji' => '${reaction_emoji}']));"
-                    notification_data_b64=$(php -r "$php_code")
+                    # CORRECTION : Simuler EXACTEMENT ce que fait phpBB : sérialiser un tableau PHP.
+                    php_code="echo serialize(['reacter_id' => ${reacter_id}, 'reacter_name' => '${reacter_name_escaped}', 'reaction_emoji' => '${reaction_emoji_escaped}']);"
+                    notification_data_serialized=$(php -r "$php_code" | sed "s/'/''/g") # Échapper les apostrophes pour SQL
 
-                    # La requête insère la chaîne encodée en base64.
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_b64}');"
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_serialized}');"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
@@ -1822,21 +1820,20 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $notif_rows = [];
 foreach ($notifications as $notif) {
     // CORRECTION : Le script insère maintenant du PHP sérialisé direct.
-    // Le diagnostic tente donc de désérialiser directement, comme le ferait phpBB.
+    // Le diagnostic doit donc désérialiser directement, comme le ferait phpBB.
     $raw_data = $notif['notification_data'];
     $data = @unserialize($raw_data);
     
     // Extraire les valeurs
     if ($data === false || !is_array($data)) {
-        $reacter_id = 'ERREUR';
-        $reacter_name = 'DECODAGE';
-        $reaction_emoji = '!!';
-
         // Afficher un diagnostic en cas d'échec
         echo "\n=== DEBUG NOTIFICATION #{$notif['notification_id']} ===\n";
         echo "❌ Échec de la désérialisation.\n";
         echo "   Données brutes (100 premiers caractères): " . substr($raw_data, 0, 100) . "\n";
         echo "===============================\n\n";
+        $reacter_id = 'ERREUR';
+        $reacter_name = 'DECODAGE';
+        $reaction_emoji = '!!';
     } else {
         $reacter_id = $data['reacter_id'] ?? 'N/A';
         $reacter_name = $data['reacter_name'] ?? 'N/A';
@@ -1852,7 +1849,7 @@ foreach ($notifications as $notif) {
         'reacter_id' => $reacter_id,
         'reacter_name' => $reacter_name,
         'emoji' => $reaction_emoji,
-        'data' => substr($notif['notification_data'], 0, 20) . '...',
+        'data' => substr(base64_encode($notif['notification_data']), 0, 20) . '...',
     ];
 }
 draw_table(
