@@ -247,7 +247,7 @@ class main_module
             'REACTIONS_PICKER_EMOJI_SIZE'    => (int) ($config['bastien59960_reactions_picker_emoji_size'] ?? 24),
             'REACTIONS_PICKER_SHOW_CATEGORIES' => (int) ($config['bastien59960_reactions_picker_show_categories'] ?? 0),
             'REACTIONS_PICKER_SHOW_SEARCH'     => (int) ($config['bastien59960_reactions_picker_show_search'] ?? 0),
-            'REACTIONS_PICKER_USE_JSON'        => (int) ($config['bastien59960_reactions_picker_use_json'] ?? 0),
+            'REACTIONS_PICKER_USE_JSON'        => (int) ($config['bastien59960_reactions_picker_use_json'] ?? 1),
             'REACTIONS_SYNC_INTERVAL'          => (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000),
         ]);
         

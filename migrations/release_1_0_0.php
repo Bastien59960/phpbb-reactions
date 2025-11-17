@@ -104,8 +104,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.add', array('bastien59960_reactions_picker_show_categories', 1)),
             array('config.add', array('bastien59960_reactions_picker_show_search', 1)),
             array('config.add', array('bastien59960_reactions_picker_use_json', 1)),
-            array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)),
-            array('config.add', array('bastien59960_reactions_sync_interval', 20)), // Valeur en secondes
+            array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)), 
+            array('config.add', array('bastien59960_reactions_sync_interval', 60)), // CORRECTION : Valeur par défaut augmentée à 60 secondes
 
             array('module.add', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
             array('module.add', array(

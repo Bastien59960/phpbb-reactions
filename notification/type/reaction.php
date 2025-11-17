@@ -208,6 +208,19 @@ class reaction extends base implements type_interface
         return (int) ($data['post_author'] ?? ($data['poster_id'] ?? 0));
     }
 
+    /**
+     * Spécifie le type d'élément auquel cette notification est liée.
+     *
+     * CRUCIAL : En retournant 'post', on dit à phpBB que cette notification
+     * concerne un message. phpBB utilisera alors le système de permissions
+     * des messages (f_read) pour déterminer si l'utilisateur peut voir la notification.
+     * Sans cela, la notification est créée mais jamais affichée.
+     */
+    public static function get_item_type()
+    {
+        return 'post';
+    }
+
     // =========================================================================
     // MÉTHODES DE GÉNÉRATION D'URL
     // ========================================================================= 

@@ -116,8 +116,8 @@ class listener implements EventSubscriberInterface
         $picker_height = (int) ($this->config['bastien59960_reactions_picker_height'] ?? 280);
         $picker_emoji_size = (int) ($this->config['bastien59960_reactions_picker_emoji_size'] ?? 24);
         $picker_show_categories = (int) ($this->config['bastien59960_reactions_picker_show_categories'] ?? 1);
-        $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 0);
-        $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 0);
+        $picker_show_search = (int) ($this->config['bastien59960_reactions_picker_show_search'] ?? 1);
+        $picker_use_json = (int) ($this->config['bastien59960_reactions_picker_use_json'] ?? 1);
 
         // Lire la valeur en secondes depuis l'ACP (défaut 5s) et la convertir en millisecondes pour le JS.
         $sync_interval_seconds = (int) ($this->config['bastien59960_reactions_sync_interval'] ?? 20);
@@ -125,7 +125,8 @@ class listener implements EventSubscriberInterface
         
         // CORRECTION : Utiliser un chemin web relatif au lieu d'un chemin de fichier serveur.
         // Le JavaScript (fetch) a besoin d'une URL, pas d'un chemin de disque dur.
-        $json_path = ($picker_use_json && $picker_show_categories)
+        // CORRECTION LOGIQUE : Le chargement du JSON ne doit dépendre que de l'option `picker_use_json`.
+        $json_path = ($picker_use_json)
             ? generate_board_url() . '/ext/bastien59960/reactions/styles/prosilver/theme/categories.json'
             : '';
 
