@@ -947,7 +947,7 @@ class ajax
                     'item_id'           => $post_id,
                     'item_parent_id'    => $topic_id,
                     'user_id'           => $post_author_id, // L'utilisateur à notifier
-                    'notification_data' => serialize($notification_data),
+                    'notification_data' => $notification_data, // CORRECTION : Passer le tableau brut, phpBB s'occupe de la sérialisation.
                 ]
             ];
 

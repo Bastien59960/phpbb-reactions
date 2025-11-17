@@ -1503,21 +1503,15 @@ GET_REACTIONS_EOF
                 while IFS=$'\t' read -r post_id topic_id poster_id reacter_id reacter_name reaction_emoji; do
                     # Échapper les apostrophes dans le nom d'utilisateur pour la requête SQL
                     reacter_name_escaped=$(echo "$reacter_name" | sed "s/'/''/g")
-                    
-                    # CORRECTION : Calculer la longueur en BYTES, pas en caractères
-                    # Pour bash, on utilise un sous-shell avec printf qui gère UTF-8
-                    reacter_name_bytes=$(printf '%s' "$reacter_name" | wc -c)
-                    emoji_bytes=$(printf '%s' "$reaction_emoji" | wc -c)
 
-                    # Construire la chaîne sérialisée avec les longueurs en bytes
-                    notification_data_serialized="a:3:{s:10:\"reacter_id\";i:${reacter_id};s:12:\"reacter_name\";s:${reacter_name_bytes}:\"${reacter_name_escaped}\";s:14:\"reaction_emoji\";s:${emoji_bytes}:\"${reaction_emoji}\";}"
+                    # CORRECTION : Ne plus construire la chaîne sérialisée manuellement.
+                    # On crée un tableau PHP, on le sérialise, puis on l'encode en base64.
+                    # C'est un format que la classe de notification saura décoder.
+                    php_code="echo base64_encode(serialize(['reacter_id' => ${reacter_id}, 'reacter_name' => '${reacter_name_escaped}', 'reaction_emoji' => '${reaction_emoji}']));"
+                    notification_data_b64=$(php -r "$php_code")
 
-                    # NOUVEAU CODE (sérialisé direct - compatible phpBB) :
-                    # Échapper les caractères spéciaux pour MySQL (' et \)
-                    notification_data_escaped=$(printf '%s' "$notification_data_serialized" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")
-
-                    # La requête insère la chaîne sérialisée et échappée directement.
-                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_escaped}');"
+                    # La requête insère la chaîne encodée en base64.
+                    insert_sql="INSERT INTO phpbb_notifications (notification_type_id, item_id, item_parent_id, user_id, notification_read, notification_time, notification_data) VALUES (${REACTION_NOTIF_TYPE_ID}, ${post_id}, ${topic_id}, ${poster_id}, 0, UNIX_TIMESTAMP(), '${notification_data_b64}');"
                     
                     # Exécuter la requête
                     MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -e "$insert_sql"
