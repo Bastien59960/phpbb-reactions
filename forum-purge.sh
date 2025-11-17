@@ -1292,27 +1292,6 @@ RESTORE_EOF
         fi
     fi
 
-# ==============================================================================
-# 25. RESTAURATION DES NOTIFICATIONS
-# ==============================================================================
-echo -e "───[ 25. RESTAURATION DES NOTIFICATIONS 'CLOCHE' ]─────────"
-echo -e "${YELLOW}ℹ️  Réinjection des notifications 'cloche' depuis la sauvegarde...${NC}"
-sleep 0.1
-echo -e "   (Le mot de passe a été demandé au début du script.)"
-
-BACKUP_NOTIF_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications_backup;" 2>/dev/null || echo 0)
-
-if [ "$BACKUP_NOTIF_ROWS" -gt 0 ]; then
-    restore_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_NOTIF_EOF'
-        -- Insérer les notifications sauvegardées, en ignorant les doublons si certains existent déjà.
-        INSERT IGNORE INTO phpbb_notifications SELECT * FROM phpbb_notifications_backup;
-RESTORE_NOTIF_EOF
-    )
-    check_status "Restauration des notifications depuis 'phpbb_notifications_backup'." "$restore_notif_output"
-else
-    echo -e "${GREEN}ℹ️  Restauration des notifications ignorée : la sauvegarde est vide ou absente.${NC}"
-fi
-
 
 # ==============================================================================
 # 26. PEUPLEMENT DE LA BASE DE DONNÉES (DEBUG)
@@ -1458,6 +1437,29 @@ RESET_FLAGS_EOF
     fi
 
     # ==============================================================================
+    # 25. RESTAURATION DES NOTIFICATIONS (DÉPLACÉ ICI)
+    # ==============================================================================
+    echo ""
+    echo -e "───[ 25. RESTAURATION DES NOTIFICATIONS 'CLOCHE' ]─────────"
+    echo -e "${YELLOW}ℹ️  Réinjection des notifications 'cloche' depuis la sauvegarde...${NC}"
+    sleep 0.1
+    echo -e "   (Le mot de passe a été demandé au début du script.)"
+
+    BACKUP_NOTIF_ROWS=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications_backup;" 2>/dev/null || echo 0)
+
+    if [ "$BACKUP_NOTIF_ROWS" -gt 0 ]; then
+        restore_notif_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" <<'RESTORE_NOTIF_EOF'
+            -- Insérer les notifications sauvegardées, en ignorant les doublons si certains existent déjà.
+            INSERT IGNORE INTO phpbb_notifications SELECT * FROM phpbb_notifications_backup;
+RESTORE_NOTIF_EOF
+        )
+        check_status "Restauration des notifications depuis 'phpbb_notifications_backup'." "$restore_notif_output"
+    else
+        echo -e "${GREEN}ℹ️  Restauration des notifications ignorée : la sauvegarde est vide ou absente.${NC}"
+    fi
+
+
+    # ==============================================================================
     # 28. GÉNÉRATION DE FAUSSES NOTIFICATIONS (DEBUG CLOCHE)
     # ==============================================================================
     echo ""
@@ -1470,12 +1472,12 @@ RESET_FLAGS_EOF
 
     if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo ""
-        # CORRECTION CRITIQUE : On doit rechercher l'ID en utilisant le nom COURT, car c'est ce que la migration insère maintenant.
-        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' LIMIT 1;")
+        # On recherche l'ID en utilisant le nom LONG (canonique), ce qui est la méthode correcte.
+        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction' LIMIT 1;")
 
         if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
-            # Message d'erreur mis à jour pour refléter la recherche du nom court.
-            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'reaction'. Étape ignorée.${NC}"
+            # Message d'erreur mis à jour pour refléter la recherche du nom long.
+            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'bastien59960.reactions.notification.type.reaction'. Étape ignorée.${NC}"
         else
             echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID). Génération via SQL direct...${NC}"
             

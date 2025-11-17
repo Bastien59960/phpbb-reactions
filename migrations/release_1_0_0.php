@@ -223,9 +223,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             $this->db->sql_query($sql);
     
             // Type 1: reaction (nom court déduit par phpBB)
-            // CORRECTION CRITIQUE : phpBB s'attend à ce que le nom court soit enregistré ici,
-            // car il fait le lien avec le service via la méthode get_type() de la classe.
-            $canonical_name = 'reaction';
+            // CORRECTION : Le nom canonique (long) du service DOIT être utilisé ici.
+            // C'est ce nom que le conteneur de services utilise pour trouver la classe de notification.
+            $canonical_name = 'bastien59960.reactions.notification.type.reaction';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
                 LIMIT 1";
@@ -242,7 +242,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             }
 
             // Type 2: reaction_email_digest
-            $digest_name = 'reaction_email_digest';
+            $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
                 LIMIT 1";
