@@ -22,11 +22,7 @@ if (!defined('IN_PHPBB'))
 }
 
 use phpbb\notification\type\type_interface;
-// Ajout des dépendances manquantes pour correspondre à services.yml
-use phpbb\user_loader;
-use bastien59960\reactions\controller\helper as reactions_helper;
-use phpbb\controller\helper as controller_helper;
-use phpbb\template\template;
+use phpbb\template\template; // Seule dépendance supplémentaire nécessaire
 
 class reaction_email_digest extends \phpbb\notification\type\base implements type_interface
 {

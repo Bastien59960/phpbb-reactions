@@ -54,7 +54,7 @@ class reaction extends base implements type_interface
     /** @var user_loader Chargeur d'utilisateurs */
     protected $user_loader;
 
-    /** @var language */
+    /** @var \phpbb\language\language */
     protected $language;
 
     /** @var string Nom de la table des notifications */
