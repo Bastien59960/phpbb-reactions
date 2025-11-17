@@ -265,36 +265,31 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     {
         $types_table = $this->table_prefix . 'notification_types';
         $notifications_table = $this->table_prefix . 'notifications';
-        
-        $names = array(
-            'bastien59960.reactions.notification.type.reaction',
-            'bastien59960.reactions.notification.type.reaction_email_digest',
-            'reaction', // Ancien nom court à nettoyer
-            'reaction_email_digest', // Ancien nom court à nettoyer
-        );
 
         try {
-            foreach ($names as $canonical_name) {
-                $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-                    WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'";
-                $result = $this->db->sql_query($sql);
-                $row = $this->db->sql_fetchrow($result);
-                $this->db->sql_freeresult($result);
-                
-                if ($row) {
-                    $type_id = (int) $row['notification_type_id'];
-                    
-                    // Delete notifications first
-                    $sql = 'DELETE FROM ' . $notifications_table . '
-                        WHERE notification_type_id = ' . $type_id;
-                    $this->db->sql_query($sql);
-                    
-                    // Delete type
-                    $sql = 'DELETE FROM ' . $types_table . '
-                        WHERE notification_type_id = ' . $type_id;
-                    $this->db->sql_query($sql);
-                }
+            // Étape 1 : Récupérer les IDs de tous les types de notification liés à l'extension (noms longs et courts)
+            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
+                    WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
+                       OR notification_type_name IN ('reaction', 'reaction_email_digest')";
+            $result = $this->db->sql_query($sql);
+            
+            $type_ids = [];
+            while ($row = $this->db->sql_fetchrow($result)) {
+                $type_ids[] = (int) $row['notification_type_id'];
             }
+            $this->db->sql_freeresult($result);
+
+            if (empty($type_ids)) {
+                return true; // Rien à faire
+            }
+
+            // Étape 2 : Supprimer toutes les notifications qui utilisent ces types
+            $sql_delete_notifs = 'DELETE FROM ' . $notifications_table . ' WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
+            $this->db->sql_query($sql_delete_notifs);
+
+            // Étape 3 : Supprimer les types de notification eux-mêmes
+            $sql_delete_types = 'DELETE FROM ' . $types_table . ' WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
+            $this->db->sql_query($sql_delete_types);
         } catch (\Exception $e) {
             // Ignore errors
         }

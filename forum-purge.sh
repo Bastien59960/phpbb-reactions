@@ -271,16 +271,20 @@ sleep 0.1
  
 initial_diag_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'INITIAL_DIAG_EOF'
 -- S'assurer que le type est bien enregistré et activé
+-- CORRECTION : Le diagnostic initial doit chercher les noms longs attendus, pas un pattern large.
 SELECT '--- Types de notifications de réaction ---' AS 'Diagnostic';
 SELECT * FROM phpbb_notification_types 
-WHERE notification_type_name LIKE '%reaction%';
+WHERE notification_type_name IN (
+    'bastien59960.reactions.notification.type.reaction', 
+    'bastien59960.reactions.notification.type.reaction_email_digest'
+);
 
 -- Vérifier que la notification a bien été créée
 SELECT '--- Dernières 50 notifications de réaction ---' AS 'Diagnostic';
 SELECT * FROM phpbb_notifications 
 WHERE notification_type_id = (
     SELECT notification_type_id 
-    FROM phpbb_notification_types -- Utilisation du nom long pour le diagnostic
+    FROM phpbb_notification_types
     WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'
     LIMIT 1
 )
@@ -347,11 +351,17 @@ sleep 0.1
 echo -e "   (Le mot de passe a été fourni au début du script.)"
 
 backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
--- Sauvegarde des réactions
+-- Sauvegarde des réactions (méthode sécurisée)
 DROP TABLE IF EXISTS phpbb_post_reactions_backup;
-CREATE TABLE phpbb_post_reactions_backup LIKE phpbb_post_reactions;
-INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;
-SET @reactions_count = ROW_COUNT();
+SET @source_table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
+SET @sql_backup_reactions = IF(@source_table_exists > 0,
+    'CREATE TABLE phpbb_post_reactions_backup LIKE phpbb_post_reactions; INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;',
+    'SELECT "Table phpbb_post_reactions non trouvée, sauvegarde ignorée." as status;'
+);
+PREPARE stmt1 FROM @sql_backup_reactions;
+EXECUTE stmt1;
+DEALLOCATE PREPARE stmt1;
+SET @reactions_count = IF(@source_table_exists > 0, ROW_COUNT(), 0);
 
 -- Sauvegarde des notifications
 DROP TABLE IF EXISTS phpbb_notifications_backup;
@@ -360,7 +370,9 @@ INSERT INTO phpbb_notifications_backup SELECT * FROM phpbb_notifications;
 SET @notif_count = ROW_COUNT();
 
 -- Affichage du résumé
-SELECT 'Réactions' AS 'Type de sauvegarde', CONCAT('Total: ', @reactions_count) AS 'Statut';
+-- Utiliser une sous-requête pour afficher le bon nombre même si la table n'existait pas
+SELECT 'Réactions' AS 'Type de sauvegarde', 
+       (SELECT COUNT(*) FROM phpbb_post_reactions_backup) AS 'Total';
 SELECT 'Notifications' AS 'Type de sauvegarde', CONCAT('Total: ', @notif_count) AS 'Statut';
 BACKUP_EOF
 )
@@ -685,7 +697,7 @@ SELECT '════════════════════════
 SELECT '🔔 DERNIÈRES 5 NOTIFICATIONS "RÉACTION" CRÉÉES' AS '';
 SELECT '═══════════════════════════════════════════════════════════════' AS '';
 
--- Vérifier que la notification a bien été créée
+-- CORRECTION : Ce diagnostic doit chercher le nom long attendu.
 SELECT 
     notification_id,
     notification_read,
@@ -718,7 +730,8 @@ SELECT 'CONFIG_REMAINING', config_name, config_value FROM phpbb_config WHERE con
 UNION ALL
 SELECT 'MODULE_REMAINING', module_langname, module_basename FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%'
 UNION ALL
-SELECT 'NOTIFICATION_TYPE_REMAINING', notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
+-- CORRECTION : La recherche de traces doit être exhaustive et chercher toutes les formes (longues, courtes, ou même juste le mot 'reaction').
+SELECT 'NOTIFICATION_TYPE_REMAINING', notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name LIKE '%reaction%'
 UNION ALL 
 SELECT 'COLUMN_REMAINING', TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_users' AND COLUMN_NAME LIKE '%reaction%'
 UNION ALL
@@ -781,7 +794,8 @@ PRE_ENABLE_CHECK=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -s
 UNION ALL
 (SELECT 'MODULE' FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' LIMIT 1)
 UNION ALL
-(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%' LIMIT 1)
+-- CORRECTION : La recherche de traces doit être exhaustive.
+(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE '%reaction%' LIMIT 1)
 UNION ALL
 (SELECT 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions' LIMIT 1)
 UNION ALL
