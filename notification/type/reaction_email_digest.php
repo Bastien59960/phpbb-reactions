@@ -103,13 +103,14 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
 
     /**
      * Spécifie le fichier de langue à charger.
-     * Doit pointer vers le fichier unifié.
+     * CORRECTION : On retourne `false` pour unifier le comportement avec la classe `reaction`.
+     * Toutes les clés de langue sont maintenant dans `common.php`, chargé globalement.
      *
      * @return string
      */
     public function get_language_file()
     {
-        return 'bastien59960/reactions/reactions';
+        return false;
     }
 
     /**
