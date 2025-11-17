@@ -940,9 +940,8 @@ class ajax
             }
 
             // Envoyer la notification via le manager de phpBB
-            // CORRECTION : Le premier argument de add_notifications doit être le nom COURT du type de notification.
-            // phpBB se charge de trouver le service complet correspondant grâce au tag dans services.yml.
-            // Le nom court est défini par la clé du service dans le tableau passé au manager.
+            // Le premier argument de add_notifications doit être le nom COURT du type de notification.
+            // phpBB déduit le nom court ('reaction') à partir du nom du service ('bastien59960.reactions.notification.type.reaction').
             $this->notification_manager->add_notifications([
                 'reaction' => [
                     $post_author_id => $notification_data,

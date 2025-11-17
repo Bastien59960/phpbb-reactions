@@ -124,15 +124,15 @@ force_manual_purge() {
 
     -- Purge des types de notifications
     SELECT '--- Purge des types de notifications...' AS '';
-    DELETE FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%';
+    DELETE FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest');
 
     -- Purge du schéma (colonnes et tables)
     SELECT '--- Purge du schéma (colonnes et tables)...' AS '';
     ALTER TABLE phpbb_users DROP COLUMN IF EXISTS user_reactions_notify, DROP COLUMN IF EXISTS user_reactions_cron_email;
     -- Suppression des notifications restantes pour éviter les erreurs
-    DELETE n FROM phpbb_notifications n
-    LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
-    WHERE t.notification_type_name LIKE 'notification.type.reaction%';
+    DELETE FROM phpbb_notifications WHERE notification_type_id IN (
+        SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
+    );
     DROP TABLE IF EXISTS phpbb_post_reactions;
 MANUAL_PURGE_EOF
     )
@@ -272,8 +272,8 @@ SELECT '--- Dernières 50 notifications de réaction ---' AS 'Diagnostic';
 SELECT * FROM phpbb_notifications 
 WHERE notification_type_id = (
     SELECT notification_type_id 
-    FROM phpbb_notification_types 
-    WHERE notification_type_name = 'notification.type.reaction'
+    FROM phpbb_notification_types
+    WHERE notification_type_name = 'reaction'
     LIMIT 1
 )
 ORDER BY notification_time DESC 
@@ -353,7 +353,7 @@ backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<
     SELECT n.*
     FROM phpbb_notifications n
     JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
-    WHERE t.notification_type_name = 'notification.type.reaction';
+    WHERE t.notification_type_name = 'reaction';
     SET @notif_count = ROW_COUNT();
 
     -- Affichage du résumé
@@ -688,8 +688,8 @@ SELECT
     notification_read,
     notification_time,
     user_id
-FROM phpbb_notifications 
-WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'notification.type.reaction' LIMIT 1)
+FROM phpbb_notifications
+WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' LIMIT 1)
 ORDER BY notification_time DESC 
 LIMIT 5;
 
@@ -715,15 +715,13 @@ SELECT 'CONFIG_REMAINING', config_name, config_value FROM phpbb_config WHERE con
 UNION ALL
 SELECT 'MODULE_REMAINING', module_langname, module_basename FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%'
 UNION ALL
-SELECT 'NOTIFICATION_TYPE_REMAINING', notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%'
+SELECT 'NOTIFICATION_TYPE_REMAINING', notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
 UNION ALL
 SELECT 'COLUMN_REMAINING', TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_users' AND COLUMN_NAME LIKE '%reaction%'
 UNION ALL
 SELECT 'TABLE_REMAINING', TABLE_NAME, 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions'
 UNION ALL
 SELECT 'MIGRATION_ENTRY_REMAINING', migration_name, 'MIGRATION' FROM phpbb_migrations WHERE migration_name LIKE '%bastien59960%reactions%'
-UNION ALL
-SELECT 'NOTIFICATION_REMAINING', item_id, notification_type_id FROM phpbb_notifications WHERE notification_type_id IN (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%')
 UNION ALL
 SELECT 'EXT_ENTRY_REMAINING', ext_name, ext_active FROM phpbb_ext WHERE ext_name = 'bastien59960/reactions';
 
@@ -780,7 +778,7 @@ PRE_ENABLE_CHECK=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -s
 UNION ALL
 (SELECT 'MODULE' FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%' LIMIT 1)
 UNION ALL
-(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name LIKE 'notification.type.reaction%' LIMIT 1)
+(SELECT 'NOTIFICATION_TYPE' FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest') LIMIT 1)
 UNION ALL
 (SELECT 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions' LIMIT 1)
 UNION ALL
@@ -982,7 +980,7 @@ SELECT
     notification_type_name,
     CASE 
         WHEN notification_type_name LIKE 'bastien59960%' THEN '⚠️  NOM INCORRECT (contient namespace)'
-        WHEN notification_type_name NOT LIKE 'notification.type.%' THEN '⚠️  FORMAT INATTENDU'
+        WHEN notification_type_name NOT LIKE 'reaction%' THEN '⚠️  FORMAT INATTENDU'
         ELSE '✅ Format correct'
     END AS status
 FROM phpbb_notification_types
@@ -1039,7 +1037,7 @@ ERROR_DIAGNOSTIC_EOF
 
     echo ""
     echo -e "${YELLOW}💡 CONSEIL : Vérifiez les noms de types de notifications ci-dessus.${NC}"
-    echo -e "${YELLOW}   Ils doivent être au format 'notification.type.xxx' et non 'bastien59960.reactions.xxx'${NC}"
+    echo -e "${YELLOW}   Ils doivent être 'reaction' ou 'reaction_email_digest', et non 'bastien59960.reactions.xxx' ou 'notification.type.xxx'${NC}"
     echo ""
 fi
 
@@ -1414,10 +1412,10 @@ RESET_FLAGS_EOF
     if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo ""
         # Récupérer l'ID du type de notification 'reaction'
-        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'notification.type.reaction';")
+        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction';")
 
         if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
-            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'notification.type.reaction'. Étape ignorée.${NC}"
+            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'reaction'. Étape ignorée.${NC}"
         else
             echo -e "${GREEN}   Type de notification 'reaction' trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
 
@@ -1766,7 +1764,7 @@ if (isset($column_info[0]) && $column_info[0]['CHARACTER_SET_NAME'] !== 'utf8mb4
 echo "\n🔔 Analyse détaillée des 10 dernières notifications 'cloche'\n";
 $stmt = $pdo->query("
     SELECT * FROM phpbb_notifications 
-    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'notification.type.reaction' LIMIT 1)
+    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' LIMIT 1)
     ORDER BY notification_time DESC 
     LIMIT 10
 ");
@@ -1859,8 +1857,8 @@ while true; do
 -- Récupérer les IDs des types de notification de l'extension
 SET @type_ids := (
     SELECT GROUP_CONCAT(notification_type_id) 
-    FROM phpbb_notification_types 
-    WHERE notification_type_name LIKE 'notification.type.reaction%'
+    FROM phpbb_notification_types
+    WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
 );
 
 -- Supprimer les notifications correspondantes si des types ont été trouvés
