@@ -4,6 +4,7 @@
  * Chemin : bastien59960/reactions/controller/ajax.php
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions
+ * @version 1.0.3
  *
  * Rôle :
  * Ce contrôleur est le point d'entrée unique pour toutes les requêtes AJAX
@@ -940,19 +941,20 @@ class ajax
             }
 
             // Envoyer la notification via le manager de phpBB
-            // Le premier argument de add_notifications doit être le nom COURT du type de notification.
-            // phpBB déduit le nom court ('reaction') à partir du nom du service ('bastien59960.reactions.notification.type.reaction').
-            $this->notification_manager->add_notifications([
-                'reaction' => [
-                    $post_author_id => $notification_data,
-                ],
-            ]);
+            // La méthode add_notifications attend 2 arguments : le nom du type et un tableau de données.
+            $notifications_to_add = [
+                [
+                    'item_id'           => $post_id,
+                    'item_parent_id'    => $topic_id,
+                    'user_id'           => $post_author_id, // L'utilisateur à notifier
+                    'notification_data' => serialize($notification_data),
+                ]
+            ];
+
+            $this->notification_manager->add_notifications('bastien59960.reactions.notification.type.reaction', $notifications_to_add);
 
             if (defined('DEBUG') && DEBUG) {
-                $log_suffix = !empty($notification_ids) 
-                    ? (is_array($notification_ids) ? implode(',', $notification_ids) : $notification_ids) 
-                    : 'none';
-                error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id . ', ids=' . $log_suffix);
+                error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id);
             }
         } catch (\Exception $e) {
             error_log('[Reactions] Erreur lors de l\'envoi de la notification : ' . $e->getMessage());

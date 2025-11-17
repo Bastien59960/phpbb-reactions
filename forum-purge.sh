@@ -4,6 +4,7 @@
 # Chemin : bastien59960/reactions/forum-purge.sh
 # Auteur : Bastien (bastien59960)
 # Version : 1.1.0
+# @version 1.0.3
 # GitHub : https://github.com/bastien59960/reactions
 #
 # Rôle :
@@ -716,7 +717,7 @@ UNION ALL
 SELECT 'MODULE_REMAINING', module_langname, module_basename FROM phpbb_modules WHERE module_basename LIKE '%\\bastien59960\\reactions\\%'
 UNION ALL
 SELECT 'NOTIFICATION_TYPE_REMAINING', notification_type_name, notification_type_enabled FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'reaction_email_digest')
-UNION ALL
+UNION ALL 
 SELECT 'COLUMN_REMAINING', TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_users' AND COLUMN_NAME LIKE '%reaction%'
 UNION ALL
 SELECT 'TABLE_REMAINING', TABLE_NAME, 'TABLE' FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions'
@@ -1412,10 +1413,10 @@ RESET_FLAGS_EOF
     if [[ "$user_choice_notif" =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo ""
         # Récupérer l'ID du type de notification 'reaction'
-        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction';")
+        REACTION_NOTIF_TYPE_ID=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' OR notification_type_name = 'notification.type.reaction' LIMIT 1;")
 
         if [ -z "$REACTION_NOTIF_TYPE_ID" ]; then
-            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'reaction'. Étape ignorée.${NC}"
+            echo -e "${RED}❌ ERREUR : Impossible de trouver l'ID du type de notification 'reaction' ou 'notification.type.reaction'. Étape ignorée.${NC}"
         else
             echo -e "${GREEN}   Type de notification 'reaction' trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
 
@@ -1764,7 +1765,7 @@ if (isset($column_info[0]) && $column_info[0]['CHARACTER_SET_NAME'] !== 'utf8mb4
 echo "\n🔔 Analyse détaillée des 10 dernières notifications 'cloche'\n";
 $stmt = $pdo->query("
     SELECT * FROM phpbb_notifications 
-    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name = 'reaction' LIMIT 1)
+    WHERE notification_type_id = (SELECT notification_type_id FROM phpbb_notification_types WHERE notification_type_name IN ('reaction', 'notification.type.reaction') LIMIT 1)
     ORDER BY notification_time DESC 
     LIMIT 10
 ");

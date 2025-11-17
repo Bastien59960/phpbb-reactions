@@ -4,6 +4,7 @@
  * Chemin : bastien59960/reactions/ext.php
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions
+ * @version 1.0.3
  *
  * Rôle :
  * Ce fichier est la classe principale et le point d'entrée de l'extension pour
@@ -59,19 +60,14 @@ class ext extends \phpbb\extension\base
 	 * Cette méthode est appelée par phpBB lors de l'activation de l'extension.
 	 * Elle enregistre les types de notifications auprès du système de notifications phpBB.
 	 * 
-	 * CORRECTION CRITIQUE :
-	 * On doit utiliser les NOMS DE TYPES (get_type()) et NON les noms de services.
-	 * 
 	 * L'extension Reactions possède DEUX types de notifications :
 	 * 
-	 * 1️⃣ notification.type.reaction (notification cloche instantanée)
+	 * 1️⃣ reaction (notification cloche instantanée)
 	 *    - Défini dans : notification/type/reaction.php
-	 *    - Méthode get_type() retourne : 'notification.type.reaction'
 	 *    - Utilisé pour : Notifier immédiatement l'auteur d'un post qu'on a réagi
 	 * 
-	 * 2️⃣ notification.type.reaction_email_digest (notification email groupée)
+	 * 2️⃣ reaction_email_digest (notification email groupée)
 	 *    - Défini dans : notification/type/reaction_email_digest.php
-	 *    - Méthode get_type() retourne : 'notification.type.reaction_email_digest'
 	 *    - Utilisé pour : Envoyer un résumé périodique par email (cron)
 	 * 
 	 * Ces noms DOIVENT correspondre EXACTEMENT à ce qui est :
@@ -90,10 +86,10 @@ class ext extends \phpbb\extension\base
 			$notification_manager = $this->container->get('notification_manager');
 
 			// Enregistrer la notification cloche
-			$notification_manager->enable_notifications('notification.type.reaction');
+			$notification_manager->enable_notifications('reaction');
 
 			// Enregistrer la notification email digest
-			$notification_manager->enable_notifications('notification.type.reaction_email_digest');
+			$notification_manager->enable_notifications('reaction_email_digest');
 
 			return 'notification'; // Indique à phpBB que des types de notifs ont été gérés
 		}
@@ -115,10 +111,10 @@ class ext extends \phpbb\extension\base
 		$notification_manager = $this->container->get('notification_manager');
 		
 		// Désactiver la notification cloche
-		$notification_manager->disable_notifications('notification.type.reaction');
+		$notification_manager->disable_notifications('reaction');
 	
 		// Désactiver la notification email digest
-		$notification_manager->disable_notifications('notification.type.reaction_email_digest');
+		$notification_manager->disable_notifications('reaction_email_digest');
 		
 		return parent::disable_step($old_state);
 	}

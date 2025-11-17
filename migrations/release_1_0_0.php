@@ -4,6 +4,7 @@
  * Chemin : bastien59960/reactions/migrations/release_1_0_0.php
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions
+ * @version 1.0.3
  *
  * Rôle :
  * Fichier de migration initial pour l'extension. Il est responsable de la
@@ -146,12 +147,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('custom', array(array($this, 'remove_notification_type'))),
 
             // Étape 2 : Supprimer les modules ACP et UCP (d'abord les enfants, puis la catégorie)
-            array('module.remove', array('acp', 'ACP_REACTIONS_SETTINGS')),
-            array('module.remove', array('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS')),
-            array('module.remove', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS')),
+            // La méthode custom 'remove_existing_modules' s'occupe déjà de ça.
 
             // Étape 3 : Supprimer les clés de configuration
-            // CORRECTION : L'argument de config.remove doit être un tableau.
             array('config.remove', array('bastien59960_reactions_max_per_post')),
             array('config.remove', array('bastien59960_reactions_max_per_user')),
             array('config.remove', array('bastien59960_reactions_enabled')),
@@ -165,7 +163,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             array('config.remove', array('bastien59960_reactions_picker_use_json')),
             array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
             array('config.remove', array('bastien59960_reactions_sync_interval')),
-            array('config.remove', array('bastien59960_reactions_imported_from_old')),
             array('config.remove', array('bastien59960_reactions_version')),
             array('config.remove', array('bastien59960_reactions_last_test_run')),
         );
@@ -175,9 +172,10 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     {
         try {
             $module_tool = $this->container->get('phpbb.db.migration.tool.module');
-            $module_tool->remove('acp', 'ACP_REACTIONS_SETTINGS');
-            // CORRECTION : Le nom du module UCP est UCP_REACTIONS_SETTINGS, pas TITLE.
-            $module_tool->remove('ucp', 'UCP_REACTIONS_SETTINGS');
+            // Supprime le module enfant et sa catégorie parente si elle devient vide.
+            $module_tool->remove('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS');
+            // Supprime le module UCP de la catégorie des préférences.
+            $module_tool->remove('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS');
         } catch (\Exception $e) {
             // Ignore errors
         }
@@ -224,8 +222,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($malformed_name)) . "'";
             $this->db->sql_query($sql);
 
-            // Type 1: notification.type.reaction
-            $canonical_name = 'notification.type.reaction';
+            // Type 1: reaction (nom court déduit par phpBB)
+            $canonical_name = 'reaction';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
                 LIMIT 1";
@@ -241,8 +239,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
             }
 
-            // Type 2: notification.type.reaction_email_digest
-            $digest_name = 'notification.type.reaction_email_digest';
+            // Type 2: reaction_email_digest (nom court déduit par phpBB)
+            $digest_name = 'reaction_email_digest';
             $sql = 'SELECT notification_type_id FROM ' . $types_table . "
                 WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
                 LIMIT 1";
@@ -269,8 +267,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
         $notifications_table = $this->table_prefix . 'notifications';
         
         $names = array(
-            'notification.type.reaction',
-            'notification.type.reaction_email_digest',
+            'reaction',
+            'reaction_email_digest',
         );
 
         try {
