@@ -16,8 +16,9 @@ define('IN_PHPBB', true);
 
 // CORRECTION : Le script est dans ext/bastien59960/reactions/
 // Il faut remonter de 3 niveaux pour atteindre la racine du forum
+// reactions/ -> bastien59960/ -> ext/ -> racine
 $script_dir = dirname(__FILE__);
-$phpbb_root_path = realpath($script_dir . '/../../../../') . '/';
+$phpbb_root_path = realpath($script_dir . '/../../../') . '/';
 $phpEx = substr(strrchr(__FILE__, '.'), 1);
 
 // Si PHPBB_ROOT_PATH est défini dans l'environnement, l'utiliser
@@ -108,14 +109,15 @@ $inserted = 0;
 foreach ($reactions as $reaction) {
     try {
         // Construire le tableau de données exactement comme dans controller/ajax.php
+        // IMPORTANT : L'ordre doit correspondre à controller/ajax.php ligne 952-968
         $notification_data = [
-            'post_id'        => (int)$reaction['post_id'],
             'topic_id'       => (int)$reaction['topic_id'],
             'forum_id'       => (int)$reaction['forum_id'],
             'poster_id'      => (int)$reaction['poster_id'],
             'reacter_id'     => (int)$reaction['reacter_id'],
             'reacter_name'   => $reaction['reacter_name'],
             'reaction_emoji' => $reaction['reaction_emoji'],
+            'post_id'        => (int)$reaction['post_id'], // Ajouté en dernier comme dans controller/ajax.php
         ];
         
         // Sérialiser avec serialize() de PHP (format exact de phpBB)
