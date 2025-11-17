@@ -1577,9 +1577,14 @@ SQL_EOF
                     echo -e "${YELLOW}   Vidage du cache phpBB après création des notifications...${NC}"
                     $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
                     
-                    # Étape 5 : Vérifier que les notifications ont bien été créées
+                    # Étape 5 : Attendre un peu pour que le cache soit complètement vidé
+                    sleep 0.5
+                    
+                    # Étape 6 : Vérifier que les notifications ont bien été créées
                     NOTIF_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;")
                     echo -e "${GREEN}✅ $NOTIF_COUNT notification(s) créée(s) et cache vidé.${NC}"
+                    echo -e "${YELLOW}   ⚠️  IMPORTANT : Si vous voyez encore l'erreur NOTIFICATION_TYPE_NOT_EXIST,${NC}"
+                    echo -e "${YELLOW}      rechargez la page du forum ou attendez quelques secondes pour que le cache se reconstruise.${NC}"
                 fi
             fi
         fi

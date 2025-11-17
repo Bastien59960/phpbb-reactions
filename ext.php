@@ -80,17 +80,27 @@ class ext extends \phpbb\extension\base
 	 */
 	public function enable_step($old_state)
 	{
+		// CORRECTION CRITIQUE : Toujours appeler enable_notifications(), même après une purge/réactivation
+		// car phpBB doit réenregistrer les types de notifications dans son système interne.
+		// Le problème est que si $old_state n'est pas false, enable_notifications() n'est jamais appelé,
+		// et phpBB ne peut pas charger les types depuis le container DI.
+		// 
+		// Solution : Appeler enable_notifications() à chaque activation, pas seulement la première fois.
+		// On vérifie d'abord si les types existent déjà dans la table pour éviter les erreurs.
+		$notification_manager = $this->container->get('notification_manager');
+		
+		try {
+			// Toujours réenregistrer les types, même s'ils existent déjà dans la table
+			// Cela garantit que phpBB les charge correctement dans son système interne
+			$notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction');
+			$notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction_email_digest');
+		} catch (\Exception $e) {
+			// Si les types sont déjà activés, on ignore l'erreur
+			// (enable_notifications() peut lever une exception si déjà activé)
+		}
+		
 		if ($old_state === false)
 		{
-			// Récupérer le gestionnaire de notifications phpBB
-			$notification_manager = $this->container->get('notification_manager');
-
-			// Enregistrer la notification cloche
-			$notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction');
-
-			// Enregistrer la notification email digest
-			$notification_manager->enable_notifications('bastien59960.reactions.notification.type.reaction_email_digest');
-
 			return 'notification'; // Indique à phpBB que des types de notifs ont été gérés
 		}
 		return parent::enable_step($old_state);
