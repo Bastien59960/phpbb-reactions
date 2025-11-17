@@ -41,6 +41,7 @@ echo "║  TEST MIGRATOR RÉEL - Simulation activation                  ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
 
 require($phpbb_root_path . 'common.' . $phpEx);
+require($phpbb_root_path . 'phpbb/class_loader.php');
 
 global $phpbb_container, $db, $table_prefix;
 
@@ -214,6 +215,7 @@ try {
             $filename = basename($file, '.php');
             $class_name = '\\bastien59960\\reactions\\migrations\\' . $filename;
             
+            // Inclure le fichier pour s'assurer que la classe est disponible
             require_once($file);
             
             if (class_exists($class_name)) {

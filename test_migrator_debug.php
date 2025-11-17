@@ -250,11 +250,12 @@ try {
     echo "│ VÉRIFICATION : Migration phpBB core référencée               │\n";
     echo "└─────────────────────────────────────────────────────────────┘\n";
     
-    $core_migration = '\phpbb\db\migration\data\v33x\v3310';
+    // CORRECTION : Le nom de la classe pour la version 3.3.10 est v3_3_10, pas v3310.
+    $core_migration = '\phpbb\db\migration\data\v33x\v3_3_10';
     echo "🔍 Vérification de : $core_migration\n";
     
     // Chercher le fichier de migration dans phpBB
-    $core_migration_path = $phpbb_root_path . 'phpbb/db/migration/data/v33x/v3310.php';
+    $core_migration_path = $phpbb_root_path . 'phpbb/db/migration/data/v33x/v3_3_10.php';
     if (file_exists($core_migration_path)) {
         echo "   ✅ Fichier trouvé : $core_migration_path\n";
         

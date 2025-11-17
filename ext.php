@@ -91,10 +91,14 @@ class ext extends \phpbb\extension\base
 			// Ignorer l'exception si les types sont déjà activés.
 		}
 		
-		// CORRECTION : Toujours retourner 'notification' pour forcer phpBB à
-		// peupler les préférences pour tous les utilisateurs, même lors d'une réactivation.
-		// C'est cette instruction qui déclenche la création des lignes dans phpbb_user_notifications.
-		return 'notification';
+		// Si c'est la toute première activation, on retourne l'étape 'notification'
+		// pour que phpBB peuple les préférences pour tous les utilisateurs.
+		if ($old_state === false)
+		{
+			return 'notification';
+		}
+		// Pour une simple réactivation, on appelle la méthode parente pour finaliser.
+		return parent::enable_step($old_state);
 	}
 
 	/**
