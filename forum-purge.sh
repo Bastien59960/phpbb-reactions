@@ -567,7 +567,7 @@ sleep 0.5
 # ==============================================================================
 # Ce bloc est défini une seule fois et redirigé vers le descripteur de fichier 3.
 # Il sera réutilisé par les étapes 14 et 16.
-exec 3<<'DIAGNOSTIC_EOF'
+exec 3<<DIAGNOSTIC_EOF
 -- ============================================================================
 -- DIAGNOSTIC COMPLET DE L'ÉTAT DE LA BASE DE DONNÉES
 -- ============================================================================
@@ -1478,7 +1478,7 @@ RESET_FLAGS_EOF
             echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
 
             # Sélectionner jusqu'à 5 réactions aléatoires pour générer des notifications
-            REACTIONS_TO_NOTIFY=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<'GET_REACTIONS_EOF'
+            REACTIONS_TO_NOTIFY=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" --default-character-set=utf8mb4 -sN <<GET_REACTIONS_EOF
                 SELECT 
                     r.post_id,
                     r.topic_id,
