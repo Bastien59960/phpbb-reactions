@@ -371,15 +371,19 @@ echo -e "   (Le mot de passe a été fourni au début du script.)"
 
 backup_output=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -t <<'BACKUP_EOF'
 -- Sauvegarde des réactions (méthode sécurisée)
+-- CORRECTION : Une instruction PREPARE ne peut contenir qu'une seule requête.
+-- On sépare la création de la table et l'insertion des données.
 DROP TABLE IF EXISTS phpbb_post_reactions_backup;
 SET @source_table_exists = (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'phpbb_post_reactions');
-SET @sql_backup_reactions = IF(@source_table_exists > 0,
-    'CREATE TABLE phpbb_post_reactions_backup LIKE phpbb_post_reactions; INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;',
-    'SELECT "Table phpbb_post_reactions non trouvée, sauvegarde ignorée." as status;'
-);
-PREPARE stmt1 FROM @sql_backup_reactions;
-EXECUTE stmt1;
-DEALLOCATE PREPARE stmt1;
+
+-- Étape 1 : Créer la table de sauvegarde si la source existe
+SET @sql_create = IF(@source_table_exists > 0, 'CREATE TABLE phpbb_post_reactions_backup LIKE phpbb_post_reactions;', 'SELECT "Source absente, création ignorée." as status;');
+PREPARE stmt_create FROM @sql_create; EXECUTE stmt_create; DEALLOCATE PREPARE stmt_create;
+
+-- Étape 2 : Insérer les données dans la sauvegarde si la source existe
+SET @sql_insert = IF(@source_table_exists > 0, 'INSERT INTO phpbb_post_reactions_backup SELECT * FROM phpbb_post_reactions;', 'SELECT "Source absente, insertion ignorée." as status;');
+PREPARE stmt_insert FROM @sql_insert; EXECUTE stmt_insert; DEALLOCATE PREPARE stmt_insert;
+
 SET @reactions_count = IF(@source_table_exists > 0, ROW_COUNT(), 0);
 
 -- Sauvegarde des notifications

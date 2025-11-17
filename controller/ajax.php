@@ -951,7 +951,9 @@ class ajax
                 ]
             ];
 
-            $this->notification_manager->add_notifications('bastien59960.reactions.notification.type.reaction', $notifications_to_add);
+            // CORRECTION CRITIQUE : Utiliser le nom COURT du type de notification.
+            // phpBB fera le lien avec le service 'bastien59960.reactions.notification.type.reaction' grâce à la méthode get_type().
+            $this->notification_manager->add_notifications('reaction', $notifications_to_add);
 
             if (defined('DEBUG') && DEBUG) {
                 error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id);
