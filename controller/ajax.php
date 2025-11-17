@@ -922,6 +922,15 @@ class ajax
                 }
                 return;
             }
+            
+            // SÉCURITÉ SUPPLÉMENTAIRE : Refuser les emojis vides ou invalides
+            if (empty($emoji) || !$this->is_valid_emoji($emoji))
+            {
+                if (defined('DEBUG') && DEBUG) {
+                    error_log('[Reactions] Notification: Emoji vide ou invalide ignoré (post_id=' . $post_id . ')');
+                }
+                return;
+            }
 
             // Récupérer le nom d'utilisateur du réacteur
             $reacter_username = $this->user->data['username'] ?? 'Utilisateur';
