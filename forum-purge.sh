@@ -236,11 +236,6 @@ echo -e "${GREEN}✅ Identifiants de base de données lus avec succès depuis co
 echo -e "   Utilisateur : ${YELLOW}$DB_USER${NC} | Base de données : ${YELLOW}$DB_NAME${NC}"
 
 # ==============================================================================
-echo -e "🔑 Veuillez entrer le mot de passe MySQL pour l'utilisateur ${YELLOW}$DB_USER${NC} :"
-read -s MYSQL_PASSWORD # -s pour masquer l'entrée. Le mot de passe sera utilisé via la variable d'environnement MYSQL_PWD.
-echo "" # Nouvelle ligne après l'entrée masquée
-
-# ==============================================================================
 # 1. VÉRIFICATION DE LA CONNEXION MYSQL (SÉCURITÉ)
 # Enregistrer la fonction de nettoyage pour qu'elle soit appelée à la sortie du script
 # EXIT : Se déclenche à la fin normale ou via `exit`
