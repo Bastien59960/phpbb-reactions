@@ -1487,10 +1487,10 @@ RESET_FLAGS_EOF
             echo -e "${RED}❌ ERREUR : L'extension 'bastien59960/reactions' n'est pas activée. Activez-la d'abord.${NC}"
         else
             # Étape 2 : Vider le cache avant de créer les notifications (pour forcer le rechargement des services)
-            echo -e "${YELLOW}   Vidage du cache phpBB pour forcer le rechargement des types de notifications...${NC}"
+            echo -e "${YELLOW}   Purge du cache pour s'assurer que les services sont à jour...${NC}"
             $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
             
-            # Étape 2.5 : Attendre un peu pour que le cache soit complètement vidé
+            # Attendre un peu pour que le cache soit complètement vidé
             sleep 0.5
             
             # Étape 3 : On recherche l'ID en utilisant le nom LONG (canonique), ce qui est la méthode correcte.
@@ -1505,13 +1505,13 @@ RESET_FLAGS_EOF
             else
                 echo -e "${GREEN}   Type de notification trouvé (ID: $REACTION_NOTIF_TYPE_ID).${NC}"
                 
-                # Le problème est que si des notifications existent avec un type qui n'est pas encore chargé,
-                # phpBB plantera. Il faut les supprimer d'abord, puis vérifier que le service est chargé.
-                echo -e "${YELLOW}   Suppression de toutes les notifications existantes de ce type pour éviter le crash...${NC}"
+                # Par précaution, on supprime les notifications existantes de ce type.
+                # Cela évite les erreurs si des données corrompues étaient présentes.
+                echo -e "${YELLOW}   Nettoyage préventif des notifications de réaction existantes...${NC}"
                 MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -e "
                     DELETE FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;
                 " > /dev/null 2>&1
-                echo -e "${GREEN}   ✅ Notifications existantes supprimées${NC}"
+                echo -e "${GREEN}   ✅ Nettoyage préventif terminé.${NC}"
                 
                 # Étape 5 : Supprimer les notifications orphelines (types inexistants)
                 echo -e "${YELLOW}   Nettoyage des notifications orphelines...${NC}"
@@ -1521,15 +1521,15 @@ RESET_FLAGS_EOF
                     WHERE t.notification_type_id IS NULL;
                 " > /dev/null 2>&1
                 
-                # Étape 6 : Forcer le rechargement des types de notifications dans phpBB
-                echo -e "${YELLOW}   Forçage du rechargement des types de notifications dans phpBB...${NC}"
+                # Étape 6 : Exécuter un script PHP qui vérifie si le service de notification est bien chargeable par phpBB.
+                echo -e "${YELLOW}   Vérification du chargement du service de notification via le container phpBB...${NC}"
                 reload_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI reload-notification-types.php 2>&1)
                 reload_exit_code=$?
                 
                 # Afficher la sortie du script de rechargement
                 echo "$reload_output" | sed 's/^/   | /'
                 
-                # Étape 7 : Vérifier si le service est bien chargé AVANT de créer les notifications
+                # Étape 7 : Si le service n'est pas chargé, on arrête tout pour éviter de créer des données qui feraient planter le forum.
                 if ! echo "$reload_output" | grep -q "Service.*trouvé dans le container"; then
                     echo ""
                     echo -e "${WHITE_ON_RED}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
@@ -1561,17 +1561,9 @@ RESET_FLAGS_EOF
                     echo ""
                 else
                     echo -e "${GREEN}   ✅ Service correctement enregistré dans le container DI${NC}"
-                    
-                    # Étape 8 : Vider le cache APRÈS le rechargement pour forcer phpBB à reconstruire le container
-                    echo -e "${YELLOW}   Vidage du cache phpBB après rechargement des types...${NC}"
-                    $PHP_CLI "$FORUM_ROOT/bin/phpbbcli.php" cache:purge -vvv > /dev/null 2>&1
-                    
-                    # Étape 9 : Attendre un peu pour que le cache soit complètement vidé et le container reconstruit
-                    echo -e "${YELLOW}   Attente de 2 secondes pour laisser le temps au container DI de se reconstruire...${NC}"
-                    sleep 2
-                    
-                    # Étape 10 : MAINTENANT créer les notifications (le service est chargé)
-                    echo -e "${YELLOW}   Génération via script PHP (format serialize() identique à phpBB)...${NC}"
+
+                    # Le service est bien chargé, on peut maintenant créer les notifications en toute sécurité.
+                    echo -e "${YELLOW}   Génération des notifications de test via un script PHP dédié...${NC}"
                     
                     # Exporter les variables d'environnement pour le script PHP
                     export DB_USER="$DB_USER"
@@ -1593,11 +1585,11 @@ RESET_FLAGS_EOF
                         # Afficher la sortie (qui est maintenant juste le log)
                         echo "$generation_output"
                         
-                        # Étape 11 : Vérifier que les notifications ont bien été créées
+                        # Vérifier que les notifications ont bien été créées
                         NOTIF_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "SELECT COUNT(*) FROM phpbb_notifications WHERE notification_type_id = $REACTION_NOTIF_TYPE_ID;")
-                        echo -e "${GREEN}✅ $NOTIF_COUNT notification(s) créée(s), types rechargés et cache vidé.${NC}"
-                        
-                        # Étape 12 : Vérification finale - s'assurer qu'il n'y a pas de notifications orphelines
+                        echo -e "${GREEN}✅ $NOTIF_COUNT notification(s) de test créée(s).${NC}"
+
+                        # Vérification finale - s'assurer qu'il n'y a pas de notifications orphelines après l'opération
                         ORPHAN_COUNT=$(MYSQL_PWD="$MYSQL_PASSWORD" mysql -u "$DB_USER" "$DB_NAME" -sN -e "
                             SELECT COUNT(*) FROM phpbb_notifications n
                             LEFT JOIN phpbb_notification_types t ON n.notification_type_id = t.notification_type_id
@@ -1614,10 +1606,6 @@ RESET_FLAGS_EOF
                         else
                             echo -e "${GREEN}   ✅ Aucune notification orpheline détectée${NC}"
                         fi
-                        
-                        echo -e "${YELLOW}   ⚠️  Si vous voyez encore l'erreur NOTIFICATION_TYPE_NOT_EXIST,${NC}"
-                        echo -e "${YELLOW}      le problème vient du chargement du service depuis le container DI.${NC}"
-                        echo -e "${YELLOW}      Essayez de recharger la page du forum après quelques secondes.${NC}"
                     fi
                 fi
             fi
