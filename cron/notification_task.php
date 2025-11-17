@@ -853,6 +853,8 @@ class notification_task extends \phpbb\cron\task\base
     {
         if (empty($emoji) || !is_string($emoji))
         {
+            // Utiliser 'XXX' comme placeholder intentionnel.
+            // Cela permet de distinguer clairement une donnée invalide d'un bug d'encodage (qui afficherait '?' ou un losange).
             return 'XXX';
         }
 
@@ -875,6 +877,8 @@ class notification_task extends \phpbb\cron\task\base
         }
 
         // Si ce n'est pas un emoji valide, retourner '?'
+        // Utiliser 'XXX' comme placeholder intentionnel.
+        // Cela permet de distinguer clairement une donnée invalide d'un bug d'encodage (qui afficherait '?' ou un losange).
         return 'XXX';
     }
 

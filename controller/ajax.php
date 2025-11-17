@@ -788,17 +788,28 @@ class ajax
             return false;
         }
     
-        // Cette expression régulière vérifie que la chaîne ne contient QUE des caractères graphiques Unicode.
-        // \p{L} (lettres), \p{N} (nombres), \p{P} (ponctuation), \p{S} (symboles), \p{Z} (séparateurs), \p{M} (marques, pour les modificateurs).
-        // \p{Cf} (format, pour le Zero Width Joiner U+200D utilisé dans les emojis composites).
-        // Le modificateur 'u' est crucial pour la gestion de l'Unicode.
-        // Cela empêche l'injection de caractères de contrôle invisibles.
-        // CORRECTION : Ajout de \p{M} pour accepter les modificateurs d'emoji (couleurs, tons de peau, etc.)
-        // CORRECTION 2 : Ajout de \p{Cf} pour supporter les emojis composites comme 😶‍🌫️
+        // CORRECTION 4 : Validation renforcée pour les emojis et les sélecteurs de variation.
+        // Un emoji valide, même avec des modificateurs (couleur, variation), doit contenir au moins
+        // un caractère de base qui est un symbole, une lettre ou un nombre.
+        // Les sélecteurs de variation (catégorie \p{M}) ne sont pas suffisants à eux seuls.
+        // \p{L} -> Lettres
+        // \p{N} -> Nombres
+        // \p{P} -> Ponctuation
+        // \p{S} -> Symboles (catégorie principale des emojis)
+        if (!preg_match('/[\p{L}\p{N}\p{P}\p{S}]/u', $emoji)) {
+            return false;
+        }
+
+        // Ensuite, on s'assure que la chaîne ne contient QUE des caractères autorisés pour un emoji.
+        // Cela inclut les caractères de base, les marques de combinaison (tons de peau, sélecteurs de variation)
+        // et les caractères de format (comme le Zero-Width Joiner pour les emojis composites).
+        //    \p{Z} -> Séparateurs (espaces)
+        //    \p{M} -> Marques (accents, modificateurs de couleur d'emoji)
+        //    \p{Cf} -> Format (Zero-Width Joiner U+200D)
         if (!preg_match('/^[\p{L}\p{N}\p{P}\p{S}\p{Z}\p{M}\p{Cf}]+$/u', $emoji)) {
             return false;
         }
-        
+
         return true;
     }
 
