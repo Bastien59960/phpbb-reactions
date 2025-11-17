@@ -148,8 +148,8 @@ services:
             - '@bastien59960.reactions.helper'
             - '@request'
             - '@template'
-        tags:
-            - { name: notification.type }
+        tags: # Le tag correct pour un type de notification est "notification.type.driver"
+            - { name: notification.type.driver }
 
     # =========================================================================
     # CONTRÔLEUR UCP (PREFERENCES UTILISATEURS)
