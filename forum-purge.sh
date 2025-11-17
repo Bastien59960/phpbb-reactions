@@ -1344,7 +1344,7 @@ if [ "$REACTIONS_COUNT" -eq 0 ]; then
             -- Étape 3: Peupler les tables temporaires
             INSERT INTO temp_posts (post_id, topic_id, poster_id) SELECT post_id, topic_id, poster_id FROM phpbb_posts WHERE post_visibility = 1 ORDER BY post_time DESC LIMIT 50;
             INSERT INTO temp_users (user_id) SELECT user_id FROM phpbb_users WHERE user_type != 2 AND user_id != 1 ORDER BY RAND() LIMIT 20;
-            INSERT INTO temp_emojis (emoji) VALUES ('💩'), ('🤡'), ('🖕'), ('🗿'), ('🐸'), ('👻'), ('🤢'), ('👽'), ('🤏'), ('💀'), (''), ('🧠'), ('👀'), ('🧢'), ('💅'), ('🔥'), ('💯'), ('🤣'), ('🤔'), ('🤯');
+            INSERT INTO temp_emojis (emoji) VALUES ('💩'), ('🤡'), ('🖕'), ('🗿'), ('🐸'), ('👻'), ('🤢'), ('👽'), ('🤏'), ('💀'), ('🧠'), ('👀'), ('🧢'), ('💅'), ('🔥'), ('💯'), ('🤣'), ('🤔'), ('🤯');
 
             -- Étape 4: Générer les réactions
             -- CORRECTION : La clause LIMIT n'accepte pas de sous-requête.

@@ -853,7 +853,7 @@ class notification_task extends \phpbb\cron\task\base
     {
         if (empty($emoji) || !is_string($emoji))
         {
-            return '?';
+            return 'XXX';
         }
 
         // Normaliser d'abord en UTF-8
@@ -875,7 +875,7 @@ class notification_task extends \phpbb\cron\task\base
         }
 
         // Si ce n'est pas un emoji valide, retourner '?'
-        return '?';
+        return 'XXX';
     }
 
     /**
@@ -892,9 +892,9 @@ class notification_task extends \phpbb\cron\task\base
         $this->log("              🔄 [emoji_to_text] Conversion de l'emoji en texte...");
         $this->log("                 └─ Emoji reçu: [{$emoji}] (hex: " . bin2hex($emoji) . ", length: " . strlen($emoji) . ")");
         
-        if (empty($emoji) || $emoji === '?')
+        if (empty($emoji) || $emoji === '?' || $emoji === 'XXX')
         {
-            $this->log("                 ⚠️  Emoji vide ou '?' - retour de '[?]'");
+            $this->log("                 ⚠️  Emoji vide ou invalide - retour de '[?]'");
             return '[?]';
         }
 
