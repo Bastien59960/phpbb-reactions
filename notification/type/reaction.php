@@ -91,16 +91,15 @@ class reaction extends base implements type_interface
 
     /**
      * Retourne le nom unique du type de notification
-     * 
-     * IMPORTANT : Ce nom doit correspondre à la fin du nom de service défini
-     * dans services.yml (ex: bastien59960.reactions.notification.type.reaction -> reaction).
-     * C'est ce nom court que phpBB utilise en interne.
-     * 
-     * @return string Le nom court du type
+     *
+     * IMPORTANT : Ce nom doit correspondre EXACTEMENT au nom de service défini
+     * dans services.yml (bastien59960.reactions.notification.type.reaction).
+     *
+     * @return string Le nom complet du service
      */
     public function get_type()
     {
-        return 'reaction';
+        return 'bastien59960.reactions.notification.type.reaction';
     }
 
     /**

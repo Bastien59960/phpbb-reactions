@@ -54,11 +54,14 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
     /**
      * Retourne le nom unique du type de notification.
      *
-     * @return string
+     * IMPORTANT : Ce nom doit correspondre EXACTEMENT au nom de service défini
+     * dans services.yml (bastien59960.reactions.notification.type.reaction_email_digest).
+     *
+     * @return string Le nom complet du service
      */
     public function get_type()
     {
-        return 'reaction_email_digest';
+        return 'bastien59960.reactions.notification.type.reaction_email_digest';
     }
 
     /**

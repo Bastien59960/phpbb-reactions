@@ -122,6 +122,24 @@ foreach ($all_users as $i => $user_data) {
         if (!$notification_setting) {
             echo "    " . COLOR_RED . "[ERREUR] Préférence manquante pour la méthode '" . $method_short_name . "'" . COLOR_NC . "\n";
             $has_error = true;
+
+            // Si le mode --fix est activé, on insère la préférence manquante
+            if ($fix_mode) {
+                try {
+                    $sql_insert = "INSERT INTO {$table_prefix}user_notifications (item_type, item_id, user_id, method, notify)
+                                   VALUES (:item_type, 0, :user_id, :method, 1)";
+                    $stmt_insert = $pdo->prepare($sql_insert);
+                    $stmt_insert->execute([
+                        'item_type' => $pref['type'],
+                        'user_id'   => $user_id,
+                        'method'    => $pref['method'],
+                    ]);
+                    echo "    " . COLOR_GREEN . "[FIX] Préférence pour '" . $method_short_name . "' créée et activée." . COLOR_NC . "\n";
+                } catch (\PDOException $e) {
+                    echo "    " . COLOR_RED . "[ERREUR FIX] Impossible de créer la préférence manquante : " . $e->getMessage() . COLOR_NC . "\n";
+                }
+            }
+
         } elseif ((int) $notification_setting['notify'] !== 1) {
             echo "    " . COLOR_RED . "[ERREUR] Préférence pour '" . $method_short_name . "' n'est pas activée (valeur : " . $notification_setting['notify'] . ")" . COLOR_NC . "\n";
             $has_error = true;
