@@ -178,10 +178,10 @@ class reaction extends base implements type_interface
      */
     public function get_url()
     {
-        $post_id = self::get_item_id($this->notification_data);
-        
+        $post_id = $this->get_data('post_id');
+
         if (!$post_id) {
-            return ''; // Pas d'ID = pas d'URL
+            return '';
         }
 
         return append_sid(
@@ -219,17 +219,23 @@ class reaction extends base implements type_interface
     // =========================================================================
 
     /**
-     * Retourne la clé de langue pour le titre de la notification
-     * 
-     * CORRECTION IMPORTANTE : Cette clé DOIT correspondre exactement
-     * à celle définie dans le fichier de langue de la notification.
-     * Le message attendu est du type : "%1$s a réagi à votre message avec %2$s".
-     * 
-     * @return string La clé de langue (SANS le préfixe L_).
+     * Retourne le titre traduit de la notification
+     *
+     * IMPORTANT : Cette méthode doit retourner le texte traduit via $this->language->lang(),
+     * pas la clé brute. phpBB affiche directement la valeur retournée par cette méthode.
+     *
+     * @return string Le texte traduit de la notification
      */
     public function get_title()
     {
-        return 'NOTIFICATION_TYPE_REACTION';
+        // Charger le fichier de langue si ce n'est pas déjà fait
+        $this->language->add_lang('common', 'bastien59960/reactions');
+
+        // Récupérer les données de la notification
+        $reacter_name = $this->get_data('reacter_name') ?: 'Quelqu\'un';
+        $reaction_emoji = $this->get_data('reaction_emoji') ?: '👍';
+
+        return $this->language->lang('NOTIFICATION_TYPE_REACTION', $reacter_name, $reaction_emoji);
     }
 
     /**
@@ -350,15 +356,15 @@ class reaction extends base implements type_interface
 
     /**
      * Variables du template d'e-mail (non utilisé car e-mails désactivés)
-     * 
+     *
      * @return array Variables pour le template d'email
      */
     public function get_email_template_variables()
     {
         return [
-            'REACTOR_USERNAME' => $this->data['reacter_username'] ?? '',
-            'EMOJI'            => $this->notification_data['emoji'] ?? '',
-            'POST_ID'          => self::get_item_id($this->notification_data),
+            'REACTOR_USERNAME' => $this->get_data('reacter_name') ?? '',
+            'EMOJI'            => $this->get_data('reaction_emoji') ?? '',
+            'POST_ID'          => $this->get_data('post_id'),
         ];
     }
 
@@ -378,16 +384,14 @@ class reaction extends base implements type_interface
      * @return array [clé_langue, [paramètres]]
      */
     public function get_title_for_user($user_id, $lang = null)
-    {   
-        // CORRECTION : Le notification_manager de phpBB désérialise automatiquement les données.
-        // On doit donc TOUJOURS s'attendre à recevoir un tableau ici.
-        $data = $this->notification_data;
-
+    {
+        // Cette méthode n'est pas utilisée par phpBB standard,
+        // mais on la garde pour compatibilité
         return [
-            $this->get_title(), // Clé : NOTIFICATION_TYPE_REACTION
+            'NOTIFICATION_TYPE_REACTION',
             [
-                $data['reacter_name'] ?? 'Quelqu\'un', // %1$s : Nom du réacteur
-                !empty($data['reaction_emoji']) ? $data['reaction_emoji'] : 'XXX', // %2$s : Emoji (placeholder)
+                $this->get_data('reacter_name') ?: 'Quelqu\'un',
+                $this->get_data('reaction_emoji') ?: '👍',
             ],
         ];
     }
@@ -404,9 +408,9 @@ class reaction extends base implements type_interface
     public function get_render_data($user_id)
     {
         return [
-            'emoji'            => $this->notification_data['emoji'] ?? '',
-            'reacter_username' => $this->notification_data['reacter_username'] ?? '',
-            'post_id'          => self::get_item_id($this->notification_data),
+            'emoji'            => $this->get_data('reaction_emoji') ?? '',
+            'reacter_username' => $this->get_data('reacter_name') ?? '',
+            'post_id'          => $this->get_data('post_id'),
         ];
     }
 
