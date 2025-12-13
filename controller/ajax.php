@@ -967,9 +967,9 @@ class ajax
             // statiques de la classe de notification (get_item_id, get_item_parent_id, etc.) puissent fonctionner.
             $notification_data['post_id'] = $post_id; // Ajout crucial pour get_item_id
 
-            // CORRECTION CRITIQUE : Utiliser le nom COURT du type de notification.
-            // phpBB fera le lien avec le service 'bastien59960.reactions.notification.type.reaction' grâce à la méthode get_type().
-            $this->notification_manager->add_notifications('reaction', $notification_data);
+            // CORRECTION CRITIQUE : Utiliser le nom COMPLET du service de notification.
+            // Ce nom doit correspondre exactement au nom retourné par get_type() et défini dans services.yml.
+            $this->notification_manager->add_notifications('bastien59960.reactions.notification.type.reaction', $notification_data);
 
             if (defined('DEBUG') && DEBUG) {
                 error_log('[Reactions] Notification envoyée pour post_id=' . $post_id . ', auteur=' . $post_author_id);
