@@ -49,6 +49,9 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
         // On assigne manuellement les dépendances non gérées par le parent.
         $this->config = $config;
         $this->template = $template;
+
+        // Charger le fichier de langue de l'extension via l'objet language
+        $this->language->add_lang('common', 'bastien59960/reactions');
     }
 
     /**

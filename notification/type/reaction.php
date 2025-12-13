@@ -67,17 +67,9 @@ class reaction extends base implements type_interface
             $notifications_table
         );
 
-        try
-        {
-            $this->user->add_lang_ext('bastien59960/reactions', 'common');
-        }
-        catch (\Throwable $e)
-        {
-            if (defined('DEBUG'))
-            {
-                error_log('[Reactions Notification] Unable to load language packs (reaction): ' . $e->getMessage());
-            }
-        }
+        // Charger le fichier de langue de l'extension via l'objet language
+        // Utiliser $this->language au lieu de $this->user pour les notifications
+        $this->language->add_lang('common', 'bastien59960/reactions');
 
         // Log de débogage (visible uniquement si DEBUG est activé dans config.php)
         if (defined('DEBUG') && DEBUG) {
