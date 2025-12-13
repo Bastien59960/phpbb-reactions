@@ -115,6 +115,7 @@ services:
     # =========================================================================
     bastien59960.reactions.notification.type.reaction:
         class: bastien59960\reactions\notification\type\reaction
+        shared: false
         arguments:
             - '@dbal.conn'
             - '@language'
@@ -122,28 +123,28 @@ services:
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%core.table_prefix%notifications'
+            - '%tables.user_notifications%'
         tags:
-            - { name: notification.type.driver }
+            - { name: notification.type }
 
     # =========================================================================
     # TYPE DE NOTIFICATION : DIGEST COURRIEL
     # =========================================================================
     bastien59960.reactions.notification.type.reaction_email_digest:
         class: bastien59960\reactions\notification\type\reaction_email_digest
+        shared: false
         arguments:
-            # Ordre corrigé pour correspondre au constructeur parent
             - '@dbal.conn'
             - '@language'
             - '@user'
             - '@auth'
             - '%core.root_path%'
             - '%core.php_ext%'
-            - '%tables.notifications%'
+            - '%tables.user_notifications%'
             - '@config'
             - '@template'
         tags:
-            - { name: notification.type.driver }
+            - { name: notification.type }
 
     # =========================================================================
     # CONTRÔLEUR UCP (PREFERENCES UTILISATEURS)

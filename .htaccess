@@ -1,0 +1,16 @@
+# Bloquer l'accès au répertoire .git et aux fichiers sensibles
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^\.git/.* - [F,L]
+</IfModule>
+
+# Alternative si mod_rewrite n'est pas disponible
+<FilesMatch "^\.git">
+    Require all denied
+</FilesMatch>
+
+# Bloquer aussi les fichiers de config git
+<FilesMatch "^\.git-credentials$|^\.gitignore$|^\.gitmodules$">
+    Require all denied
+</FilesMatch>
