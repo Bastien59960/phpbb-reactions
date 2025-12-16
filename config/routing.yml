@@ -17,9 +17,3 @@ bastien59960_reactions_ajax:
   path: /reactions/ajax
   defaults: { _controller: bastien59960.reactions.ajax:handle }
   methods: [POST]
-
-# Contrôleur de test/debug (facultatif).
-bastien59960_reactions_test:
-  path: /reactions/test
-  defaults: { _controller: bastien59960.reactions.test:handle }
-  methods: [GET]
