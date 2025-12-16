@@ -113,7 +113,7 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
             );
 
             // Étape 3 : Lire toutes les anciennes réactions.
-            $sql = 'SELECT reaction_user_id, post_id, topic_id, reaction_file_name, reaction_time 
+            $sql = 'SELECT reaction_user_id, post_id, topic_id, reaction_file_name, reaction_time
                     FROM ' . $old_reactions_table . '
                     ORDER BY reaction_time ASC';
             $result = $this->db->sql_query($sql);
@@ -129,9 +129,20 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
                 return true; // CRITIQUE : Retour explicite requis
             }
 
+            // Étape 3b : Récupérer les réactions déjà existantes dans la nouvelle table.
+            // Cela évite les erreurs de clé dupliquée si la migration a partiellement échoué avant.
+            $sql = 'SELECT post_id, user_id, reaction_emoji FROM ' . $new_reactions_table;
+            $result = $this->db->sql_query($sql);
+            $existing_keys = array();
+            while ($row = $this->db->sql_fetchrow($result))
+            {
+                $key = (int) $row['post_id'] . '-' . (int) $row['user_id'] . '-' . $row['reaction_emoji'];
+                $existing_keys[$key] = true;
+            }
+            $this->db->sql_freeresult($result);
+
             // Étape 4 : Préparer les données pour une insertion en masse.
             $reactions_to_insert = array();
-            $existing_keys = array();
 
             foreach ($old_reactions as $row)
             {
