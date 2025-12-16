@@ -100,6 +100,10 @@ class release_1_0_1 extends \phpbb\db\migration\container_aware_migration
 
         try
         {
+            // CORRECTION CRITIQUE : Forcer la connexion MySQL à utiliser utf8mb4
+            // pour permettre l'insertion d'emojis 4-bytes.
+            $this->db->sql_query("SET NAMES 'utf8mb4'");
+
             // Étape 2 : Définir la correspondance emoji.
             $emoji_map = array(
                 '1f44d.png' => '👍', '1f44e.png' => '👎', '1f642.png' => '🙂',
