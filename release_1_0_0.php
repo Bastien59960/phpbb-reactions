@@ -67,25 +67,10 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     public function update_data()
     {
         return [
-            // Étape 1: S'assurer que la table et la connexion sont prêtes pour les emojis.
-            ['custom', [[$this, 'prepare_database_for_emojis']]],
-            // Étape 2: Importer les données de l'ancienne extension (si elle existe).
-            ['custom', [[$this, 'import_from_old_extension']]],
+            // Fusion de la préparation et de l'importation en une seule étape atomique
+            // pour garantir que la connexion reste en utf8mb4 pendant l'insertion.
+            ['custom', [[$this, 'import_with_utf8mb4_connection']]],
         ];
-    }
-
-    /**
-     * Prépare la base de données pour les emojis.
-     * Force la connexion en utf8mb4 et s'assure que la colonne est correctement configurée.
-     */
-    public function prepare_database_for_emojis()
-    {
-        // Force la connexion en utf8mb4 pour cette session, crucial pour les insertions d'emojis.
-        $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
-
-        $table_name = $this->table_prefix . 'post_reactions';
-        $sql = "ALTER TABLE {$table_name} MODIFY `reaction_emoji` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL";
-        $this->sql_query($sql);
     }
 
     /**
@@ -95,6 +80,14 @@ class release_1_0_0 extends \phpbb\db\migration\migration
     public function import_from_old_extension()
     {
         // Vérifier si l'ancienne table existe
+    }
+
+    public function import_with_utf8mb4_connection()
+    {
+        // Étape 1 : Forcer la connexion en utf8mb4. C'EST L'ACTION LA PLUS IMPORTANTE.
+        $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+
+        // Étape 2 : Importer les données
         if ($this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions_pro'))
         {
             $sql = 'SELECT post_id, topic_id, user_id, reaction, added
