@@ -98,6 +98,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     public function update_data()
     {
         return [
+            // Nettoyage des modules ACP de l'ancienne extension (steve/postreactions)
+            ['custom', [[$this, 'cleanup_old_acp_modules']]],
+
             // Configurations de l'extension
             ['config.add', ['bastien59960_reactions_enabled', 1]],
             ['config.add', ['bastien59960_reactions_max_per_post', 20]],
@@ -114,30 +117,9 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ['config.add', ['bastien59960_reactions_sync_interval', 60]],
             ['config.add', ['bastien59960_reactions_version', '1.0.0']],
 
-            // Module ACP
-            ['module.add', ['acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_TITLE']],
-            ['module.add', [
-                'acp',
-                'ACP_REACTIONS_TITLE',
-                [
-                    'module_basename' => '\bastien59960\reactions\acp\main_module',
-                    'module_langname' => 'ACP_REACTIONS_SETTINGS',
-                    'module_mode'     => 'settings',
-                    'module_auth'     => 'ext_bastien59960/reactions',
-                ],
-            ]],
-
-            // Module UCP
-            ['module.add', [
-                'ucp',
-                'UCP_PREFS',
-                [
-                    'module_basename' => '\bastien59960\reactions\ucp\main_module',
-                    'module_langname' => 'UCP_REACTIONS_SETTINGS',
-                    'module_mode'     => 'settings',
-                    'module_auth'     => 'ext_bastien59960/reactions',
-                ],
-            ]],
+            // Modules ACP et UCP (création robuste avec vérification)
+            ['custom', [[$this, 'create_acp_module']]],
+            ['custom', [[$this, 'create_ucp_module']]],
 
             // Fonctions personnalisées
             ['custom', [[$this, 'set_utf8mb4_columns']]],
@@ -175,6 +157,159 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ['config.remove', ['bastien59960_reactions_sync_interval']],
             ['config.remove', ['bastien59960_reactions_version']],
         ];
+    }
+
+    /**
+     * Nettoie les modules ACP de l'ancienne extension steve/postreactions
+     * pour éviter le conflit de nom avec ACP_REACTIONS_TITLE
+     */
+    public function cleanup_old_acp_modules()
+    {
+        try {
+            // Supprimer les sous-modules de l'ancienne extension (steve/postreactions)
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_basename LIKE '%steve%postreactions%'
+                    AND module_class = 'acp'";
+            $this->db->sql_query($sql);
+
+            // Supprimer la catégorie ACP_REACTIONS_TITLE de l'ancienne extension
+            // (seulement si elle n'a plus d'enfants bastien59960)
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_langname = 'ACP_REACTIONS_TITLE'
+                    AND module_class = 'acp'
+                    AND module_basename = ''
+                    AND NOT EXISTS (
+                        SELECT 1 FROM (SELECT * FROM " . $this->table_prefix . "modules) AS m2
+                        WHERE m2.module_basename LIKE '%bastien59960%'
+                        AND m2.module_class = 'acp'
+                    )";
+            $this->db->sql_query($sql);
+        } catch (\Exception $e) {
+            // Ignorer les erreurs si les modules n'existent pas
+        }
+        return true;
+    }
+
+    /**
+     * Crée le module ACP de façon robuste (vérifie avant de créer)
+     */
+    public function create_acp_module()
+    {
+        try {
+            // 1. Vérifier/créer la catégorie parente ACP_REACTIONS_TITLE
+            $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                    WHERE module_langname = 'ACP_REACTIONS_TITLE'
+                    AND module_class = 'acp'
+                    AND module_basename = ''";
+            $result = $this->db->sql_query($sql);
+            $parent = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if (!$parent) {
+                // Récupérer l'ID de ACP_CAT_DOT_MODS
+                $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                        WHERE module_langname = 'ACP_CAT_DOT_MODS'
+                        AND module_class = 'acp'";
+                $result = $this->db->sql_query($sql);
+                $cat_mods = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
+
+                $parent_id = $cat_mods ? (int) $cat_mods['module_id'] : 0;
+
+                // Créer la catégorie
+                $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
+                       $this->db->sql_build_array('INSERT', [
+                           'module_class'    => 'acp',
+                           'parent_id'       => $parent_id,
+                           'module_langname' => 'ACP_REACTIONS_TITLE',
+                           'module_basename' => '',
+                           'module_mode'     => '',
+                           'module_auth'     => '',
+                           'module_enabled'  => 1,
+                           'module_display'  => 1,
+                           'left_id'         => 0,
+                           'right_id'        => 0,
+                       ]);
+                $this->db->sql_query($sql);
+                $parent_module_id = $this->db->sql_nextid();
+            } else {
+                $parent_module_id = (int) $parent['module_id'];
+            }
+
+            // 2. Vérifier/créer le sous-module settings
+            $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                    WHERE module_basename = '\\\\bastien59960\\\\reactions\\\\acp\\\\main_module'
+                    AND module_class = 'acp'";
+            $result = $this->db->sql_query($sql);
+            $exists = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if (!$exists) {
+                $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
+                       $this->db->sql_build_array('INSERT', [
+                           'module_class'    => 'acp',
+                           'parent_id'       => $parent_module_id,
+                           'module_langname' => 'ACP_REACTIONS_SETTINGS',
+                           'module_basename' => '\\bastien59960\\reactions\\acp\\main_module',
+                           'module_mode'     => 'settings',
+                           'module_auth'     => 'ext_bastien59960/reactions',
+                           'module_enabled'  => 1,
+                           'module_display'  => 1,
+                           'left_id'         => 0,
+                           'right_id'        => 0,
+                       ]);
+                $this->db->sql_query($sql);
+            }
+        } catch (\Exception $e) {
+            // Log mais ne pas échouer
+        }
+        return true;
+    }
+
+    /**
+     * Crée le module UCP de façon robuste (vérifie avant de créer)
+     */
+    public function create_ucp_module()
+    {
+        try {
+            // Vérifier si le module existe déjà
+            $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                    WHERE module_basename = '\\\\bastien59960\\\\reactions\\\\ucp\\\\main_module'
+                    AND module_class = 'ucp'";
+            $result = $this->db->sql_query($sql);
+            $exists = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if (!$exists) {
+                // Récupérer l'ID de UCP_PREFS
+                $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                        WHERE module_langname = 'UCP_PREFS'
+                        AND module_class = 'ucp'";
+                $result = $this->db->sql_query($sql);
+                $ucp_prefs = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
+
+                $parent_id = $ucp_prefs ? (int) $ucp_prefs['module_id'] : 0;
+
+                $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
+                       $this->db->sql_build_array('INSERT', [
+                           'module_class'    => 'ucp',
+                           'parent_id'       => $parent_id,
+                           'module_langname' => 'UCP_REACTIONS_SETTINGS',
+                           'module_basename' => '\\bastien59960\\reactions\\ucp\\main_module',
+                           'module_mode'     => 'settings',
+                           'module_auth'     => 'ext_bastien59960/reactions',
+                           'module_enabled'  => 1,
+                           'module_display'  => 1,
+                           'left_id'         => 0,
+                           'right_id'        => 0,
+                       ]);
+                $this->db->sql_query($sql);
+            }
+        } catch (\Exception $e) {
+            // Log mais ne pas échouer
+        }
+        return true;
     }
 
     /**

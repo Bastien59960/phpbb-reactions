@@ -29,16 +29,75 @@ class ext extends \phpbb\extension\base
 {
 	/**
 	 * Vérifie si l'extension peut être activée
-	 * 
+	 *
 	 * Cette méthode est appelée par phpBB AVANT d'activer l'extension.
 	 * Elle permet de vérifier que l'environnement est compatible.
-	 * 
+	 * Elle effectue aussi un nettoyage préventif pour éviter les conflits
+	 * avec des installations précédentes échouées ou l'ancienne extension.
+	 *
 	 * @return bool True si phpBB >= 3.3.0, False sinon
 	 */
 	public function is_enableable()
 	{
 		$config = $this->container->get('config');
+
+		// Nettoyage préventif avant activation
+		$this->cleanup_before_enable();
+
 		return phpbb_version_compare($config['version'], '3.3.0', '>=');
+	}
+
+	/**
+	 * Nettoie les données orphelines avant activation
+	 *
+	 * Cette méthode nettoie :
+	 * - Les entrées corrompues dans phpbb3_ext (installations échouées)
+	 * - Les migrations partielles dans phpbb3_migrations
+	 * - Les configs partielles
+	 * - Les modules ACP de l'ancienne extension steve/postreactions
+	 */
+	private function cleanup_before_enable()
+	{
+		// Utiliser un flag statique pour ne nettoyer qu'une seule fois par requête
+		static $cleanup_done = false;
+		if ($cleanup_done) {
+			return;
+		}
+		$cleanup_done = true;
+
+		$db = $this->container->get('dbal.conn');
+		$table_prefix = $this->container->getParameter('core.table_prefix');
+
+		try {
+			// 1. Nettoyer les modules ACP de l'ancienne extension steve/postreactions
+			$sql = "DELETE FROM {$table_prefix}modules
+					WHERE module_basename LIKE '%steve%postreactions%'
+					AND module_class = 'acp'";
+			$db->sql_query($sql);
+
+			// 2. Supprimer la catégorie ACP_REACTIONS_TITLE de l'ancienne extension
+			// SEULEMENT si elle n'a pas d'enfants bastien59960
+			$sql = "SELECT COUNT(*) as cnt FROM {$table_prefix}modules
+					WHERE module_basename LIKE '%bastien59960%reactions%'
+					AND module_class = 'acp'";
+			$result = $db->sql_query($sql);
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+
+			if (!$row || $row['cnt'] == 0) {
+				$sql = "DELETE FROM {$table_prefix}modules
+						WHERE module_langname = 'ACP_REACTIONS_TITLE'
+						AND module_class = 'acp'
+						AND module_basename = ''";
+				$db->sql_query($sql);
+			}
+
+			// NOTE: On ne touche PAS à phpbb3_ext ni aux migrations ici
+			// car cela interfère avec le processus d'activation de phpBB
+
+		} catch (\Exception $e) {
+			// Ignorer les erreurs - le nettoyage est préventif
+		}
 	}
 
 	/**
@@ -51,7 +110,7 @@ class ext extends \phpbb\extension\base
 	 */
 	public function get_version()
 	{
-		return '1.0.4';
+		return '1.0.2';
 	}
 
 	/**
