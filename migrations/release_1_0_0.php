@@ -173,7 +173,6 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ['config.remove', ['bastien59960_reactions_post_emoji_size']],
             ['config.remove', ['bastien59960_reactions_sync_interval']],
             ['config.remove', ['bastien59960_reactions_version']],
-            ['config.remove', ['bastien59960_reactions_imported_from_old']],
         ];
     }
 
