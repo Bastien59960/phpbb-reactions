@@ -26,6 +26,17 @@ use phpbb\template\template; // Seule dépendance supplémentaire nécessaire
 
 class reaction_email_digest extends \phpbb\notification\type\base implements type_interface
 {
+    /**
+     * Options de notification pour l'UCP
+     *
+     * IMPORTANT: Cette propriété est requise pour que phpBB affiche correctement
+     * les options de notification dans le Panneau de Contrôle Utilisateur (UCP).
+     */
+    public static $notification_option = [
+        'lang'  => 'NOTIFICATION_REACTION_EMAIL_DIGEST_TITLE',
+        'group' => 'NOTIFICATION_GROUP_POSTING',
+    ];
+
     /** @var \phpbb\config\config */
     protected $config;
 

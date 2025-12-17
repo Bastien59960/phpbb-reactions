@@ -36,7 +36,20 @@ class reaction extends base implements type_interface
     // =========================================================================
     // PROPRIÉTÉS DE LA CLASSE
     // =========================================================================
-    
+
+    /**
+     * Options de notification pour l'UCP
+     *
+     * IMPORTANT: Cette propriété est requise pour que phpBB affiche correctement
+     * les options de notification dans le Panneau de Contrôle Utilisateur (UCP).
+     * - 'lang' : clé de langue pour le libellé de l'option
+     * - 'group' : groupe dans lequel afficher l'option (ex: NOTIFICATION_GROUP_POSTING)
+     */
+    public static $notification_option = [
+        'lang'  => 'NOTIFICATION_TYPE_REACTION_TITLE',
+        'group' => 'NOTIFICATION_GROUP_POSTING',
+    ];
+
     /** @var string Nom de la table des notifications */
     protected $notifications_table;
 

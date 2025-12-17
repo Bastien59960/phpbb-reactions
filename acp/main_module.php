@@ -163,7 +163,8 @@ class main_module
             $picker_width = max(200, min(900, $request->variable('picker_width', (int) ($config['bastien59960_reactions_picker_width'] ?? 320))));
             $picker_height = max(200, min(900, $request->variable('picker_height', (int) ($config['bastien59960_reactions_picker_height'] ?? 500))));
             $picker_emoji_size = max(12, min(96, $request->variable('picker_emoji_size', (int) ($config['bastien59960_reactions_picker_emoji_size'] ?? 24))));
-            $sync_interval = max(1000, min(60000, $request->variable('sync_interval', (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000))));
+            // Intervalle de sync en SECONDES (min 3s, max 300s = 5 minutes, défaut 20s)
+            $sync_interval = max(3, min(300, $request->variable('sync_interval', (int) ($config['bastien59960_reactions_sync_interval'] ?? 20))));
 
             $picker_show_categories = $request->variable('picker_show_categories', 0);
             $picker_show_search = $request->variable('picker_show_search', 0);
@@ -248,7 +249,7 @@ class main_module
             'REACTIONS_PICKER_SHOW_CATEGORIES' => (int) ($config['bastien59960_reactions_picker_show_categories'] ?? 0),
             'REACTIONS_PICKER_SHOW_SEARCH'     => (int) ($config['bastien59960_reactions_picker_show_search'] ?? 0),
             'REACTIONS_PICKER_USE_JSON'        => (int) ($config['bastien59960_reactions_picker_use_json'] ?? 1),
-            'REACTIONS_SYNC_INTERVAL'          => (int) ($config['bastien59960_reactions_sync_interval'] ?? 5000),
+            'REACTIONS_SYNC_INTERVAL'          => (int) ($config['bastien59960_reactions_sync_interval'] ?? 20),
         ]);
         
         // ====================================================================

@@ -21,10 +21,23 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 {
     /**
      * Vérifie si l'extension est déjà installée
+     *
+     * IMPORTANT: Cette méthode vérifie DEUX conditions :
+     * 1. La table post_reactions existe
+     * 2. La configuration bastien59960_reactions_enabled existe
+     *
+     * Cela évite que la migration soit sautée si la table existe mais
+     * que les configurations n'ont pas été créées (cas d'une installation partielle).
      */
     public function effectively_installed()
     {
-        return $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions');
+        // Vérifier si la table existe
+        if (!$this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions')) {
+            return false;
+        }
+
+        // Vérifier si la configuration existe (preuve que update_data() a été exécuté)
+        return isset($this->config['bastien59960_reactions_enabled']);
     }
 
     /**
@@ -114,7 +127,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ['config.add', ['bastien59960_reactions_picker_use_json', 1]],
             ['config.add', ['bastien59960_reactions_picker_emoji_size', 24]],
             ['config.add', ['bastien59960_reactions_post_emoji_size', 24]],
-            ['config.add', ['bastien59960_reactions_sync_interval', 60]],
+            ['config.add', ['bastien59960_reactions_sync_interval', 20]], // En secondes (min 3s, max 300s)
             ['config.add', ['bastien59960_reactions_version', '1.0.0']],
 
             // Modules ACP et UCP (création robuste avec vérification)
@@ -160,13 +173,17 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     }
 
     /**
-     * Nettoie les modules ACP de l'ancienne extension steve/postreactions
-     * pour éviter le conflit de nom avec ACP_REACTIONS_TITLE
+     * Nettoie les modules ACP et UCP de l'ancienne extension steve/postreactions
+     * pour éviter les conflits de nom et les onglets dupliqués
      */
     public function cleanup_old_acp_modules()
     {
         try {
-            // Supprimer les sous-modules de l'ancienne extension (steve/postreactions)
+            // =========================================================================
+            // NETTOYAGE ACP : Ancienne extension steve/postreactions
+            // =========================================================================
+
+            // Supprimer les sous-modules ACP de l'ancienne extension (steve/postreactions)
             $sql = 'DELETE FROM ' . $this->table_prefix . "modules
                     WHERE module_basename LIKE '%steve%postreactions%'
                     AND module_class = 'acp'";
@@ -184,6 +201,35 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                         AND m2.module_class = 'acp'
                     )";
             $this->db->sql_query($sql);
+
+            // =========================================================================
+            // NETTOYAGE UCP : Ancienne extension steve/postreactions
+            // =========================================================================
+
+            // Supprimer les sous-modules UCP de l'ancienne extension (steve/postreactions)
+            // Ces modules créent un onglet séparé "UCP_REACTIONS_TITLE" au lieu
+            // d'être intégrés dans "Préférences du forum" (UCP_PREFS)
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_basename LIKE '%steve%postreactions%'
+                    AND module_class = 'ucp'";
+            $this->db->sql_query($sql);
+
+            // Supprimer la catégorie UCP_REACTIONS_TITLE de l'ancienne extension
+            // (c'est l'onglet séparé au niveau 0 qui ne devrait pas exister)
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_langname = 'UCP_REACTIONS_TITLE'
+                    AND module_class = 'ucp'
+                    AND module_basename = ''
+                    AND parent_id = 0";
+            $this->db->sql_query($sql);
+
+            // Supprimer aussi UCP_REACTIONS_SETTING (ancien nom de steve) s'il existe
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_langname = 'UCP_REACTIONS_SETTING'
+                    AND module_class = 'ucp'
+                    AND module_basename LIKE '%steve%'";
+            $this->db->sql_query($sql);
+
         } catch (\Exception $e) {
             // Ignorer les erreurs si les modules n'existent pas
         }
