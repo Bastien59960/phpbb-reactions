@@ -168,16 +168,26 @@
 .emoji-picker {
     background: white;
     border: 1px solid #e0e0e0;
-    border-radius: 12px; /* Rayon de la bordure */
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15); /* décalage X, décalage Y, flou, couleur */
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     width: var(--reactions-picker-width, 320px);
     max-width: var(--reactions-picker-width, 320px);
-    max-height: var(--reactions-picker-height, 280px);
-    height: 420px;
-    overflow: hidden;
+    height: var(--reactions-picker-height, 400px);
+    max-height: var(--reactions-picker-height, 400px);
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* ========== CORPS DU PICKER (contient tout le contenu scrollable) ========== */
+.emoji-picker-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0; /* Important pour que flex fonctionne avec overflow */
+    scrollbar-width: thin;
+    scrollbar-color: #e0e0e0 white;
 }
 
 /* ========== HEADER DU PICKER (Recherche + Bouton Fermer) ========== */
@@ -231,13 +241,15 @@
     content: '✕';
 }
 
-/* ========== CONTENU PRINCIPAL SCROLLABLE ========== */
+/* ========== SECTION EMOJIS COURANTS ========== */
+.emoji-frequent-section {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* ========== CONTENU PRINCIPAL (catégories du JSON) ========== */
 .emoji-picker-main {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 0 8px; /* 0px vertical, 8px horizontal */
-    scrollbar-width: thin; /* Épaisseur de la barre de défilement */
-    scrollbar-color: #e0e0e0 white; /* Couleur du curseur, couleur de la piste */
+    padding: 8px;
 }
 
 /* ========== CATÉGORIES ET GRILLES ========== */
