@@ -233,9 +233,10 @@ class listener implements EventSubscriberInterface
     public function load_language_files($event)
     {
         $language_sets = [
-            'common',     // Pour l'UI générale
-            'acp/common', // Pour le panneau d'administration
-            'email',      // Pour les templates d'e-mail
+            'common',        // Pour l'UI générale (contient UCP_REACTIONS_SETTINGS)
+            'ucp_reactions', // Pour le menu UCP (titre de l'onglet)
+            'acp/common',    // Pour le panneau d'administration
+            'email',         // Pour les templates d'e-mail
         ];
 
         foreach ($language_sets as $lang_set) {
