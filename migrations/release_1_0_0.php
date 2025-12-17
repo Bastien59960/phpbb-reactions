@@ -380,7 +380,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 
             if (!$exists) {
                 // Récupérer UCP_PREFS
-                $sql = 'SELECT module_id, right_id FROM ' . $this->table_prefix . "modules
+                $sql = 'SELECT module_id, left_id, right_id FROM ' . $this->table_prefix . "modules
                         WHERE module_langname = 'UCP_PREFS'
                         AND module_class = 'ucp'";
                 $result = $this->db->sql_query($sql);
@@ -392,20 +392,20 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                 }
 
                 $parent_id = (int) $ucp_prefs['module_id'];
-                $new_left = (int) $ucp_prefs['right_id'];
 
-                // Décaler pour faire de la place
-                $sql = 'UPDATE ' . $this->table_prefix . "modules
-                        SET left_id = left_id + 2
-                        WHERE module_class = 'ucp' AND left_id >= " . $new_left;
-                $this->db->sql_query($sql);
+                // Trouver le dernier enfant de UCP_PREFS pour calculer la position
+                $sql = 'SELECT MAX(right_id) as max_right FROM ' . $this->table_prefix . "modules
+                        WHERE parent_id = " . $parent_id . "
+                        AND module_class = 'ucp'";
+                $result = $this->db->sql_query($sql);
+                $row = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
 
-                $sql = 'UPDATE ' . $this->table_prefix . "modules
-                        SET right_id = right_id + 2
-                        WHERE module_class = 'ucp' AND right_id >= " . $new_left;
-                $this->db->sql_query($sql);
+                // Calculer la position (après le dernier enfant existant)
+                $new_left = $row && $row['max_right'] ? (int) $row['max_right'] + 1 : (int) $ucp_prefs['left_id'] + 1;
+                $new_right = $new_left + 1;
 
-                // Créer le module
+                // Créer le module avec la bonne position
                 $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
                        $this->db->sql_build_array('INSERT', [
                            'module_class'    => 'ucp',
@@ -417,7 +417,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                            'module_enabled'  => 1,
                            'module_display'  => 1,
                            'left_id'         => $new_left,
-                           'right_id'        => $new_left + 1,
+                           'right_id'        => $new_right,
                        ]);
                 $this->db->sql_query($sql);
             }

@@ -92,6 +92,7 @@ class listener implements EventSubscriberInterface
             'core.viewtopic_post_row_after'  => 'display_reactions',
             'core.viewforum_modify_topicrow' => 'add_forum_data',
             'core.console.command.configure' => 'load_language_for_cli',
+            'core.ucp_display_module_before' => 'load_ucp_language',
         ];
     }
 
@@ -251,6 +252,16 @@ class listener implements EventSubscriberInterface
         }
 
         return;
+    }
+
+    /**
+     * Charge les fichiers de langue pour l'UCP avant l'affichage du menu
+     * Cela garantit que UCP_REACTIONS_SETTINGS est traduit dans le menu
+     */
+    public function load_ucp_language($event)
+    {
+        $this->language->add_lang('ucp_reactions', 'bastien59960/reactions');
+        $this->language->add_lang('common', 'bastien59960/reactions');
     }
 
     private function get_user_reactions($post_id, $user_id)

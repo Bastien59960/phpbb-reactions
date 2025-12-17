@@ -296,11 +296,14 @@ function toggle_visible(id) {
             typeof window.REACTIONS_JSON_PATH === 'string' &&
             window.REACTIONS_JSON_PATH.trim() !== '';
 
+        // Log de diagnostic pour déboguer le chargement du JSON
+        console.log('[Reactions] shouldLoadJson:', shouldLoadJson,
+            '| useJson:', options.useJson,
+            '| JSON_PATH:', window.REACTIONS_JSON_PATH);
+
         if (shouldLoadJson) {
             // Log de débogage pour vérifier l'URL utilisée pour le fetch.
-            if (window.REACTIONS_DEBUG_MODE) {
-                console.log('[Reactions] Tentative de chargement du JSON depuis :', window.REACTIONS_JSON_PATH);
-            }
+            console.log('[Reactions] Tentative de chargement du JSON depuis :', window.REACTIONS_JSON_PATH);
 
             fetch(window.REACTIONS_JSON_PATH)
                 .then((res) => {
