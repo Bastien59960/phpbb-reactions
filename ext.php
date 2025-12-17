@@ -75,22 +75,9 @@ class ext extends \phpbb\extension\base
 					AND module_class = 'acp'";
 			$db->sql_query($sql);
 
-			// 2. Supprimer la catégorie ACP_REACTIONS_TITLE de l'ancienne extension
-			// SEULEMENT si elle n'a pas d'enfants bastien59960
-			$sql = "SELECT COUNT(*) as cnt FROM {$table_prefix}modules
-					WHERE module_basename LIKE '%bastien59960%reactions%'
-					AND module_class = 'acp'";
-			$result = $db->sql_query($sql);
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
-
-			if (!$row || $row['cnt'] == 0) {
-				$sql = "DELETE FROM {$table_prefix}modules
-						WHERE module_langname = 'ACP_REACTIONS_TITLE'
-						AND module_class = 'acp'
-						AND module_basename = ''";
-				$db->sql_query($sql);
-			}
+			// 2. Ne PAS supprimer ACP_REACTIONS_TITLE car notre extension l'utilise
+			// Le nettoyage de l'ancienne catégorie n'est fait que dans la migration
+			// après avoir vérifié qu'il n'y a pas de conflits
 
 			// NOTE: On ne touche PAS à phpbb3_ext ni aux migrations ici
 			// car cela interfère avec le processus d'activation de phpBB

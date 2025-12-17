@@ -191,13 +191,13 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     }
 
     /**
-     * Crée le module ACP de façon robuste (vérifie avant de créer)
+     * Crée le module ACP de façon robuste avec calcul correct du nested set
      */
     public function create_acp_module()
     {
         try {
-            // 1. Vérifier/créer la catégorie parente ACP_REACTIONS_TITLE
-            $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+            // 1. Vérifier si la catégorie parente ACP_REACTIONS_TITLE existe
+            $sql = 'SELECT module_id, left_id, right_id FROM ' . $this->table_prefix . "modules
                     WHERE module_langname = 'ACP_REACTIONS_TITLE'
                     AND module_class = 'acp'
                     AND module_basename = ''";
@@ -206,45 +206,55 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             $this->db->sql_freeresult($result);
 
             if (!$parent) {
-                // Récupérer l'ID de ACP_CAT_DOT_MODS
-                $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                // Récupérer ACP_CAT_DOT_MODS
+                $sql = 'SELECT module_id, right_id FROM ' . $this->table_prefix . "modules
                         WHERE module_langname = 'ACP_CAT_DOT_MODS'
                         AND module_class = 'acp'";
                 $result = $this->db->sql_query($sql);
                 $cat_mods = $this->db->sql_fetchrow($result);
                 $this->db->sql_freeresult($result);
 
-                $parent_id = $cat_mods ? (int) $cat_mods['module_id'] : 0;
+                if (!$cat_mods) {
+                    return true; // Pas de catégorie DOT_MODS, abandonner
+                }
 
-                // Créer la catégorie
+                $cat_mods_id = (int) $cat_mods['module_id'];
+                $cat_mods_right = (int) $cat_mods['right_id'];
+
+                // Calculer les positions pour le nouveau module (catégorie + enfant)
+                // On a besoin de 4 positions: cat_left, child_left, child_right, cat_right
+                $new_left = $cat_mods_right;
+
+                // Décaler tous les modules avec left_id >= new_left
+                $sql = 'UPDATE ' . $this->table_prefix . "modules
+                        SET left_id = left_id + 4
+                        WHERE module_class = 'acp' AND left_id >= " . $new_left;
+                $this->db->sql_query($sql);
+
+                // Décaler tous les modules avec right_id >= new_left
+                $sql = 'UPDATE ' . $this->table_prefix . "modules
+                        SET right_id = right_id + 4
+                        WHERE module_class = 'acp' AND right_id >= " . $new_left;
+                $this->db->sql_query($sql);
+
+                // Créer la catégorie ACP_REACTIONS_TITLE
                 $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
                        $this->db->sql_build_array('INSERT', [
                            'module_class'    => 'acp',
-                           'parent_id'       => $parent_id,
+                           'parent_id'       => $cat_mods_id,
                            'module_langname' => 'ACP_REACTIONS_TITLE',
                            'module_basename' => '',
                            'module_mode'     => '',
                            'module_auth'     => '',
                            'module_enabled'  => 1,
                            'module_display'  => 1,
-                           'left_id'         => 0,
-                           'right_id'        => 0,
+                           'left_id'         => $new_left,
+                           'right_id'        => $new_left + 3,
                        ]);
                 $this->db->sql_query($sql);
                 $parent_module_id = $this->db->sql_nextid();
-            } else {
-                $parent_module_id = (int) $parent['module_id'];
-            }
 
-            // 2. Vérifier/créer le sous-module settings
-            $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
-                    WHERE module_basename = '\\\\bastien59960\\\\reactions\\\\acp\\\\main_module'
-                    AND module_class = 'acp'";
-            $result = $this->db->sql_query($sql);
-            $exists = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
-
-            if (!$exists) {
+                // Créer le sous-module ACP_REACTIONS_SETTINGS
                 $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
                        $this->db->sql_build_array('INSERT', [
                            'module_class'    => 'acp',
@@ -255,10 +265,52 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                            'module_auth'     => 'ext_bastien59960/reactions',
                            'module_enabled'  => 1,
                            'module_display'  => 1,
-                           'left_id'         => 0,
-                           'right_id'        => 0,
+                           'left_id'         => $new_left + 1,
+                           'right_id'        => $new_left + 2,
                        ]);
                 $this->db->sql_query($sql);
+            } else {
+                // La catégorie existe, vérifier si le sous-module existe
+                $parent_module_id = (int) $parent['module_id'];
+
+                $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                        WHERE module_basename LIKE '%bastien59960%reactions%acp%'
+                        AND module_class = 'acp'";
+                $result = $this->db->sql_query($sql);
+                $exists = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
+
+                if (!$exists) {
+                    $parent_right = (int) $parent['right_id'];
+                    $new_left = $parent_right;
+
+                    // Décaler pour faire de la place
+                    $sql = 'UPDATE ' . $this->table_prefix . "modules
+                            SET left_id = left_id + 2
+                            WHERE module_class = 'acp' AND left_id >= " . $new_left;
+                    $this->db->sql_query($sql);
+
+                    $sql = 'UPDATE ' . $this->table_prefix . "modules
+                            SET right_id = right_id + 2
+                            WHERE module_class = 'acp' AND right_id >= " . $new_left;
+                    $this->db->sql_query($sql);
+
+                    // Créer le sous-module
+                    $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
+                           $this->db->sql_build_array('INSERT', [
+                               'module_class'    => 'acp',
+                               'parent_id'       => $parent_module_id,
+                               'module_langname' => 'ACP_REACTIONS_SETTINGS',
+                               'module_basename' => '\\bastien59960\\reactions\\acp\\main_module',
+                               'module_mode'     => 'settings',
+                               'module_auth'     => 'ext_bastien59960/reactions',
+                               'module_enabled'  => 1,
+                               'module_display'  => 1,
+                               'left_id'         => $new_left,
+                               'right_id'        => $new_left + 1,
+                           ]);
+                    $this->db->sql_query($sql);
+                }
             }
         } catch (\Exception $e) {
             // Log mais ne pas échouer
@@ -267,30 +319,47 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
     }
 
     /**
-     * Crée le module UCP de façon robuste (vérifie avant de créer)
+     * Crée le module UCP de façon robuste avec calcul correct du nested set
      */
     public function create_ucp_module()
     {
         try {
             // Vérifier si le module existe déjà
             $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
-                    WHERE module_basename = '\\\\bastien59960\\\\reactions\\\\ucp\\\\main_module'
+                    WHERE module_basename LIKE '%bastien59960%reactions%ucp%'
                     AND module_class = 'ucp'";
             $result = $this->db->sql_query($sql);
             $exists = $this->db->sql_fetchrow($result);
             $this->db->sql_freeresult($result);
 
             if (!$exists) {
-                // Récupérer l'ID de UCP_PREFS
-                $sql = 'SELECT module_id FROM ' . $this->table_prefix . "modules
+                // Récupérer UCP_PREFS
+                $sql = 'SELECT module_id, right_id FROM ' . $this->table_prefix . "modules
                         WHERE module_langname = 'UCP_PREFS'
                         AND module_class = 'ucp'";
                 $result = $this->db->sql_query($sql);
                 $ucp_prefs = $this->db->sql_fetchrow($result);
                 $this->db->sql_freeresult($result);
 
-                $parent_id = $ucp_prefs ? (int) $ucp_prefs['module_id'] : 0;
+                if (!$ucp_prefs) {
+                    return true;
+                }
 
+                $parent_id = (int) $ucp_prefs['module_id'];
+                $new_left = (int) $ucp_prefs['right_id'];
+
+                // Décaler pour faire de la place
+                $sql = 'UPDATE ' . $this->table_prefix . "modules
+                        SET left_id = left_id + 2
+                        WHERE module_class = 'ucp' AND left_id >= " . $new_left;
+                $this->db->sql_query($sql);
+
+                $sql = 'UPDATE ' . $this->table_prefix . "modules
+                        SET right_id = right_id + 2
+                        WHERE module_class = 'ucp' AND right_id >= " . $new_left;
+                $this->db->sql_query($sql);
+
+                // Créer le module
                 $sql = 'INSERT INTO ' . $this->table_prefix . 'modules ' .
                        $this->db->sql_build_array('INSERT', [
                            'module_class'    => 'ucp',
@@ -301,8 +370,8 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                            'module_auth'     => 'ext_bastien59960/reactions',
                            'module_enabled'  => 1,
                            'module_display'  => 1,
-                           'left_id'         => 0,
-                           'right_id'        => 0,
+                           'left_id'         => $new_left,
+                           'right_id'        => $new_left + 1,
                        ]);
                 $this->db->sql_query($sql);
             }
