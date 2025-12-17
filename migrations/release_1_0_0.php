@@ -143,6 +143,7 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
             ['custom', [[$this, 'set_utf8mb4_columns']]],
             ['custom', [[$this, 'create_notification_types']]],
             ['custom', [[$this, 'create_user_notification_preferences']]],
+            ['custom', [[$this, 'clean_orphan_notifications']]],
         ];
     }
 
@@ -330,6 +331,23 @@ class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
                         WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
                 $this->db->sql_query($sql);
             }
+        } catch (\Exception $e) {
+            // Ignorer les erreurs
+        }
+        return true;
+    }
+
+    /**
+     * Nettoie les notifications orphelines (sans type valide)
+     */
+    public function clean_orphan_notifications()
+    {
+        try {
+            $sql = "DELETE n FROM {$this->table_prefix}notifications n
+                    LEFT JOIN {$this->table_prefix}notification_types t
+                        ON n.notification_type_id = t.notification_type_id
+                    WHERE t.notification_type_id IS NULL";
+            $this->db->sql_query($sql);
         } catch (\Exception $e) {
             // Ignorer les erreurs
         }
