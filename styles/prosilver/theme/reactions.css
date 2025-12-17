@@ -70,26 +70,32 @@
 .reaction-more {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
     background: #f8f9fa;
     border: 1px dashed #d1d1d1;
-    border-radius: 15px;
-    padding: 8px; /* 8px sur tous les côtés */
+    border-radius: 4px;
+    padding: 4px 8px;
     cursor: pointer;
-    font-size: var(--reactions-post-emoji-size, 24px);
-    font-weight: bold;
     color: #6c757d;
     transition: all 0.2s ease;
-    min-width: calc(var(--reactions-post-emoji-size, 24px) + 8px);
-    height: calc(var(--reactions-post-emoji-size, 24px) + 4px);
     order: -1;
     margin-right: 8px;
 }
 
+.reaction-more-icon {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.reaction-more-text {
+    font-size: 11px; /* Taille phpBB standard */
+    font-weight: normal;
+    white-space: nowrap;
+}
+
 /**
  * État de survol du bouton "plus"
- * 
- * Change l'apparence au survol pour indiquer l'interactivité.
  */
 .reaction-more:hover {
     background: #e9ecef;
@@ -97,34 +103,29 @@
     border-color: #adb5bd;
 }
 
-/* ========== RÉACTIONS ========== */
-.post-reactions .reaction-wrapper,
-.post-reactions .reaction-more {
+/* ========== RÉACTIONS (emojis affichés sous le post) ========== */
+.post-reactions .reaction-wrapper {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: #f3f3f3;
     border: 1px solid #d1d1d1;
     border-radius: 15px;
-    padding: 4px 8px; /* 4px vertical, 8px horizontal */
+    padding: 2px 6px;
     cursor: pointer;
     font-size: var(--reactions-post-emoji-size, 24px);
     line-height: 1;
     transition: all 0.2s ease;
     user-select: none;
-}
-
-.post-reactions .reaction-wrapper {
-    position: relative; /* Contexte de positionnement pour le tooltip */
+    position: relative;
     vertical-align: middle;
     order: 1;
+    margin-right: 4px;
 }
 
 .post-reactions .reaction-more {
-    order: -1; /* Toujours à gauche */
+    order: -1;
     border-style: dashed;
-    color: #6c757d;
-    font-weight: bold;
 }
 
 .post-reactions .reaction-wrapper:hover {
