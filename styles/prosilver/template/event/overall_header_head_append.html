@@ -1,25 +1,26 @@
 <!--
     Template : styles/prosilver/template/event/overall_header_head_append.html — bastien59960/reactions
-    
+
     Template d'injection des ressources CSS et JavaScript pour l'extension Reactions.
-    
+
     Ce template est injecté dans le <head> de toutes les pages du forum pour charger :
-    - Les styles CSS des réactions
-    - Les scripts JavaScript nécessaires
+    - Les styles CSS des réactions (pour tous les utilisateurs)
+    - Les scripts JavaScript (UNIQUEMENT pour les utilisateurs connectés)
     - Les variables JavaScript globales
     - Les keywords français pour la recherche d'emojis
-    
+
     Points clés :
-    - Chargement conditionnel (seulement si les réactions sont activées)
-    - Injection des variables JavaScript globales
-    - Support des keywords français pour la recherche d'emojis
-    - Debug conditionnel pour le développement
+    - CSS chargé pour tous (affichage des réactions en lecture seule)
+    - JS chargé uniquement pour les utilisateurs connectés (interaction)
+    - Les visiteurs voient les réactions mais ne peuvent pas interagir
 -->
 <!-- DEBUG: {DEBUG_REACTIONS} -->
 <!-- IF S_REACTIONS_ENABLED -->
+<!-- CSS chargé pour tous les utilisateurs (affichage des réactions) -->
 <link href="{REACTIONS_CSS_PATH}" rel="stylesheet" type="text/css" media="screen" />
 
-<!-- NOUVEAU : Chargement des keywords français pour la recherche -->
+<!-- JavaScript chargé UNIQUEMENT pour les utilisateurs connectés -->
+<!-- IF S_USER_LOGGED_IN -->
 <script src="{ROOT_PATH}ext/bastien59960/reactions/styles/prosilver/template/js/emoji-keywords-fr.js"></script>
 
 <script>
@@ -41,5 +42,6 @@ var REACTIONS_OPTIONS = window.REACTIONS_OPTIONS || {
 
 <!-- Script principal des réactions (DOIT être chargé APRÈS emoji-keywords-fr.js) -->
 <script src="{REACTIONS_JS_PATH}"></script>
+<!-- ENDIF -->
 
 <!-- ENDIF -->

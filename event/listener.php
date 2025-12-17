@@ -158,10 +158,14 @@ class listener implements EventSubscriberInterface
 
         $debug_mode = (defined('DEBUG') && DEBUG) ? 'true' : 'false';
 
+        // Déterminer si l'utilisateur est vraiment connecté (pas anonyme)
+        $is_logged_in = ($this->user->data['user_id'] != ANONYMOUS) ? 'true' : 'false';
+
         $this->template->assign_var(
             'REACTIONS_AJAX_URL_JS',
             'window.REACTIONS_AJAX_URL = "' . addslashes($ajax_url) . '";' .
             'window.REACTIONS_SID = "' . addslashes(isset($this->user->data['session_id']) ? $this->user->data['session_id'] : '') . '";' .
+            'window.REACTIONS_USER_LOGGED_IN = ' . $is_logged_in . ';' .
             'window.REACTIONS_JSON_PATH = "' . addslashes($json_path) . '";' .
             'window.REACTIONS_DEBUG_MODE = ' . $debug_mode . ';' .
             'window.REACTIONS_OPTIONS = {' .

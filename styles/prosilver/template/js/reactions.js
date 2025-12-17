@@ -749,14 +749,15 @@ function toggle_visible(id) {
 
     /**
      * Vérifie si l'utilisateur est considéré comme connecté côté client.
-     * 
-     * La vérification se base sur la présence de la variable globale `REACTIONS_SID`,
-     * qui est injectée dans la page par phpBB pour les utilisateurs connectés.
+     *
+     * La vérification se base sur la variable globale `REACTIONS_USER_LOGGED_IN`,
+     * qui est injectée dans la page par phpBB. Cette variable est `true` uniquement
+     * pour les utilisateurs authentifiés (pas les visiteurs anonymes).
      * @important Cette vérification est une première barrière côté client ; la véritable validation d'authentification est effectuée côté serveur.
      * @returns {boolean} `true` si l'utilisateur est connecté, `false` sinon.
      */
     function isUserLoggedIn() {
-        return typeof REACTIONS_SID !== 'undefined' && REACTIONS_SID !== '';
+        return typeof window.REACTIONS_USER_LOGGED_IN !== 'undefined' && window.REACTIONS_USER_LOGGED_IN === true;
     }
 
     /**
@@ -1301,12 +1302,20 @@ function toggle_visible(id) {
 
     /**
      * Démarre le processus de synchronisation automatique en temps réel.
-     * 
+     *
      * Cette fonction configure un `setInterval` qui appellera `performLiveSync`
      * à un intervalle régulier défini dans les options (`syncInterval`).
+     *
+     * IMPORTANT : La synchronisation n'est démarrée que pour les utilisateurs connectés
+     * afin d'éviter des requêtes AJAX inutiles pour les visiteurs anonymes.
      */
     function startLiveSync() {
         if (typeof REACTIONS_AJAX_URL === 'undefined') {
+            return;
+        }
+
+        // Ne pas démarrer la synchronisation pour les utilisateurs non connectés
+        if (!isUserLoggedIn()) {
             return;
         }
 
