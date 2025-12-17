@@ -30,15 +30,15 @@
               data-emoji="{post_reactions.EMOJI}"
               data-count="{post_reactions.COUNT}"
               data-users="{post_reactions.USERS}"
-              title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->"
+              title="{L_REACTIONS_COUNT_TOOLTIP}"
               <!-- IF post_reactions.COUNT == 0 -->style="display: none;"<!-- ENDIF -->>
             {post_reactions.EMOJI}
             <span class="count">{post_reactions.COUNT}</span>
         </span>
         <!-- END post_reactions -->
-        
+
         <!-- Bouton pour ouvrir la palette d'emojis -->
-        <span class="reaction-more" title="Ajouter une réaction">+</span>
+        <span class="reaction-more" title="{L_REACTIONS_ADD_TOOLTIP}"><span class="reaction-more-icon">+</span> <span class="reaction-more-text">{L_REACTIONS_BUTTON_TEXT}</span></span>
     </div>
 </div>
 
@@ -55,7 +55,7 @@
             <span class="reaction reaction-readonly"
                   data-emoji="{post_reactions.EMOJI}"
                   data-count="{post_reactions.COUNT}"
-                  title="{post_reactions.COUNT} réaction<!-- IF post_reactions.COUNT != 1 -->s<!-- ENDIF -->">
+                  title="{L_REACTIONS_COUNT_TOOLTIP}">
                 {post_reactions.EMOJI}
                 <span class="count">{post_reactions.COUNT}</span>
             </span>
