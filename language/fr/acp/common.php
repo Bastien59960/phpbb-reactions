@@ -17,9 +17,8 @@ if (!defined('IN_PHPBB')) {
 
 $lang = array_merge($lang ?? [], [
     // --- Titres des modules ---
-    'ACP_REACTIONS_TITLE'                => 'Réactions aux messages',
+    'ACP_REACTIONS_TITLE'                => 'Extension Réactions',
     'ACP_REACTIONS_SETTINGS'             => 'Paramètres',
-    'ACP_REACTIONS_IMPORT'               => 'Importation',
     'ACP_REACTIONS_SETTINGS_EXPLAIN'     => 'Configurez le comportement, les limites et l\'apparence des réactions.',
 
     // --- Descriptions des paramètres ---

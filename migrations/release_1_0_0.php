@@ -1,299 +1,338 @@
 <?php
 /**
- * Fichier : release_1_0_0.php
- * Chemin : bastien59960/reactions/migrations/release_1_0_0.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
- * @version 1.0.3
+ * Migration initiale pour l'extension Reactions
  *
- * Rôle :
- * Fichier de migration initial pour l'extension. Il est responsable de la
- * création de la structure de la base de données (tables, colonnes), de
- * l'ajout des configurations par défaut, de l'enregistrement des modules
- * (ACP, UCP) et des types de notifications.
+ * Cette migration crée toute la structure nécessaire :
+ * - Table post_reactions
+ * - Colonnes utilisateur (préférences notifications)
+ * - Configurations de l'extension
+ * - Modules ACP et UCP
+ * - Types de notifications
  *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * @package    bastien59960/reactions
+ * @author     Bastien (bastien59960)
+ * @copyright  (c) 2025 Bastien59960
+ * @license    GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;
 
 class release_1_0_0 extends \phpbb\db\migration\container_aware_migration
 {
+    /**
+     * Vérifie si l'extension est déjà installée
+     */
     public function effectively_installed()
     {
-        $types_table = $this->table_prefix . 'notification_types';
-        $sql = 'SELECT notification_type_id
-                FROM ' . $types_table . " 
-                WHERE notification_type_name = 'bastien59960.reactions.notification.type.reaction'";
-        $result = $this->db->sql_query($sql);
-        $type_exists = (bool) $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-
-        return (
-            $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions') &&
-            $this->db_tools->sql_column_exists($this->table_prefix . 'users', 'user_reactions_notify') &&
-            $type_exists
-        );
+        return $this->db_tools->sql_table_exists($this->table_prefix . 'post_reactions');
     }
 
-    static public function depends_on()
+    /**
+     * Dépendances de cette migration
+     */
+    public static function depends_on()
     {
-        return array('\phpbb\db\migration\data\v33x\v3310');
+        return [
+            '\phpbb\db\migration\data\v33x\v3310',
+            '\phpbb\db\migration\data\v310\notifications',
+        ];
     }
 
+    /**
+     * Création du schéma de base de données
+     */
     public function update_schema()
     {
-        return array(
-            'add_tables' => array(
-                $this->table_prefix . 'post_reactions' => array(
-                    'COLUMNS'       => array(
-                        'reaction_id'       => array('UINT', null, 'auto_increment'),
-                        'post_id'           => array('UINT', 0),
-                        'topic_id'          => array('UINT', 0),
-                        'user_id'           => array('UINT', 0),
-                        'reaction_emoji'    => array('VCHAR:191', ''),
-                        'reaction_time'     => array('UINT:11', 0),
-                        'reaction_notified' => array('BOOL', 0),
-                    ),
-                    'PRIMARY_KEY'   => 'reaction_id',
-                    'KEYS'          => array(
-                        'post_id'           => array('INDEX', 'post_id'),
-                        'topic_id'          => array('INDEX', 'topic_id'),
-                        'user_id'           => array('INDEX', 'user_id'),
-                        'post_user_emoji'   => array('UNIQUE', array('post_id', 'user_id', 'reaction_emoji')),
-                        'user_post_idx'     => array('INDEX', array('user_id', 'post_id')),
-                    ),
-                ),
-            ),
-            'add_columns' => array(
-                $this->table_prefix . 'users' => array(
-                    'user_reactions_notify'     => array('BOOL', 1),
-                    'user_reactions_cron_email' => array('BOOL', 1),
-                ),
-            ),
-        );
+        return [
+            'add_tables' => [
+                $this->table_prefix . 'post_reactions' => [
+                    'COLUMNS' => [
+                        'reaction_id'       => ['UINT', null, 'auto_increment'],
+                        'post_id'           => ['UINT', 0],
+                        'topic_id'          => ['UINT', 0],
+                        'user_id'           => ['UINT', 0],
+                        'reaction_emoji'    => ['VCHAR:191', ''],
+                        'reaction_time'     => ['UINT:11', 0],
+                        'reaction_notified' => ['BOOL', 0],
+                    ],
+                    'PRIMARY_KEY' => 'reaction_id',
+                    'KEYS' => [
+                        'post_id'         => ['INDEX', 'post_id'],
+                        'topic_id'        => ['INDEX', 'topic_id'],
+                        'user_id'         => ['INDEX', 'user_id'],
+                        'post_user_emoji' => ['UNIQUE', ['post_id', 'user_id', 'reaction_emoji']],
+                        'user_post_idx'   => ['INDEX', ['user_id', 'post_id']],
+                    ],
+                ],
+            ],
+            'add_columns' => [
+                $this->table_prefix . 'users' => [
+                    'user_reactions_notify'     => ['BOOL', 1],
+                    'user_reactions_cron_email' => ['BOOL', 1],
+                ],
+            ],
+        ];
     }
-    
+
+    /**
+     * Suppression du schéma (désinstallation)
+     */
     public function revert_schema()
     {
-        return array(
-            'drop_tables' => array(
+        return [
+            'drop_tables' => [
                 $this->table_prefix . 'post_reactions',
-            ),
-            'drop_columns' => array(
-                $this->table_prefix . 'users' => array(
+            ],
+            'drop_columns' => [
+                $this->table_prefix . 'users' => [
                     'user_reactions_notify',
                     'user_reactions_cron_email',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 
+    /**
+     * Mise à jour des données
+     */
     public function update_data()
     {
-        return array(
-            array('config.add', array('bastien59960_reactions_max_per_post', 20)),
-            array('config.add', array('bastien59960_reactions_max_per_user', 10)),
-            array('config.add', array('bastien59960_reactions_enabled', 1)),
-            array('config.add', array('reactions_ucp_preferences_installed', 1)),
-            array('config.add', array('bastien59960_reactions_spam_time', 15)),
-            array('config.add', array('bastien59960_reactions_cron_last_run', 0)),
-            array('config.add', array('bastien59960_reactions_picker_width', 320)),
-            array('config.add', array('bastien59960_reactions_picker_height', 500)),
-            array('config.add', array('bastien59960_reactions_picker_show_categories', 1)),
-            array('config.add', array('bastien59960_reactions_picker_show_search', 1)),
-            array('config.add', array('bastien59960_reactions_picker_use_json', 1)),
-            array('config.add', array('bastien59960_reactions_picker_emoji_size', 24)), 
-            array('config.add', array('bastien59960_reactions_sync_interval', 60)), // CORRECTION : Valeur par défaut augmentée à 60 secondes
+        return [
+            // Configurations de l'extension
+            ['config.add', ['bastien59960_reactions_enabled', 1]],
+            ['config.add', ['bastien59960_reactions_max_per_post', 20]],
+            ['config.add', ['bastien59960_reactions_max_per_user', 10]],
+            ['config.add', ['bastien59960_reactions_spam_time', 15]],
+            ['config.add', ['bastien59960_reactions_cron_last_run', 0]],
+            ['config.add', ['bastien59960_reactions_picker_width', 320]],
+            ['config.add', ['bastien59960_reactions_picker_height', 500]],
+            ['config.add', ['bastien59960_reactions_picker_show_categories', 1]],
+            ['config.add', ['bastien59960_reactions_picker_show_search', 1]],
+            ['config.add', ['bastien59960_reactions_picker_use_json', 1]],
+            ['config.add', ['bastien59960_reactions_picker_emoji_size', 24]],
+            ['config.add', ['bastien59960_reactions_post_emoji_size', 24]],
+            ['config.add', ['bastien59960_reactions_sync_interval', 60]],
+            ['config.add', ['bastien59960_reactions_version', '1.0.0']],
 
-            array('module.add', array('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_TITLE')),
-            array('module.add', array(
+            // Module ACP
+            ['module.add', ['acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_TITLE']],
+            ['module.add', [
                 'acp',
                 'ACP_REACTIONS_TITLE',
-                array(
-                    'module_basename'   => '\bastien59960\reactions\acp\main_module',
-                    'module_langname'   => 'ACP_REACTIONS_SETTINGS',
-                    'module_mode'       => 'settings',
-                    'module_auth'       => 'ext_bastien59960/reactions',
-                )
-            )),
+                [
+                    'module_basename' => '\bastien59960\reactions\acp\main_module',
+                    'module_langname' => 'ACP_REACTIONS_SETTINGS',
+                    'module_mode'     => 'settings',
+                    'module_auth'     => 'ext_bastien59960/reactions',
+                ],
+            ]],
 
-            // CORRECTION : Utilisation de la syntaxe de module unique avec tous les champs requis.
-            array('module.add', array(
+            // Module UCP
+            ['module.add', [
                 'ucp',
                 'UCP_PREFS',
-                array(
-                    'module_basename'   => '\bastien59960\reactions\ucp\main_module',
-                    'module_langname'   => 'UCP_REACTIONS_SETTINGS',
-                    'module_mode'       => 'settings',
-                    'module_auth'       => 'ext_bastien59960/reactions',
-                )
-            )),
+                [
+                    'module_basename' => '\bastien59960\reactions\ucp\main_module',
+                    'module_langname' => 'UCP_REACTIONS_SETTINGS',
+                    'module_mode'     => 'settings',
+                    'module_auth'     => 'ext_bastien59960/reactions',
+                ],
+            ]],
 
-            array('custom', array(array($this, 'set_utf8mb4_bin'))),
-            array('custom', array(array($this, 'create_notification_type'))),
-            array('custom', array(array($this, 'clean_orphan_notifications'))),
-        );
+            // Fonctions personnalisées
+            ['custom', [[$this, 'set_utf8mb4_columns']]],
+            ['custom', [[$this, 'create_notification_types']]],
+            ['custom', [[$this, 'create_user_notification_preferences']]],
+        ];
     }
 
+    /**
+     * Suppression des données (désinstallation)
+     */
     public function revert_data()
     {
-        return array(
-            // Étape 0 : Nettoyage préventif des anciens modules (sécurité)
-            array('custom', array(array($this, 'remove_existing_modules'))),
+        return [
+            // Supprimer les modules
+            ['custom', [[$this, 'remove_modules']]],
 
-            // Étape 1 : Supprimer les types de notifications via méthode custom
-            array('custom', array(array($this, 'remove_notification_type'))),
+            // Supprimer les types de notifications
+            ['custom', [[$this, 'remove_notification_types']]],
 
-            // Étape 2 : Supprimer les modules ACP et UCP (d'abord les enfants, puis la catégorie)
-            // La méthode custom 'remove_existing_modules' s'occupe déjà de ça.
-
-            // Étape 3 : Supprimer les clés de configuration
-            array('config.remove', array('bastien59960_reactions_max_per_post')),
-            array('config.remove', array('bastien59960_reactions_max_per_user')),
-            array('config.remove', array('bastien59960_reactions_enabled')),
-            array('config.remove', array('reactions_ucp_preferences_installed')),
-            array('config.remove', array('bastien59960_reactions_spam_time')),
-            array('config.remove', array('bastien59960_reactions_cron_last_run')),
-            array('config.remove', array('bastien59960_reactions_picker_width')),
-            array('config.remove', array('bastien59960_reactions_picker_height')),
-            array('config.remove', array('bastien59960_reactions_picker_show_categories')),
-            array('config.remove', array('bastien59960_reactions_picker_show_search')),
-            array('config.remove', array('bastien59960_reactions_picker_use_json')),
-            array('config.remove', array('bastien59960_reactions_picker_emoji_size')),
-            array('config.remove', array('bastien59960_reactions_sync_interval')),
-            array('config.remove', array('bastien59960_reactions_version')),
-            array('config.remove', array('bastien59960_reactions_last_test_run')),
-        );
+            // Supprimer les configurations
+            ['config.remove', ['bastien59960_reactions_enabled']],
+            ['config.remove', ['bastien59960_reactions_max_per_post']],
+            ['config.remove', ['bastien59960_reactions_max_per_user']],
+            ['config.remove', ['bastien59960_reactions_spam_time']],
+            ['config.remove', ['bastien59960_reactions_cron_last_run']],
+            ['config.remove', ['bastien59960_reactions_picker_width']],
+            ['config.remove', ['bastien59960_reactions_picker_height']],
+            ['config.remove', ['bastien59960_reactions_picker_show_categories']],
+            ['config.remove', ['bastien59960_reactions_picker_show_search']],
+            ['config.remove', ['bastien59960_reactions_picker_use_json']],
+            ['config.remove', ['bastien59960_reactions_picker_emoji_size']],
+            ['config.remove', ['bastien59960_reactions_post_emoji_size']],
+            ['config.remove', ['bastien59960_reactions_sync_interval']],
+            ['config.remove', ['bastien59960_reactions_version']],
+            ['config.remove', ['bastien59960_reactions_imported_from_old']],
+        ];
     }
 
-    public function remove_existing_modules()
+    /**
+     * Configure les colonnes en UTF8MB4 pour supporter les emojis
+     */
+    public function set_utf8mb4_columns()
     {
         try {
-            $module_tool = $this->container->get('phpbb.db.migration.tool.module');
-            // Supprime le module enfant et sa catégorie parente si elle devient vide.
-            $module_tool->remove('acp', 'ACP_CAT_DOT_MODS', 'ACP_REACTIONS_SETTINGS');
-            // Supprime le module UCP de la catégorie des préférences.
-            $module_tool->remove('ucp', 'UCP_PREFS', 'UCP_REACTIONS_SETTINGS');
-        } catch (\Exception $e) {
-            // Ignore errors
-        }
-        return true;
-    }
-
-    public function set_utf8mb4_bin()
-    {
-        $table = $this->table_prefix . 'post_reactions';
-        try {
-            $sql = "ALTER TABLE {$table}
+            // Colonne reaction_emoji
+            $sql = "ALTER TABLE {$this->table_prefix}post_reactions
                     MODIFY `reaction_emoji` VARCHAR(191)
                     CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''";
             $this->db->sql_query($sql);
-        } catch (\Exception $e) {
-            // Ignore errors
-        }
-        return true;
-    }
 
-    public function clean_orphan_notifications()
-    {
-        $notifications_table = $this->table_prefix . 'notifications';
-        $types = $this->table_prefix . 'notification_types';
-        try {
-            $sql = "DELETE n FROM {$notifications_table} n
-                    LEFT JOIN {$types} t ON n.notification_type_id = t.notification_type_id
-                    WHERE t.notification_type_id IS NULL";
+            // Colonne notification_data (pour stocker les emojis dans les notifications)
+            $sql = "ALTER TABLE {$this->table_prefix}notifications
+                    MODIFY notification_data MEDIUMTEXT
+                    CHARACTER SET utf8mb4 COLLATE utf8mb4_bin";
             $this->db->sql_query($sql);
         } catch (\Exception $e) {
-            // Ignore errors
+            // Ignorer les erreurs (la colonne peut déjà être en utf8mb4)
         }
         return true;
     }
 
-    public function create_notification_type()
+    /**
+     * Crée les types de notifications
+     */
+    public function create_notification_types()
     {
         $types_table = $this->table_prefix . 'notification_types';
-    
+
+        $notification_types = [
+            'bastien59960.reactions.notification.type.reaction',
+            'bastien59960.reactions.notification.type.reaction_email_digest',
+        ];
+
+        foreach ($notification_types as $type_name) {
+            // Vérifier si le type existe déjà
+            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
+                    WHERE notification_type_name = '" . $this->db->sql_escape($type_name) . "'";
+            $result = $this->db->sql_query($sql);
+            $exists = $this->db->sql_fetchrow($result);
+            $this->db->sql_freeresult($result);
+
+            if (!$exists) {
+                $sql = 'INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', [
+                    'notification_type_name'    => $type_name,
+                    'notification_type_enabled' => 1,
+                ]);
+                $this->db->sql_query($sql);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Crée les préférences de notification pour tous les utilisateurs
+     */
+    public function create_user_notification_preferences()
+    {
+        $notification_types = [
+            'bastien59960.reactions.notification.type.reaction' => 'notification.method.board',
+            'bastien59960.reactions.notification.type.reaction_email_digest' => 'notification.method.email',
+        ];
+
+        // Récupérer tous les utilisateurs actifs
+        $sql = 'SELECT user_id FROM ' . $this->table_prefix . 'users
+                WHERE user_type <> ' . USER_IGNORE . ' AND user_id <> ' . ANONYMOUS;
+        $result = $this->db->sql_query($sql);
+
+        $user_ids = [];
+        while ($row = $this->db->sql_fetchrow($result)) {
+            $user_ids[] = (int) $row['user_id'];
+        }
+        $this->db->sql_freeresult($result);
+
+        foreach ($user_ids as $user_id) {
+            foreach ($notification_types as $item_type => $method) {
+                // Vérifier si la préférence existe
+                $sql = 'SELECT notify FROM ' . $this->table_prefix . 'user_notifications
+                        WHERE user_id = ' . $user_id . '
+                          AND item_type = \'' . $this->db->sql_escape($item_type) . '\'
+                          AND method = \'' . $this->db->sql_escape($method) . '\'
+                          AND item_id = 0';
+                $result = $this->db->sql_query($sql);
+                $exists = $this->db->sql_fetchrow($result);
+                $this->db->sql_freeresult($result);
+
+                if (!$exists) {
+                    $sql = 'INSERT INTO ' . $this->table_prefix . 'user_notifications
+                            (item_type, item_id, user_id, method, notify)
+                            VALUES (\'' . $this->db->sql_escape($item_type) . '\', 0, ' . $user_id . ',
+                                    \'' . $this->db->sql_escape($method) . '\', 1)';
+                    $this->db->sql_query($sql);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Supprime les modules ACP et UCP
+     */
+    public function remove_modules()
+    {
         try {
-            // Cleanup old malformed entries
-            $malformed_names = ['reaction', 'reaction_email_digest'];
-            $sql = 'DELETE FROM ' . $types_table . "
-                WHERE " . $this->db->sql_in_set('notification_type_name', $malformed_names);
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_basename LIKE '%bastien59960%reactions%'";
             $this->db->sql_query($sql);
-    
-            // Type 1: reaction (nom court déduit par phpBB)
-            // CORRECTION : Le nom canonique (long) du service DOIT être utilisé ici.
-            // C'est ce nom que le conteneur de services utilise pour trouver la classe de notification.
-            $canonical_name = 'bastien59960.reactions.notification.type.reaction';
-            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-                WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($canonical_name)) . "'
-                LIMIT 1";
-            $result = $this->db->sql_query($sql);
-            $row = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
 
-            if (!$row) { // phpcs:ignore
-                $insert_data = array(
-                    'notification_type_name'    => $canonical_name,
-                    'notification_type_enabled' => 1,
-                );
-                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
-            }
-
-            // Type 2: reaction_email_digest
-            $digest_name = 'bastien59960.reactions.notification.type.reaction_email_digest';
-            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-                WHERE LOWER(notification_type_name) = '" . $this->db->sql_escape(strtolower($digest_name)) . "'
-                LIMIT 1";
-            $result = $this->db->sql_query($sql);
-            $row = $this->db->sql_fetchrow($result);
-            $this->db->sql_freeresult($result);
-
-            if (!$row) { // phpcs:ignore
-                $insert_data = array(
-                    'notification_type_name'    => $digest_name,
-                    'notification_type_enabled' => 1,
-                );
-                $this->db->sql_query('INSERT INTO ' . $types_table . ' ' . $this->db->sql_build_array('INSERT', $insert_data));
-            }
+            // Supprimer aussi la catégorie ACP
+            $sql = 'DELETE FROM ' . $this->table_prefix . "modules
+                    WHERE module_langname = 'ACP_REACTIONS_TITLE' AND module_class = 'acp'";
+            $this->db->sql_query($sql);
         } catch (\Exception $e) {
-            // Ignore errors
+            // Ignorer les erreurs
         }
         return true;
     }
 
-    public function remove_notification_type()
+    /**
+     * Supprime les types de notifications
+     */
+    public function remove_notification_types()
     {
-        $types_table = $this->table_prefix . 'notification_types';
-        $notifications_table = $this->table_prefix . 'notifications';
-
         try {
-            // Étape 1 : Récupérer les IDs de tous les types de notification liés à l'extension (noms longs et courts)
-            $sql = 'SELECT notification_type_id FROM ' . $types_table . "
-                    WHERE notification_type_name LIKE 'bastien59960.reactions.notification.type.%'
-                       OR notification_type_name IN ('reaction', 'reaction_email_digest')";
+            // Récupérer les IDs des types
+            $sql = 'SELECT notification_type_id FROM ' . $this->table_prefix . "notification_types
+                    WHERE notification_type_name LIKE 'bastien59960.reactions.%'";
             $result = $this->db->sql_query($sql);
-            
+
             $type_ids = [];
             while ($row = $this->db->sql_fetchrow($result)) {
                 $type_ids[] = (int) $row['notification_type_id'];
             }
             $this->db->sql_freeresult($result);
 
-            if (empty($type_ids)) {
-                return true; // Rien à faire
+            if (!empty($type_ids)) {
+                // Supprimer les notifications
+                $sql = 'DELETE FROM ' . $this->table_prefix . 'notifications
+                        WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
+                $this->db->sql_query($sql);
+
+                // Supprimer les préférences utilisateurs
+                $sql = 'DELETE FROM ' . $this->table_prefix . "user_notifications
+                        WHERE item_type LIKE 'bastien59960.reactions.%'";
+                $this->db->sql_query($sql);
+
+                // Supprimer les types
+                $sql = 'DELETE FROM ' . $this->table_prefix . 'notification_types
+                        WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
+                $this->db->sql_query($sql);
             }
-
-            // Étape 2 : Supprimer toutes les notifications qui utilisent ces types
-            $sql_delete_notifs = 'DELETE FROM ' . $notifications_table . ' WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
-            $this->db->sql_query($sql_delete_notifs);
-
-            // Étape 3 : Supprimer les types de notification eux-mêmes
-            $sql_delete_types = 'DELETE FROM ' . $types_table . ' WHERE ' . $this->db->sql_in_set('notification_type_id', $type_ids);
-            $this->db->sql_query($sql_delete_types);
         } catch (\Exception $e) {
-            // Ignore errors
+            // Ignorer les erreurs
         }
         return true;
     }
