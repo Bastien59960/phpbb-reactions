@@ -21,9 +21,6 @@ De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont a
 - **Code Robuste et Actuel** : Développée avec les standards de phpBB et PHP 7.4+, garantissant sécurité et performance.
 - **Support Complet d'Unicode** : Ne vous limitez pas à une poignée d'images. Profitez de tous les émojis, y compris les plus récents.
 - **Notifications Intelligentes** : Un système de notifications (cloche et e-mail) puissant mais respectueux de l'utilisateur pour éviter le spam.
-- **Maintenance Active** : Le projet est activement maintenu avec une feuille de route claire pour de futures améliorations.
-
-En bref, c'est la solution "plug-and-play" pour moderniser l'interaction sur votre forum sans compromis.
 
 ---
 
@@ -50,7 +47,7 @@ En bref, c'est la solution "plug-and-play" pour moderniser l'interaction sur vot
 
 ## 🖼️ Aperçu
 
-*(Ajoutez ici une capture d'écran si souhaité)*
+
 
 ---
 
