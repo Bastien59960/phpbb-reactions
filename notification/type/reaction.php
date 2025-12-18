@@ -342,6 +342,31 @@ class reaction extends base implements type_interface
     }
 
     /**
+     * Crée le tableau de données à insérer en base de données
+     *
+     * IMPORTANT : Cette méthode DOIT stocker les données personnalisées
+     * dans notification_data pour qu'elles soient disponibles lors de l'affichage.
+     *
+     * @param array $type_data Données de la réaction
+     * @param array $pre_create_data Données pré-créées (non utilisées ici)
+     * @return void
+     */
+    public function create_insert_array($type_data, $pre_create_data = array())
+    {
+        // Appeler la méthode parente pour initialiser les données de base
+        parent::create_insert_array($type_data, $pre_create_data);
+
+        // Stocker les données personnalisées dans notification_data
+        $this->set_data('post_id', (int) ($type_data['post_id'] ?? 0));
+        $this->set_data('topic_id', (int) ($type_data['topic_id'] ?? 0));
+        $this->set_data('forum_id', (int) ($type_data['forum_id'] ?? 0));
+        $this->set_data('reacter_id', (int) ($type_data['reacter_id'] ?? ($type_data['reacter'] ?? 0)));
+        $this->set_data('reacter_name', $type_data['reacter_name'] ?? 'Quelqu\'un');
+        $this->set_data('reaction_emoji', $type_data['reaction_emoji'] ?? '👍');
+        $this->set_data('poster_id', (int) ($type_data['poster_id'] ?? ($type_data['post_author'] ?? 0)));
+    }
+
+    /**
      * Retourne les utilisateurs dont il faut charger les données
      * 
      * Dans notre cas, on n'a pas besoin de charger de données
