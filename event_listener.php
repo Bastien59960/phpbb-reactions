@@ -1,6 +1,6 @@
 <?php
 /**
- * @package    bastien59960/Reactions
+ * @package    bastien59960/reactions
  * @author     Bastien (bastien59960)
  * @copyright  (c) 2025 Bastien59960
  * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
@@ -101,10 +101,10 @@ class listener implements EventSubscriberInterface
      */
     public function add_assets_to_page($event)
     {
-        $this->language->add_lang('common', 'bastien59960/Reactions');
+        $this->language->add_lang('common', 'bastien59960/reactions');
 
-        $css_path = './ext/bastien59960/Reactions/styles/prosilver/theme/reactions.css';
-        $js_path  = './ext/bastien59960/Reactions/styles/prosilver/template/js/reactions.js';
+        $css_path = './ext/bastien59960/reactions/styles/prosilver/theme/reactions.css';
+        $js_path  = './ext/bastien59960/reactions/styles/prosilver/template/js/reactions.js';
 
         try {
             $ajax_url = $this->helper->route('bastien59960_reactions_ajax', []);
@@ -128,7 +128,7 @@ class listener implements EventSubscriberInterface
         // Le JavaScript (fetch) a besoin d'une URL, pas d'un chemin de disque dur.
         // CORRECTION LOGIQUE : Le chargement du JSON ne doit dépendre que de l'option `picker_use_json`.
         $json_path = ($picker_use_json)
-            ? generate_board_url() . '/ext/bastien59960/Reactions/styles/prosilver/theme/categories.json'
+            ? generate_board_url() . '/ext/bastien59960/reactions/styles/prosilver/theme/categories.json'
             : '';
 
         $this->template->assign_vars([
@@ -248,7 +248,7 @@ class listener implements EventSubscriberInterface
 
         foreach ($language_sets as $lang_set) {
             $lang_set_ext[] = [
-                'ext_name' => 'bastien59960/Reactions',
+                'ext_name' => 'bastien59960/reactions',
                 'lang_set' => $lang_set,
             ];
         }
@@ -264,8 +264,8 @@ class listener implements EventSubscriberInterface
      */
     public function load_ucp_language($event)
     {
-        $this->language->add_lang('ucp_reactions', 'bastien59960/Reactions');
-        $this->language->add_lang('common', 'bastien59960/Reactions');
+        $this->language->add_lang('ucp_reactions', 'bastien59960/reactions');
+        $this->language->add_lang('common', 'bastien59960/reactions');
     }
 
     private function get_user_reactions($post_id, $user_id)
@@ -388,7 +388,7 @@ class listener implements EventSubscriberInterface
 
             // CORRECTION FINALE : Il faut charger la langue dans les deux services,
             // car `cron:list` utilise `$user->lang()` pour la traduction.
-            $this->user->add_lang_ext('bastien59960/Reactions', 'common');
+            $this->user->add_lang_ext('bastien59960/reactions', 'common');
         }
     }
 }
