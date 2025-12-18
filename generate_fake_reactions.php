@@ -6,9 +6,9 @@
  */
 
 define('IN_PHPBB', true);
-$phpbb_root_path = (defined('PHPBB_ROOT_PATH')) ? PHPBB_ROOT_PATH : './';
+$phpbb_root_path = (defined('PHPBB_ROOT_PATH')) ? PHPBB_ROOT_PATH : __DIR__ . '/../../../';
 $phpEx = substr(strrchr(__FILE__, '.'), 1);
-include($phpbb_root_path . 'common.' . $phpEx);
+require($phpbb_root_path . 'common.' . $phpEx);
 
 // Initialisation de la session (nécessaire pour l'accès DB)
 $user->session_begin();
