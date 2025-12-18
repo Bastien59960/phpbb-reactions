@@ -5,6 +5,20 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 
 ---
 
+<<<<<<< HEAD
+=======
+## 🤔 Pourquoi "phpBB Reactions" ?
+
+De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont aujourd'hui obsolètes, non maintenues ou incompatibles avec les versions récentes de phpBB et de PHP. Par exemple, l'ancienne extension populaire de Steve, bien qu'ayant été pionnière, n'a pas reçu les mises à jour nécessaires et souffre de problèmes de compatibilité et de fonctionnalités vieillissantes.
+
+**phpBB Reactions** a été entièrement conçue pour l'écosystème moderne de phpBB 3.3+ :
+- **Code Robuste et Actuel** : Développée avec les standards de phpBB et PHP 7.4+, garantissant sécurité et performance.
+- **Support Complet d'Unicode** : Ne vous limitez pas à une poignée d'images. Profitez de tous les émojis, y compris les plus récents.
+- **Notifications Intelligentes** : Un système de notifications (cloche et e-mail) puissant mais respectueux de l'utilisateur pour éviter le spam.
+
+---
+
+>>>>>>> 6a84f747be93011e6dc4ac4be3e381a035529ce6
 ## ✨ Fonctionnalités phares
 
 - **Réactions illimitées** : Support complet de tous les émojis Unicode (👍 ❤️ 😂 👎 …), y compris les emojis composés et les dernières nouveautés.
@@ -27,10 +41,15 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 ---
 
 ## 🖼️ Aperçu
+![Capture d'écran de l'interface des réactions](./images/01.jpg)
+![Capture d'écran des notifications](./images/02.jpg)
 
+<<<<<<< HEAD
 *(Ajoutez ici une capture d'écran si souhaité)*
 ![Capture d'écran de l'interface des réactions](./images/01.jpg)
 ![Capture d'écran des notifications](./images/02.jpg)
+=======
+>>>>>>> 6a84f747be93011e6dc4ac4be3e381a035529ce6
 
 ---
 
