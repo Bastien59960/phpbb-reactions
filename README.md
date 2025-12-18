@@ -46,7 +46,8 @@ De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont a
 ---
 
 ## 🖼️ Aperçu
-
+![Capture d'écran de l'interface des réactions](./images/01.jpg)
+![Capture d'écran des notifications](./images/02.jpg)
 
 
 ---
