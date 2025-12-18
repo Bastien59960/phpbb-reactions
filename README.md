@@ -34,6 +34,7 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 ---
 
 ## 🛠️ Installation rapide
+**⚠️ Cette extension est actuellement en version bêta. Vos retours sont précieux pour l'améliorer !**
 
 1. **Pré-requis** : phpBB 3.3.10+ (UTF8MB4 activé sur la base de données)
 2. **Téléchargement** : [Dernière version sur GitHub](https://github.com/bastien59960/reactions)
@@ -198,6 +199,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 ---
 
 ## 🛠️ Quick Installation
+**⚠️ This extension is currently in beta. Your feedback is valuable for its improvement!**
 
 1. **Requirements**: phpBB 3.3.10+ (UTF8MB4 enabled on the database)
 2. **Download**: [Latest version on GitHub](https://github.com/bastien59960/reactions)
