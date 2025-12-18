@@ -2,7 +2,7 @@
     "name": "bastien59960/reactions",
     "type": "phpbb-extension",
     "description": "Extension phpBB 3.3+ permettant aux utilisateurs de réagir aux messages avec des emojis Unicode. Inclut un système de notifications complet avec support des notifications par cloche (immédiates) et par email (avec délai anti-spam).",
-    "homepage": "https://github.com/Bastien59960/phpbb-reactions",
+    "homepage": "https://github.com/Bastien59960/Reactions",
     "version": "1.0.0",
     "keywords": [
         "phpbb",
@@ -17,7 +17,7 @@
     "authors": [
         {
             "name": "Bastien59960",
-            "email": "bastien59960@example.com",
+            "email": "bastien@debucquoi.com",
             "role": "Developer",
             "homepage": "https://github.com/Bastien59960"
         }
@@ -33,13 +33,13 @@
         "squizlabs/php_codesniffer": "^3.0"
     },
     "extra": {
-        "display-name": "Post Reactions",
+        "display-name": "Reactions",
         "soft-require": {
             "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
         },
         "version-check": {
             "host": "raw.githubusercontent.com",
-            "directory": "/Bastien59960/phpbb-reactions/master",
+            "directory": "/Bastien59960/Reactions/master",
             "filename": "version.json"
         }
     },
