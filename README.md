@@ -1,6 +1,13 @@
 # 🚀 phpBB Reactions — Extension d'Émojis Ultra-Complète pour phpBB 3.3+
 
 Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos membres réagir à chaque message avec l'intégralité des émojis Unicode !  
+
+<p align="center">
+  <a href="https://github.com/Bastien59960/phpbb-reactions"><img src="https://img.shields.io/badge/version-1.0.0--beta-blue" alt="Version"></a>
+  <a href="https://www.phpbb.com/"><img src="https://img.shields.io/badge/phpBB-%3E%3D%203.3-0076B1" alt="phpBB Version"></a>
+  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/php-%3E%3D%207.4-8892BF" alt="PHP Version"></a>
+  <a href="./license"><img src="https://img.shields.io/badge/license-GPL--2.0--only-green" alt="License"></a>
+</p>
 **Expérience fluide, notifications intelligentes, personnalisation avancée, et performance garantie.**
 
 ---
@@ -12,7 +19,7 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 - **Multi-réactions** : Jusqu'à 10 réactions différentes par utilisateur et par post (paramétrable).
 - **Compteurs dynamiques** : Affichage en temps réel du nombre de réactions par emoji sous chaque message.
 - **Tooltips interactifs** : Survolez un emoji pour voir qui a réagi.
-- **AJAX ultra-rapide** : Toutes les interactions (ajout, retrait, affichage) sont instantanées, sans rechargement de page.
+- **Interactions AJAX** : Ajout et retrait de réactions sans rechargement de page. Les réactions des autres utilisateurs se synchronisent automatiquement (intervalle configurable).
 - **Notifications puissantes** :
    - **Synchronisation Intelligente** : Les réactions sont mises à jour sur la page sans action de l'utilisateur (ex: via `sync`).
   - **Cloche** : Notification immédiate dans le forum.
@@ -163,7 +170,14 @@ GNU General Public License v2.0
 
 ---
 
-# 🚀 phpBB Reactions — The Ultimate Emoji Extension for phpBB 3.3+ (English)
+# 🚀 phpBB Reactions — The Ultimate Emoji Extension for phpBB 3.3+
+
+<p align="center">
+  <a href="https://github.com/Bastien59960/reactions"><img src="https://img.shields.io/badge/version-1.0.0--beta-blue" alt="Version"></a>
+  <a href="https://www.phpbb.com/"><img src="https://img.shields.io/badge/phpBB-%3E%3D%203.3-0076B1" alt="phpBB Version"></a>
+  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/php-%3E%3D%207.4-8892BF" alt="PHP Version"></a>
+  <a href="./license"><img src="https://img.shields.io/badge/license-GPL--2.0--only-green" alt="License"></a>
+</p>
 
 Bring your phpBB forum to life: let your members react to every post with the full range of Unicode emojis!  
 **Smooth experience, smart notifications, advanced customization, and top performance.**
@@ -173,15 +187,15 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 ## ✨ Key Features
 
 - **Unlimited reactions**: Full support for all Unicode emojis (👍 ❤️ 😂 👎 …), including composed and latest emojis.
-- **Smart palette**: 10 quick-access emojis, full palette for all others.
+- **Smart palette**: 10 common emojis for quick access, with an extended palette for all others.
 - **Multi-reactions**: Up to 10 different reactions per user and per post (configurable).
 - **Live counters**: Real-time display of reaction counts per emoji under each post.
 - **Interactive tooltips**: Hover an emoji to see who reacted.
-- **Ultra-fast AJAX**: All interactions (add, remove, display) are instant, no page reload.
+- **AJAX Interactions**: Add and remove reactions without page reloads. Other users' reactions are synchronized automatically (configurable interval).
 - **Powerful notifications**:
   - **Smart Sync**: Reactions are updated on the page without user action (e.g., via `sync`).
   - **Bell**: Instant in-forum notification.
-  - **Email digest**: Periodic grouped digest, anti-spam, user-customizable.
+  - **Email Summary**: Periodic grouped digest, anti-spam, customizable by the user.
 - **User preferences**: Each member chooses which notifications to receive (bell, email, or none).
 - **Configurable limits**: Max reactions per post, per user, anti-spam delay… all adjustable in the ACP.
 - **Advanced security**: CSRF protection, strict emoji validation, permission checks, built-in anti-spam.
@@ -202,7 +216,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 **⚠️ This extension is currently in beta. Your feedback is valuable for its improvement!**
 
 1. **Requirements**: phpBB 3.3.10+ (UTF8MB4 enabled on the database)
-2. **Download**: [Latest version on GitHub](https://github.com/bastien59960/reactions)
+2. **Download**: Latest version on GitHub
 3. **Deployment**:
    - Unzip into `ext/bastien59960/reactions/`
    - Enable the extension in ACP > Customise > Manage extensions
@@ -215,17 +229,17 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 ## 📝 Detailed Features
 
 ### Reactions & Interface
-- Quick and full emoji palette
+- Quick and full emoji palettes
 - Display of reactions under each post
 - Tooltips with the list of users who reacted
 - Add/remove reaction in one click (AJAX)
 
 ### Notifications
 - **Bell**: Instant notification to the post author (except self-reaction)
-- **Email digest**: Grouped digest, anti-spam (configurable delay, default 45 min)
+- **Email Summary**: Grouped digest, anti-spam (configurable delay, default 45 min)
 - Individual preferences (enable/disable each type)
 
-### Configuration & Customization
+### Configuration & Personalization
 - Limits per post and per user (modifiable in ACP)
 - Global enable/disable of the extension
 - Anti-spam delay for email notifications
