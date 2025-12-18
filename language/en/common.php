@@ -65,7 +65,7 @@ $lang = array_merge($lang ?? [], [
     'REACTIONS_ADD_TOOLTIP'     => 'Add a reaction',
     'REACTIONS_MORE_TOOLTIP'    => 'More emojis',
     'REACTIONS_COUNT_TOOLTIP'   => '%d reaction(s)',
-    'REACTIONS_BUTTON_TEXT'     => 'React to the post above with an emoji',
+    'REACTIONS_BUTTON_TEXT'     => 'Like',
     'REACTIONS_COUNT_TITLE'     => '%d reaction',
     'REACTIONS_COUNT_TITLE_PLURAL' => '%d reactions',
     
