@@ -4,7 +4,7 @@
  * Chemin : bastien59960/reactions/ext.php
  * Auteur : Bastien (bastien59960)
  * GitHub : https://github.com/bastien59960/reactions
- * @version 1.0.4
+ * @version 1.0.0
  *
  * Rôle :
  * Ce fichier est la classe principale et le point d'entrée de l'extension pour
@@ -97,7 +97,7 @@ class ext extends \phpbb\extension\base
 	 */
 	public function get_version()
 	{
-		return '1.0.2';
+		return '1.0.0';
 	}
 
 	/**
