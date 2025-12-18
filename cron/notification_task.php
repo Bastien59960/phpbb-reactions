@@ -666,7 +666,18 @@ class notification_task extends \phpbb\cron\task\base
             $messenger->subject($subject_utf8);
 
             $template_path = '@bastien59960_reactions/email/reaction_digest';
-            $this->log("     📄 [Messenger Fallback] Template: {$template_path}");
+            $this->log("     📄 [Messenger] Template: {$template_path}");
+            $this->log("     📄 [Messenger] Langue: {$author_lang}");
+
+            // Vérifier si le fichier template existe physiquement
+            $template_file_fr = $this->phpbb_root_path . 'ext/bastien59960/reactions/language/fr/email/reaction_digest.txt';
+            $template_file_en = $this->phpbb_root_path . 'ext/bastien59960/reactions/language/en/email/reaction_digest.txt';
+            $template_file_lang = $this->phpbb_root_path . 'ext/bastien59960/reactions/language/' . $author_lang . '/email/reaction_digest.txt';
+
+            $this->log("     📂 [Template] Vérification fichier ({$author_lang}): " . (file_exists($template_file_lang) ? '✅ EXISTE' : '❌ MANQUANT'));
+            $this->log("     📂 [Template] Vérification fichier (fr): " . (file_exists($template_file_fr) ? '✅ EXISTE' : '❌ MANQUANT'));
+            $this->log("     📂 [Template] Vérification fichier (en): " . (file_exists($template_file_en) ? '✅ EXISTE' : '❌ MANQUANT'));
+
             $messenger->template($template_path, $author_lang);
 
             // Assigner les variables globales
@@ -725,15 +736,48 @@ class notification_task extends \phpbb\cron\task\base
             }
 
             $this->log("     📤 [Messenger] Envoi de l'email...");
+
+            // Capturer les erreurs PHP pendant l'envoi
+            $error_before = error_get_last();
+
             $send_result = $messenger->send(NOTIFY_EMAIL);
-            
+
+            $error_after = error_get_last();
+
+            // Logger le type exact du résultat
+            $this->log("     📊 [Messenger] Résultat brut de send(): " . var_export($send_result, true) . " (type: " . gettype($send_result) . ")");
+
+            // Vérifier s'il y a eu une erreur PHP pendant l'envoi
+            if ($error_after !== $error_before && $error_after !== null) {
+                $this->log("     ⚠️  [Messenger] Erreur PHP détectée: " . $error_after['message']);
+                $this->log("        └─ Fichier: " . $error_after['file'] . ":" . $error_after['line']);
+            }
+
+            // Vérifier les erreurs du messenger
+            if (method_exists($messenger, 'get_errors') && !empty($messenger->get_errors())) {
+                $this->log("     ⚠️  [Messenger] Erreurs messenger: " . implode(', ', $messenger->get_errors()));
+            }
+
+            // Logger la queue d'emails si disponible
+            if (property_exists($messenger, 'queue') && $messenger->queue !== null) {
+                $this->log("     📬 [Messenger] Email mis en queue (pas envoyé immédiatement)");
+            }
+
             if ($send_result === true || $send_result === 1)
             {
-                $this->log("     ✅ [Messenger] Email envoyé avec succès.");
+                $this->log("     ✅ [Messenger] Email envoyé avec succès à {$author_email}");
+                $this->log("     📧 [SMTP] Destinataire: {$author_email}");
+                $this->log("     📧 [SMTP] Sujet: {$subject_utf8}");
             } else {
-                $this->log("     ❌ [Messenger Fallback] Échec de l'envoi");
+                $this->log("     ❌ [Messenger] Échec de l'envoi - résultat: " . var_export($send_result, true));
+
+                // Essayer de récupérer plus d'infos sur l'erreur SMTP
+                global $phpbb_log;
+                if (isset($phpbb_log)) {
+                    $this->log("     🔍 [Debug] phpbb_log disponible pour analyse");
+                }
             }
-            
+
             return $send_result;
         }
         catch (\Exception $e)
