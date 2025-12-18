@@ -98,6 +98,7 @@ class helper
                     'count' => 0,
                     'users' => [],
                     'user_reacted' => false,
+                    'first_reaction' => (int) $row['reaction_time'],
                 ];
             }
 
@@ -131,15 +132,17 @@ class helper
             }
 
             $reactions[] = [
-                'emoji'        => $emoji,
-                'count'        => (int) $data['count'],
-                'users'        => $data['users'],
-                'user_reacted' => !empty($data['user_reacted']),
+                'emoji'          => $emoji,
+                'count'          => (int) $data['count'],
+                'users'          => $data['users'],
+                'user_reacted'   => !empty($data['user_reacted']),
+                'first_reaction' => (int) $data['first_reaction'],
             ];
         }
 
+        // Tri par timestamp de la première réaction (ordre stable)
         usort($reactions, function ($a, $b) {
-            return $b['count'] <=> $a['count'];
+            return $a['first_reaction'] <=> $b['first_reaction'];
         });
 
         $html = '<div class="post-reactions">';

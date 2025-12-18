@@ -308,12 +308,12 @@ class listener implements EventSubscriberInterface
             return [];
         }
 
-        $sql = 'SELECT reaction_emoji, COUNT(*) AS reaction_count
+        $sql = 'SELECT reaction_emoji, COUNT(*) AS reaction_count, MIN(reaction_time) AS first_reaction
                 FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . $post_id . '
                 GROUP BY reaction_emoji
                 HAVING COUNT(*) > 0
-                ORDER BY COUNT(*) DESC';
+                ORDER BY MIN(reaction_time) ASC';
 
         $result = $this->db->sql_query($sql);
 
