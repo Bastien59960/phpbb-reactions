@@ -5,20 +5,6 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 
 ---
 
-<<<<<<< HEAD
-=======
-## 🤔 Pourquoi "phpBB Reactions" ?
-
-De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont aujourd'hui obsolètes, non maintenues ou incompatibles avec les versions récentes de phpBB et de PHP. Par exemple, l'ancienne extension populaire de Steve, bien qu'ayant été pionnière, n'a pas reçu les mises à jour nécessaires et souffre de problèmes de compatibilité et de fonctionnalités vieillissantes.
-
-**phpBB Reactions** a été entièrement conçue pour l'écosystème moderne de phpBB 3.3+ :
-- **Code Robuste et Actuel** : Développée avec les standards de phpBB et PHP 7.4+, garantissant sécurité et performance.
-- **Support Complet d'Unicode** : Ne vous limitez pas à une poignée d'images. Profitez de tous les émojis, y compris les plus récents.
-- **Notifications Intelligentes** : Un système de notifications (cloche et e-mail) puissant mais respectueux de l'utilisateur pour éviter le spam.
-
----
-
->>>>>>> 6a84f747be93011e6dc4ac4be3e381a035529ce6
 ## ✨ Fonctionnalités phares
 
 - **Réactions illimitées** : Support complet de tous les émojis Unicode (👍 ❤️ 😂 👎 …), y compris les emojis composés et les dernières nouveautés.
@@ -41,15 +27,9 @@ De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont a
 ---
 
 ## 🖼️ Aperçu
-![Capture d'écran de l'interface des réactions](./images/01.jpg)
-![Capture d'écran des notifications](./images/02.jpg)
 
-<<<<<<< HEAD
-*(Ajoutez ici une capture d'écran si souhaité)*
 ![Capture d'écran de l'interface des réactions](./images/01.jpg)
 ![Capture d'écran des notifications](./images/02.jpg)
-=======
->>>>>>> 6a84f747be93011e6dc4ac4be3e381a035529ce6
 
 ---
 
@@ -63,21 +43,6 @@ De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont a
 4. **Configuration** :
    - Rendez-vous dans l'ACP > Extensions > Post Reactions pour ajuster les paramètres (limites, activation, etc.)
    - Les utilisateurs peuvent gérer leurs préférences dans leur panneau utilisateur
-
----
-
-##  Mise à jour
-
-Pour mettre à jour l'extension depuis une version précédente :
-
-1.  **Désactivez** l'extension dans `ACP > Personnalisation > Gérer les extensions`.
-2.  **Important** : Ne sélectionnez **pas** "Supprimer les données" lors de la désactivation, sinon toutes vos réactions seront effacées.
-3.  **Supprimez** le répertoire `ext/bastien59960/reactions/` de votre serveur.
-4.  **Téléchargez** la dernière version et décompressez-la dans `ext/bastien59960/reactions/`.
-5.  **Réactivez** l'extension dans l'ACP. Les migrations de base de données s'appliqueront automatiquement.
-6.  **Videz le cache** de phpBB pour vous assurer que tous les changements sont pris en compte.
-
-
 
 ---
 
@@ -227,7 +192,6 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 
 ## 🖼️ Preview
 
-*(Add a screenshot here if desired)*
 ![Screenshot of the reactions interface](./images/01.jpg)
 ![Screenshot of the notifications](./images/02.jpg)
 
@@ -243,21 +207,6 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 4. **Configuration**:
    - Go to ACP > Extensions > Post Reactions to adjust settings (limits, activation, etc.)
    - Users can manage their preferences in their user control panel
-
----
-
-## 🔄 Updating
-
-To update the extension from a previous version:
-
-1.  **Disable** the extension in `ACP > Customise > Manage extensions`.
-2.  **Important**: Do **not** select "Delete data" when disabling, otherwise all your reactions will be erased.
-3.  **Delete** the `ext/bastien59960/reactions/` directory from your server.
-4.  **Download** the latest version and unzip it into `ext/bastien59960/reactions/`.
-5.  **Re-enable** the extension in the ACP. Database migrations will be applied automatically.
-6.  **Purge the cache** of phpBB to ensure all changes are applied.
-
-
 
 ---
 
