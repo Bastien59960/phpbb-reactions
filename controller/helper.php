@@ -178,7 +178,11 @@ class helper
 
         if ($is_logged_in) {
             $tooltip = htmlspecialchars($this->language->lang('REACTIONS_ADD_TOOLTIP'), ENT_QUOTES, 'UTF-8');
-            $html .= '<span class="reaction-more" role="button" title="' . $tooltip . '" aria-label="' . $tooltip . '">+</span>';
+            $button_text = htmlspecialchars($this->language->lang('REACTIONS_BUTTON_TEXT'), ENT_QUOTES, 'UTF-8');
+            $html .= '<span class="reaction-more" role="button" title="' . $tooltip . '" aria-label="' . $tooltip . '">';
+            $html .= '<span class="reaction-more-icon">+</span> ';
+            $html .= '<span class="reaction-more-text">' . $button_text . '</span>';
+            $html .= '</span>';
         }
 
         $html .= '</div>';
