@@ -362,10 +362,6 @@
     text-align: left;
 }
 
-.reaction-user-tooltip li {
-    padding: 2px 0; /* 2px vertical, 0px horizontal */
-}
-
 .reaction-user-tooltip .reaction-user-link {
     color: #1976d2;
     text-decoration: none;
@@ -377,6 +373,25 @@
     background: #e3f2fd;
     border-radius: 3px;
     color: #0d47a1;
+}
+
+.reaction-user-tooltip li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.reaction-user-tooltip li:last-child {
+    border-bottom: none;
+}
+
+.reaction-user-tooltip .reaction-time {
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+    margin-left: 4px;
 }
 
 .emoji-picker--no-categories .emoji-tabs,
