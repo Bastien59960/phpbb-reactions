@@ -1,7 +1,29 @@
 # 🚀 phpBB Reactions — Extension d'Émojis Ultra-Complète pour phpBB 3.3+
 
+<p align="center">
+  <a href="https://github.com/Bastien59960/phpbb-reactions/releases/latest"><img src="https://img.shields.io/github/v/release/Bastien59960/phpbb-reactions?style=for-the-badge" alt="Dernière version"></a>
+  <a href="https://github.com/Bastien59960/phpbb-reactions/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Bastien59960/phpbb-reactions?style=for-the-badge" alt="Licence"></a>
+  <a href="#"><img src="https://img.shields.io/badge/phpBB-3.3.10+-blue.svg?style=for-the-badge" alt="phpBB Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/PHP->=7.4-blueviolet.svg?style=for-the-badge" alt="PHP Version"></a>
+  <a href="https://bastien.debucquoi.com/forum/"><img src="https://img.shields.io/badge/forum-support-green?style=for-the-badge" alt="Forum de support"></a>
+</p>
+
 Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos membres réagir à chaque message avec l'intégralité des émojis Unicode !  
 **Expérience fluide, notifications intelligentes, personnalisation avancée, et performance garantie.**
+
+---
+
+## 🤔 Pourquoi "phpBB Reactions" ?
+
+De nombreuses extensions de réactions pour phpBB existent, mais beaucoup sont aujourd'hui obsolètes, non maintenues ou incompatibles avec les versions récentes de phpBB et de PHP. Par exemple, l'ancienne extension populaire de Steve, bien qu'ayant été pionnière, n'a pas reçu les mises à jour nécessaires et souffre de problèmes de compatibilité et de fonctionnalités vieillissantes.
+
+**phpBB Reactions** a été entièrement conçue pour l'écosystème moderne de phpBB 3.3+ :
+- **Code Robuste et Actuel** : Développée avec les standards de phpBB et PHP 7.4+, garantissant sécurité et performance.
+- **Support Complet d'Unicode** : Ne vous limitez pas à une poignée d'images. Profitez de tous les émojis, y compris les plus récents.
+- **Notifications Intelligentes** : Un système de notifications (cloche et e-mail) puissant mais respectueux de l'utilisateur pour éviter le spam.
+- **Maintenance Active** : Le projet est activement maintenu avec une feuille de route claire pour de futures améliorations.
+
+En bref, c'est la solution "plug-and-play" pour moderniser l'interaction sur votre forum sans compromis.
 
 ---
 
@@ -35,8 +57,8 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 ## 🛠️ Installation rapide
 
 1. **Pré-requis** : phpBB 3.3.10+ (UTF8MB4 activé sur la base de données)
-2. **Téléchargement** : [Dernière version sur GitHub](https://github.com/bastien59960/reactions)
-3. **Déploiement** :
+2. **Téléchargement** : [Dernière version sur GitHub](https://github.com/bastien59960/phpbb-reactions/releases/latest)
+3. **Installation** :
    - Dézippez dans `ext/bastien59960/reactions/`
    - Activez l'extension dans l'ACP > Personnalisation > Gérer les extensions
 4. **Configuration** :
@@ -45,7 +67,7 @@ Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos me
 
 ---
 
-## 📝 Fonctionnalités détaillées
+## 📝 Guide des Fonctionnalités
 
 ### Réactions & interface
 - Palette d'emojis rapide et palette complète
@@ -163,8 +185,30 @@ GNU General Public License v2.0
 
 # 🚀 phpBB Reactions — The Ultimate Emoji Extension for phpBB 3.3+ (English)
 
+<p align="center">
+  <a href="https://github.com/Bastien59960/phpbb-reactions/releases/latest"><img src="https://img.shields.io/github/v/release/Bastien59960/phpbb-reactions?style=for-the-badge" alt="Latest Release"></a>
+  <a href="https://github.com/Bastien59960/phpbb-reactions/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Bastien59960/phpbb-reactions?style=for-the-badge" alt="License"></a>
+  <a href="#"><img src="https://img.shields.io/badge/phpBB-3.3.10+-blue.svg?style=for-the-badge" alt="phpBB Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/PHP->=7.4-blueviolet.svg?style=for-the-badge" alt="PHP Version"></a>
+  <a href="https://bastien.debucquoi.com/forum/"><img src="https://img.shields.io/badge/forum-support-green?style=for-the-badge" alt="Support Forum"></a>
+</p>
+
 Bring your phpBB forum to life: let your members react to every post with the full range of Unicode emojis!  
 **Smooth experience, smart notifications, advanced customization, and top performance.**
+
+---
+
+## 🤔 Why "phpBB Reactions"?
+
+While several reaction extensions for phpBB exist, many are now outdated, unmaintained, or incompatible with recent phpBB and PHP versions. For instance, Steve's popular old extension, although a pioneer, has not received necessary updates and suffers from compatibility issues and aging features.
+
+**phpBB Reactions** was designed from the ground up for the modern phpBB 3.3+ ecosystem:
+- **Robust & Modern Code**: Built with current phpBB and PHP 7.4+ standards, ensuring security and performance.
+- **Full Unicode Support**: Don't limit yourself to a handful of images. Enjoy all emojis, including the latest ones.
+- **Smart Notifications**: A powerful yet user-respecting notification system (bell and email) to prevent spam.
+- **Active Maintenance**: The project is actively maintained with a clear roadmap for future enhancements.
+
+In short, it's the "plug-and-play" solution to modernize interaction on your forum without compromise.
 
 ---
 
@@ -198,8 +242,8 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 ## 🛠️ Quick Installation
 
 1. **Requirements**: phpBB 3.3.10+ (UTF8MB4 enabled on the database)
-2. **Download**: [Latest version on GitHub](https://github.com/bastien59960/reactions)
-3. **Deployment**:
+2. **Download**: Latest version on GitHub
+3. **Installation**:
    - Unzip into `ext/bastien59960/reactions/`
    - Enable the extension in ACP > Customise > Manage extensions
 4. **Configuration**:
@@ -208,7 +252,7 @@ Bring your phpBB forum to life: let your members react to every post with the fu
 
 ---
 
-## 📝 Detailed Features
+## 📝 Feature Guide
 
 ### Reactions & Interface
 - Quick and full emoji palette
