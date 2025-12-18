@@ -15,7 +15,7 @@ $user->session_begin();
 $auth->acl($user->data);
 $user->setup();
 
-echo "\n--- 🧪 GÉNÉRATEUR MASSIF DE RÉACTIONS (x50) ---\n";
+echo "\n--- 🧪 GÉNÉRATEUR MASSIF DE RÉACTIONS (x300) ---\n";
 
 // 1. Récupérer les utilisateurs (Humains uniquement, pas de bots ni d'invités)
 $sql = 'SELECT user_id, username, user_email 
@@ -52,7 +52,7 @@ if (empty($posts)) {
 $emojis = ['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '👀', '🚀', '🔥', '🧪', '🤖'];
 $table_reactions = $table_prefix . 'post_reactions';
 $count_inserted = 0;
-$target = 50;
+$target = 300;
 
 echo "ℹ️  Génération en cours...\n";
 
@@ -75,8 +75,23 @@ for ($i = 0; $i < $target; $i++) {
     $db->sql_freeresult($res);
 
     if (!$exists) {
+        // Logique de "Tendance" : 70% de chance de reprendre un emoji déjà utilisé sur ce post
+        // Cela simule "différents users qui réagissent pareil"
+        $sql_existing = "SELECT reaction_emoji FROM $table_reactions WHERE post_id = " . (int)$post['post_id'];
+        $res_existing = $db->sql_query($sql_existing);
+        $existing_emojis = [];
+        while ($row_e = $db->sql_fetchrow($res_existing)) {
+            $existing_emojis[] = $row_e['reaction_emoji'];
+        }
+        $db->sql_freeresult($res_existing);
+
+        if (!empty($existing_emojis) && rand(0, 100) < 70) {
+            $emoji = $existing_emojis[array_rand($existing_emojis)];
+        } else {
+            $emoji = $emojis[array_rand($emojis)];
+        }
+
         // Insertion
-        $emoji = $emojis[array_rand($emojis)];
         $sql_ary = [
             'post_id'           => $post['post_id'],
             'user_id'           => $reactor['user_id'],
