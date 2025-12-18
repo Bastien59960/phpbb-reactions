@@ -51,12 +51,12 @@ class reaction_email_digest extends \phpbb\notification\type\base implements typ
         \phpbb\auth\auth $auth,
         $phpbb_root_path,
         $php_ext,
-        $notifications_table,
+        $user_notifications_table,
         // Dépendances spécifiques
         \phpbb\config\config $config,
         \phpbb\template\template $template // Ajout de la dépendance au template
     ) {
-        parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $notifications_table);
+        parent::__construct($db, $language, $user, $auth, $phpbb_root_path, $php_ext, $user_notifications_table);
         // On assigne manuellement les dépendances non gérées par le parent.
         $this->config = $config;
         $this->template = $template;

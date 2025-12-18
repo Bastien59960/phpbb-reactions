@@ -50,14 +50,14 @@ class reaction extends base implements type_interface
         'group' => 'NOTIFICATION_GROUP_POSTING',
     ];
 
-    /** @var string Nom de la table des notifications */
-    protected $notifications_table;
+    /** @var string Nom de la table des préférences de notifications utilisateurs */
+    protected $user_notifications_table;
 
     /**
      * Constructeur de la classe de notification
-     * 
+     *
      * IMPORTANT : L'ORDRE DES ARGUMENTS DOIT CORRESPONDRE À services.yml
-     * 
+     *
      */
     public function __construct(
         driver_interface $db,
@@ -66,10 +66,10 @@ class reaction extends base implements type_interface
         auth $auth,
         $phpbb_root_path,
         $php_ext,
-        $notifications_table
+        $user_notifications_table
     ) {
         // Appeler le constructeur de la classe parente
-        // L'ordre attendu par \phpbb\notification\type\base est : db, language, user, auth, root_path, php_ext, notifications_table
+        // L'ordre attendu par \phpbb\notification\type\base est : db, language, user, auth, root_path, php_ext, user_notifications_table
         parent::__construct(
             $db,
             $language,
@@ -77,7 +77,7 @@ class reaction extends base implements type_interface
             $auth,
             $phpbb_root_path,
             $php_ext,
-            $notifications_table
+            $user_notifications_table
         );
 
         // Charger le fichier de langue de l'extension via l'objet language
@@ -312,28 +312,33 @@ class reaction extends base implements type_interface
 
     /**
      * Trouve les utilisateurs qui doivent recevoir cette notification
-     * 
+     *
      * LOGIQUE :
      * - On notifie l'auteur du message (poster_id)
      * - SAUF si c'est lui-même qui a réagi (pas d'auto-notification)
-     * 
+     *
+     * IMPORTANT : phpBB attend un format spécifique via get_authorised_recipients()
+     *
      * @param array $type_data Données de la réaction.
-     * @param array $options   Options supplémentaires (non utilisé ici).
-     * @return array Liste des IDs utilisateur à notifier
+     * @param array $options   Options supplémentaires.
+     * @return array Liste des utilisateurs au format phpBB
      */
     public function find_users_for_notification($type_data, $options = array())
     {
-        $users = array();
-
         $post_author = (int) ($type_data['post_author'] ?? ($type_data['poster_id'] ?? 0));
         $reacter = (int) ($type_data['reacter'] ?? ($type_data['reacter_id'] ?? 0));
+        $forum_id = (int) ($type_data['forum_id'] ?? 0);
 
-        // Notifier l'auteur UNIQUEMENT s'il n'est pas le réacteur
-        if ($post_author && $post_author !== $reacter) {
-            $users[] = $post_author;
+        // Pas de destinataire si l'auteur n'existe pas ou si c'est une auto-réaction
+        if (!$post_author || $post_author === $reacter) {
+            return array();
         }
 
-        return $users;
+        // Utiliser check_user_notification_options pour vérifier les préférences
+        // et get_authorised_recipients pour filtrer par permissions
+        $users = array($post_author);
+
+        return $this->check_user_notification_options($users, $options);
     }
 
     /**
