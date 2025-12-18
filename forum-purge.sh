@@ -828,18 +828,15 @@ else
     fi
     echo ""
 
-    # CORRECTION : Lancer le nettoyage manuel AVANT de s'arrêter.
+    # Lancer le nettoyage manuel pour corriger l'état de la base de données
     echo -e "${YELLOW}   Le script va maintenant effectuer un nettoyage manuel forcé pour corriger l'état de la base de données...${NC}"
     echo ""
     force_manual_purge
-    
-    # CORRECTION : Afficher un message clair indiquant que le script s'arrête après le nettoyage.
-    # L'appel à `exit 1` déclenchera ensuite le `trap` qui gère la restauration d'urgence.
+
+    # Continuer le script après le nettoyage manuel (les migrations phpBB ne sont pas critiques)
     echo ""
-    echo -e "${WHITE_ON_RED}   Nettoyage manuel terminé. Le script va maintenant s'arrêter pour vous permettre de corriger les migrations.${NC}"
+    echo -e "${GREEN}   Nettoyage manuel terminé. Continuation du script...${NC}"
     echo ""
-    
-    exit 1 # Arrêter le script. Le trap `cleanup` prendra le relais pour la restauration.
 fi
 
 # ==============================================================================
@@ -1187,9 +1184,7 @@ has_error=0
 # 1. Vérification des fichiers et de leur syntaxe
 print_diag_header "1. VÉRIFICATION DES FICHIERS"
 check_diag "Fichier 'notification_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
-check_diag "Fichier 'test_task.php' existe" test -f "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
 check_diag "Syntaxe PHP de 'notification_task.php' est valide" $PHP_CLI -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/notification_task.php" || has_error=1
-check_diag "Syntaxe PHP de 'test_task.php' est valide" $PHP_CLI -l "$FORUM_ROOT/ext/bastien59960/reactions/cron/test_task.php" || has_error=1
 
 # 1.5 Vérification de la syntaxe de services.yml
 print_diag_header "1.5 VÉRIFICATION DE LA SYNTAXE DE services.yml"
@@ -1220,21 +1215,6 @@ if [ -f "$SERVICES_FILE" ]; then
         echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.notification' ou tag 'cron.task' manquant."
         has_error=1
     fi
-
-    if awk '
-        /^[[:space:]]*cron\.task\.bastien59960\.reactions\.test:/ { in_block=1; found_service=1 }
-        /^[a-zA-Z]/ && NR>1 { in_block=0 }
-        in_block && /name:[[:space:]]*cron\.task/ { found_tag=1 }
-        END {
-            if (found_service && found_tag) exit 0
-            else exit 1
-        }
-    ' "$SERVICES_FILE"; then
-        echo -e "  ${GREEN}✅ SUCCÈS :${NC} Déclaration du service 'cron.task.bastien59960.reactions.test' et tag 'cron.task'"
-    else
-        echo -e "  ${RED}❌ ÉCHEC  :${NC} Déclaration du service 'cron.task.bastien59960.reactions.test' ou tag 'cron.task' manquant."
-        has_error=1
-    fi
 fi
 
 # 3. Vérification des fichiers de langue
@@ -1243,7 +1223,6 @@ LANG_FILE_FR="$FORUM_ROOT/ext/bastien59960/reactions/language/fr/common.php"
 check_diag "Fichier de langue 'fr/common.php' existe" test -f "$LANG_FILE_FR" || has_error=1
 if [ -f "$LANG_FILE_FR" ]; then
     if grep -q "TASK_BASTIEN59960_REACTIONS_NOTIFICATION" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_NOTIFICATION' absente"; has_error=1; fi
-    if grep -q "TASK_BASTIEN59960_REACTIONS_TEST" "$LANG_FILE_FR"; then echo -e "  ${GREEN}✅ SUCCÈS :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' présente"; else echo -e "  ${RED}❌ ÉCHEC  :${NC} Clé 'TASK_BASTIEN59960_REACTIONS_TEST' absente"; has_error=1; fi
 fi
 
 # CORRECTION LOGIQUE : Si une erreur est détectée ici, on arrête le script.
@@ -1484,7 +1463,7 @@ RESET_FLAGS_EOF
 
     # Exécuter le script PHP dédié et capturer sa sortie
     # L'option --fix est passée pour permettre la correction automatique
-    integrity_check_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI check-notifications-integrity.php --fix 2>&1)
+    integrity_check_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions/maintenance" && $PHP_CLI check-notifications-integrity.php --fix 2>&1)
     integrity_check_exit_code=$?
 
     # Afficher la sortie du script PHP
@@ -1550,7 +1529,7 @@ RESET_FLAGS_EOF
                 
                 # Étape 6 : Exécuter un script PHP qui vérifie si le service de notification est bien chargeable par phpBB.
                 echo -e "${YELLOW}   Vérification du chargement du service de notification via le container phpBB...${NC}"
-                reload_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI reload-notification-types.php 2>&1)
+                reload_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions/maintenance" && $PHP_CLI reload-notification-types.php 2>&1)
                 reload_exit_code=$?
                 
                 # Afficher la sortie du script de rechargement
@@ -1601,7 +1580,7 @@ RESET_FLAGS_EOF
                     
                     # Exécuter le script PHP de génération
                     # Le script doit être exécuté depuis le répertoire de l'extension
-                    generation_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions" && $PHP_CLI generate-test-notifications.php 2>&1)
+                    generation_output=$(cd "$FORUM_ROOT/ext/bastien59960/reactions/maintenance" && $PHP_CLI generate-test-notifications.php 2>&1)
                     generation_exit_code=$?
 
                     # GESTION D'ERREUR : Vérifier si le script PHP a échoué

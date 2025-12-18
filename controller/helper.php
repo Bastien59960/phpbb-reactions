@@ -191,8 +191,9 @@ class helper
 
         $html .= '</div>';
 
-        // Encapsuler dans le conteneur parent pour un remplacement complet
-        return '<div class="post-reactions-container" data-post-id="' . $post_id . '">' . $html . '</div>';
+        // Retourne uniquement le contenu intérieur (pas le conteneur parent)
+        // Le JS remplace innerHTML du conteneur existant
+        return $html;
     }
 
     /**
