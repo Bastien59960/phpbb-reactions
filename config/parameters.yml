@@ -28,3 +28,6 @@ parameters:
 
     # Table des notifications (référence)
     tables.notifications: '%core.table_prefix%notifications'
+
+    # Table des préférences de notifications utilisateurs (requise par base.php)
+    tables.user_notifications: '%core.table_prefix%user_notifications'

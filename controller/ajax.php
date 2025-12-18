@@ -700,25 +700,26 @@ class ajax
      */
     private function get_users_for_emoji($post_id, $emoji)
     {
-        $sql = 'SELECT DISTINCT u.user_id, u.username, u.username_clean
+        $sql = 'SELECT u.user_id, u.username, u.username_clean, r.reaction_time
                 FROM ' . $this->post_reactions_table . ' r
                 LEFT JOIN ' . USERS_TABLE . ' u ON r.user_id = u.user_id
                 WHERE r.post_id = ' . (int) $post_id . "
                   AND r.reaction_emoji = '" . $this->db->sql_escape($emoji) . "'
                 ORDER BY r.reaction_time ASC";
-        
+
         $result = $this->db->sql_query($sql);
-        
+
         $users = [];
         while ($row = $this->db->sql_fetchrow($result)) {
             $users[] = [
                 'user_id' => (int) $row['user_id'],
                 'username' => $row['username'],
-                'username_clean' => $row['username_clean']
+                'username_clean' => $row['username_clean'],
+                'reaction_time' => (int) $row['reaction_time']
             ];
         }
         $this->db->sql_freeresult($result);
-        
+
         return new JsonResponse([
             'success' => true,
             'post_id' => $post_id,

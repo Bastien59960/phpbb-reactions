@@ -308,12 +308,12 @@ class listener implements EventSubscriberInterface
             return [];
         }
 
-        $sql = 'SELECT reaction_emoji, COUNT(*) AS reaction_count
+        $sql = 'SELECT reaction_emoji, COUNT(*) AS reaction_count, MIN(reaction_time) AS first_reaction
                 FROM ' . $this->post_reactions_table . '
                 WHERE post_id = ' . $post_id . '
                 GROUP BY reaction_emoji
                 HAVING COUNT(*) > 0
-                ORDER BY COUNT(*) DESC';
+                ORDER BY MIN(reaction_time) ASC';
 
         $result = $this->db->sql_query($sql);
 
@@ -330,19 +330,20 @@ class listener implements EventSubscriberInterface
 
     private function get_users_by_reaction($post_id, $emoji)
     {
-        $sql = 'SELECT u.user_id, u.username
+        $sql = 'SELECT u.user_id, u.username, pr.reaction_time
                 FROM ' . $this->post_reactions_table . ' pr
                 JOIN ' . USERS_TABLE . ' u ON pr.user_id = u.user_id
                 WHERE pr.post_id = ' . (int) $post_id . "
                   AND pr.reaction_emoji = '" . $this->db->sql_escape($emoji) . "'
                 ORDER BY pr.reaction_time ASC";
-        
+
         $result = $this->db->sql_query($sql);
         $users = [];
         while ($row = $this->db->sql_fetchrow($result)) {
             $users[] = [
-                'user_id' => (int) $row['user_id'],
-                'username' => $row['username']
+                'user_id'       => (int) $row['user_id'],
+                'username'      => $row['username'],
+                'reaction_time' => (int) $row['reaction_time'],
             ];
         }
         $this->db->sql_freeresult($result);

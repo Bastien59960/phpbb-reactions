@@ -62,45 +62,55 @@
 /* ============================================================================= */
 
 /**
- * Bouton "plus" pour ouvrir la palette d'emojis
- * 
- * Toujours positionné à gauche avec un style distinctif
- * pour indiquer qu'il permet d'ajouter des réactions.
+ * Bouton "Like" style Facebook
+ *
+ * Bouton compact avec pouce bleu, le texte apparaît au survol.
  */
 .reaction-more {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: #f8f9fa;
-    border: 1px dashed #d1d1d1;
-    border-radius: 4px;
-    padding: 4px 8px;
+    justify-content: center;
+    gap: 0;
+    background: transparent;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 12px;
     cursor: pointer;
-    color: #6c757d;
+    color: #1877F2;
     transition: all 0.2s ease;
     order: -1;
     margin-right: 8px;
+    font-size: 18px;
+}
+
+.reaction-more:hover {
+    background: rgba(24, 119, 242, 0.1);
 }
 
 .reaction-more-icon {
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 18px;
     line-height: 1;
 }
 
+.reaction-more-icon::before {
+    content: '👍';
+}
+
 .reaction-more-text {
-    font-size: 11px; /* Taille phpBB standard */
-    font-weight: normal;
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-left: 0;
+    transition: all 0.25s ease;
     white-space: nowrap;
 }
 
-/**
- * État de survol du bouton "plus"
- */
-.reaction-more:hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #adb5bd;
+.reaction-more:hover .reaction-more-text {
+    max-width: 80px;
+    opacity: 1;
+    margin-left: 6px;
 }
 
 /* ========== RÉACTIONS (emojis affichés sous le post) ========== */
@@ -352,10 +362,6 @@
     text-align: left;
 }
 
-.reaction-user-tooltip li {
-    padding: 2px 0; /* 2px vertical, 0px horizontal */
-}
-
 .reaction-user-tooltip .reaction-user-link {
     color: #1976d2;
     text-decoration: none;
@@ -367,6 +373,27 @@
     background: #e3f2fd;
     border-radius: 3px;
     color: #0d47a1;
+}
+
+.reaction-user-tooltip li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+.reaction-user-tooltip li:last-child {
+    border-bottom: none;
+}
+
+.reaction-user-tooltip .reaction-time {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
 }
 
 .emoji-picker--no-categories .emoji-tabs,

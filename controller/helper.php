@@ -79,7 +79,7 @@ class helper
     {
         $post_id = (int) $post_id;
 
-        $sql = 'SELECT r.reaction_emoji, r.user_id, u.username
+        $sql = 'SELECT r.reaction_emoji, r.user_id, r.reaction_time, u.username
                 FROM ' . $this->table_post_reactions . ' r
                 LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = r.user_id
                 WHERE r.post_id = ' . $post_id . '
@@ -98,13 +98,15 @@ class helper
                     'count' => 0,
                     'users' => [],
                     'user_reacted' => false,
+                    'first_reaction' => (int) $row['reaction_time'],
                 ];
             }
 
             $aggregated[$emoji]['count']++;
             $aggregated[$emoji]['users'][] = [
-                'user_id'  => (int) $row['user_id'],
-                'username' => $row['username'] ?? '',
+                'user_id'       => (int) $row['user_id'],
+                'username'      => $row['username'] ?? '',
+                'reaction_time' => (int) $row['reaction_time'],
             ];
         }
         $this->db->sql_freeresult($result);
@@ -130,15 +132,17 @@ class helper
             }
 
             $reactions[] = [
-                'emoji'        => $emoji,
-                'count'        => (int) $data['count'],
-                'users'        => $data['users'],
-                'user_reacted' => !empty($data['user_reacted']),
+                'emoji'          => $emoji,
+                'count'          => (int) $data['count'],
+                'users'          => $data['users'],
+                'user_reacted'   => !empty($data['user_reacted']),
+                'first_reaction' => (int) $data['first_reaction'],
             ];
         }
 
+        // Tri par timestamp de la première réaction (ordre stable)
         usort($reactions, function ($a, $b) {
-            return $b['count'] <=> $a['count'];
+            return $a['first_reaction'] <=> $b['first_reaction'];
         });
 
         $html = '<div class="post-reactions">';
@@ -180,15 +184,16 @@ class helper
             $tooltip = htmlspecialchars($this->language->lang('REACTIONS_ADD_TOOLTIP'), ENT_QUOTES, 'UTF-8');
             $button_text = htmlspecialchars($this->language->lang('REACTIONS_BUTTON_TEXT'), ENT_QUOTES, 'UTF-8');
             $html .= '<span class="reaction-more" role="button" title="' . $tooltip . '" aria-label="' . $tooltip . '">';
-            $html .= '<span class="reaction-more-icon">+</span> ';
+            $html .= '<span class="reaction-more-icon"></span>';
             $html .= '<span class="reaction-more-text">' . $button_text . '</span>';
             $html .= '</span>';
         }
 
         $html .= '</div>';
 
-        // Encapsuler dans le conteneur parent pour un remplacement complet
-        return '<div class="post-reactions-container" data-post-id="' . $post_id . '">' . $html . '</div>';
+        // Retourne uniquement le contenu intérieur (pas le conteneur parent)
+        // Le JS remplace innerHTML du conteneur existant
+        return $html;
     }
 
     /**

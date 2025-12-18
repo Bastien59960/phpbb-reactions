@@ -1201,14 +1201,37 @@ function toggle_visible(id) {
     }
 
     /**
+     * Formate un timestamp Unix en date/heure lisible selon la locale et timezone de l'utilisateur.
+     *
+     * @param {number} timestamp Timestamp Unix en secondes.
+     * @returns {string} Date formatée (ex: "18 déc. 2025, 10:30")
+     */
+    function formatReactionTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp * 1000);
+        try {
+            return date.toLocaleString(navigator.language || 'fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            // Fallback simple si toLocaleString échoue
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+    }
+
+    /**
      * Crée et affiche le tooltip avec la liste des utilisateurs.
-     * 
+     *
      * Le tooltip est une liste `<ul>` positionnée de manière absolue sous la réaction.
-     * Chaque utilisateur est un lien vers son profil. Le tooltip reste visible
-     * si l'utilisateur déplace sa souris dessus.
-     * 
+     * Chaque utilisateur est un lien vers son profil avec le timestamp de la réaction.
+     * Le tooltip reste visible si l'utilisateur déplace sa souris dessus.
+     *
      * @param {HTMLElement} element L'élément de réaction de référence pour le positionnement.
-     * @param {Array} users Un tableau d'objets `{user_id, username}`.
+     * @param {Array} users Un tableau d'objets `{user_id, username, reaction_time}`.
      */
     function showUserTooltip(element, users) {
         // Supprimer tout tooltip existant (un seul à la fois)
@@ -1217,10 +1240,12 @@ function toggle_visible(id) {
         const tooltip = document.createElement('ul');
         tooltip.className = 'reaction-user-tooltip';
 
-        // Construction HTML sécurisée (escape XSS)
-        const userLinks = users.map(user =>
-            `<li><a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a></li>`
-        ).join('');
+        // Construction HTML sécurisée (escape XSS) avec timestamp à droite
+        const userLinks = users.map(user => {
+            const timeStr = user.reaction_time ? formatReactionTime(user.reaction_time) : '';
+            const timeHtml = timeStr ? `<span class="reaction-time">${escapeHtml(timeStr)}</span>` : '';
+            return `<li><a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a>${timeHtml}</li>`;
+        }).join('');
 
         tooltip.innerHTML = userLinks || '<li><span class="no-users">Personne</span></li>';
         document.body.appendChild(tooltip);
