@@ -1240,14 +1240,11 @@ function toggle_visible(id) {
         const tooltip = document.createElement('ul');
         tooltip.className = 'reaction-user-tooltip';
 
-        // Construction HTML sécurisée (escape XSS) avec timestamp
+        // Construction HTML sécurisée (escape XSS) avec timestamp à droite
         const userLinks = users.map(user => {
             const timeStr = user.reaction_time ? formatReactionTime(user.reaction_time) : '';
             const timeHtml = timeStr ? `<span class="reaction-time">${escapeHtml(timeStr)}</span>` : '';
-            return `<li>
-                <a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a>
-                ${timeHtml}
-            </li>`;
+            return `<li><a href="./memberlist.php?mode=viewprofile&u=${user.user_id}" class="reaction-user-link" target="_blank">${escapeHtml(user.username)}</a>${timeHtml}</li>`;
         }).join('');
 
         tooltip.innerHTML = userLinks || '<li><span class="no-users">Personne</span></li>';

@@ -79,7 +79,7 @@ class helper
     {
         $post_id = (int) $post_id;
 
-        $sql = 'SELECT r.reaction_emoji, r.user_id, u.username
+        $sql = 'SELECT r.reaction_emoji, r.user_id, r.reaction_time, u.username
                 FROM ' . $this->table_post_reactions . ' r
                 LEFT JOIN ' . USERS_TABLE . ' u ON u.user_id = r.user_id
                 WHERE r.post_id = ' . $post_id . '
@@ -103,8 +103,9 @@ class helper
 
             $aggregated[$emoji]['count']++;
             $aggregated[$emoji]['users'][] = [
-                'user_id'  => (int) $row['user_id'],
-                'username' => $row['username'] ?? '',
+                'user_id'       => (int) $row['user_id'],
+                'username'      => $row['username'] ?? '',
+                'reaction_time' => (int) $row['reaction_time'],
             ];
         }
         $this->db->sql_freeresult($result);

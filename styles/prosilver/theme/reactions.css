@@ -377,10 +377,13 @@
 
 .reaction-user-tooltip li {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     padding: 4px 0;
     border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
 }
 
 .reaction-user-tooltip li:last-child {
@@ -390,8 +393,7 @@
 .reaction-user-tooltip .reaction-time {
     font-size: 11px;
     color: #888;
-    font-style: italic;
-    margin-left: 4px;
+    flex-shrink: 0;
 }
 
 .emoji-picker--no-categories .emoji-tabs,
