@@ -1,19 +1,16 @@
-##
-# Fichier : services.yml
-# Chemin : bastien59960/reactions/config/services.yml
-# Auteur : Bastien (bastien59960)
-# GitHub : https://github.com/bastien59960/reactions
+# @package    bastien59960/reactions
+# @version    1.0.0
+# @author     Bastien (bastien59960) <bastien@debucquoi.com>
+# @copyright  (c) 2025 Bastien59960
+# @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
 #
-# Rôle :
-# Ce fichier est le cœur de l'injection de dépendances de l'extension. Il
-# déclare tous les services (classes) et leurs dépendances, permettant à phpBB
-# de les instancier et de les fournir automatiquement là où ils sont nécessaires
-# (contrôleurs, tâches cron, listeners, etc.).
+# Fichier : config/services.yml
+# Rôle : Configuration des services (Injection de Dépendances).
 #
-# @copyright (c) 2025 Bastien59960
-# @license GNU General Public License, version 2 (GPL-2.0)
-
-##
+# Description détaillée :
+# Ce fichier déclare l'ensemble des services utilisés par l'extension (contrôleurs,
+# listeners, tâches cron, types de notifications, etc.) et définit leurs dépendances.
+# Il permet à phpBB d'instancier automatiquement ces classes avec les arguments requis.
 imports:
     - { resource: 'parameters.yml' }
 

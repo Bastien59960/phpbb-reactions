@@ -1,14 +1,17 @@
 <?php
 /**
- * Migration d'import des réactions depuis l'ancienne extension
+ * @package    bastien59960/reactions
+ * @version    1.0.0
+ * @author     Bastien (bastien59960) <bastien@debucquoi.com>
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
+ * Fichier : migrations/release_1_0_1.php
+ * Rôle : Migration de mise à jour (Import des données).
+ *
+ * Description détaillée :
  * Cette migration importe les données depuis une ancienne extension de réactions
  * (table phpbb_reactions) vers la nouvelle structure (table phpbb_post_reactions).
- *
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
- * @license    GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;

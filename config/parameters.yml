@@ -1,16 +1,16 @@
-##
-# Fichier : parameters.yml
-# Chemin : bastien59960/reactions/config/parameters.yml
-# Auteur : Bastien (bastien59960)
-# GitHub : https://github.com/bastien59960/reactions
+# @package    bastien59960/reactions
+# @version    1.0.0
+# @author     Bastien (bastien59960) <bastien@debucquoi.com>
+# @copyright  (c) 2025 Bastien59960
+# @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
 #
-# Rôle :
-# Ce fichier définit les paramètres utilisés par l'extension, notamment les noms
-# des tables de la base de données.
+# Fichier : config/parameters.yml
+# Rôle : Définition des paramètres globaux de l'extension.
 #
-# @copyright (c) 2025 Bastien59960
-# @license GNU General Public License, version 2 (GPL-2.0)
-##
+# Description détaillée :
+# Ce fichier contient les constantes de configuration, principalement les noms
+# des tables de la base de données utilisées par l'extension, pour faciliter
+# leur maintenance et leur injection dans les services.
 
 parameters:
     # =============================================================================

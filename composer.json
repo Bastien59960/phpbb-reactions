@@ -42,7 +42,7 @@
         "squizlabs/php_codesniffer": "^3.0"
     },
     "extra": {
-        "display-name": "Reactions",
+        "display-name": "reactions",
         "soft-require": {
             "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
         },

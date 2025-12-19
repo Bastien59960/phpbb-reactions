@@ -1,20 +1,19 @@
 <?php
 /**
+ * @package    bastien59960/reactions
+ * @version    1.0.0
+ * @author     Bastien (bastien59960) <bastien@debucquoi.com>
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ *
  * Fichier : ext.php
- * Chemin : bastien59960/reactions/ext.php
- * Auteur : Bastien (bastien59960)
- * GitHub : https://github.com/bastien59960/reactions
- * @version 1.0.0
+ * Rôle : Classe principale de l'extension (Point d'entrée).
  *
- * Rôle :
- * Ce fichier est la classe principale et le point d'entrée de l'extension pour
- * le système de phpBB. Il agit comme un "chef d'orchestre" en gérant le cycle
- * de vie complet de l'extension : vérification de la compatibilité avant
- * installation, actions à l'activation (ex: enregistrement des notifications),
- * à la désactivation et à la purge complète des données.
- *
- * @copyright (c) 2025 Bastien59960
- * @license GNU General Public License, version 2 (GPL-2.0)
+ * Description détaillée :
+ * Ce fichier est le point d'entrée de l'extension pour le système de phpBB.
+ * Il gère le cycle de vie complet de l'extension : vérification de la compatibilité
+ * (is_enableable), nettoyage préventif, activation (enable_step), désactivation
+ * (disable_step) et purge des données (purge_step).
  */
 
 namespace bastien59960\reactions;

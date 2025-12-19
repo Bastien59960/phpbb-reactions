@@ -1,17 +1,19 @@
 <?php
 /**
  * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
+ * @version    1.0.0
+ * @author     Bastien (bastien59960) <bastien@debucquoi.com>
  * @copyright  (c) 2025 Bastien59960
  * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Fichier : /event/listener.php
- * Rôle : Listener d'événements pour l'extension Reactions.
- * Ce fichier permet d'intercepter et de traiter les événements du cycle de vie
- * de phpBB (affichage, envoi de message, etc.) pour intégrer la logique des
- * réactions dans le forum. Il est responsable de l'injection des assets (CSS, JS),
- * des variables de template et de l'affichage des réactions sur les pages
- * concernées.
+ * Fichier : event/listener.php
+ * Rôle : Gestionnaire d'événements (Event Listener).
+ *
+ * Description détaillée :
+ * Ce fichier implémente l'interface EventSubscriberInterface pour écouter et réagir
+ * aux événements du cœur de phpBB. Il est responsable de l'injection des assets (CSS/JS),
+ * de l'assignation des variables de template, de l'affichage des réactions dans les
+ * messages, et de la gestion des données lors de l'affichage des pages.
  */
 
 namespace bastien59960\reactions\event;
@@ -19,6 +21,9 @@ namespace bastien59960\reactions\event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use phpbb\db\driver\driver_interface;
 
+/**
+ * Listener des événements de l'extension
+ */
 class listener implements EventSubscriberInterface
 {
     // =============================================================================
@@ -75,7 +80,7 @@ class listener implements EventSubscriberInterface
         try {
             $this->db->sql_query("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_bin'");
         } catch (\Exception $e) {
-            error_log('[phpBB Reactions] Could not set names: ' . $e->getMessage());
+            error_log('[phpBB reactions] Could not set names: ' . $e->getMessage());
         }
     }
 
@@ -198,7 +203,7 @@ class listener implements EventSubscriberInterface
         }
 
         if (!$this->is_valid_post($post_id)) {
-            error_log('[phpBB Reactions] display_reactions: post_id ' . $post_id . ' not found');
+            error_log('[phpBB reactions] display_reactions: post_id ' . $post_id . ' not found');
             $event['post_row'] = $post_row;
             return;
         }

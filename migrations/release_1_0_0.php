@@ -1,18 +1,21 @@
 <?php
 /**
- * Migration initiale pour l'extension Reactions
+ * @package    bastien59960/reactions
+ * @version    1.0.0
+ * @author     Bastien (bastien59960) <bastien@debucquoi.com>
+ * @copyright  (c) 2025 Bastien59960
+ * @license    http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  *
- * Cette migration crée toute la structure nécessaire :
+ * Fichier : migrations/release_1_0_0.php
+ * Rôle : Migration initiale (Schéma de base de données).
+ *
+ * Description détaillée :
+ * Cette migration crée toute la structure nécessaire pour l'extension :
  * - Table post_reactions
  * - Colonnes utilisateur (préférences notifications)
  * - Configurations de l'extension
  * - Modules ACP et UCP
  * - Types de notifications
- *
- * @package    bastien59960/reactions
- * @author     Bastien (bastien59960)
- * @copyright  (c) 2025 Bastien59960
- * @license    GNU General Public License, version 2 (GPL-2.0)
  */
 
 namespace bastien59960\reactions\migrations;
