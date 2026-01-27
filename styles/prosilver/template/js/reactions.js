@@ -521,18 +521,20 @@ function toggle_visible(id) {
                     tabsContainer.querySelectorAll('.emoji-tab').forEach((t) => t.classList.remove('active'));
                     tab.classList.add('active');
 
+                    if (cat.key === 'frequent') {
+                        pickerBody.scrollTop = 0;
+                        return;
+                    }
+
                     if (!mainContent) {
                         return;
                     }
 
-                    if (cat.key === 'frequent') {
-                        mainContent.scrollTop = 0;
-                        return;
-                    }
-
-                    const categoryElement = mainContent.querySelector(`[data-category-name="${cat.key}"]`);
+                    const categoryElement = pickerBody.querySelector(`[data-category-name="${cat.key}"]`);
                     if (categoryElement) {
-                        mainContent.scrollTop = categoryElement.offsetTop - mainContent.offsetTop;
+                        var bodyRect = pickerBody.getBoundingClientRect();
+                        var elemRect = categoryElement.getBoundingClientRect();
+                        pickerBody.scrollTop += (elemRect.top - bodyRect.top);
                     }
                 });
 
