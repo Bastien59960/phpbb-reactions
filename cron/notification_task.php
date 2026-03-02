@@ -128,24 +128,26 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
-        // CORRECTION : Relire la configuration au moment de l'exécution pour garantir la fraîcheur de la valeur.
-        $spam_minutes = (int) $this->config['bastien59960_reactions_spam_time'];
-        if ($spam_minutes <= 0)
-        {
-            error_log('[Reactions Cron] Run skipped (spam_minutes <= 0).');
-            return;
-        }
-
-        $spam_delay_seconds = $spam_minutes * 60;
-
-        if (!function_exists('generate_board_url'))
-        {
-            include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
-        }
-
-        // CORRECTION : Utiliser $_SERVER['REQUEST_TIME'] au lieu de time() pour être
-        // compatible avec les environnements de test où la date système est modifiée.
         $current_time = isset($_SERVER['REQUEST_TIME']) ? (int) $_SERVER['REQUEST_TIME'] : time();
+        try
+        {
+            // CORRECTION : Relire la configuration au moment de l'exécution pour garantir la fraîcheur de la valeur.
+            $spam_minutes = (int) $this->config['bastien59960_reactions_spam_time'];
+            if ($spam_minutes <= 0)
+            {
+                error_log('[Reactions Cron] Run skipped (spam_minutes <= 0).');
+                return;
+            }
+
+            $spam_delay_seconds = $spam_minutes * 60;
+
+            if (!function_exists('generate_board_url'))
+            {
+                include_once($this->phpbb_root_path . 'includes/functions.' . $this->php_ext);
+            }
+
+            // CORRECTION : Utiliser $_SERVER['REQUEST_TIME'] au lieu de time() pour être
+            // compatible avec les environnements de test où la date système est modifiée.
         $threshold_timestamp = $current_time - $spam_delay_seconds;
         $run_start = microtime(true);
 
@@ -486,6 +488,14 @@ class notification_task extends \phpbb\cron\task\base
         );
 
         error_log($summary_message);
+        }
+        catch (\Throwable $exception)
+        {
+            // Evite les tempetes de relance si une exception non geree survient.
+            error_log('[Reactions Cron] Unhandled exception: ' . $exception->getMessage());
+            error_log('[Reactions Cron] Unhandled trace: ' . $exception->getFile() . ':' . $exception->getLine());
+            $this->config->set('bastien59960_reactions_cron_last_run', $current_time);
+        }
     }
 
     /**
@@ -556,11 +566,21 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function should_run()
     {
-        // CORRECTION : Simplification radicale. La tâche doit TOUJOURS être considérée comme "prête".
-        // La logique de savoir s'il y a du travail à faire est déplacée dans la méthode run().
-        // Cela évite les problèmes de cache de configuration et garantit que le cron est toujours
-        // exécutable par `cron:run`, ce qui est essentiel pour le script de purge.
-        return true;
+        if (!(int) $this->config['bastien59960_reactions_enabled'])
+        {
+            return false;
+        }
+
+        $spam_minutes = (int) $this->config['bastien59960_reactions_spam_time'];
+        if ($spam_minutes <= 0)
+        {
+            return false;
+        }
+
+        $last_run = (int) $this->config['bastien59960_reactions_cron_last_run'];
+        $interval = max(60, $spam_minutes * 60);
+
+        return $last_run < (time() - $interval);
     }
 
     /**
