@@ -204,8 +204,18 @@ class ajax
             // =====================================================================
             
             // Seuls les utilisateurs connectés peuvent interagir.
-            if ($this->user->data['user_id'] == ANONYMOUS) { // ANONYMOUS est une constante de phpBB
-                throw new \phpbb\exception\http_exception(403, 'User not logged in.');
+            // Retour direct pour éviter de polluer les logs avec une exception attendue.
+            if ((int) $this->user->data['user_id'] === ANONYMOUS) { // ANONYMOUS est une constante de phpBB
+                if (ob_get_level()) {
+                    ob_end_clean();
+                }
+
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => 'User not logged in.',
+                    'auth_required' => true,
+                    'rid' => $rid,
+                ], 403);
             }
 
             // =====================================================================

@@ -186,6 +186,10 @@ function toggle_visible(id) {
      */
     function attachMoreButtonEvents(context) {
         context.querySelectorAll('.reaction-more').forEach(button => {
+            const container = button.closest('.post-reactions-container');
+            if (container && container.classList.contains('post-reactions-readonly')) {
+                return;
+            }
             button.removeEventListener('click', handleMoreButtonClick);
             button.addEventListener('click', handleMoreButtonClick);
         });
@@ -200,6 +204,10 @@ function toggle_visible(id) {
      */
     function attachTooltipEvents(context) {
         context.querySelectorAll('.post-reactions .reaction-wrapper').forEach(wrapper => {
+            const container = wrapper.closest('.post-reactions-container');
+            if (container && container.classList.contains('post-reactions-readonly')) {
+                return;
+            }
             const emoji = wrapper.getAttribute('data-emoji');
             const postId = getPostIdFromReaction(wrapper);
             if (emoji && postId) {
@@ -232,9 +240,16 @@ function toggle_visible(id) {
         }
     
         event.preventDefault(); // Empêche le comportement par défaut uniquement si c'est une réaction.
+        const container = reactionButton.closest('.post-reactions-container');
+        if (!container || container.classList.contains('post-reactions-readonly')) {
+            return;
+        }
+
         const wrapper = reactionButton.closest('.reaction-wrapper');
-        const emoji = wrapper.getAttribute('data-emoji');
-        const postId = getPostIdFromReaction(wrapper);
+        const emoji = wrapper
+            ? wrapper.getAttribute('data-emoji')
+            : reactionButton.getAttribute('data-emoji');
+        const postId = container.getAttribute('data-post-id');
         
         // Validation des données
         if (!emoji || !postId) { // Sécurité : ne rien faire si les données sont invalides
@@ -766,6 +781,58 @@ function toggle_visible(id) {
     }
 
     /**
+     * Indique si un code HTTP correspond à une session non authentifiée.
+     * @param {number|null} status Code HTTP
+     * @returns {boolean}
+     */
+    function isAuthFailureStatus(status) {
+        return status === 401 || status === 403;
+    }
+
+    /**
+     * Arrête la synchronisation temps réel.
+     */
+    function stopLiveSync() {
+        if (liveSyncTimer !== null) {
+            window.clearInterval(liveSyncTimer);
+            liveSyncTimer = null;
+        }
+        liveSyncInFlight = false;
+    }
+
+    /**
+     * Bascule l'UI vers un mode lecture seule pour éviter tout nouvel appel AJAX interactif.
+     */
+    function switchToReadonlyMode() {
+        closeAllPickers();
+        hideUserTooltip();
+
+        document.querySelectorAll('.post-reactions-container').forEach((container) => {
+            container.classList.add('post-reactions-readonly');
+            container.querySelectorAll('.reaction').forEach((button) => {
+                button.classList.add('reaction-readonly');
+            });
+            container.querySelectorAll('.reaction-wrapper').forEach((wrapper) => {
+                wrapper.classList.remove('active', 'loading');
+            });
+            container.querySelectorAll('.reaction-more').forEach((button) => {
+                button.remove();
+            });
+        });
+    }
+
+    /**
+     * Traite une session expirée/non authentifiée: arrêt sync + mode lecture seule + message.
+     * @param {string|null} serverMessage Message remonté par le serveur.
+     */
+    function handleUnauthorizedSession(serverMessage) {
+        window.REACTIONS_USER_LOGGED_IN = false;
+        stopLiveSync();
+        switchToReadonlyMode();
+        showLoginMessage(serverMessage || L.LOGIN_REQUIRED);
+    }
+
+    /**
      * Affiche un message modal demandant la connexion
      *
      * Crée et affiche une boîte de dialogue modale simple pour informer les utilisateurs
@@ -774,6 +841,7 @@ function toggle_visible(id) {
      * @param {string} text Le message à afficher.
      */
     function showLoginMessage(text) {
+        const messageText = text || L.LOGIN_REQUIRED;
         // Vérifier qu'il n'y a pas déjà un message affiché
         if (document.querySelector('.reactions-login-message')) {
             return;
@@ -795,7 +863,7 @@ function toggle_visible(id) {
             text-align: center;
         `;
         message.innerHTML = `
-            <p>${escapeHtml(text)}</p>
+            <p>${escapeHtml(messageText)}</p>
             <button class="reactions-login-dismiss" style="margin-top: 10px; padding: 5px 15px; cursor: pointer;">OK</button>
         `;
         document.body.appendChild(message);
@@ -985,8 +1053,9 @@ function toggle_visible(id) {
             const serverMessage = error.data ? error.data.error : null;
 
             switch (status) {
+                case 401: // Unauthorized
                 case 403: // Forbidden
-                    showLoginMessage();
+                    handleUnauthorizedSession(serverMessage);
                     break;
                 case 429: // Too Many Requests (limite atteinte)
                 case 400: // Bad Request (emoji invalide, etc.)
@@ -1164,6 +1233,10 @@ function toggle_visible(id) {
                     sid: REACTIONS_SID
                 };
 
+                if (!isUserLoggedIn()) {
+                    return;
+                }
+
                 fetch(REACTIONS_AJAX_URL, {
                     method: 'POST',
                     headers: { 
@@ -1174,7 +1247,9 @@ function toggle_visible(id) {
                 })
                 .then(res => {
                     if (!res.ok) {
-                        throw new Error('HTTP ' + res.status);
+                        const err = new Error('HTTP ' + res.status);
+                        err.status = res.status;
+                        throw err;
                     }
                     return res.json();
                 })
@@ -1184,6 +1259,10 @@ function toggle_visible(id) {
                     }
                 })
                 .catch(err => {
+                    if (isAuthFailureStatus(err && err.status ? err.status : null)) {
+                        handleUnauthorizedSession();
+                        return;
+                    }
                     console.error('[Reactions] Erreur chargement users:', err);
                 });
 
@@ -1367,7 +1446,7 @@ function toggle_visible(id) {
      */
     function collectLiveSyncPostIds() {
         const ids = [];
-        document.querySelectorAll('.post-reactions-container[data-post-id]').forEach((container) => {
+        document.querySelectorAll('.post-reactions-container[data-post-id]:not(.post-reactions-readonly)').forEach((container) => {
             const value = parseInt(container.getAttribute('data-post-id'), 10);
             if (!Number.isNaN(value) && value > 0) {
                 ids.push(value);
@@ -1384,6 +1463,11 @@ function toggle_visible(id) {
      * en réponse. Empêche les requêtes concurrentes avec le flag `liveSyncInFlight`.
      */
     function performLiveSync() {
+        if (!isUserLoggedIn()) {
+            stopLiveSync();
+            return;
+        }
+
         if (liveSyncInFlight) {
             return;
         }
@@ -1411,8 +1495,19 @@ function toggle_visible(id) {
                 post_ids: postIds,
             }),
         })
-            .then((response) => response.json())
-            .then((data) => {
+            .then((response) => {
+                return response.json().catch(() => ({})).then((data) => ({ response, data }));
+            })
+            .then(({ response, data }) => {
+                if (isAuthFailureStatus(response.status)) {
+                    handleUnauthorizedSession(data && data.error ? data.error : null);
+                    return;
+                }
+
+                if (!response.ok) {
+                    return;
+                }
+
                 if (!data || !data.success || !data.posts) {
                     return;
                 }
