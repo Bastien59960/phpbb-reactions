@@ -50,6 +50,17 @@ services:
     # =========================================================================
     # CONTRÔLEUR AJAX
     # =========================================================================
+    bastien59960.reactions.unsubscribe:
+        class: bastien59960\reactions\controller\unsubscribe
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@language'
+            - '@request'
+            - '@template'
+            - '@dbal.tools'
+            - '%core.table_prefix%'
+
     bastien59960.reactions.ajax:
         class: bastien59960\reactions\controller\ajax
         arguments:
