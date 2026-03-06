@@ -19,6 +19,7 @@ Voir le message : {posts.POST_URL_ABSOLUTE}
 
 {DIGEST_FOOTER}
 {UNSUBSCRIBE_TEXT}
+{U_UNSUBSCRIBE}
 
 Lien vers votre profil : {U_USER_PROFILE}
 Lien vers vos préférences : {U_UCP}

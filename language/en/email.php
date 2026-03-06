@@ -52,6 +52,7 @@ $lang = array_merge($lang, array(
     // FOOTER AND SIGNATURE
     // =========================================================================
     'REACTIONS_DIGEST_SIGNATURE' => "Sincerely,\nThe %s Team", // %s is replaced by the forum name
-    'REACTIONS_DIGEST_FOOTER'      => 'You are receiving this email because you have chosen to receive reaction summaries.',
-    'REACTIONS_DIGEST_UNSUBSCRIBE' => 'To manage your notification preferences, please visit your User Control Panel.',
+    'REACTIONS_DIGEST_FOOTER'           => 'You are receiving this email because you have chosen to receive reaction summaries.',
+    'REACTIONS_DIGEST_UNSUBSCRIBE'      => 'To unsubscribe from reaction email notifications:',
+    'REACTIONS_DIGEST_UNSUBSCRIBE_LINK' => 'Unsubscribe',
 ));

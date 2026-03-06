@@ -52,6 +52,7 @@ $lang = array_merge($lang, array(
     // PIED DE PAGE ET SIGNATURE
     // =========================================================================
     'REACTIONS_DIGEST_SIGNATURE' => "Cordialement,\nL'équipe %s", // %s est remplacé par le nom du forum
-    'REACTIONS_DIGEST_FOOTER'    => 'Vous recevez cet e-mail car vous avez choisi de recevoir des résumés de réactions.',
-    'REACTIONS_DIGEST_UNSUBSCRIBE' => 'Pour gérer vos préférences de notification, veuillez visiter votre Panneau de Contrôle Utilisateur.',
+    'REACTIONS_DIGEST_FOOTER'          => 'Vous recevez cet e-mail car vous avez choisi de recevoir des résumés de réactions.',
+    'REACTIONS_DIGEST_UNSUBSCRIBE'     => 'Pour vous désabonner des notifications de réactions par email :',
+    'REACTIONS_DIGEST_UNSUBSCRIBE_LINK' => 'Se désabonner',
 ));

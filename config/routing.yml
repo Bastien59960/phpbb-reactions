@@ -17,3 +17,9 @@ bastien59960_reactions_ajax:
   path: /reactions/ajax
   defaults: { _controller: bastien59960.reactions.ajax:handle }
   methods: [POST]
+
+# Endpoint désabonnement des emails de notification de réactions.
+bastien59960_reactions_unsubscribe:
+  path: /reactions/unsubscribe
+  defaults: { _controller: bastien59960.reactions.unsubscribe:handle }
+  methods: [GET]

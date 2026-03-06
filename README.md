@@ -1,340 +1,141 @@
-# 🚀 phpBB Reactions — Extension d'Émojis Ultra-Complète pour phpBB 3.3+
+# Bastien59960 Reactions - phpBB 3.3+ Extension
 
-Ajoutez une dimension sociale et moderne à votre forum phpBB : laissez vos membres réagir à chaque message avec l'intégralité des émojis Unicode !  
+[Français](README.fr.md)
 
-<p align="center">
-  <a href="https://github.com/Bastien59960/phpbb-reactions"><img src="https://img.shields.io/badge/version-1.0.0--beta-blue" alt="Version"></a>
-  <a href="https://www.phpbb.com/"><img src="https://img.shields.io/badge/phpBB-%3E%3D%203.3-0076B1" alt="phpBB Version"></a>
-  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/php-%3E%3D%207.4-8892BF" alt="PHP Version"></a>
-  <a href="./license"><img src="https://img.shields.io/badge/license-GPL--2.0--only-green" alt="License"></a>
-</p>
-**Expérience fluide, notifications intelligentes, personnalisation avancée, et performance garantie.**
+**Add modern, high-signal community feedback to every post.**
 
----
+As forum content written by real users becomes more valuable, engagement quality matters more than vanity metrics. Bastien59960 Reactions gives phpBB administrators a robust emoji reaction system with live UX, notification controls, digest emails, and unsubscribe-safe delivery flows.
 
-## ✨ Fonctionnalités phares
+## Why install it
 
-- **Réactions illimitées** : Support complet de tous les émojis Unicode (👍 ❤️ 😂 👎 …), y compris les emojis composés et les dernières nouveautés.
-- **Palette intelligente** : 10 emojis courants en accès rapide, palette étendue pour tous les autres.
-- **Multi-réactions** : Jusqu'à 10 réactions différentes par utilisateur et par post (paramétrable).
-- **Compteurs dynamiques** : Affichage en temps réel du nombre de réactions par emoji sous chaque message.
-- **Tooltips interactifs** : Survolez un emoji pour voir qui a réagi.
-- **Interactions AJAX** : Ajout et retrait de réactions sans rechargement de page. Les réactions des autres utilisateurs se synchronisent automatiquement (intervalle configurable).
-- **Notifications puissantes** :
-   - **Synchronisation Intelligente** : Les réactions sont mises à jour sur la page sans action de l'utilisateur (ex: via `sync`).
-  - **Cloche** : Notification immédiate dans le forum.
-  - **Résumé e-mail** : Digest périodique groupé, anti-spam, personnalisable par l'utilisateur.
-- **Préférences utilisateur** : Chaque membre choisit s'il veut recevoir des notifications (cloche, e-mail, ou aucune).
-- **Limites configurables** : Nombre max de réactions par post, par utilisateur, délai anti-spam… tout est ajustable dans l'ACP.
-- **Sécurité avancée** : Protection CSRF, validation stricte des emojis, contrôle des permissions, anti-spam natif.
-- **Support multilingue** : Français et anglais inclus, facilement extensible.
-- **Design responsive** : Parfaitement intégré à prosilver, compatible mobile/tablette.
-- **Outils de Diagnostic** : Scripts de maintenance et de diagnostic inclus pour un débogage rapide et efficace.
+- Increase member engagement with lightweight feedback on every post.
+- Keep notifications useful with anti-spam digest timing and per-user preferences.
+- Provide a smooth AJAX experience without full page reloads.
+- Keep operational control from ACP with configurable limits and picker behavior.
 
----
+## Key features
 
-## 🖼️ Aperçu
+### Reactions UX and live sync
 
-![Capture d'écran de l'interface des réactions](./images/01.jpg)
-![Capture d'écran des notifications](./images/02.jpg)
+- Emoji reactions under posts with counters and user tooltips.
+- AJAX add/remove endpoints for fast interaction.
+- Configurable background sync interval for near-real-time updates.
+- Configurable picker behavior (size, categories, search, full emoji set loading).
 
----
+### Notifications and digest cron
 
-## 🛠️ Installation rapide
-**⚠️ Cette extension est actuellement en version bêta. Vos retours sont précieux pour l'améliorer !**
+- In-forum notifications for new reactions.
+- Email digest cron task grouping reactions by recipient and by post.
+- Anti-spam delay between digests (ACP setting).
+- Run-time safeguards: processing window and per-run cap.
 
-1. **Pré-requis** : phpBB 3.3.10+ (UTF8MB4 activé sur la base de données)
-2. **Téléchargement** : [Dernière version sur GitHub](https://github.com/bastien59960/reactions)
-3. **Déploiement** :
-   - Dézippez dans `ext/bastien59960/reactions/`
-   - Activez l'extension dans l'ACP > Personnalisation > Gérer les extensions
-4. **Configuration** :
-   - Rendez-vous dans l'ACP > Extensions > Post Reactions pour ajuster les paramètres (limites, activation, etc.)
-   - Les utilisateurs peuvent gérer leurs préférences dans leur panneau utilisateur
+### Unsubscribe handling for digest emails
 
----
+- Signed unsubscribe link in reaction digest emails.
+- `GET /app.php/reactions/unsubscribe` endpoint validates token and updates user preference.
+- Outcome-aware HTTP responses (`200`, `403`, `404`) and user messaging.
+- Optional integration with AdminHelper log table (`unsubscribe_type = reactions_notify`) when available.
 
-## 📝 Fonctionnalités détaillées
+### ACP and UCP controls
 
-### Réactions & interface
-- Palette d'emojis rapide et palette complète
-- Affichage des réactions sous chaque post
-- Tooltips avec la liste des utilisateurs ayant réagi
-- Ajout/retrait de réaction en un clic (AJAX)
+- ACP settings for limits and display behavior:
+  - max reaction types per post
+  - max reactions per user per post
+  - digest delay
+  - picker and display parameters
+- UCP preference support for email digest opt-in/out.
 
-### Notifications
-- **Cloche** : Notification immédiate à l'auteur du message (hors auto-réaction)
-- **Résumé e-mail** : Digest groupé, anti-spam (délai configurable, par défaut 45 min)
-- Préférences individuelles (activer/désactiver chaque type)
+### Data hygiene
 
-### Configuration & personnalisation
-- Limites par post et par utilisateur (modifiables dans l'ACP)
-- Activation/désactivation globale de l'extension
-- Délai anti-spam pour les notifications e-mail
-- Support complet des emojis Unicode (utf8mb4 requis)
+- Cleans up orphan/self-reaction notification candidates during cron processing.
+- Marks handled reaction items to avoid repeated notifications.
 
-### Sécurité & robustesse
-- Validation CSRF sur toutes les requêtes
-- Validation stricte des emojis (longueur, unicité, caractères)
-- Permissions phpBB respectées (seuls les membres autorisés peuvent réagir)
-- Nettoyage automatique des notifications orphelines
+## Requirements
 
-### Performance
-- Index SQL optimisés
-- Requêtes AJAX groupées
-- Cache des emojis
-- Logs détaillés pour le debug
+- PHP `>= 7.4.0`
+- phpBB `>= 3.3.0`
+- MySQL/MariaDB with `utf8mb4` recommended for full emoji coverage
 
----
+## Installation
 
-## 👨‍💻 Pour les Développeurs
+1. Copy `bastien59960/reactions` into `ext/`.
+2. Enable the extension:
 
-Cette extension inclut des outils de diagnostic et de maintenance conçus pour accélérer le développement et le débogage.
-
-### Script de Maintenance (`forum-purge.sh`)
-
-Un script shell "tout-en-un" qui automatise un cycle complet de réinitialisation de l'extension. Idéal pour garantir un environnement de test propre.
-
-**Fonctionnalités du script :**
-- Sauvegarde et restauration automatiques des réactions.
-- Désactivation, purge complète et réactivation de l'extension.
-- Nettoyage du cache phpBB et des migrations corrompues.
-- Test final de l'exécution du cron avec un rapport détaillé.
-
-**Usage :**
 ```bash
-# Placez-vous dans le répertoire de l'extension
-cd /path/to/your/forum/ext/bastien59960/reactions/
-
-# Exécutez le script
-bash forum-purge.sh
+php bin/phpbbcli.php extension:enable bastien59960/reactions
 ```
 
----
+## Update
 
-## 📦 Structure du projet
+After updating files:
 
-```
-reactions/
-├── ext.php
-├── config/           # Services, paramètres, routes
-├── controller/       # Contrôleurs AJAX, UCP, etc.
-├── event/            # Listener d'événements phpBB
-├── notification/     # Types de notifications personnalisés
-├── cron/             # Tâche cron pour les digests e-mail
-├── migrations/       # Migrations de base de données
-├── language/         # Fichiers de langue (fr, en)
-├── styles/           # Templates, JS, CSS
-└── ...
-```
-
----
-
-## 🔒 Sécurité & bonnes pratiques
-
-- Validation CSRF et permissions à chaque étape
-- Limites anti-spam configurables
-- Logs d'erreur et de performance
-- Nettoyage automatique des données orphelines
-
----
-
-## 🚦 Roadmap & évolutions prévues
-
-- Réactions personnalisées (emojis propres au forum)
-- Statistiques avancées (tableaux de bord, top réactions)
-- Intégration mobile et PWA
-- API REST pour applications tierces
-- Notifications en temps réel (WebSockets)
-- Import/export des réactions
-- Tests automatisés
-
----
-
-## 🤝 Contribution & support
-
-- **Bugs, suggestions, contributions** : ouvrez une issue ou une pull request sur GitHub
-- **Documentation complète** : voir le dossier `/docs` et les fichiers `DOCUMENTATION.md`, `CONFIGURATION.md`
-- **Communauté** : [Forum de support](https://bastien.debucquoi.com/forum/)
-
----
-
-## 📄 Licence
-
-GNU General Public License v2.0  
-(c) 2025 Bastien59960
-
----
-
-*Rejoignez la communauté, testez, contribuez, et faites de votre forum un espace vivant et interactif !*
-
----
-
-# 🚀 phpBB Reactions — The Ultimate Emoji Extension for phpBB 3.3+
-
-<p align="center">
-  <a href="https://github.com/Bastien59960/reactions"><img src="https://img.shields.io/badge/version-1.0.0--beta-blue" alt="Version"></a>
-  <a href="https://www.phpbb.com/"><img src="https://img.shields.io/badge/phpBB-%3E%3D%203.3-0076B1" alt="phpBB Version"></a>
-  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/php-%3E%3D%207.4-8892BF" alt="PHP Version"></a>
-  <a href="./license"><img src="https://img.shields.io/badge/license-GPL--2.0--only-green" alt="License"></a>
-</p>
-
-Bring your phpBB forum to life: let your members react to every post with the full range of Unicode emojis!  
-**Smooth experience, smart notifications, advanced customization, and top performance.**
-
----
-
-## ✨ Key Features
-
-- **Unlimited reactions**: Full support for all Unicode emojis (👍 ❤️ 😂 👎 …), including composed and latest emojis.
-- **Smart palette**: 10 common emojis for quick access, with an extended palette for all others.
-- **Multi-reactions**: Up to 10 different reactions per user and per post (configurable).
-- **Live counters**: Real-time display of reaction counts per emoji under each post.
-- **Interactive tooltips**: Hover an emoji to see who reacted.
-- **AJAX Interactions**: Add and remove reactions without page reloads. Other users' reactions are synchronized automatically (configurable interval).
-- **Powerful notifications**:
-  - **Smart Sync**: Reactions are updated on the page without user action (e.g., via `sync`).
-  - **Bell**: Instant in-forum notification.
-  - **Email Summary**: Periodic grouped digest, anti-spam, customizable by the user.
-- **User preferences**: Each member chooses which notifications to receive (bell, email, or none).
-- **Configurable limits**: Max reactions per post, per user, anti-spam delay… all adjustable in the ACP.
-- **Advanced security**: CSRF protection, strict emoji validation, permission checks, built-in anti-spam.
-- **Multilingual**: French and English included, easily extensible.
-- **Responsive design**: Perfectly integrated with prosilver, mobile/tablet ready.
-- **Diagnostic Tools**: Includes maintenance and diagnostic scripts for fast and efficient debugging.
-
----
-
-## 🖼️ Preview
-
-![Screenshot of the reactions interface](./images/01.jpg)
-![Screenshot of the notifications](./images/02.jpg)
-
----
-
-## 🛠️ Quick Installation
-**⚠️ This extension is currently in beta. Your feedback is valuable for its improvement!**
-
-1. **Requirements**: phpBB 3.3.10+ (UTF8MB4 enabled on the database)
-2. **Download**: Latest version on GitHub
-3. **Deployment**:
-   - Unzip into `ext/bastien59960/reactions/`
-   - Enable the extension in ACP > Customise > Manage extensions
-4. **Configuration**:
-   - Go to ACP > Extensions > Post Reactions to adjust settings (limits, activation, etc.)
-   - Users can manage their preferences in their user control panel
-
----
-
-## 📝 Detailed Features
-
-### Reactions & Interface
-- Quick and full emoji palettes
-- Display of reactions under each post
-- Tooltips with the list of users who reacted
-- Add/remove reaction in one click (AJAX)
-
-### Notifications
-- **Bell**: Instant notification to the post author (except self-reaction)
-- **Email Summary**: Grouped digest, anti-spam (configurable delay, default 45 min)
-- Individual preferences (enable/disable each type)
-
-### Configuration & Personalization
-- Limits per post and per user (modifiable in ACP)
-- Global enable/disable of the extension
-- Anti-spam delay for email notifications
-- Full Unicode emoji support (utf8mb4 required)
-
-### Security & Robustness
-- CSRF validation on all requests
-- Strict emoji validation (length, uniqueness, characters)
-- phpBB permissions respected (only authorized members can react)
-- Automatic cleanup of orphan notifications
-
-### Performance
-- Optimized SQL indexes
-- Grouped AJAX requests
-- Emoji cache
-- Detailed logs for debugging
-
----
-
-## 👨‍💻 For Developers
-
-This extension includes diagnostic and maintenance tools designed to speed up development and debugging.
-
-### Maintenance Script (`forum-purge.sh`)
-
-An all-in-one shell script that automates a full reset cycle for the extension. Ideal for ensuring a clean testing environment.
-
-**Script Features:**
-- Automatic backup and restoration of reactions.
-- Disabling, full purging, and re-enabling of the extension.
-- Clearing the phpBB cache and corrupted migrations.
-- Final cron execution test with a detailed report.
-
-**Usage:**
 ```bash
-# Navigate to the extension directory
-cd /path/to/your/forum/ext/bastien59960/reactions/
-
-# Run the script
-bash forum-purge.sh
-```
----
-
-## 📦 Project Structure
-
-```
-reactions/
-├── ext.php
-├── config/           # Services, parameters, routes
-├── controller/       # AJAX, UCP, etc. controllers
-├── event/            # phpBB event listener
-├── notification/     # Custom notification types
-├── cron/             # Cron task for email digests
-├── migrations/       # Database migrations
-├── language/         # Language files (fr, en)
-├── styles/           # Templates, JS, CSS
-└── ...
+php bin/phpbbcli.php db:migrate
+php bin/phpbbcli.php cache:purge
 ```
 
----
+## Uninstall
 
-## 🔒 Security & Best Practices
+```bash
+php bin/phpbbcli.php extension:disable bastien59960/reactions
+php bin/phpbbcli.php extension:purge bastien59960/reactions
+```
 
-- CSRF and permission checks at every step
-- Configurable anti-spam limits
-- Error and performance logs
-- Automatic cleanup of orphan data
+## Quick ACP setup
 
----
+In **ACP > Extensions > Reactions**:
 
-## 🚦 Roadmap & Upcoming Features
+- Set digest delay (`bastien59960_reactions_spam_time`).
+- Set per-post and per-user reaction limits.
+- Tune picker width/height/icon sizes.
+- Enable/disable category tabs, search, and full emoji JSON loading.
+- Set refresh interval for live sync.
 
-- Custom reactions (forum-specific emojis)
-- Advanced statistics (dashboards, top reactions)
-- Mobile integration and PWA
-- REST API for third-party apps
-- Real-time notifications (WebSockets)
-- Import/export of reactions
-- Automated tests
+## Cron and useful commands
 
----
+### Run phpBB cron
 
-## 🤝 Contribution & Support
+```bash
+php /var/www/forum/bin/phpbbcli.php cron:run
+```
 
-- **Bugs, suggestions, contributions**: open an issue or pull request on GitHub
-- **Full documentation**: see `/docs` and the files `DOCUMENTATION.md`, `CONFIGURATION.md`
-- **Community**: [Support forum](https://bastien.debucquoi.com/forum/)
+### Run only reactions digest task
 
----
+```bash
+php /var/www/forum/bin/phpbbcli.php cron:run cron.task.bastien59960.reactions.notification
+```
 
-## 📄 License
+### Basic local cron diagnostics script
 
-GNU General Public License v2.0  
-(c) 2025 Bastien59960
+```bash
+bash ext/bastien59960/reactions/tools/check-crons.sh
+```
 
----
+## Stored data (summary)
 
-*Join the community, test, contribute, and make your forum a lively and interactive space!*
+Main storage points:
+
+- `post_reactions` table: reaction events, emojis, timestamps, and digest handling flags.
+- `users.user_reactions_cron_email`: member digest email preference.
+- phpBB notifications tables for in-forum and email notification methods.
+
+## Security and privacy
+
+- CSRF protections and permission checks apply to reaction actions.
+- Unsubscribe token uses HMAC signature derived from forum secret material.
+- Digest unsubscribe endpoint updates only reaction email preference.
+- No API keys or server secrets are stored in extension files.
+
+## Known limits
+
+- Full emoji fidelity depends on `utf8mb4` database configuration.
+- Email delivery timing depends on phpBB queue and cron regularity.
+- AdminHelper log integration is conditional on AdminHelper log table availability.
+
+## License
+
+[GPL-2.0-only](LICENSE)
+
+## Author
+
+**Bastien** (`bastien59960`)
