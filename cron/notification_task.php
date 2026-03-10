@@ -337,12 +337,13 @@ class notification_task extends \phpbb\cron\task\base
 
                 if ($send_result !== false)
                 {
-                    $this->mark_reactions_as_handled($data['mark_ids']);
+                    $this->mark_reactions_as_handled($data['mark_ids'], 1); // email envoyé
                     $processed++;
                 }
                 else
                 {
                     error_log('[Reactions Cron] Send failed for user_id ' . $author_id . '.');
+                    $this->mark_reactions_as_handled($data['mark_ids'], 3); // email échoué
                 }
             }
 
@@ -371,7 +372,17 @@ class notification_task extends \phpbb\cron\task\base
      * @param array $ids Tableau d'IDs de réactions à marquer.
      * @return void
      */
-    protected function mark_reactions_as_handled(array $ids)
+    /**
+     * Marque les réactions comme traitées par le cron.
+     *
+     * @param array $ids         IDs de réactions à marquer.
+     * @param int   $email_sent  Statut email :
+     *                           0 = pending (ne pas utiliser ici)
+     *                           1 = email envoyé avec succès
+     *                           2 = email ignoré (pas d'email, préf. désactivée, self-réaction…)
+     *                           3 = email échoué (send() === false ou exception)
+     */
+    protected function mark_reactions_as_handled(array $ids, int $email_sent = 2)
     {
         if (empty($ids))
         {
@@ -380,7 +391,7 @@ class notification_task extends \phpbb\cron\task\base
 
         $ids = array_map('intval', $ids);
         $sql = 'UPDATE ' . $this->post_reactions_table . '
-                SET reaction_notified = 1
+                SET reaction_notified = 1, reaction_email_sent = ' . (int) $email_sent . '
                 WHERE ' . $this->db->sql_in_set('reaction_id', $ids);
         $this->db->sql_query($sql);
     }
