@@ -279,7 +279,7 @@ class notification_task extends \phpbb\cron\task\base
                 $subject = $this->language->lang('REACTIONS_DIGEST_SUBJECT');
                 $subject_utf8 = $this->normalize_utf8($subject);
 
-                $messenger = new \messenger(true);
+                $messenger = $this->create_digest_messenger();
                 $messenger->headers('Content-Transfer-Encoding: quoted-printable');
                 $messenger->to($author_email, $author_name_utf8);
                 $messenger->subject($subject_utf8);
@@ -540,5 +540,11 @@ class notification_task extends \phpbb\cron\task\base
     public function is_runnable()
     {
         return (bool) $this->config['email_enable'];
+    }
+
+    protected function create_digest_messenger()
+    {
+        $cache_dir = rtrim($this->phpbb_root_path, '/\\') . '/store/reactions_mail_twig_cache';
+        return new digest_messenger($cache_dir, true);
     }
 }
