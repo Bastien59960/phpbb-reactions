@@ -28,6 +28,7 @@ Quand on veut reagir sans devoir ecrire un post, il faut un systeme simple, rapi
 - Tache cron de digest email, agregee par destinataire et par message.
 - Delai anti-spam entre deux digest (reglage ACP).
 - Garde-fous d'execution: fenetre de temps et plafond par run.
+- Les choix faits dans `UCP > Preferences du forum > Modifier les preferences des notifications` sont synchronises avec les anciens flags utilisateur de l'extension pour eviter les preferences divergentes.
 
 ### Gestion de desinscription des digest emails
 
@@ -44,6 +45,8 @@ Quand on veut reagir sans devoir ecrire un post, il faut un systeme simple, rapi
   - delai du digest
   - parametres du picker et de l'affichage
 - Support des preferences UCP pour opt-in/opt-out digest email.
+- Les lignes visibles dans la page standard `ucp_notifications` pilotent les notifications reactions (cloche et digest email).
+- L'ancien panneau UCP reactions et le lien de desinscription digest restent synchronises avec ces preferences pour compatibilite.
 
 ### Hygiene des donnees
 
@@ -137,8 +140,8 @@ cron web est temporairement bloque :
 Points de stockage principaux:
 
 - table `post_reactions`: evenements reactions, emojis, horodatage et flags digest.
-- `users.user_reactions_cron_email`: preference email digest du membre.
-- tables notifications phpBB pour la cloche et l'email.
+- `users.user_reactions_notify` et `users.user_reactions_cron_email`: flags de compatibilite historiques, maintenus synchronises avec phpBB.
+- tables notifications phpBB: source de verite pour les preferences cloche/email visibles dans `ucp_notifications`.
 
 ## Securite et vie privee
 

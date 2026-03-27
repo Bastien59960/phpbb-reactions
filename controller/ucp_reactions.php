@@ -8,6 +8,11 @@ use phpbb\user;
 
 class ucp_reactions
 {
+    private const REACTION_TYPE = 'bastien59960.reactions.notification.type.reaction';
+    private const DIGEST_TYPE = 'bastien59960.reactions.notification.type.reaction_email_digest';
+    private const BOARD_METHOD = 'notification.method.board';
+    private const EMAIL_METHOD = 'notification.method.email';
+
     protected $u_action;
     /** @var driver_interface */
     protected $db;
@@ -56,6 +61,13 @@ class ucp_reactions
                     user_reactions_cron_email = ' . (int) $user_reactions_cron_email . '
                 WHERE user_id = ' . (int) $this->user->data['user_id'];
             $this->db->sql_query($sql);
+
+            $user_id = (int) $this->user->data['user_id'];
+            $this->sync_global_subscription($user_id, self::REACTION_TYPE, self::BOARD_METHOD, (bool) $user_reactions_notify);
+            $this->sync_global_subscription($user_id, self::DIGEST_TYPE, self::EMAIL_METHOD, (bool) $user_reactions_cron_email);
+
+            $this->user->data['user_reactions_notify'] = (int) $user_reactions_notify;
+            $this->user->data['user_reactions_cron_email'] = (int) $user_reactions_cron_email;
             
             trigger_error($this->user->lang['UCP_REACTIONS_SAVED'] . adm_back_link($this->u_action));
         }
@@ -66,5 +78,32 @@ class ucp_reactions
             'USER_REACTIONS_CRON_EMAIL'  => $this->user->data['user_reactions_cron_email'],
             'U_ACTION'                   => $this->u_action,
         ]);
+    }
+
+    private function sync_global_subscription($user_id, $item_type, $method, $enabled)
+    {
+        $user_id = (int) $user_id;
+        $notify = $enabled ? 1 : 0;
+        $table = $this->table_prefix . 'user_notifications';
+
+        $sql = 'UPDATE ' . $table . "
+            SET notify = " . (int) $notify . "
+            WHERE item_type = '" . $this->db->sql_escape($item_type) . "'
+                AND item_id = 0
+                AND user_id = " . $user_id . "
+                AND method = '" . $this->db->sql_escape($method) . "'";
+        $this->db->sql_query($sql);
+
+        if (!$this->db->sql_affectedrows())
+        {
+            $sql = 'INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', [
+                'item_type' => $item_type,
+                'item_id'   => 0,
+                'user_id'   => $user_id,
+                'method'    => $method,
+                'notify'    => $notify,
+            ]);
+            $this->db->sql_query($sql);
+        }
     }
 }

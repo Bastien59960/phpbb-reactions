@@ -93,6 +93,7 @@ class listener implements EventSubscriberInterface
             'core.viewforum_modify_topicrow' => 'add_forum_data',
             'core.console.command.configure' => 'load_language_for_cli',
             'core.ucp_display_module_before' => 'load_ucp_language',
+            'core.ucp_notifications_submit_notification_is_set' => 'sync_notification_preferences',
         ];
     }
 
@@ -262,6 +263,63 @@ class listener implements EventSubscriberInterface
     {
         $this->language->add_lang('ucp_reactions', 'bastien59960/reactions');
         $this->language->add_lang('common', 'bastien59960/reactions');
+    }
+
+    /**
+     * Keep the legacy per-user flags in sync with the standard phpBB notification UI.
+     *
+     * The reactions extension still reads `user_reactions_notify` and
+     * `user_reactions_cron_email` in several code paths. Without syncing them here,
+     * the visible checkboxes in `ucp_notifications` can drift from the actual
+     * behaviour of the extension.
+     */
+    public function sync_notification_preferences($event)
+    {
+        $user_id = (int) ($this->user->data['user_id'] ?? ANONYMOUS);
+        if ($user_id <= ANONYMOUS)
+        {
+            return;
+        }
+
+        $type_data = isset($event['type_data']) && is_array($event['type_data']) ? $event['type_data'] : [];
+        $method_data = isset($event['method_data']) && is_array($event['method_data']) ? $event['method_data'] : [];
+
+        $type_id = (string) ($type_data['id'] ?? '');
+        $method_id = (string) ($method_data['id'] ?? '');
+        $is_set_notify = isset($event['is_set_notify']) ? (bool) $event['is_set_notify'] : false;
+        $is_available = isset($event['is_available']) ? (bool) $event['is_available'] : true;
+        $enabled = ($is_set_notify && $is_available) ? 1 : 0;
+
+        if ($type_id === 'bastien59960.reactions.notification.type.reaction'
+            && $method_id === 'notification.method.board')
+        {
+            $this->sync_legacy_user_flag($user_id, 'user_reactions_notify', $enabled);
+            return;
+        }
+
+        if ($type_id === 'bastien59960.reactions.notification.type.reaction_email_digest'
+            && $method_id === 'notification.method.email')
+        {
+            $this->sync_legacy_user_flag($user_id, 'user_reactions_cron_email', $enabled);
+        }
+    }
+
+    private function sync_legacy_user_flag($user_id, $column, $value)
+    {
+        if (!in_array($column, ['user_reactions_notify', 'user_reactions_cron_email'], true))
+        {
+            return;
+        }
+
+        $user_id = (int) $user_id;
+        $value = (int) ($value ? 1 : 0);
+
+        $sql = 'UPDATE ' . USERS_TABLE . '
+                SET ' . $column . ' = ' . $value . '
+                WHERE user_id = ' . $user_id;
+        $this->db->sql_query($sql);
+
+        $this->user->data[$column] = $value;
     }
 
     private function get_user_reactions($post_id, $user_id)

@@ -30,6 +30,9 @@ if (!defined('IN_PHPBB'))
 
 class unsubscribe
 {
+    private const DIGEST_TYPE = 'bastien59960.reactions.notification.type.reaction_email_digest';
+    private const EMAIL_METHOD = 'notification.method.email';
+
     protected $config;
     protected $db;
     protected $language;
@@ -94,6 +97,7 @@ class unsubscribe
                         $this->db->sql_query(
                             'UPDATE ' . USERS_TABLE . ' SET user_reactions_cron_email = 0 WHERE user_id = ' . (int) $user_id
                         );
+                        $this->sync_global_subscription($user_id, self::DIGEST_TYPE, self::EMAIL_METHOD, false);
                     }
 
                     $http_status = 200;
@@ -168,5 +172,32 @@ class unsubscribe
     private function get_adminhelper_unsubscribe_log_table()
     {
         return $this->table_prefix . 'adminhelper_unsubscribe_log';
+    }
+
+    private function sync_global_subscription($user_id, $item_type, $method, $enabled)
+    {
+        $user_id = (int) $user_id;
+        $notify = $enabled ? 1 : 0;
+        $table = $this->table_prefix . 'user_notifications';
+
+        $sql = 'UPDATE ' . $table . "
+            SET notify = " . (int) $notify . "
+            WHERE item_type = '" . $this->db->sql_escape($item_type) . "'
+                AND item_id = 0
+                AND user_id = " . $user_id . "
+                AND method = '" . $this->db->sql_escape($method) . "'";
+        $this->db->sql_query($sql);
+
+        if (!$this->db->sql_affectedrows())
+        {
+            $sql = 'INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', [
+                'item_type' => $item_type,
+                'item_id'   => 0,
+                'user_id'   => $user_id,
+                'method'    => $method,
+                'notify'    => $notify,
+            ]);
+            $this->db->sql_query($sql);
+        }
     }
 }

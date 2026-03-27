@@ -28,6 +28,7 @@ As forum content written by real users becomes more valuable, engagement quality
 - Email digest cron task grouping reactions by recipient and by post.
 - Anti-spam delay between digests (ACP setting).
 - Run-time safeguards: processing window and per-run cap.
+- Choices made in `UCP > Board preferences > Edit notification options` are synchronized with the extension's legacy per-user flags so visible checkboxes and actual behavior stay aligned.
 
 ### Unsubscribe handling for digest emails
 
@@ -44,6 +45,8 @@ As forum content written by real users becomes more valuable, engagement quality
   - digest delay
   - picker and display parameters
 - UCP preference support for email digest opt-in/out.
+- The visible lines in the standard `ucp_notifications` page drive reactions notifications (bell and digest email).
+- The legacy reactions UCP panel and digest unsubscribe link remain synchronized with those preferences for backward compatibility.
 
 ### Data hygiene
 
@@ -116,8 +119,8 @@ bash ext/bastien59960/reactions/tools/check-crons.sh
 Main storage points:
 
 - `post_reactions` table: reaction events, emojis, timestamps, and digest handling flags.
-- `users.user_reactions_cron_email`: member digest email preference.
-- phpBB notifications tables for in-forum and email notification methods.
+- `users.user_reactions_notify` and `users.user_reactions_cron_email`: legacy compatibility flags kept in sync with phpBB.
+- phpBB notifications tables: source of truth for bell/email preferences shown in `ucp_notifications`.
 
 ## Security and privacy
 
