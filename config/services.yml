@@ -78,6 +78,7 @@ services:
             - '@config'
             - '@notification_manager'
             - '@bastien59960.reactions.helper'
+            - '@dispatcher'
 
     # =========================================================================
     # TÂCHE CRON PRINCIPALE (DIGEST E-MAIL)

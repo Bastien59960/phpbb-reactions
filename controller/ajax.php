@@ -90,6 +90,9 @@ class ajax
     /** @var \bastien59960\reactions\controller\helper Service d'aide pour générer le HTML */
     protected $reactions_helper;
 
+    /** @var \phpbb\event\dispatcher_interface Dispatcher d'événements phpBB */
+    protected $dispatcher;
+
     /**
      * Liste des 10 emojis courantes utilisées par défaut
      * 
@@ -139,7 +142,8 @@ class ajax
         $php_ext,
         \phpbb\config\config $config,
         \phpbb\notification\manager $notification_manager,
-        \bastien59960\reactions\controller\helper $reactions_helper
+        \bastien59960\reactions\controller\helper $reactions_helper,
+        \phpbb\event\dispatcher_interface $dispatcher
     ) {
         // Initialisation des propriétés
         $this->db = $db;
@@ -156,10 +160,10 @@ class ajax
         $this->config = $config;
         $this->notification_manager = $notification_manager;
         $this->reactions_helper = $reactions_helper;
-        
+        $this->dispatcher = $dispatcher;
+
         // Charger les fichiers de langue de l'extension
         $this->language->add_lang('common', 'bastien59960/reactions');
-        
     }
 
     // =============================================================================
@@ -622,6 +626,11 @@ class ajax
             // Déclencher immédiatement la notification "cloche" pour l'auteur du message.
             $this->trigger_immediate_notification($post_id, $user_id, $emoji);
 
+            // Notifier les bridges (ex. phpbbwaha) qu'une réaction a été ajoutée.
+            $vars = ['post_id', 'user_id', 'emoji', 'action'];
+            $action = 'add';
+            extract($this->dispatcher->trigger_event('bastien59960.reactions.reaction_toggled', compact($vars)));
+
             // Génération du HTML mis à jour
             $new_reactions_html = $this->reactions_helper->get_reactions_html_for_post($post_id);
 
@@ -669,6 +678,18 @@ class ajax
             error_log("[Reactions RID=$rid] delete SQL: $sql");
         }
         $this->db->sql_query($sql);
+
+        // Notifier les bridges qu'une réaction a été supprimée (emoji vide = suppression WA).
+        $vars = ['post_id', 'user_id', 'emoji', 'action'];
+        $user_id = (int) $this->user->data['user_id'];
+        $action  = 'remove';
+        $emoji_relay = ''; // Emoji vide = suppression côté WA
+        extract($this->dispatcher->trigger_event('bastien59960.reactions.reaction_toggled', [
+            'post_id' => $post_id,
+            'user_id' => $user_id,
+            'emoji'   => $emoji_relay,
+            'action'  => $action,
+        ]));
 
         // Récupérer les réactions mises à jour
         $reactions = $this->get_reactions_array($post_id);
