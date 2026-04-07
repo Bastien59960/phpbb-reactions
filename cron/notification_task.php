@@ -104,6 +104,11 @@ class notification_task extends \phpbb\cron\task\base
      */
     public function run()
     {
+        if (!$this->is_runnable() || !$this->should_run())
+        {
+            return;
+        }
+
         set_time_limit(0);
 
         $run_deadline = time() + 55;
