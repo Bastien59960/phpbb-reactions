@@ -1,0 +1,9 @@
+{
+    "current_version": "1.0.0",
+    "stable": {
+        "current": "1.0.0",
+        "download": "https://github.com/Bastien59960/reactions/archive/refs/heads/main.zip",
+        "announcement": "https://github.com/Bastien59960/reactions",
+        "eol": "false"
+    }
+}
