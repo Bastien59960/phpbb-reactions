@@ -53,6 +53,14 @@ Quand on veut reagir sans devoir ecrire un post, il faut un systeme simple, rapi
 - Nettoyage des candidats orphelins/auto-reactions pendant le cron.
 - Marquage des elements traites pour eviter les notifications repetees.
 
+## Dépendances inter-extensions
+
+| Extension | Rôle | Type |
+|---|---|---|
+| `bastien59960/adminhelper` | Lit `phpbb3_post_reactions` pour les statistiques de notifications et les actions de maintenance email dans l'ACP | **Consommateur optionnel** — reactions expose sa table ; adminhelper l'utilise uniquement si elle existe (`sql_table_exists`) |
+
+`reactions` ne dépend d'**aucune autre extension** du projet.
+
 ## Prerequis
 
 - PHP `>= 7.4.0`

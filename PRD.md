@@ -73,3 +73,14 @@ php /var/www/forum/bin/phpbbcli.php cron:run bastien59960.reactions.notification
 1. Verifier que les lignes reactions existent dans `ucp_notifications` (mode `notification_options`).
 2. Verifier qu'il n'y a plus d'entree laterale `UCP_REACTIONS_SETTINGS`.
 3. Lancer un cron digest manuel et verifier l'ecriture dans `/var/log/reactions_cron.log`.
+
+## Dépendances inter-extensions
+
+### Exposée à (consommateurs)
+
+- **`adminhelper`** : lit `phpbb3_post_reactions` (colonnes `reaction_notified`, `reaction_email_sent`, `reaction_time`) depuis son ACP pour afficher des statistiques de notifications et permettre des actions de maintenance (marquer en attente, restaurer les abonnements email). La dépendance est purement optionnelle côté consommateur : adminhelper utilise `sql_table_exists()` avant tout accès.
+- **`stats`** : trace dans ses propres tables si les assets CSS/JS de reactions ont été chargés par session (`reactions_extension_expected`, `reactions_css_seen`, `reactions_js_seen`). Aucun accès direct aux tables de reactions.
+
+### Dépend de
+
+Aucune. `reactions` est entièrement autonome vis-à-vis des autres extensions du projet.

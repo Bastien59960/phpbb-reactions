@@ -53,6 +53,14 @@ As forum content written by real users becomes more valuable, engagement quality
 - Cleans up orphan/self-reaction notification candidates during cron processing.
 - Marks handled reaction items to avoid repeated notifications.
 
+## Inter-extension dependencies
+
+| Extension | Role | Type |
+|---|---|---|
+| `bastien59960/adminhelper` | Reads `phpbb3_post_reactions` for notification statistics and email maintenance in ACP | **Optional consumer** — reactions exposes its table; adminhelper uses it only if the table exists (`sql_table_exists`) |
+
+`reactions` itself has **no dependency** on any other extension in this project.
+
 ## Requirements
 
 - PHP `>= 7.4.0`
