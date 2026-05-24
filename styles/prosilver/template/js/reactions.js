@@ -888,6 +888,77 @@ function toggle_visible(id) {
     /* ---------------------------------------------------------------------- */
 
     /**
+     * Applique le toggle d'un emoji directement dans le DOM (mise à jour
+     * optimiste, avant la réponse AJAX). La vérité serveur — renvoyée par
+     * `sendReaction` dans `data.html` — vient ensuite remplacer le bloc et
+     * réconcilie (compteurs, tooltips, ordre).
+     *
+     * @param {HTMLElement} container Le `.post-reactions-container` du post.
+     * @param {string} emoji L'emoji nettoyé (déjà passé par safeEmoji).
+     * @param {boolean} hadReactedBefore État avant le clic — détermine
+     *        si on enlève (true) ou ajoute (false) la réaction.
+     */
+    function applyOptimisticToggle(container, emoji, hadReactedBefore) {
+        const reactionsContainer = container.querySelector('.post-reactions');
+        let wrapper = container.querySelector(
+            `.reaction-wrapper[data-emoji="${emoji}"]`
+        );
+
+        if (hadReactedBefore) {
+            if (!wrapper) { return; }
+            const countEl = wrapper.querySelector('.count');
+            const current = parseInt(
+                wrapper.getAttribute('data-count')
+                    || (countEl && countEl.textContent)
+                    || '1', 10
+            ) || 1;
+            const next = Math.max(0, current - 1);
+            if (next === 0) {
+                wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
+            } else {
+                wrapper.setAttribute('data-count', next);
+                if (countEl) { countEl.textContent = next; }
+                wrapper.classList.remove('active');
+            }
+            return;
+        }
+
+        if (wrapper) {
+            const countEl = wrapper.querySelector('.count');
+            const current = parseInt(
+                wrapper.getAttribute('data-count')
+                    || (countEl && countEl.textContent)
+                    || '0', 10
+            ) || 0;
+            const next = current + 1;
+            wrapper.setAttribute('data-count', next);
+            if (countEl) { countEl.textContent = next; }
+            wrapper.classList.add('active');
+            return;
+        }
+
+        if (!reactionsContainer) { return; }
+
+        const newWrapper = document.createElement('div');
+        newWrapper.className = 'reaction-wrapper active';
+        newWrapper.setAttribute('data-emoji', emoji);
+        newWrapper.setAttribute('data-count', '1');
+
+        const button = document.createElement('button');
+        button.type      = 'button';
+        button.className = 'reaction';
+        button.innerHTML = `${emoji} <span class="count">1</span>`;
+        newWrapper.appendChild(button);
+
+        const moreButton = reactionsContainer.querySelector('.reaction-more');
+        if (moreButton) {
+            reactionsContainer.insertBefore(newWrapper, moreButton);
+        } else {
+            reactionsContainer.appendChild(newWrapper);
+        }
+    }
+
+    /**
      * Envoie la requête AJAX pour ajouter ou retirer une réaction.
      * 
      * PROCESSUS :
@@ -963,9 +1034,25 @@ function toggle_visible(id) {
         }
 
         // =====================================================================
+        // MISE À JOUR OPTIMISTE
+        // =====================================================================
+        // On applique le toggle dans le DOM avant la réponse serveur pour un
+        // retour visuel immédiat. Snapshot du HTML précédent pour rollback en
+        // cas d'erreur (réseau, 4xx, 5xx). En cas de succès, le bloc est
+        // remplacé par data.html (vérité serveur), ce qui réconcilie tooltips
+        // et compteurs si une race a eu lieu entre-temps.
+        const optimisticContainer = document.querySelector(
+            `.post-reactions-container[data-post-id="${postId}"]:not(.post-reactions-readonly)`
+        );
+        const previousContainerHtml = optimisticContainer ? optimisticContainer.innerHTML : null;
+        if (optimisticContainer) {
+            applyOptimisticToggle(optimisticContainer, cleanEmoji, hasReacted);
+        }
+
+        // =====================================================================
         // ÉTAPE 4 : ENVOI DE LA REQUÊTE AJAX
         // =====================================================================
-        
+
         fetch(REACTIONS_AJAX_URL, {
             method: 'POST',
             headers: {
@@ -1045,8 +1132,14 @@ function toggle_visible(id) {
             // =====================================================================
             // GESTION DES ERREURS RÉSEAU OU EXCEPTIONS
             // =====================================================================
-            
+
             console.error('[Reactions] Erreur lors de l\'envoi:', error);
+
+            // Rollback de la mise à jour optimiste : restaurer l'état d'avant clic
+            if (optimisticContainer && previousContainerHtml !== null) {
+                optimisticContainer.innerHTML = previousContainerHtml;
+                initReactions(optimisticContainer);
+            }
 
             // Gestion des erreurs en fonction du code de statut HTTP
             const status = error.response ? error.response.status : null;
